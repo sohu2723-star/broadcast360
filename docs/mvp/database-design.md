@@ -43,10 +43,16 @@ duration
 created_at
 ---------------------
 
+<<<<<<< HEAD
 hot news
 
 id
 channel_id
+=======
+news
+
+id
+>>>>>>> b85e503c3ec185806db409b9c0f1e5936e60e029
 title
 content
 image_url
