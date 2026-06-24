@@ -1,0 +1,264 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// =====================
+// USERS
+// =====================
+
+enum Role {
+  ADMIN
+  GUEST
+}
+
+model User {
+  id Int @id @default(autoincrement())
+
+  name     String
+  email    String @unique
+  password String
+
+  role Role @default(GUEST)
+
+  createdAt DateTime @default(now())
+}
+
+// =====================
+// CHANNELS
+// =====================
+
+model Channel {
+  id Int @id @default(autoincrement())
+
+  name        String
+  description String?
+  logo        String?
+  country     String?
+
+  streams    Stream[]
+  programs   Program[]
+  news       News[]
+  recordings Recording[]
+
+  createdAt         DateTime           @default(now())
+  broadcastSessions BroadcastSession[]
+}
+
+// =====================
+// LIVE STREAM
+// =====================
+
+model Stream {
+  id Int @id @default(autoincrement())
+
+  channelId Int
+
+  url      String
+  protocol String
+  status   String @default("offline")
+
+  channel Channel @relation(fields: [channelId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+// =====================
+// MOVIES
+// =====================
+
+model Movie {
+  id Int @id @default(autoincrement())
+
+  title       String
+  description String?
+  thumbnail   String?
+  videoUrl    String?
+
+  duration    Int
+  releaseYear Int?
+
+  programs Program[]
+
+  createdAt DateTime @default(now())
+}
+
+// =====================
+// SERIES
+// =====================
+
+model Series {
+  id Int @id @default(autoincrement())
+
+  title       String
+  description String?
+  thumbnail   String?
+
+  episodes Episode[]
+
+  createdAt DateTime @default(now())
+}
+
+// =====================
+// EPISODES
+// =====================
+
+model Episode {
+  id Int @id @default(autoincrement())
+
+  seriesId Int
+
+  title     String
+  episodeNo Int
+
+  duration Int
+  videoUrl String?
+
+  series Series @relation(fields: [seriesId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+// =====================
+// NEWS
+// =====================
+
+model News {
+  id Int @id @default(autoincrement())
+
+  channelId Int?
+
+  title   String
+  content String?
+
+  image    String?
+  videoUrl String?
+
+  type String
+  // live / prepared
+
+  channel Channel? @relation(fields: [channelId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+// =====================
+// BROADCAST SCHEDULE
+// =====================
+
+model Program {
+  id        Int     @id @default(autoincrement())
+  channelId Int
+  channel   Channel @relation(fields: [channelId], references: [id])
+
+  title String
+  type  ProgramType
+
+  // movie, news, episode, live stream url
+  sourceUrl String?
+
+  // allow ads?
+  allowAds          Boolean            @default(false)
+  startTime         DateTime
+  endTime           DateTime
+  adPolicy          AdPolicy?
+  createdAt         DateTime           @default(now())
+  movie             Movie?             @relation(fields: [movieId], references: [id])
+  movieId           Int?
+  playlistItems     PlaylistItem[]
+  broadcastSessions BroadcastSession[]
+}
+
+enum ProgramType {
+  MOVIE
+  SERIES
+  NEWS
+  LIVE
+  CAMERA
+}
+
+model Advertisement {
+  id       Int    @id @default(autoincrement())
+  title    String
+  videoUrl String
+
+  duration Int
+  // seconds
+
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model AdPolicy {
+  id        Int     @id @default(autoincrement())
+  programId Int     @unique
+  program   Program @relation(fields: [programId], references: [id])
+  interval  Int
+  // minutes
+  enabled   Boolean @default(true)
+}
+
+model Playlist {
+  id    Int            @id @default(autoincrement())
+  name  String
+  items PlaylistItem[]
+}
+
+model PlaylistItem {
+  id         Int @id @default(autoincrement())
+  playlistId Int
+
+  playlist  Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  programId Int
+
+  program Program @relation(fields: [programId], references: [id], onDelete: Cascade)
+  order   Int
+}
+
+model BroadcastSession {
+  id Int @id @default(autoincrement())
+
+  channelId Int
+
+  channel Channel @relation(fields: [channelId], references: [id])
+
+  programId Int?
+
+  program Program? @relation(fields: [programId], references: [id])
+
+  status    BroadcastStatus @default(STOPPED)
+  startedAt DateTime?
+}
+
+enum BroadcastStatus {
+  LIVE
+  STOPPED
+  SWITCHING
+}
+
+// =====================
+// RECORDINGS
+// =====================
+
+model Recording {
+  id Int @id @default(autoincrement())
+
+  channelId Int
+
+  title String
+
+  fileUrl String
+
+  duration Int
+
+  startedAt DateTime
+  endedAt   DateTime
+
+  channel Channel @relation(fields: [channelId], references: [id])
+
+  createdAt DateTime @default(now())
+}
