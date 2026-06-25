@@ -1,27 +1,58 @@
 import { prisma } from "@/lib/prisma";
 
-
-export async function getPaginatedMovies({ page, limit }: { page: number; limit: number }) {
+export async function getPaginatedMovies({ 
+  page, 
+  limit, 
+  search 
+}: { 
+  page: number; 
+  limit: number; 
+  search?: string; 
+}) {
   const skip = (page - 1) * limit;
+  const whereClause = search
+    ? {
+        OR: [
+          {
+            title: {
+              contains: search,
+              mode: "insensitive" as const, 
+            },
+          },
+          {
+            programs: {
+              some: {
+                title: {
+                  contains: search,
+                  mode: "insensitive" as const, 
+                },
+              },
+            },
+          },
+        ],
+      }
+    : {};
 
-  //transaction to get better performance
   const [data, total] = await prisma.$transaction([
     prisma.movie.findMany({
+      where: whereClause, 
       skip,
       take: limit,
       include: {
         programs: {
           select: {
             id: true,
-            title: true, 
+            title: true,
           },
         },
       },
       orderBy: { 
-        createdAt: 'desc' // To show latest movies uploaded first
+        createdAt: 'desc' 
       },
     }),
-    prisma.movie.count(),
+    prisma.movie.count({
+      where: whereClause, 
+    }),
   ]);
 
   return { data, total };

@@ -1,13 +1,13 @@
 import {getPaginatedMovies,getMovieById, deleteMovie} from "@/repositories/movie.repository";
 
-export async function fetchPaginatedMovies(page: number, limit: number) {
-
+export async function fetchPaginatedMovies(page: number, limit: number, search?: string) {
   const validatedPage = Math.max(1, page);
   const validatedLimit = Math.max(1, limit);
 
   const { data, total } = await getPaginatedMovies({ 
     page: validatedPage, 
-    limit: validatedLimit 
+    limit: validatedLimit,
+    search
   });
 
   return {
