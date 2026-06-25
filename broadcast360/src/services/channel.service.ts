@@ -1,8 +1,6 @@
 import { getAllChannels, getChannelById,deleteChannel }
 from "@/repositories/channel.repository";
 
-
-
 export async function fetchChannels() {
   const channels = await getAllChannels();
   return channels;

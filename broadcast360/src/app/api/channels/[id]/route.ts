@@ -17,8 +17,6 @@ export async function GET(
   }
 }
 
-
-
 // DELETE CHANNEL
 export async function DELETE(
   request: Request,
