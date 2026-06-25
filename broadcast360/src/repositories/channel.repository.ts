@@ -1,8 +1,53 @@
 import { prisma } from "@/lib/prisma";
 
 //query
-export function getAllChannels() {
-  return prisma.channel.findMany();
+export async function getPaginatedChannels({
+  page,
+  limit,
+  search,
+}: {
+  page: number;
+  limit: number;
+  search?: string;
+}) {
+  const skip = (page - 1) * limit;
+
+  // Search Clause
+  const whereClause = search
+    ? {
+        OR: [
+          {
+            name: {
+              contains: search,
+              mode: "insensitive" as const,
+            },
+          },
+          {
+            country: {
+              contains: search,
+              mode: "insensitive" as const,
+            },
+          },
+        ],
+      }
+    : {};
+
+  // $transaction to get better performance
+  const [data, total] = await prisma.$transaction([
+    prisma.channel.findMany({
+      where: whereClause,
+      skip,
+      take: limit,
+      orderBy: {
+        id: "desc",
+      },
+    }),
+    prisma.channel.count({
+      where: whereClause,
+    }),
+  ]);
+
+  return { data, total };
 }
 
 export function getChannelById(id:number){
@@ -18,10 +63,6 @@ export function getChannelById(id:number){
   });
 }
 
-// export function deleteChannel(id:number){
-//   return prisma.channel.delete({
-//     where:{id}});
-// }
 
 export async function deleteChannel(id:number){
 
@@ -81,3 +122,4 @@ export async function deleteChannel(id:number){
 
   ]);
 }
+
