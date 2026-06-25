@@ -5,7 +5,7 @@ import Link from "next/link";
 
 interface Program {
   id: number;
-  name: string;
+  title: string;
 }
 
 interface Movie {
@@ -127,7 +127,7 @@ export default function MoviesPage() {
               ) : (
                 movies.map((movie) => {
                   const programTags = movie.programs && movie.programs.length > 0
-                    ? movie.programs.map((p) => p.name).join(", ")
+                    ? movie.programs.map((p) => p.title).join(", ")
                     : "-";
 
                   return (
