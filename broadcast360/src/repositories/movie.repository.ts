@@ -13,6 +13,7 @@ export function getMovieById(id: number) {
 export function createMovie(data: {
   title: string;
   description: string;
+  releaseYear: number;
   videoUrl: string;
   thumbnail: string;
   duration: number;

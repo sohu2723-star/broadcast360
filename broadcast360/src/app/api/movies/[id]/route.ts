@@ -6,75 +6,107 @@ import {
   editMovie,
 } from "@/services/movie.service";
 
+/*  GET MOVIE BY ID */
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
+  try {
+    const { id } = await params;
 
-  const movie = await fetchMovieById(
-    Number(id)
-  );
+    const movieId = Number(id);
 
-  return NextResponse.json(movie);
+    if (isNaN(movieId)) {
+      return NextResponse.json(
+        { message: "Invalid ID" },
+        { status: 400 }
+      );
+    }
+
+    const movie = await fetchMovieById(movieId);
+
+    if (!movie) {
+      return NextResponse.json(
+        { message: "Movie not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(movie);
+  } catch (error) {
+    console.error("GET ERROR =", error);
+
+    return NextResponse.json(
+      { message: "Failed to fetch movie" },
+      { status: 500 }
+    );
+  }
 }
 
+/*  UPDATE MOVIE */
 export async function PUT(
-req:NextRequest,
-{params}:{params:Promise<{id:string}>}
-){
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
 
-try{
+    const movieId = Number(id);
 
-const {id}=await params;
+    if (isNaN(movieId)) {
+      return NextResponse.json(
+        { message: "Invalid ID" },
+        { status: 400 }
+      );
+    }
 
+    const body = await req.json();
 
-const body = await req.json();
+    const movie = await editMovie(movieId, {
+      title: body.title,
+      description: body.description,
+      releaseYear: Number(body.releaseYear),
+    });
 
+    return NextResponse.json(movie);
+  } catch (error) {
+    console.error("PUT ERROR =", error);
 
-const movie = await editMovie(
-Number(id),
-{
-title:body.title,
-description:body.description,
-releaseYear:body.releaseYear
-}
-);
-
-
-return NextResponse.json(movie);
-
-
-}catch(error){
-
-console.error(error);
-
-
-return NextResponse.json(
-{
-message:"Update failed"
-},
-{
-status:500
-}
-);
-
-
+    return NextResponse.json(
+      { message: "Update failed" },
+      { status: 500 }
+    );
+  }
 }
 
-}
-
+/*  DELETE MOVIE */
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
+  try {
+    const { id } = await params;
 
-  await removeMovie(
-    Number(id)
-  );
+    const movieId = Number(id);
 
-  return NextResponse.json({
-    message: "deleted",
-  });
+    if (isNaN(movieId)) {
+      return NextResponse.json(
+        { message: "Invalid ID" },
+        { status: 400 }
+      );
+    }
+
+    await removeMovie(movieId);
+
+    return NextResponse.json({
+      message: "Movie deleted successfully",
+    });
+  } catch (error) {
+    console.error("DELETE ERROR =", error);
+
+    return NextResponse.json(
+      { message: "Delete failed" },
+      { status: 500 }
+    );
+  }
 }
