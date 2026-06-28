@@ -96,6 +96,7 @@ model Series {
 
   title       String
   description String?
+  genre      String?
   thumbnail   String?
 
   episodes Episode[]

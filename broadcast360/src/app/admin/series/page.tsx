@@ -54,21 +54,32 @@ export default function SeriesPage() {
     loadSeries(1, value);
   };
 
-  const handleDelete = async (id: number) => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this series and all its episodes?");
-    if (!confirmDelete) return;
+const handleDelete = async (id: number) => {
+  const confirmDelete = window.confirm("Are you sure you want to delete this series and all its episodes?");
+  if (!confirmDelete) return;
 
-    try {
-      const res = await fetch(`/api/series/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to delete series");
-      
-      alert("Series deleted successfully");
-      loadSeries(pagination.page, search);
-    } catch (error) {
-      console.error(error);
-      alert("Delete failed");
+  try {
+    const res = await fetch(`/api/series/${id}`, { 
+      method: "DELETE" 
+    });
+    
+    const result = await res.json();
+
+    if (!res.ok) {
+      throw new Error(result.message || "Failed to delete from server");
     }
-  };
+    
+    
+    setSeriesList((prev) => prev.filter((item) => item.id !== id));
+    alert("Series deleted successfully!");
+    
+    
+    loadSeries(pagination.page, search);
+  } catch (error: any) {
+    console.error("Delete UI Error:", error);
+    alert(error.message || "Delete failed. Please try again.");
+  }
+};
 
   const totalPages = Math.ceil(pagination.total / pagination.limit);
 
@@ -123,11 +134,22 @@ export default function SeriesPage() {
                     {/* Thumbnail Column */}
                     <td className="p-5">
                       {series.thumbnail ? (
-                        <img 
-                          src={series.thumbnail} 
-                          alt={series.title} 
-                          className="w-12 h-16 object-cover rounded-lg bg-white/5 border border-white/10 shadow-md"
-                        />
+                        <div className="w-12 h-16 relative overflow-hidden rounded-lg border border-white/10 bg-gray-900 shadow-md">
+                          <img 
+                            src={series.thumbnail} 
+                            alt={series.title} 
+                            className="w-full h-full object-cover block"
+                            referrerPolicy="no-referrer" // External Image Block ဖြစ်ခြင်းမှ ကာကွယ်ရန်
+                            onError={(e) => {
+                              // အကယ်၍ Link သေနေရင် Default အစားထိုးစာသား ပြရန်
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              if (target.parentElement) {
+                                target.parentElement.innerHTML = '<div class="w-full h-full flex items-center justify-center text-[10px] text-gray-500">Error</div>';
+                              }
+                            }}
+                          />
+                        </div>
                       ) : (
                         <div className="w-12 h-16 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center text-[10px] text-gray-500 text-center p-1">
                           No Pic
