@@ -1,6 +1,29 @@
 import { prisma } from "@/lib/prisma";
 
-//query
+
+type CreateChannelInput = {
+  name: string;
+  description?: string;
+  logo?: string;
+  country?: string;
+};
+
+
+type UpdateChannelInput = {
+  name?: string;
+  description?: string;
+  logo?: string;
+  country?: string;
+};
+
+
+// normal query
+export function getAllChannels() {
+  return prisma.channel.findMany();
+}
+
+
+// pagination query
 export async function getPaginatedChannels({
   page,
   limit,
@@ -10,9 +33,9 @@ export async function getPaginatedChannels({
   limit: number;
   search?: string;
 }) {
+
   const skip = (page - 1) * limit;
 
-  // Search Clause
   const whereClause = search
     ? {
         OR: [
@@ -32,7 +55,7 @@ export async function getPaginatedChannels({
       }
     : {};
 
-  // $transaction to get better performance
+
   const [data, total] = await prisma.$transaction([
     prisma.channel.findMany({
       where: whereClause,
@@ -42,10 +65,12 @@ export async function getPaginatedChannels({
         id: "desc",
       },
     }),
+
     prisma.channel.count({
       where: whereClause,
     }),
   ]);
+
 
   return { data, total };
 }
@@ -53,7 +78,7 @@ export async function getPaginatedChannels({
 export function getChannelById(id:number){
 
   return prisma.channel.findUnique({
-    where:{id :id },
+    where:{id},
     include:{
       streams:true,
       programs:true,
@@ -61,65 +86,93 @@ export function getChannelById(id:number){
       recordings:true
     }
   });
+
+}
+
+export function createChannel(data: CreateChannelInput) {
+  return prisma.channel.create({
+    data
+  });
+
 }
 
 
-export async function deleteChannel(id:number){
+export function updateChannel(
+  id:number,
+  data:UpdateChannelInput
+){
 
+  return prisma.channel.update({
+    where:{id},
+    data
+  });
+
+}
+
+export async function deleteChannel(id: number) {
   return prisma.$transaction([
 
     prisma.stream.deleteMany({
-      where:{
-        channelId:id
-      }
-    }),
-
-    prisma.adPolicy.deleteMany({
-      where:{
-        program:{
-          channelId:id
-        }
-      }
+      where: {
+        channelId: id,
+      },
     }),
 
     prisma.playlistItem.deleteMany({
-      where:{
-        program:{
-          channelId:id
-        }
-      }
+      where: {
+        playlist: {
+          program: {
+            channelId: id,
+          },
+        },
+      },
     }),
 
+    // DELETE SCHEDULES FIRST
+    prisma.schedule.deleteMany({
+      where: {
+        channelId: id,
+      },
+    }),
+
+    // THEN PLAYLISTS
+    prisma.playlist.deleteMany({
+      where: {
+        program: {
+          channelId: id,
+        },
+      },
+    }),
+
+    // THEN PROGRAMS
     prisma.program.deleteMany({
-      where:{
-        channelId:id
-      }
+      where: {
+        channelId: id,
+      },
     }),
 
     prisma.news.deleteMany({
-      where:{
-        channelId:id
-      }
+      where: {
+        channelId: id,
+      },
     }),
 
     prisma.recording.deleteMany({
-      where:{
-        channelId:id
-      }
+      where: {
+        channelId: id,
+      },
     }),
 
     prisma.broadcastSession.deleteMany({
-      where:{
-        channelId:id
-      }
+      where: {
+        channelId: id,
+      },
     }),
 
     prisma.channel.delete({
-      where:{
-        id
-      }
-    })
-
+      where: {
+        id,
+      },
+    }),
   ]);
 }
-
