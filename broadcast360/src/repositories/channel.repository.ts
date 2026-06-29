@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/prisma";
 
-
 type CreateChannelInput = {
   name: string;
   description?: string;
@@ -16,12 +15,9 @@ type UpdateChannelInput = {
   country?: string;
 };
 
-
-// normal query
 export function getAllChannels() {
   return prisma.channel.findMany();
 }
-
 
 // pagination query
 export async function getPaginatedChannels({
@@ -86,8 +82,8 @@ export function getChannelById(id:number){
       recordings:true
     }
   });
-
 }
+
 
 export function createChannel(data: CreateChannelInput) {
   return prisma.channel.create({

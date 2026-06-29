@@ -23,7 +23,6 @@ export async function fetchChannels() {
 export function fetchChannelById(id:number){
   return getChannelById(id);
 }
-
 export function addChannel(data: CreateChannelInput){
  return createChannel(data);
 }

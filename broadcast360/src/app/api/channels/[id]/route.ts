@@ -1,3 +1,4 @@
+
 import { fetchChannelById, editChannel, removeChannel } 
 from "@/services/channel.service";
 import { updateChannelSchema } from "@/lib/validators/channel.validator";
@@ -59,9 +60,6 @@ export async function PUT(
 
     }
 
-
-
-
     // CHECK DUPLICATE NAME
     const existing =
       await prisma.channel.findFirst({
@@ -78,16 +76,11 @@ export async function PUT(
 
       });
 
-
-
     if(existing){
-
       return NextResponse.json(
-
         {
           error:"Channel name already exists"
         },
-
         {
           status:409
         }
@@ -95,37 +88,21 @@ export async function PUT(
       );
 
     }
-
-
-
-
-
     const channel =
       await editChannel(
 
         channelId,
 
         result.data
-
       );
-
-
-
     return NextResponse.json(channel);
-
-
-
   } catch(error){
-
-
     console.error(
       "Database operation failed: update channel",
       error
     );
 
-
     return NextResponse.json(
-
       {
         message:"Failed to update channel"
       },
