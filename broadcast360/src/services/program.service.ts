@@ -1,4 +1,4 @@
-import { createProgram, getProgramById, updateProgram } 
+import { createProgram, getProgramById, updateProgram, getProgramDetails } 
 from "@/repositories/program.repository";
 
 import { CreateProgramInput, UpdateProgramInput } 
@@ -31,4 +31,10 @@ export function editProgram(
  data:UpdateProgramInput
 ){
  return updateProgram(id,data);
+}
+
+export function fetchProgramDetails(id:number){
+
+ return getProgramDetails(id);
+
 }
