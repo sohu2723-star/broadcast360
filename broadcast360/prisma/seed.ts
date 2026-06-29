@@ -2,6 +2,8 @@ import {
   PrismaClient,
   Role,
   ProgramType,
+  PlaylistItemType,
+  ScheduleStatus,
   BroadcastStatus
 } from "../src/generated/prisma/client";
 
@@ -18,20 +20,18 @@ const adapter = new PrismaPg(pool);
 
 const prisma = new PrismaClient({ adapter });
 
-
-
 async function main() {
-  console.log('🌱 Starting database seeding...');
+  console.log('🌱 Starting database seeding with updated schema...');
 
-  // 1. CLEANUP (Optional but recommended: clears old data to prevent unique constraint issues)
+  // 1. CLEANUP EXECUTED IN REVERSE RELATION ORDER
   await prisma.recording.deleteMany();
   await prisma.broadcastSession.deleteMany();
+  await prisma.schedule.deleteMany();
   await prisma.playlistItem.deleteMany();
   await prisma.playlist.deleteMany();
-  await prisma.adPolicy.deleteMany();
   await prisma.program.deleteMany();
-  await prisma.advertisement.deleteMany();
   await prisma.news.deleteMany();
+  await prisma.advertisement.deleteMany();
   await prisma.episode.deleteMany();
   await prisma.series.deleteMany();
   await prisma.movie.deleteMany();
@@ -47,10 +47,10 @@ async function main() {
     users.push(
       await prisma.user.create({
         data: {
-          name: `User ${i}`,
-          email: `user${i}@example.com`,
-          password: `hashed_password_${i}`, // Simple placeholder for seed
-          role: i <= 2 ? Role.ADMIN : Role.GUEST, // 2 Admins, 8 Guests
+          name: `Staff Member ${i}`,
+          email: `staff${i}@broadcast.tv`,
+          password: `secure_hash_password_${i}`,
+          role: i <= 2 ? Role.ADMIN : Role.GUEST,
         },
       })
     );
@@ -64,28 +64,32 @@ async function main() {
     channels.push(
       await prisma.channel.create({
         data: {
-          name: `Channel ${String.fromCharCode(64 + i)} Network`, // Channel A, B, C...
-          description: `This is the official description for Channel ${String.fromCharCode(64 + i)}.`,
-          logo: `/images/logo/channel_${i}.png`, // Placeholder path for logos
+          name: `Channel ${String.fromCharCode(64 + i)} Network`,
+          description: `Prime broadcast television feed for Channel ${String.fromCharCode(64 + i)}.`,
+          logo: `/logos/channel_${i}.png`,
           country: countries[i - 1],
+          streamKey: `live_key_stream_secret_${i}`,
         },
       })
     );
   }
   console.log('📺 Seeded 10 Channels');
 
-  // 4. LIVE STREAMS
+  // 4. STREAM INPUTS
+  const streams = [];
   for (let i = 1; i <= 10; i++) {
-    await prisma.stream.create({
-      data: {
-        channelId: channels[i - 1].id, // 1 stream per channel
-        url: `rtmp://live.example.com/live/stream_${i}`,
-        protocol: 'RTMP',
-        status: i % 3 === 0 ? 'active' : 'offline',
-      },
-    });
+    streams.push(
+      await prisma.stream.create({
+        data: {
+          channelId: channels[i - 1].id,
+          url: `rtmp://ingest.server.com/live/stream_${i}`,
+          protocol: 'RTMP',
+          status: i % 2 === 0 ? 'active' : 'offline',
+        },
+      })
+    );
   }
-  console.log('⚡ Seeded 10 Live Streams');
+  console.log('⚡ Seeded 10 Streams');
 
   // 5. MOVIES
   const movies = [];
@@ -93,12 +97,13 @@ async function main() {
     movies.push(
       await prisma.movie.create({
         data: {
-          title: `Blockbuster Movie Vol. ${i}`,
-          description: `An action-packed cinematic masterpiece, volume ${i}.`,
-          thumbnail: `images/movie_${i}.jpg`,
-          videoUrl: `images/videos/movie_${i}.mp4`,
-          duration: 5400 + i * 300, // Between 1.5 to 2.5 hours
-          releaseYear: 2015 + i,
+          title: `Feature Movie ${i}`,
+          description: `An cinematic presentation tracking story arc ${i}.`,
+          genre: i % 2 === 0 ? 'Action' : 'Drama',
+          thumbnail: `/thumbnails/movies/movie_${i}.png`,
+          videoUrl: `/videos/movie_${i}.mp4`,
+          duration: 7200, // 2 hours
+          releaseYear: 2020 + i,
         },
       })
     );
@@ -111,130 +116,160 @@ async function main() {
     allSeries.push(
       await prisma.series.create({
         data: {
-          title: `Hit Series: Season ${i}`,
-          description: `The complete narrative arc for season ${i} of our flagship drama.`,
-          thumbnail: `images/series_${i}.jpg`,
+          title: `Drama Series Season ${i}`,
+          description: `Seasonal broadcast package containing ongoing episodic stories.`,
+          genre: 'Comedy',
+          releaseYear: 2025,
+          thumbnail: `/thumbnails/movies/series_${i}.jpeg`,
         },
       })
     );
   }
   console.log('🍿 Seeded 10 Series');
 
-  // 7. EPISODES (Distributed across our 10 series)
+  // 7. EPISODES
+  const episodes = [];
   for (let i = 1; i <= 10; i++) {
-    await prisma.episode.create({
-      data: {
-        seriesId: allSeries[Math.floor((i - 1) / 1)].id, // Maps smoothly across series
-        title: `Episode Title ${i}`,
-        episodeNo: ((i - 1) % 5) + 1, // Creates ep numbers like 1, 2, 3, 4, 5...
-        duration: 2400, // 40 minutes
-        videoUrl: `upload/videos/episode_${i}.mp4`,
-      },
-    });
-  }
-  console.log('🎞️ Seeded 10 Episodes');
-
-  // 8. NEWS
-  for (let i = 1; i <= 10; i++) {
-    await prisma.news.create({
-      data: {
-        channelId: channels[i - 1].id,
-        title: `Breaking News Update ${i}`,
-        content: `Detailed journalistic reporting regarding global event number ${i}.`,
-        image: `images/news/img_${i}.jpg`,
-        videoUrl: i % 2 === 0 ? `videos/news/clip_${i}.mp4` : null,
-        type: i % 2 === 0 ? 'live' : 'prepared',
-      },
-    });
-  }
-  console.log('📰 Seeded 10 News Articles');
-
-  // 9. ADVERTISEMENTS
-  for (let i = 1; i <= 10; i++) {
-    await prisma.advertisement.create({
-      data: {
-        title: `Commercial Ad ${i}`,
-        videoUrl: `videos/ads/ad_clip_${i}.mp4`,
-        duration: i % 2 === 0 ? 30 : 15, // 15s or 30s ads
-        active: true,
-      },
-    });
-  }
-  console.log('💰 Seeded 10 Advertisements');
-
-  // 10. PROGRAMS (Broadcast Schedule)
-  const programs = [];
-  const programTypes = [ProgramType.MOVIE, ProgramType.SERIES, ProgramType.NEWS, ProgramType.LIVE, ProgramType.CAMERA];
-  
-  const baseTime = new Date('2026-07-01T00:00:00Z');
-
-  for (let i = 1; i <= 10; i++) {
-    const start = new Date(baseTime.getTime() + (i - 1) * 2 * 60 * 60 * 1000); // Cascades every 2 hours
-    const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
-
-    programs.push(
-      await prisma.program.create({
+    episodes.push(
+      await prisma.episode.create({
         data: {
-          channelId: channels[i - 1].id,
-          title: `Scheduled Program ${i}`,
-          type: programTypes[(i - 1) % programTypes.length],
-          sourceUrl: i % 3 === 0 ? `https://edge.stream.com/live/feed_${i}` : null,
-          allowAds: i % 2 === 0,
-          startTime: start,
-          endTime: end,
-          movieId: i <= 5 ? movies[i - 1].id : null, // Link first 5 programs to movies
+          seriesId: allSeries[i - 1].id,
+          title: `Episode ${i}: The Beginning`,
+          episodeNo: 1,
+          duration: 3600, // 1 hour
+          videoUrl: `/videos/episode_${i}.mp4`,
         },
       })
     );
   }
-  console.log('📅 Seeded 10 Programs');
+  console.log('🎞️ Seeded 10 Episodes');
 
-  // 11. AD POLICIES (1-to-1 relation with Program)
+  // 8. ADVERTISEMENTS
+  const advertisements = [];
   for (let i = 1; i <= 10; i++) {
-    await prisma.adPolicy.create({
-      data: {
-        programId: programs[i - 1].id,
-        interval: 15, // Play ads every 15 minutes
-        enabled: i % 2 === 0,
-      },
-    });
+    advertisements.push(
+      await prisma.advertisement.create({
+        data: {
+          title: `Sponsor Commercial Advertisement ${i}`,
+          videoUrl: `/videos/ads/ad_${i}.mp4`,
+          duration: 30, // 30 seconds
+          active: true,
+        },
+      })
+    );
   }
-  console.log('🛡️ Seeded 10 Ad Policies');
+  console.log('💰 Seeded 10 Advertisements');
 
-  // 12. PLAYLISTS
+  // 9. NEWS
+  const newsItems = [];
+  for (let i = 1; i <= 10; i++) {
+    newsItems.push(
+      await prisma.news.create({
+        data: {
+          channelId: channels[i - 1].id,
+          title: `Global News Bulletin ${i}`,
+          content: `Breaking investigative journalism reporting item ${i}.`,
+          image: `/thumbnails/movies/news_${i}.png`,
+          videoUrl: `/videos/news_report_${i}.mp4`,
+          type: i % 2 === 0 ? 'LIVE' : 'PREPARED',
+        },
+      })
+    );
+  }
+  console.log('📰 Seeded 10 News items');
+
+  // 10. PROGRAMS
+  const programs = [];
+  const types = [ProgramType.MOVIE, ProgramType.SERIES, ProgramType.NEWS, ProgramType.LIVE, ProgramType.ENTERTAINMENT];
+  for (let i = 1; i <= 10; i++) {
+    programs.push(
+      await prisma.program.create({
+        data: {
+          channelId: channels[i - 1].id,
+          title: `Show Slot ${i}`,
+          type: types[(i - 1) % types.length],
+          description: `Main scheduled block wrapper description ${i}.`,
+        },
+      })
+    );
+  }
+  console.log('📺 Seeded 10 Programs');
+
+  // 11. PLAYLISTS
   const playlists = [];
   for (let i = 1; i <= 10; i++) {
     playlists.push(
       await prisma.playlist.create({
         data: {
-          name: `Daily Rotation Playlist ${i}`,
+          name: `Daily Schedule Block Automation Playlist ${i}`,
+          programId: programs[i - 1].id,
+          totalDuration: 10830, // Aggregate mapping
         },
       })
     );
   }
   console.log('🎵 Seeded 10 Playlists');
 
-  // 13. PLAYLIST ITEMS
+  // 12. PLAYLIST ITEMS
+  const itemTypes = [
+    PlaylistItemType.MOVIE, 
+    PlaylistItemType.EPISODE, 
+    PlaylistItemType.ADVERTISEMENT, 
+    PlaylistItemType.NEWS, 
+    PlaylistItemType.STREAM
+  ];
+  
   for (let i = 1; i <= 10; i++) {
+    const itemType = itemTypes[(i - 1) % itemTypes.length];
     await prisma.playlistItem.create({
       data: {
         playlistId: playlists[i - 1].id,
-        programId: programs[i - 1].id,
         order: 1,
+        type: itemType,
+        // Polymorphic relation setup using individual conditions
+        movieId: itemType === PlaylistItemType.MOVIE ? movies[i - 1].id : null,
+        episodeId: itemType === PlaylistItemType.EPISODE ? episodes[i - 1].id : null,
+        advertisementId: itemType === PlaylistItemType.ADVERTISEMENT ? advertisements[i - 1].id : null,
+        newsId: itemType === PlaylistItemType.NEWS ? newsItems[i - 1].id : null,
+        streamId: itemType === PlaylistItemType.STREAM ? streams[i - 1].id : null,
+        duration: itemType === PlaylistItemType.ADVERTISEMENT ? 30 : 3600,
       },
     });
   }
   console.log('📌 Seeded 10 Playlist Items');
 
+  // 13. SCHEDULES
+  const schedules = [];
+  const baseTime = new Date('2026-07-01T06:00:00Z');
+  const schedStatuses = [ScheduleStatus.SCHEDULED, ScheduleStatus.LIVE, ScheduleStatus.COMPLETED, ScheduleStatus.CANCELLED];
+
+  for (let i = 1; i <= 10; i++) {
+    const start = new Date(baseTime.getTime() + (i - 1) * 3 * 60 * 60 * 1000);
+    const end = new Date(start.getTime() + 3 * 60 * 60 * 1000);
+    
+    schedules.push(
+      await prisma.schedule.create({
+        data: {
+          channelId: channels[i - 1].id,
+          playlistId: playlists[i - 1].id,
+          startTime: start,
+          endTime: end,
+          status: schedStatuses[(i - 1) % schedStatuses.length],
+        },
+      })
+    );
+  }
+  console.log('📅 Seeded 10 Schedules');
+
   // 14. BROADCAST SESSIONS
-  const statuses = [BroadcastStatus.LIVE, BroadcastStatus.STOPPED, BroadcastStatus.SWITCHING];
+  const sessionStatuses = [BroadcastStatus.LIVE, BroadcastStatus.STOPPED, BroadcastStatus.SWITCHING];
   for (let i = 1; i <= 10; i++) {
     await prisma.broadcastSession.create({
       data: {
         channelId: channels[i - 1].id,
-        programId: programs[i - 1].id,
-        status: statuses[(i - 1) % statuses.length],
-        startedAt: i % 3 !== 1 ? new Date() : null,
+        scheduleId: schedules[i - 1].id,
+        status: sessionStatuses[(i - 1) % sessionStatuses.length],
+        startedAt: i % 2 === 0 ? new Date() : null,
       },
     });
   }
@@ -245,22 +280,22 @@ async function main() {
     await prisma.recording.create({
       data: {
         channelId: channels[i - 1].id,
-        title: `Archived Broadcast Log #${i}`,
-        fileUrl: `videos/records/channel_${i}_archive.mp4`,
-        duration: 7200,
-        startedAt: new Date('2026-06-20T12:00:00Z'),
-        endedAt: new Date('2026-06-20T14:00:00Z'),
+        title: `DVR Archive Recording Record #${i}`,
+        fileUrl: `videos/archive_channel_${i}.mp4`,
+        duration: 10800,
+        startedAt: new Date('2026-06-28T01:00:00Z'),
+        endedAt: new Date('2026-06-28T04:00:00Z'),
       },
     });
   }
   console.log('💾 Seeded 10 Recordings');
 
-  console.log('🏁 Seeding finished successfully!');
+  console.log('🏁 Seeding execution successfully concluded!');
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Error while seeding database:', e);
+    console.error('❌ Error executing database seed process:', e);
     process.exit(1);
   })
   .finally(async () => {
