@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 type Channel = {
 id:number;
@@ -42,8 +43,18 @@ Channel Details
 <div className="bg-[#0B1026] rounded-2xl p-8 border border-white/10 max-w-3xl">
 <div className="flex items-center gap-5 mb-8">
 
-<div className="w-20 h-20 rounded-fullbg-[#106EE9] flex items-center justify-center text-3xl">
-📺
+<div className="w-20 h-20 rounded-full overflow-hidden bg-[#106EE9] flex items-center justify-center">
+  {channel.logo ? (
+    <Image
+      src={channel.logo}
+      alt={channel.name}
+      width={80}
+      height={80}
+      className="w-full h-full object-cover"
+    />
+  ) : (
+    <span className="text-3xl">📺</span>
+  )}
 </div>
 <div>
 <h2 className=" text-2xl font-bold">
