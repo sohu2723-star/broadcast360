@@ -145,6 +145,8 @@ model Episode {
 
   videoUrl String?
 
+  thumbnailurl String?
+
   series Series @relation(fields: [seriesId], references: [id])
 
   createdAt DateTime @default(now())
