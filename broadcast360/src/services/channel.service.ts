@@ -1,4 +1,4 @@
-import { getAllChannels, getChannelById, createChannel, updateChannel,deleteChannel }
+import { getPaginatedChannels,  getAllChannels, getChannelById, createChannel, updateChannel,deleteChannel }
 from "@/repositories/channel.repository";
 
 type CreateChannelInput = {
@@ -33,5 +33,24 @@ export function editChannel(id:number,data:UpdateChannelInput){
 }
 
 export function removeChannel(id:number){
- return deleteChannel(id);
+ return deleteChannel(id);}
+
+export async function fetchPaginatedChannels(page: number, limit: number, search?: string) {
+  const validatedPage = Math.max(1, page);
+  const validatedLimit = Math.max(1, limit);
+
+  const { data, total } = await getPaginatedChannels({
+    page: validatedPage,
+    limit: validatedLimit,
+    search,
+  });
+
+  return {
+    data,
+    pagination: {
+      page: validatedPage,
+      limit: validatedLimit,
+      total,
+    },
+  };
 }

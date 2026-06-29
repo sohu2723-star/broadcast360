@@ -1,15 +1,44 @@
 import { z } from "zod";
 
-/* ================= BASE SCHEMA ================= */
-export const baseChannelSchema = z.object({
-  name: z.string().trim().min(1, "Channel name is required"),
-  country: z.string().trim().min(1, "Country is required"),
-  logo: z.string().trim().min(1, "Channel logo is required"),
-  description: z.string().trim().min(1, "Description is required"),
+
+export const createChannelSchema = z.object({
+
+  name: z.string()
+    .trim()
+    .min(1,"Channel name is required"),
+
+  country: z.string()
+    .trim()
+    .min(1,"Country is required"),
+
+  logo: z.string()
+    .trim()
+    .min(1,"Channel logo is required"),
+
+  description: z.string()
+    .trim()
+    .min(1,"Description is required"),
+
 });
 
-/* ================= CREATE ================= */
-export const createChannelSchema = baseChannelSchema;
+export const updateChannelSchema = z.object({
 
-/* ================= UPDATE ================= */
-export const updateChannelSchema = baseChannelSchema;
+  name: z.string()
+    .trim()
+    .min(1,"Channel name is required"),
+
+
+  country: z.string()
+    .trim()
+    .min(1,"Country is required"),
+
+
+  logo: z.string()
+    .trim()
+    .optional(),
+
+  description: z.string()
+    .trim()
+    .min(1,"Description is required"),
+
+});
