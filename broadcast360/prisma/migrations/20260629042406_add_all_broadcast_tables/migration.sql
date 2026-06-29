@@ -2,7 +2,13 @@
 CREATE TYPE "Role" AS ENUM ('ADMIN', 'GUEST');
 
 -- CreateEnum
-CREATE TYPE "ProgramType" AS ENUM ('MOVIE', 'SERIES', 'NEWS', 'LIVE', 'CAMERA');
+CREATE TYPE "ProgramType" AS ENUM ('MOVIE', 'SERIES', 'NEWS', 'LIVE', 'ENTERTAINMENT');
+
+-- CreateEnum
+CREATE TYPE "PlaylistItemType" AS ENUM ('MOVIE', 'EPISODE', 'ADVERTISEMENT', 'NEWS', 'STREAM');
+
+-- CreateEnum
+CREATE TYPE "ScheduleStatus" AS ENUM ('SCHEDULED', 'LIVE', 'COMPLETED', 'CANCELLED');
 
 -- CreateEnum
 CREATE TYPE "BroadcastStatus" AS ENUM ('LIVE', 'STOPPED', 'SWITCHING');
@@ -26,6 +32,7 @@ CREATE TABLE "Channel" (
     "description" TEXT,
     "logo" TEXT,
     "country" TEXT,
+    "streamKey" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Channel_pkey" PRIMARY KEY ("id")
@@ -48,6 +55,7 @@ CREATE TABLE "Movie" (
     "id" SERIAL NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT,
+    "genre" TEXT,
     "thumbnail" TEXT,
     "videoUrl" TEXT,
     "duration" INTEGER NOT NULL,
@@ -62,6 +70,8 @@ CREATE TABLE "Series" (
     "id" SERIAL NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT,
+    "genre" TEXT,
+    "releaseYear" INTEGER,
     "thumbnail" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -79,6 +89,18 @@ CREATE TABLE "Episode" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Episode_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Advertisement" (
+    "id" SERIAL NOT NULL,
+    "title" TEXT NOT NULL,
+    "videoUrl" TEXT NOT NULL,
+    "duration" INTEGER NOT NULL,
+    "active" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Advertisement_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -101,42 +123,19 @@ CREATE TABLE "Program" (
     "channelId" INTEGER NOT NULL,
     "title" TEXT NOT NULL,
     "type" "ProgramType" NOT NULL,
-    "sourceUrl" TEXT,
-    "allowAds" BOOLEAN NOT NULL DEFAULT false,
-    "startTime" TIMESTAMP(3) NOT NULL,
-    "endTime" TIMESTAMP(3) NOT NULL,
+    "description" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "movieId" INTEGER,
 
     CONSTRAINT "Program_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "Advertisement" (
-    "id" SERIAL NOT NULL,
-    "title" TEXT NOT NULL,
-    "videoUrl" TEXT NOT NULL,
-    "duration" INTEGER NOT NULL,
-    "active" BOOLEAN NOT NULL DEFAULT true,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "Advertisement_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "AdPolicy" (
-    "id" SERIAL NOT NULL,
-    "programId" INTEGER NOT NULL,
-    "interval" INTEGER NOT NULL,
-    "enabled" BOOLEAN NOT NULL DEFAULT true,
-
-    CONSTRAINT "AdPolicy_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "Playlist" (
     "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
+    "programId" INTEGER NOT NULL,
+    "totalDuration" INTEGER,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Playlist_pkey" PRIMARY KEY ("id")
 );
@@ -145,19 +144,40 @@ CREATE TABLE "Playlist" (
 CREATE TABLE "PlaylistItem" (
     "id" SERIAL NOT NULL,
     "playlistId" INTEGER NOT NULL,
-    "programId" INTEGER NOT NULL,
     "order" INTEGER NOT NULL,
+    "type" "PlaylistItemType" NOT NULL,
+    "movieId" INTEGER,
+    "episodeId" INTEGER,
+    "advertisementId" INTEGER,
+    "newsId" INTEGER,
+    "streamId" INTEGER,
+    "duration" INTEGER,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "PlaylistItem_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Schedule" (
+    "id" SERIAL NOT NULL,
+    "channelId" INTEGER NOT NULL,
+    "playlistId" INTEGER NOT NULL,
+    "startTime" TIMESTAMP(3) NOT NULL,
+    "endTime" TIMESTAMP(3),
+    "status" "ScheduleStatus" NOT NULL DEFAULT 'SCHEDULED',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Schedule_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "BroadcastSession" (
     "id" SERIAL NOT NULL,
     "channelId" INTEGER NOT NULL,
-    "programId" INTEGER,
+    "scheduleId" INTEGER,
     "status" "BroadcastStatus" NOT NULL DEFAULT 'STOPPED',
     "startedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "BroadcastSession_pkey" PRIMARY KEY ("id")
 );
@@ -180,7 +200,7 @@ CREATE TABLE "Recording" (
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "AdPolicy_programId_key" ON "AdPolicy"("programId");
+CREATE UNIQUE INDEX "Channel_streamKey_key" ON "Channel"("streamKey");
 
 -- AddForeignKey
 ALTER TABLE "Stream" ADD CONSTRAINT "Stream_channelId_fkey" FOREIGN KEY ("channelId") REFERENCES "Channel"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -195,22 +215,34 @@ ALTER TABLE "News" ADD CONSTRAINT "News_channelId_fkey" FOREIGN KEY ("channelId"
 ALTER TABLE "Program" ADD CONSTRAINT "Program_channelId_fkey" FOREIGN KEY ("channelId") REFERENCES "Channel"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Program" ADD CONSTRAINT "Program_movieId_fkey" FOREIGN KEY ("movieId") REFERENCES "Movie"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Playlist" ADD CONSTRAINT "Playlist_programId_fkey" FOREIGN KEY ("programId") REFERENCES "Program"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "AdPolicy" ADD CONSTRAINT "AdPolicy_programId_fkey" FOREIGN KEY ("programId") REFERENCES "Program"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "PlaylistItem" ADD CONSTRAINT "PlaylistItem_playlistId_fkey" FOREIGN KEY ("playlistId") REFERENCES "Playlist"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "PlaylistItem" ADD CONSTRAINT "PlaylistItem_playlistId_fkey" FOREIGN KEY ("playlistId") REFERENCES "Playlist"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "PlaylistItem" ADD CONSTRAINT "PlaylistItem_movieId_fkey" FOREIGN KEY ("movieId") REFERENCES "Movie"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "PlaylistItem" ADD CONSTRAINT "PlaylistItem_programId_fkey" FOREIGN KEY ("programId") REFERENCES "Program"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "PlaylistItem" ADD CONSTRAINT "PlaylistItem_episodeId_fkey" FOREIGN KEY ("episodeId") REFERENCES "Episode"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PlaylistItem" ADD CONSTRAINT "PlaylistItem_advertisementId_fkey" FOREIGN KEY ("advertisementId") REFERENCES "Advertisement"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PlaylistItem" ADD CONSTRAINT "PlaylistItem_newsId_fkey" FOREIGN KEY ("newsId") REFERENCES "News"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "PlaylistItem" ADD CONSTRAINT "PlaylistItem_streamId_fkey" FOREIGN KEY ("streamId") REFERENCES "Stream"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Schedule" ADD CONSTRAINT "Schedule_channelId_fkey" FOREIGN KEY ("channelId") REFERENCES "Channel"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Schedule" ADD CONSTRAINT "Schedule_playlistId_fkey" FOREIGN KEY ("playlistId") REFERENCES "Playlist"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "BroadcastSession" ADD CONSTRAINT "BroadcastSession_channelId_fkey" FOREIGN KEY ("channelId") REFERENCES "Channel"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "BroadcastSession" ADD CONSTRAINT "BroadcastSession_programId_fkey" FOREIGN KEY ("programId") REFERENCES "Program"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Recording" ADD CONSTRAINT "Recording_channelId_fkey" FOREIGN KEY ("channelId") REFERENCES "Channel"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
