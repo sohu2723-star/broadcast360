@@ -33,7 +33,7 @@ model User {
 model Channel {
   id Int @id @default(autoincrement())
 
-  name String
+  name String @unique
 
   description String?
 
@@ -145,7 +145,11 @@ model Episode {
 
   videoUrl String?
 
+<<<<<<< HEAD
   thumbnailurl String?
+=======
+  thumbnailUrl String?
+>>>>>>> origin/main
 
   series Series @relation(fields: [seriesId], references: [id])
 
@@ -164,6 +168,8 @@ model Advertisement {
   title String
 
   videoUrl String
+  
+  thumbnailUrl String?
 
   duration Int
 
@@ -198,6 +204,32 @@ model News {
   playlistItems PlaylistItem[]
 
   createdAt DateTime @default(now())
+}
+
+// =====================
+// ENTERTAINMENT
+// =====================
+
+model Entertainment {
+  id Int @id @default(autoincrement())
+
+  title String
+
+  description String?
+
+  category String?
+
+  thumbnail String?
+
+  videoUrl String
+
+  duration Int
+
+  releaseYear Int?
+
+  createdAt DateTime @default(now())
+
+  playlistItems PlaylistItem[]
 }
 
 // =====================
@@ -265,6 +297,8 @@ enum PlaylistItemType {
 
   ADVERTISEMENT
 
+  ENTERTAINMENT
+
   NEWS
 
   STREAM
@@ -285,6 +319,8 @@ model PlaylistItem {
 
   advertisementId Int?
 
+  entertainmentId Int?
+
   newsId Int?
 
   streamId Int?
@@ -302,6 +338,8 @@ model PlaylistItem {
   news News? @relation(fields: [newsId], references: [id])
 
   stream Stream? @relation(fields: [streamId], references: [id])
+
+  entertainment Entertainment? @relation(fields:[entertainmentId], references:[id])
 
   createdAt DateTime @default(now())
 }
