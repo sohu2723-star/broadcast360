@@ -2,19 +2,29 @@ import { prisma } from "@/lib/prisma";
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = Number(params.id);
+    const { id } = await params;
 
     await prisma.episode.delete({
-      where: { id },
+      where: {
+        id: Number(id),
+      },
     });
 
-    return Response.json({ message: "Deleted successfully" });
+    return Response.json({
+      success: true,
+      message: "Episode deleted",
+    });
   } catch (error) {
+    console.error(error);
+
     return Response.json(
-      { message: "Delete failed" },
+      {
+        success: false,
+        message: "Delete failed",
+      },
       { status: 500 }
     );
   }
