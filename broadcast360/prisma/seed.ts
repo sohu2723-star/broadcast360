@@ -120,7 +120,7 @@ async function main() {
           description: `Seasonal broadcast package containing ongoing episodic stories.`,
           genre: 'Comedy',
           releaseYear: 2025,
-          thumbnail: `/thumbnails/movies/series_${i}.jpeg`,
+          thumbnail: `/thumbnails/series/series_${i}.jpeg`,
         },
       })
     );
@@ -137,7 +137,8 @@ async function main() {
           title: `Episode ${i}: The Beginning`,
           episodeNo: 1,
           duration: 3600, // 1 hour
-          videoUrl: `/videos/episode_${i}.mp4`,
+          thumbnailUrl: `/thumbnails/episodes/episode_${i}.png`,
+          videoUrl: `/videos/episodes/episode_${i}.mp4`,
         },
       })
     );
@@ -152,6 +153,7 @@ async function main() {
         data: {
           title: `Sponsor Commercial Advertisement ${i}`,
           videoUrl: `/videos/ads/ad_${i}.mp4`,
+          thumbnailUrl: `/thumbnails/ads/ad_${i}.png`,
           duration: 30, // 30 seconds
           active: true,
         },
@@ -288,7 +290,26 @@ async function main() {
       },
     });
   }
+  
   console.log('💾 Seeded 10 Recordings');
+
+    // 8. Entertainment
+  const entertainments = [];
+  for (let i = 1; i <= 10; i++) {
+    entertainments.push(
+      await prisma.entertainment.create({
+        data: {
+          title: `Entertainment Item ${i}`,
+          description: `An cinematic presentation tracking story arc ${i}.`,
+          category: i % 2 === 0 ? 'Talent Show' : 'Cooking Show',
+          videoUrl: `/videos/entertainment/entertainment_${i}.mp4`,
+          thumbnail: `/thumbnails/entertainment/entertainment_${i}.png`,
+          duration: 1800, // 30 minutes
+        },
+      })
+    );
+  }
+  console.log('🎮 Seeded 10 Entertainment Items');
 
   console.log('🏁 Seeding execution successfully concluded!');
 }
