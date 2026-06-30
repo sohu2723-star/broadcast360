@@ -7,6 +7,7 @@ type Advertisement = {
   id: number;
   title: string;
   videoUrl: string;
+  thumbnailUrl?: string; // ✅ IMPORTANT ADD
   duration: number;
   active: boolean;
   createdAt: string;
@@ -25,13 +26,12 @@ export default function AdvertisementsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  // MAIN FETCH FUNCTION
+  // FETCH DATA
   const loadAdvertisements = async (pageNumber = 1) => {
     try {
       setLoading(true);
 
       const params = new URLSearchParams();
-
       params.set("page", pageNumber.toString());
       params.set("limit", "5");
       params.set("search", search.trim());
@@ -54,18 +54,18 @@ export default function AdvertisementsPage() {
     }
   };
 
-  // LOAD WHEN PAGE CHANGES
+  // pagination load
   useEffect(() => {
     loadAdvertisements(page);
   }, [page]);
 
-  // SEARCH + FILTER CHANGE → RESET PAGE + REFRESH
+  // search + filter
   useEffect(() => {
     setPage(1);
     loadAdvertisements(1);
   }, [search, statusFilter]);
 
-  // DELETE
+  // delete
   const handleDelete = async (id: number) => {
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this advertisement?"
@@ -74,16 +74,11 @@ export default function AdvertisementsPage() {
     if (!confirmDelete) return;
 
     try {
-      const res = await fetch(
-        `/api/advertisements/${id}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const res = await fetch(`/api/advertisements/${id}`, {
+        method: "DELETE",
+      });
 
-      if (!res.ok) {
-        throw new Error("Delete failed");
-      }
+      if (!res.ok) throw new Error("Delete failed");
 
       alert("Advertisement deleted");
 
@@ -96,9 +91,7 @@ export default function AdvertisementsPage() {
 
   if (loading) {
     return (
-      <div className="text-white">
-        Loading advertisements...
-      </div>
+      <div className="text-white">Loading advertisements...</div>
     );
   }
 
@@ -106,9 +99,7 @@ export default function AdvertisementsPage() {
     <div>
       {/* HEADER */}
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">
-          Advertisements
-        </h1>
+        <h1 className="text-3xl font-bold">Advertisements</h1>
       </div>
 
       {/* SEARCH + FILTER */}
@@ -123,9 +114,7 @@ export default function AdvertisementsPage() {
 
         <select
           value={statusFilter}
-          onChange={(e) =>
-            setStatusFilter(e.target.value)
-          }
+          onChange={(e) => setStatusFilter(e.target.value)}
           className="bg-[#0B1026] border border-white/10 rounded-xl px-4 py-2"
         >
           <option value="all">All Status</option>
@@ -140,7 +129,7 @@ export default function AdvertisementsPage() {
           <thead>
             <tr className="border-b border-white/10 text-gray-400">
               <th className="p-5 text-left">Title</th>
-              <th className="p-5 text-left">Video Preview</th>
+              <th className="p-5 text-left">Thumbnail</th>
               <th className="p-5 text-left">Duration</th>
               <th className="p-5 text-left">Status</th>
               <th className="p-5 text-left">Created Date</th>
@@ -156,13 +145,15 @@ export default function AdvertisementsPage() {
               >
                 <td className="p-5">{ad.title}</td>
 
-                {/* VIDEO PREVIEW */}
+                {/* ✅ THUMBNAIL */}
                 <td className="p-5">
-                  <video
-                    src={ad.videoUrl}
-                    className="w-32 h-20 rounded-lg object-cover"
-                    muted
-                    preload="metadata"
+                  <img
+                    src={
+                      ad.thumbnailUrl ||
+                      ad.videoUrl // fallback
+                    }
+                    className="w-32 h-20 rounded-lg object-cover bg-black"
+                    alt={ad.title}
                   />
                 </td>
 
