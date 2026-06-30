@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { CreateProgramInput } from "@/types/program";
+import { CreateProgramInput, UpdateProgramInput } from "@/types/program";
 
 
 export function createProgram(
@@ -20,4 +20,30 @@ export function createProgram(
 
  });
 
+}
+
+
+
+export function getProgramById(id:number){
+  return prisma.program.findUnique({
+    where:{
+      id
+    },
+    include:{
+      channel:true
+    }
+  });
+}
+
+
+export function updateProgram(
+  id:number,
+  data:UpdateProgramInput
+){
+  return prisma.program.update({
+    where:{
+      id
+    },
+    data
+  });
 }

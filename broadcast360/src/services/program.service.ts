@@ -1,7 +1,7 @@
-import { createProgram } 
+import { createProgram, getProgramById, updateProgram } 
 from "@/repositories/program.repository";
 
-import { CreateProgramInput } 
+import { CreateProgramInput, UpdateProgramInput } 
 from "@/types/program";
 
 
@@ -19,4 +19,16 @@ export async function addProgram(
   channel:program.channel.name
  };
 
+}
+
+export function fetchProgramById(id:number){
+  return getProgramById(id);
+}
+
+
+export function editProgram(
+ id:number,
+ data:UpdateProgramInput
+){
+ return updateProgram(id,data);
 }
