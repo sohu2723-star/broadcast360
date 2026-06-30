@@ -33,7 +33,7 @@ const menus=[
     },
     {
         name: "Advertisements",
-        path: "/admin/ads"
+        path: "/admin/advertisements"
     },
     {
         name: "Programs",
