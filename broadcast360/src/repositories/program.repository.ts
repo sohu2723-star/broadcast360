@@ -47,3 +47,32 @@ export function updateProgram(
     data
   });
 }
+
+export function getProgramDetails(id:number){
+
+  return prisma.program.findUnique({
+
+    where:{
+      id
+    },
+
+    include:{
+      channel:true,
+
+      playlists:{
+        select:{
+          id:true,
+          name:true,
+          createdAt:true
+        },
+
+        orderBy:{
+          createdAt:"desc"
+        }
+      }
+
+    }
+
+  });
+
+}

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { editProgram } from "@/services/program.service";
+import { editProgram, fetchProgramDetails } from "@/services/program.service";
 import { updateProgramSchema } from "@/lib/validators/program.validator";
 
 
@@ -22,9 +22,7 @@ try{
  const result =
  updateProgramSchema.safeParse(body);
 
-
  if(!result.success){
-
  return NextResponse.json(
  {
   errors:
@@ -34,7 +32,6 @@ try{
   status:400
  }
  );
-
  }
 
 
@@ -67,5 +64,73 @@ return NextResponse.json(
 )
 
 }
+
+}
+
+export async function GET(
+ request:Request,
+ {params}:{params:Promise<{id:string}>}
+){
+
+ try{
+
+  const {id}=await params;
+
+
+  const program =
+  await fetchProgramDetails(Number(id));
+
+
+  if(!program){
+
+    return NextResponse.json(
+      {
+        message:"Program not found"
+      },
+      {
+        status:404
+      }
+    );
+
+  }
+
+
+  return NextResponse.json({
+
+    data:{
+      id:program.id,
+
+      channel:program.channel.name,
+
+      title:program.title,
+
+      type:program.type,
+
+      description:program.description,
+
+      createdAt:program.createdAt,
+
+      playlists:program.playlists
+
+    }
+
+  });
+
+
+ }catch(error){
+
+  console.error(error);
+
+
+  return NextResponse.json(
+    {
+      message:"Failed to get program"
+    },
+    {
+      status:500
+    }
+  );
+
+ }
 
 }
