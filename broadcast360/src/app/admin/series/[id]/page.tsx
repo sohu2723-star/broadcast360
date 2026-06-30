@@ -8,6 +8,7 @@ type Episode = {
   episodeNo: number;
   title: string;
   videoUrl: string | null;
+  thumbnailUrl: string | null;
   duration: number;
   createdAt: string;
 };
@@ -26,200 +27,173 @@ type Series = {
 export default function SeriesDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }) {
   const [series, setSeries] = useState<Series | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // ⭐ PAGINATION STATES ADDED
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const limit = 5;
 
-  useEffect(() => {
-    async function loadSeries() {
-      const { id } = await params;
+  const loadSeries = async () => {
+    try {
+      setLoading(true);
 
       const res = await fetch(
-        `/api/series/${id}?page=${page}&limit=${limit}`
+        `/api/series/${params.id}?page=${page}&limit=${limit}`
       );
 
       const result = await res.json();
 
-      console.log("Series Data:", result.data);
-
-      setSeries(result.data);
+      setSeries(result.data || null);
       setTotalPages(result.totalPages || 1);
+    } catch (err) {
+      console.error(err);
+      setSeries(null);
+    } finally {
+      setLoading(false);
     }
+  };
 
+  useEffect(() => {
     loadSeries();
-  }, [params, page]);
+  }, [params.id, page]);
 
-  if (!series) {
-    return <div className="text-white p-6">Loading...</div>;
-  }
+  // ✅ FIXED DELETE
+  const handleDelete = async (id: number) => {
+    const ok = window.confirm("Are you sure you want to delete?");
+    if (!ok) return;
+
+    try {
+      const res = await fetch(`/api/episodes/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) throw new Error("Delete failed");
+
+      // 🔥 OPTION 1 (BEST): refresh current page from DB
+      await loadSeries();
+
+    } catch (err) {
+      console.error(err);
+      alert("Delete failed");
+    }
+  };
+
+  if (loading) return <div className="text-white p-6">Loading...</div>;
+  if (!series) return <div className="text-white p-6">No series found</div>;
 
   return (
-    <div>
+    <div className="text-white p-6">
+
+      {/* HEADER */}
       <h1 className="text-3xl font-bold mb-8">
-        Series Details
+        {series.title}
       </h1>
 
-      {/* SERIES INFO (UNCHANGED) */}
-      <div className="bg-[#0B1026] rounded-2xl p-8 border border-white/10 mb-8">
-        <div className="flex gap-6">
-          <div className="w-32 h-32 bg-slate-700 rounded-lg overflow-hidden">
-            {series.thumbnail ? (
-              <img
-                src={series.thumbnail}
-                alt={series.title}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="flex items-center justify-center h-full text-4xl">
-                🎬
-              </div>
-            )}
-          </div>
-
-          <div>
-            <h2 className="text-2xl font-bold">
-              {series.title}
-            </h2>
-
-            <p className="text-gray-400 mt-2">
-              {series.description ?? "-"}
-            </p>
-
-            <p className="mt-3">
-              <strong>Genre:</strong>{" "}
-              {series.genre ?? "-"}
-            </p>
-
-            <p className="mt-2">
-              <strong>Release Year:</strong>{" "}
-              {series.releaseYear ?? "-"}
-            </p>
-
-            <p className="mt-2">
-              <strong>Created:</strong>{" "}
-              {new Date(series.createdAt).toLocaleDateString()}
-            </p>
-          </div>
-        </div>
+      {/* SERIES INFO */}
+      <div className="bg-[#0B1026] p-6 rounded-xl mb-6">
+        <p className="text-gray-300">
+          {series.description || "-"}
+        </p>
       </div>
 
-      {/* HEADER (UNCHANGED) */}
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Episodes</h2>
-
-        <Link
-          href={`/admin/series/${series.id}/episodes/create`}
-          className="px-4 py-2 bg-blue-600 rounded-lg"
-        >
-          + Add Episode
-        </Link>
-      </div>
-
-      {/* TABLE (UNCHANGED DESIGN) */}
-      <div className="bg-[#0B1026] rounded-2xl border border-white/10 overflow-hidden">
+      {/* EPISODES TABLE */}
+      <div className="bg-[#0B1026] rounded-xl overflow-hidden">
         <table className="w-full">
+
           <thead>
             <tr className="border-b border-white/10">
-              <th className="text-left p-4">Episode</th>
-              <th className="text-left p-4">Title</th>
-              <th className="text-left p-4">Video</th>
-              <th className="text-left p-4">Duration</th>
-              <th className="text-left p-4">Created</th>
-              <th className="text-left p-4">Actions</th>
+              <th className="p-4 text-left">Episode</th>
+              <th className="p-4 text-left">Title</th>
+              <th className="p-4 text-left">Media</th>
+              <th className="p-4 text-left">Duration</th>
+              <th className="p-4 text-left">Actions</th>
             </tr>
           </thead>
 
           <tbody>
-            {series.episodes.map((episode) => (
-              <tr key={episode.id} className="border-b border-white/10">
-                <td className="p-4">
-                  Episode {episode.episodeNo}
-                </td>
+            {series.episodes.map((ep) => (
+              <tr key={ep.id} className="border-b border-white/10">
 
-                <td className="p-4">{episode.title}</td>
+                <td className="p-4">EP {ep.episodeNo}</td>
+
+                <td className="p-4">{ep.title}</td>
 
                 <td className="p-4">
-                  {episode.videoUrl ? (
-                    <video
-                      src={episode.videoUrl}
-                      className="w-20 h-12 rounded object-cover cursor-pointer bg-black"
-                      muted
-                      playsInline
-                      preload="metadata"
-                      onLoadedData={(e) => {
-                        const video = e.currentTarget;
-                        video.currentTime = 0.1;
-                      }}
+                  {ep.thumbnailUrl ? (
+                    <img
+                      src={ep.thumbnailUrl}
+                      className="w-20 h-12 rounded cursor-pointer"
                       onClick={() =>
-                        window.open(episode.videoUrl!, "_blank")
+                        ep.videoUrl &&
+                        window.open(ep.videoUrl, "_blank")
                       }
                     />
                   ) : (
-                    "-"
+                    "No Thumbnail"
                   )}
                 </td>
 
-                <td className="p-4">{episode.duration} sec</td>
+                <td className="p-4">{ep.duration}s</td>
 
-                <td className="p-4">
-                  {new Date(episode.createdAt).toLocaleDateString()}
+                <td className="p-4 flex gap-2">
+
+                  <Link
+                    href={`/admin/episodes/${ep.id}/edit`}
+                    className="px-3 py-1 bg-yellow-600 rounded"
+                  >
+                    Edit
+                  </Link>
+
+                  <button
+                    onClick={() => handleDelete(ep.id)}
+                    className="px-3 py-1 bg-red-600 rounded"
+                  >
+                    Delete
+                  </button>
+
                 </td>
 
-                <td className="p-4">
-                  <div className="flex gap-2">
-                    <Link
-                      href={`/admin/episodes/${episode.id}/edit`}
-                      className="px-3 py-1 bg-yellow-600 rounded"
-                    >
-                      Edit
-                    </Link>
-
-                    <button className="px-3 py-1 bg-red-600 rounded">
-                      Delete
-                    </button>
-                  </div>
-                </td>
               </tr>
             ))}
 
             {series.episodes.length === 0 && (
               <tr>
-                <td colSpan={6} className="p-8 text-center text-gray-400">
+                <td className="p-6 text-center text-gray-400" colSpan={5}>
                   No episodes found
                 </td>
               </tr>
             )}
           </tbody>
+
         </table>
       </div>
 
-      {/* ⭐ PAGINATION UI (ADDED ONLY) */}
+      {/* PAGINATION */}
       <div className="flex gap-2 mt-6 justify-center">
         <button
-          className="px-3 py-1 bg-gray-700 rounded disabled:opacity-50"
+          onClick={() => setPage((p) => p - 1)}
           disabled={page === 1}
-          onClick={() => setPage(page - 1)}
+          className="px-3 py-1 bg-gray-700 rounded disabled:opacity-50"
         >
           Prev
         </button>
 
-        <span className="px-3 py-1 text-white">
+        <span>
           Page {page} / {totalPages}
         </span>
 
         <button
-          className="px-3 py-1 bg-gray-700 rounded disabled:opacity-50"
+          onClick={() => setPage((p) => p + 1)}
           disabled={page === totalPages}
-          onClick={() => setPage(page + 1)}
+          className="px-3 py-1 bg-gray-700 rounded disabled:opacity-50"
         >
           Next
         </button>
       </div>
+
     </div>
   );
 }

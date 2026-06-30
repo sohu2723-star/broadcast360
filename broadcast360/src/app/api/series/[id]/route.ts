@@ -1,13 +1,12 @@
-import { fetchSeriesById } from "@/services/series.service";
 import { prisma } from "@/lib/prisma";
 
+// GET series by id
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    // ✅ FIX HERE
-    const { id } = await params;
+    const id = Number(params.id);
 
     const { searchParams } = new URL(request.url);
 
@@ -15,13 +14,23 @@ export async function GET(
     const limit = Number(searchParams.get("limit") || 5);
     const skip = (page - 1) * limit;
 
-    const series = await fetchSeriesById(Number(id), {
-      skip,
-      take: limit,
+    const series = await prisma.series.findUnique({
+      where: { id },
+      include: {
+        episodes: {
+          skip,
+          take: limit,
+          orderBy: { episodeNo: "asc" },
+        },
+      },
     });
 
+    if (!series) {
+      return Response.json({ data: null });
+    }
+
     const totalEpisodes = await prisma.episode.count({
-      where: { seriesId: Number(id) },
+      where: { seriesId: id },
     });
 
     return Response.json({
@@ -30,10 +39,8 @@ export async function GET(
       page,
     });
   } catch (error) {
-    console.error(error);
-
     return Response.json(
-      { message: "Failed to get series by id" },
+      { message: "Failed to get series" },
       { status: 500 }
     );
   }
