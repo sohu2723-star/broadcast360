@@ -1,67 +1,66 @@
 ---
 name: pr-review
-description: Review a Broadcast360 pull request (or the current diff) and report issues in a simple, directive format for intern/OJT developers. Use when asked to review a PR, review changes, or check code before merging. Pass a PR number as the argument (e.g. "71"); with no argument it reviews the current working diff.
+description: Review a pull request (or the current diff) and report issues in a simple, directive format aimed at intern/OJT developers. Works for any language or framework. Use when asked to review a PR, review changes, or check code before merging. Pass a PR number as the argument (e.g. "71"); with no argument it reviews the current working diff.
 ---
 
-# Broadcast360 Code Review
+# Pull Request Review
 
-Review a pull request or the current diff and report problems in plain, beginner-friendly language. This project is a **Next.js (App Router) + Prisma (PostgreSQL)** app that uses a layered pattern:
+Review a pull request or the current diff and report problems in plain, beginner-friendly language. This skill is **language- and framework-agnostic** — infer the stack from the files in the diff and apply the general review principles below.
 
-```
-src/app/api/**/route.ts   →  src/services/*.service.ts  →  src/repositories/*.repository.ts  →  prisma
-src/app/admin/**/page.tsx  (client UI: list / search / filter / paginate / delete)
-```
-
-Keep findings **short, non-technical, and directive** — say what is wrong and show the exact fix. No pep talk, no personal greetings or sign-offs.
+Keep findings **short, non-technical, and directive** — say what is wrong, why it matters in one line, and show or describe the exact fix. No pep talk, no greetings, no sign-offs.
 
 ## Step 1 — Get the diff to review
 
 Pick the scope from the argument:
 
-- **A PR number was given** (e.g. `71`): fetch it with the GitHub MCP tools (the `gh` CLI is NOT available here). Use `ToolSearch` to load `mcp__github__pull_request_read`, then call:
-  - method `get` → title, state, `mergeable_state`, base/head refs
-  - method `get_diff` → the unified diff (this is the review scope)
-  - method `get_files` → per-file status
-  Repo owner/name come from `git remote -v` (currently `gw-iojt-2026/broadcast360`).
-- **No argument**: run `git diff main...HEAD`; if empty, `git diff HEAD`. Include uncommitted changes.
+- **A PR number / URL / branch was given**: fetch that PR's diff.
+  - If GitHub MCP tools are available (`mcp__github__*`), use `ToolSearch` to load `mcp__github__pull_request_read` and call it with method `get` (title, state, mergeable state, base/head), `get_diff` (the unified diff — the review scope), and `get_files` (per-file status). Get repo owner/name from `git remote -v`.
+  - Otherwise, if the `gh` CLI is available, use `gh pr diff <n>` and `gh pr view <n>`.
+  - Otherwise fetch the branch and diff it against the base with `git`.
+- **No argument**: run `git diff <base>...HEAD` (base is usually `main`/`master`); if empty, `git diff HEAD`. Include uncommitted changes.
 
-The diff is the only review scope. When you need surrounding context (a Prisma model, a caller, an existing route's convention), `Read` the files in the checkout.
+The diff is the only review scope. When you need surrounding context (a type/schema, a caller, an existing convention), open the relevant files in the checkout — don't guess.
 
-## Step 2 — Check against these common failure modes
+## Step 2 — Check against these general failure modes
 
-Go hunk by hunk. For each, ask "what input or state makes this wrong?" Pay special attention to the patterns that actually break in this codebase:
+Go through the diff hunk by hunk. For each change ask: *"what input, state, or timing makes this wrong?"* These categories apply to any codebase:
 
-**Data mapping (services)**
-- A field mapped from the **wrong source object** (e.g. `p.channel?.description` when the model has its own `p.description`). Always confirm the field exists on the right model in `prisma/schema.prisma`.
-- Dropped or renamed fields between the DB row and the API response the UI expects.
+**Correctness**
+- Reversed or wrong conditions, off-by-one, wrong operator.
+- Values used before they're ready — missing `await`/async handling, uninitialized or null/undefined values dereferenced.
+- Wrong variable or wrong source object used (copy-paste bugs); a field read from the wrong place.
+- Unhandled or silently swallowed errors; assuming a value exists in an error/edge path.
 
-**API routes (`route.ts`)**
-- `params` must be typed `{ params: Promise<{ id: string }> }` and `await`ed (Next.js 15 convention used across this repo). Flag the non-Promise form.
-- `parseInt` results used without an `isNaN` guard; missing `400` on bad input.
-- `error.message` accessed in `catch` without an `error instanceof Error` guard (throws on non-Error values).
-- Filter/where logic **duplicated** between the list query and the `count()` query — they must match exactly (same fields AND same `mode: "insensitive"`), or pagination totals will be wrong. Prefer a `count()` in the repository that reuses the same `where`.
+**Data & contracts**
+- The shape a producer returns must match what the consumer expects (API response vs. UI, function return vs. caller).
+- Two code paths that must stay in sync but were changed in only one (e.g. a filter used for listing vs. the matching count/total).
+- Dropped, renamed, or reordered fields between layers.
 
-**Client pages (`page.tsx`)**
-- Wrong file contents / copy-paste: component name, `fetch(...)` URL, and page heading must match the route the file lives in (e.g. an `admin/ads/page.tsx` that fetches `/api/series` and is named `SeriesPage` is a wrong-file commit).
-- Fetch fired on every keystroke with no debounce (note it as minor).
-- Response shape read by the UI (`result.data`, `result.pagination`, `result.meta`) must match what the route returns.
+**Input handling**
+- Missing validation on external input (IDs, query params, request bodies, user text) and missing error/failure responses.
+- Unbounded or untrusted values used directly.
 
-**Prisma / repository**
-- `include`/`select` that omit a field the response maps.
-- Deletes that must cascade to children (e.g. delete `episodes` before `series`) — confirm it's inside a `$transaction`.
+**Removed / changed behavior**
+- For each deleted or replaced line, name the guard, validation, or behavior it enforced and confirm it's re-established somewhere.
 
-**General**
-- Reversed conditions, off-by-one, missing `await`, swallowed errors.
-- Duplicated code that should be shared; obvious dead code.
-- Missing trailing newline at end of new files (note as minor).
+**Cross-file impact**
+- A changed function signature, return shape, or new precondition that breaks existing callers.
+
+**Wrong-file / misplaced code**
+- A file whose contents don't match its location or purpose (a copy-paste of another module: wrong name, wrong target, wrong heading/route).
+
+**Quality (report as minor unless it causes a bug)**
+- Duplicated logic that should be shared; dead code; needless complexity.
+- Repeated or wasteful work (redundant fetches/queries, work in a hot path).
+- Inconsistency with existing conventions in the same project (naming, error handling, types) — check a sibling file to confirm the convention.
 
 ## Step 3 — Verify before reporting
 
-Only report a finding you can back with a concrete failure ("filter by channel `NEWS` vs `news` → count says 2 pages, list returns 1"). If a claim depends on the schema or an existing convention, open the file and confirm it. Drop anything you can't stand behind. Aim for the few issues a reviewer would actually act on — correctness bugs rank above style.
+Only report a finding you can back with a concrete failure — the specific input or state, and the resulting wrong output or crash. If a claim depends on a type, schema, or existing convention, open the file and confirm it. Drop anything you can't stand behind. Report the few issues a reviewer would actually act on; correctness bugs rank above quality/style. Prefer precision over volume.
 
 ## Step 4 — Report in this format
 
-Use this exact structure. Bug findings first (🔴 Must fix), then 🟡 Minor. Each finding: file path, one-line problem, the offending line, and a `✅ Fix:` with the corrected code. End with a checklist and note any merge conflict (`mergeable_state: dirty`). No opening greeting, no closing encouragement.
+Bug findings first (🔴 Must fix), then 🟡 Minor. Each finding: file path, a one-line problem, a short plain explanation, and a directive fix (a corrected snippet when it helps, otherwise a one-sentence instruction). End with a checklist, and note any merge conflict. No opening greeting, no closing encouragement.
 
 ```
 # Code Review — PR #<n> (<title>)
@@ -73,25 +72,19 @@ Findings sorted from most important to minor.
 ### 1. <one-line problem>
 📁 `path/to/file`
 
-<1–2 sentence plain explanation>
-```ts
-<offending line>   // ❌ what's wrong
-```
-✅ Fix:
-```ts
-<corrected line>
-```
+<1–2 sentence plain explanation of what's wrong and the effect>
+✅ Fix: <corrected snippet or one-sentence instruction>
 
 ## 🟡 Minor (optional)
-### N. <problem> — 📁 `path` — <fix in a sentence or short snippet>
+### N. <problem> — 📁 `path` — <fix in a sentence>
 
 ## ✅ Checklist
 - [ ] #1 — <short reminder>
-- [ ] Resolve merge conflict with `main` (if dirty)
+- [ ] Resolve merge conflict with base branch (if any)
 ```
 
-If nothing needs fixing, say so plainly and list what you checked.
+Match code snippets to the language of the file under review. If nothing needs fixing, say so plainly and list what you checked.
 
-## Step 5 — Offer to post (do not post automatically)
+## Step 5 — Offer to act (do not act automatically)
 
-After presenting, ask whether to **post the review as a PR comment** (`mcp__github__add_comment_to_pending_review` / `mcp__github__pull_request_review_write` or `add_issue_comment`) or **push fixes to the branch**. Only do either when the user confirms.
+After presenting, ask whether to **post the review as a PR comment** or **apply/push the fixes**. Only do either when the user confirms.
