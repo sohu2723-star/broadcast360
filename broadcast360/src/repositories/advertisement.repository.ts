@@ -1,7 +1,11 @@
 import { prisma } from "@/lib/prisma";
 
 export function getAdvertisements() {
-  return prisma.advertisement.findMany();
+  return prisma.advertisement.findMany({
+    orderBy: {
+      id: "desc", 
+    },
+  });
 }
 
 export function getAdvertisementById(id: number) {
@@ -9,31 +13,3 @@ export function getAdvertisementById(id: number) {
     where: { id },
   });
 }
-
-export function createAdvertisement(data: {
-  title: string;
-  videoUrl: string;
-  duration: number;
-  active: boolean;
-}) {
-  return prisma.advertisement.create({
-    data,
-  });
-}
-
-export function updateAdvertisement(
-  id: number,
-  data: {
-    title: string;
-    active: boolean;
-    videoUrl?: string;
-    duration?: number;
-  }
-) {
-  return prisma.advertisement.update({
-    where: { id },
-    data,
-  });
-}
-
-
