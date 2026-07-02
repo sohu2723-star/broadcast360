@@ -38,17 +38,21 @@ export async function getPaginatedMovies({
     }),
   ]);
 
-  return { data, total };
+  return { data, total };}
+  
+
+export function getAllMovies() {
+  return prisma.movie.findMany();
 }
 
 export function getMovieById(id: number) {
   return prisma.movie.findUnique({
-    where: { id },
+    where: { id : id },
   });
 }
 
 export function deleteMovie(id: number) {
   return prisma.movie.delete({
-    where: { id },
+    where: { id : id },
   });
 }

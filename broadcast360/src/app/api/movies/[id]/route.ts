@@ -7,6 +7,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+
     const movie = await fetchMovieById(Number(id));
 
     if (!movie) {

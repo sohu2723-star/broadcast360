@@ -10,6 +10,7 @@ interface Movie {
   thumbnail: string | null;
   duration: number;
   releaseYear: number | null;
+  genre: string | null;
 }
 
 interface PaginationData {
@@ -108,7 +109,7 @@ export default function MoviesPage() {
               <tr className="border-b border-white/10 text-gray-400">
                 <th className="p-5 text-left w-[80px]">Cover</th>
                 <th className="p-5 text-left">Movie Title</th>
-                <th className="p-5 text-left">Genre / Program</th>
+                <th className="p-5 text-left">Genre</th>
                 <th className="p-4 text-left">Release Year</th>
                 <th className="p-4 text-left">Duration</th>
                 <th className="p-5 text-left">Action</th>
@@ -125,9 +126,6 @@ export default function MoviesPage() {
                 </tr>
               ) : (
                 movies.map((movie) => {
-                  const programTags = movie && movie.length > 0
-                    ? movie.map((p) => p.title).join(", ")
-                    : "-";
 
                   return (
                     <tr key={movie.id} className="border-b border-white/10 vertical-middle">
@@ -136,6 +134,8 @@ export default function MoviesPage() {
                           <Image 
                             src={movie.thumbnail} 
                             alt={movie.title} 
+                            width={48}
+                            height={64}
                             className="w-12 h-16 object-cover rounded-lg bg-white/5 border border-white/10 shadow-md"
                           />
                         ) : (
@@ -146,7 +146,7 @@ export default function MoviesPage() {
                       </td>
 
                       <td className="p-5 font-medium text-white">{movie.title}</td>
-                      <td className="p-5 text-gray-300">{programTags}</td>
+                      <td className="p-5 text-gray-300">{movie.genre ?? "-"}</td>
                       <td className="p-4 text-gray-300">{movie.releaseYear ?? "-"}</td>
                       <td className="p-4 text-gray-300">{movie.duration ? `${movie.duration} mins` : "-"}</td>
 
