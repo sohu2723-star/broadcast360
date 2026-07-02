@@ -94,6 +94,29 @@ export default function MovieDetailPage({
 
         {/* Movie Information */}
         <div className="space-y-4">
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 flex-wrap">
+  <div>
+    <p className="text-gray-400">Movie ID</p>
+    <p>{movie.id}</p>
+  </div>
+
+  <div>
+    <p className="text-gray-400">Duration</p>
+    <p>{movie.duration} minutes</p>
+  </div>
+
+  <div>
+    <p className="text-gray-400">Release Year</p>
+    <p>{movie.releaseYear ?? "-"}</p>
+  </div>
+
+  <div>
+    <p className="text-gray-400">Created</p>
+    <p>{new Date(movie.createdAt).toLocaleDateString()}</p>
+  </div>
+</div>
+
           <div>
             <p className="text-gray-400">
               Description
@@ -105,41 +128,7 @@ export default function MovieDetailPage({
             </p>
           </div>
 
-          <div>
-            <p className="text-gray-400">
-              Movie ID
-            </p>
-
-            <p>{movie.id}</p>
-          </div>
-
-          <div>
-            <p className="text-gray-400">
-              Duration
-            </p>
-
-            <p>{movie.duration} minutes</p>
-          </div>
-
-          <div>
-            <p className="text-gray-400">
-              Release Year
-            </p>
-
-            <p>{movie.releaseYear ?? "-"}</p>
-          </div>
-
-          <div>
-            <p className="text-gray-400">
-              Created
-            </p>
-
-            <p>
-              {new Date(
-                movie.createdAt
-              ).toLocaleDateString()}
-            </p>
-          </div>
+         
         </div>
       </div>
     </div>
