@@ -1,30 +1,45 @@
 import { prisma } from "@/lib/prisma";
 
 export async function DELETE(
-  request: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
+    const { id } = await params; 
+
+    const episodeId = Number(id);
+
+    if (isNaN(episodeId)) {
+      return Response.json(
+        { message: "Invalid episode id" },
+        { status: 400 }
+      );
+    }
+
+    const episode = await prisma.episode.findUnique({
+      where: { id: episodeId },
+    });
+
+    if (!episode) {
+      return Response.json(
+        { message: "Episode not found" },
+        { status: 404 }
+      );
+    }
 
     await prisma.episode.delete({
-      where: {
-        id: Number(id),
-      },
+      where: { id: episodeId },
     });
 
     return Response.json({
       success: true,
-      message: "Episode deleted",
+      message: "Episode deleted successfully",
     });
   } catch (error) {
-    console.error(error);
+    console.error("DELETE_ERROR:", error);
 
     return Response.json(
-      {
-        success: false,
-        message: "Delete failed",
-      },
+      { message: "Failed to delete episode" },
       { status: 500 }
     );
   }
