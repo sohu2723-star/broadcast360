@@ -22,8 +22,6 @@ export function createProgram(
 
 }
 
-
-
 export function getProgramById(id:number){
   return prisma.program.findUnique({
     where:{
@@ -48,27 +46,42 @@ export function updateProgram(
   });
 }
 
-export function getProgramDetails(id:number){
+
+export function getProgramDetails(
+  id:number
+){
 
   return prisma.program.findUnique({
 
     where:{
-      id
+      id:id
     },
 
+
     include:{
+
       channel:true,
 
+
       playlists:{
+
         select:{
+
           id:true,
+
           name:true,
+
           createdAt:true
+
         },
 
+
         orderBy:{
+
           createdAt:"desc"
+
         }
+
       }
 
     }

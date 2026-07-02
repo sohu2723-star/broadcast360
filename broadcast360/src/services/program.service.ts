@@ -33,8 +33,19 @@ export function editProgram(
  return updateProgram(id,data);
 }
 
-export function fetchProgramDetails(id:number){
+export async function fetchProgramDetails(
+  id:number
+){
 
- return getProgramDetails(id);
+  if(!id || isNaN(id)){
+
+    throw new Error(
+      "Invalid program id"
+    );
+
+  }
+
+
+  return getProgramDetails(id);
 
 }
