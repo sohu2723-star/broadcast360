@@ -1,41 +1,79 @@
-export default function Navbar(){
+"use client";
 
-return (
-<header className="
-h-20
-bg-[#010312]
-border-b
-border-white/10
-flex
-items-center
-justify-between
-px-8
-">
+import { usePathname } from "next/navigation";
 
-<div className="
-bg-[#0B1026]
-rounded-xl
-px-5
-py-3
-w-96
-">
-Search...
-</div>
-<div className="flex gap-4 items-center">
-<div className="
-w-10
-h-10
-rounded-full
-bg-[#400FD3]
-flex
-items-center
-justify-center
-">
-A
-</div>
-<div>
-Admin
-</div>
-</div>
-</header>
-)}
+const menus = [
+  { name: "Dashboard", path: "/admin" },
+  { name: "Channels", path: "/admin/channels" },
+  { name: "Live Streams", path: "/admin/streams" },
+  { name: "Movies", path: "/admin/movies" },
+  { name: "Series", path: "/admin/series" },
+  { name: "News", path: "/admin/news" },
+  { name: "Entertainments", path: "/admin/entertainments" },
+  { name: "Advertisements", path: "/admin/ads" },
+  { name: "Programs", path: "/admin/programs" },
+  { name: "Playlists", path: "/admin/playlists" },
+  { name: "Schedules", path: "/admin/schedules" },
+  { name: "Recordings", path: "/admin/recordings" },
+  { name: "Users", path: "/admin/user" },
+];
+
+export default function Navbar() {
+
+  const pathname = usePathname();
+
+  const currentMenu = menus.find(
+    (menu) => menu.path === pathname
+  );
+
+  return (
+    <header
+      className="
+      h-20
+      bg-[#010312]
+      border-b
+      border-white/10
+      flex
+      items-center
+      justify-between
+      px-8
+      "
+    >
+
+      {/* Current Page Name */}
+      <h1 className="text-3xl font-semibold text-white">
+        
+        {currentMenu?.name || "Admin"}
+      </h1>
+
+      <div className="flex items-center gap-6">
+
+        {/* Admin */}
+        <div className="flex gap-3 items-center">
+
+          <div
+            className="
+            w-10
+            h-10
+            rounded-full
+            bg-[#400FD3]
+            flex
+            items-center
+            justify-center
+            text-white
+            "
+          >
+            A
+          </div>
+
+          <div className="text-white">
+            Admin
+          </div>
+
+        </div>
+
+      </div>
+
+    </header>
+  );
+}

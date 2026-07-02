@@ -2,11 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-
-interface Program {
-  id: number;
-  title: string;
-}
+import Image from "next/image";
 
 interface Movie {
   id: number;
@@ -14,7 +10,6 @@ interface Movie {
   thumbnail: string | null;
   duration: number;
   releaseYear: number | null;
-  programs: Program[];
 }
 
 interface PaginationData {
@@ -49,9 +44,13 @@ export default function MoviesPage() {
   }, []);
 
   // Sync state 
-  useEffect(() => {
+ useEffect(() => {
+  const timer = setTimeout(() => {
     loadMovies(pagination.page, search);
-  }, [loadMovies, pagination.page]);
+  }, 400);
+
+  return () => clearTimeout(timer);
+}, [pagination.page, search]);
 
   // Handle Input Changes & Reset to Page 1
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,22 +80,22 @@ export default function MoviesPage() {
   return (
     <div>
       {/* Header Section */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Movies</h1>
-        <Link href="/admin/movies/create" className="bg-[#106EE9] px-5 py-3 rounded-xl">
-          + Add Movie
-        </Link>
-      </div>
+      <div className="flex justify-between items-center mb-8 gap-4">
 
-     
-      <div className="mb-6 max-w-md">
+   {/* Search Input */}
+      <div className="max-w-md w-full">
         <input
           type="text"
           placeholder="Search movies by title or genre..."
           value={search}
           onChange={handleSearchChange}
-          className="w-full bg-[#0B1026] text-white border border-white/10 rounded-xl px-4 py-3 placeholder-gray-500 focus:outline-none focus:border-[#106EE9] transition text-sm"
+           className="w-full bg-[#0B1026] text-white border border-white/10 rounded-xl px-4 py-3 placeholder-gray-500 focus:outline-none focus:border-[#106EE9] transition text-sm"
         />
+      </div>
+
+        <Link href="/admin/movies/create" className="bg-[#106EE9] px-5 py-3 rounded-xl whitespace-nowrap">
+          + Add Movie
+        </Link>
       </div>
 
       {/* Main Data Table */}
@@ -126,15 +125,15 @@ export default function MoviesPage() {
                 </tr>
               ) : (
                 movies.map((movie) => {
-                  const programTags = movie.programs && movie.programs.length > 0
-                    ? movie.programs.map((p) => p.title).join(", ")
+                  const programTags = movie && movie.length > 0
+                    ? movie.map((p) => p.title).join(", ")
                     : "-";
 
                   return (
                     <tr key={movie.id} className="border-b border-white/10 vertical-middle">
                       <td className="p-5">
                         {movie.thumbnail ? (
-                          <img 
+                          <Image 
                             src={movie.thumbnail} 
                             alt={movie.title} 
                             className="w-12 h-16 object-cover rounded-lg bg-white/5 border border-white/10 shadow-md"

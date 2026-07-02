@@ -19,16 +19,7 @@ export async function getPaginatedMovies({
               mode: "insensitive" as const, 
             },
           },
-          {
-            programs: {
-              some: {
-                title: {
-                  contains: search,
-                  mode: "insensitive" as const, 
-                },
-              },
-            },
-          },
+          
         ],
       }
     : {};
@@ -38,14 +29,6 @@ export async function getPaginatedMovies({
       where: whereClause, 
       skip,
       take: limit,
-      include: {
-        programs: {
-          select: {
-            id: true,
-            title: true,
-          },
-        },
-      },
       orderBy: { 
         createdAt: 'desc' 
       },
@@ -61,9 +44,6 @@ export async function getPaginatedMovies({
 export function getMovieById(id: number) {
   return prisma.movie.findUnique({
     where: { id },
-    include: {
-      programs: true, 
-    },
   });
 }
 
