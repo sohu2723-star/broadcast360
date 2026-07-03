@@ -157,7 +157,7 @@ export default function PlaylistForm({
 
 
        <button
-
+          type="button"
           onClick={()=>
             router.back()
           }

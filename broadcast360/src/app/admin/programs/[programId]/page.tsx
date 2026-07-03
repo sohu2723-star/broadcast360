@@ -41,9 +41,12 @@ export default async function Page({
       
       {/* HEADER ACTIONS */}
       <div className="flex justify-between items-center">
-        <button className="px-4 py-2 bg-gray-700 rounded-lg text-white">
+        <Link
+          href="/admin/programs"
+          className="px-4 py-2 bg-gray-700 rounded-lg text-white inline-block"
+        >
           Back
-        </button>
+        </Link>
 
         <div className="flex gap-3">
 

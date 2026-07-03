@@ -1,8 +1,8 @@
-<<<<<<< HEAD
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 type SeriesItem = {
   id: number;
@@ -45,46 +45,72 @@ export default function SeriesPage() {
   }, []);
 
   useEffect(() => {
-    loadSeries(pagination.page, search);
-  }, [loadSeries, pagination.page]);
+  let cancelled = false;
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearch(value);
-    setPagination((prev) => ({ ...prev, page: 1 }));
-    loadSeries(1, value);
-  };
-
-  const handleDelete = async (id: number) => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this series and all its episodes?");
-    if (!confirmDelete) return;
-
+  const fetchSeries = async () => {
     try {
-      const res = await fetch(`/api/series/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to delete series");
-      
-      alert("Series deleted successfully");
-      loadSeries(pagination.page, search);
+      if (!cancelled) {
+        await loadSeries(pagination.page, search);
+      }
     } catch (error) {
       console.error(error);
-      alert("Delete failed");
     }
   };
+
+  void fetchSeries();
+
+  return () => {
+    cancelled = true;
+  };
+}, [loadSeries, pagination.page, search]);
+
+const handleSearchChange = (
+  e: React.ChangeEvent<HTMLInputElement>
+) => {
+  const value = e.target.value;
+
+  setSearch(value);
+  setPagination((prev) => ({
+    ...prev,
+    page: 1,
+  }));
+};
+
+const handleDelete = async (id: number) => {
+  const confirmDelete = window.confirm("Are you sure you want to delete this series and all its episodes?");
+  if (!confirmDelete) return;
+
+  try {
+    const res = await fetch(`/api/series/${id}`, { 
+      method: "DELETE" 
+    });
+    
+    const result = await res.json();
+
+    if (!res.ok) {
+      throw new Error(result.message || "Failed to delete from server");
+    }
+    
+    
+    setSeriesList((prev) => prev.filter((item) => item.id !== id));
+    alert("Series deleted successfully!");
+    
+    
+    loadSeries(pagination.page, search);
+  } catch (error) {
+    console.error("Delete UI Error:", error);
+    alert("Delete failed. Please try again.");
+  }
+};
 
   const totalPages = Math.ceil(pagination.total / pagination.limit);
 
   return (
     <div>
       {/* Header Section */}
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">TV Series</h1>
-        <Link href="/admin/series/create" className="bg-[#106EE9] px-5 py-3 rounded-xl">
-          + Add Series
-        </Link>
-      </div>
+      <div className="flex justify-between items-center mb-8 gap-4">
 
-      {/* Search Bar */}
-      <div className="mb-6 max-w-md">
+      <div className="w-full max-w-md">
         <input
           type="text"
           placeholder="Search series by title or genre..."
@@ -93,6 +119,14 @@ export default function SeriesPage() {
           className="w-full bg-[#0B1026] text-white border border-white/10 rounded-xl px-4 py-3 placeholder-gray-500 focus:outline-none focus:border-[#106EE9] transition text-sm"
         />
       </div>
+
+      <Link
+        href="/admin/series/create"
+        className="bg-[#106EE9] px-5 py-3 rounded-xl whitespace-nowrap"
+      >
+        + Add Series
+      </Link>
+    </div>
 
       {/* Main Data Table */}
       <div className="bg-[#0B1026] rounded-2xl border border-white/10 overflow-hidden">
@@ -124,11 +158,24 @@ export default function SeriesPage() {
                     {/* Thumbnail Column */}
                     <td className="p-5">
                       {series.thumbnail ? (
-                        <img 
-                          src={series.thumbnail} 
-                          alt={series.title} 
-                          className="w-12 h-16 object-cover rounded-lg bg-white/5 border border-white/10 shadow-md"
-                        />
+                        <div className="w-12 h-16 relative overflow-hidden rounded-lg border border-white/10 bg-gray-900 shadow-md">
+                          <Image
+                            src={series.thumbnail} 
+                            alt={series.title} 
+                            width={48}
+                            height={64}
+                            className="w-full h-full object-cover block"
+                            referrerPolicy="no-referrer" // External Image Block ဖြစ်ခြင်းမှ ကာကွယ်ရန်
+                            onError={(e) => {
+                              // အကယ်၍ Link သေနေရင် Default အစားထိုးစာသား ပြရန်
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              if (target.parentElement) {
+                                target.parentElement.innerHTML = '<div class="w-full h-full flex items-center justify-center text-[10px] text-gray-500">Error</div>';
+                              }
+                            }}
+                          />
+                        </div>
                       ) : (
                         <div className="w-12 h-16 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center text-[10px] text-gray-500 text-center p-1">
                           No Pic
@@ -207,16 +254,4 @@ export default function SeriesPage() {
       </div>
     </div>
   );
-=======
-export default function AdsPage(){
-
-return (
-
-<div>
-    <h1>This is  ads page</h1>
-</div>
-
-)
-
->>>>>>> origin/main
 }
