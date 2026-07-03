@@ -1,90 +1,101 @@
 import { PlaylistRepository } from "@/repositories/playlist.repository";
 import { PlaylistCreateInput } from "@/types/playlist";
 
-
 export const PlaylistService = {
-
-
+  // CREATE
   createPlaylist: async (
     programId: number,
     data: PlaylistCreateInput
   ) => {
-
     if (!programId || isNaN(programId)) {
-
-      throw new Error(
-        "Invalid programId"
-      );
-
+      throw new Error("Invalid programId");
     }
 
+    if (!data.name || data.name.trim() === "") {
+      throw new Error("Playlist name is required");
+    }
 
-    return PlaylistRepository.create(
-      programId,
-      data
-    );
-
+    return PlaylistRepository.create(programId, data);
   },
 
-  getProgramPlaylists: async(
- programId:number,
- page:number,
- limit:number
-)=>{
+  // GET PROGRAM PLAYLISTS (PAGINATION)
+ getProgramPlaylists: async (
+  programId: number,
+  page: number = 1,
+  limit: number = 10
+) => {
+  if (!programId || isNaN(programId)) {
+    throw new Error("Invalid programId");
+  }
 
+  const safePage = Math.max(1, page);
+  const safeLimit = Math.max(1, limit);
 
-return PlaylistRepository.findByProgramId(
- programId,
- page,
- limit
-);
+  const data = await PlaylistRepository.findByProgramId(
+    programId,
+    safePage,
+    safeLimit
+  );
 
+  const playlistsWithDuration = await Promise.all(
+    data.playlists.map(async (p) => {
+      const totalDuration =
+        await PlaylistRepository.getTotalDuration(p.id);
 
+      return {
+        ...p,
+        totalDuration,
+      };
+    })
+  );
+
+  return {
+    ...data,
+    playlists: playlistsWithDuration,
+  };
 },
 
-  getPlaylistById: async (
-    id: number
-  ) => {
+  // GET SINGLE PLAYLIST
+getPlaylistById: async (playlistId: number) => {
+  if (!playlistId || isNaN(playlistId)) {
+    throw new Error("Invalid playlistId");
+  }
 
-    return PlaylistRepository.findById(id);
+  const playlist = await PlaylistRepository.findById(playlistId);
 
-  },
+  if (!playlist) return null;
 
+  const totalSeconds =
+    await PlaylistRepository.getTotalDuration(playlistId);
+
+  return {
+    ...playlist,
+    totalDuration: totalSeconds,
+  };
+},
+
+  // UPDATE
   updatePlaylist: async (
-
     id: number,
-
-    data: {
-      name: string
-    }
-
+    data: { name: string }
   ) => {
-
-
     if (!id || isNaN(id)) {
-
-      throw new Error(
-        "Invalid playlist id"
-      );
-
+      throw new Error("Invalid playlist id");
     }
 
+    if (!data.name || data.name.trim() === "") {
+      throw new Error("Playlist name is required");
+    }
 
-
-    return PlaylistRepository.update(
-
-      id,
-
-      data
-
-    );
-
-
+    return PlaylistRepository.update(id, data);
   },
 
+  // DELETE
   deletePlaylist: async (id: number) => {
-  return PlaylistRepository.delete(id);
-},
+    if (!id || isNaN(id)) {
+      throw new Error("Invalid playlist id");
+    }
 
-
+    return PlaylistRepository.delete(id);
+  },
 };

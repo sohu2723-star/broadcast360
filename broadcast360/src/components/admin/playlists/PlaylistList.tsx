@@ -1,138 +1,80 @@
 import Link from "next/link";
 import PlaylistCard from "./PlaylistCard";
 
-
 interface Playlist {
-
-  id:number;
-
-  name:string;
-
-  totalDuration:number | null;
-
+  id: number;
+  name: string;
+  totalDuration: number | null;
 }
-
 
 interface Props {
-
   playlists: Playlist[];
-
-  programId:number;
-
-  page:number;
-
-  totalPages:number;
-
+  programId: number;
+  page: number;
+  totalPages: number;
 }
 
-
-
 export default function PlaylistList({
-
   playlists,
-
   programId,
-
   page,
-
   totalPages,
-
 }: Props) {
+  return (
+    <div className="space-y-4">
 
+      {/* EMPTY STATE */}
+      {playlists.length === 0 ? (
+        <div className="text-gray-400 text-center py-10">
+          No playlists found
+        </div>
+      ) : (
+        <div className="grid gap-3">
+          {playlists.map((playlist) => (
+            <div
+              key={playlist.id}
+              className="bg-[#111936] border border-white/10 rounded-lg p-4 hover:border-blue-500/50 transition"
+            >
+              <PlaylistCard
+                playlist={playlist}
+                programId={programId}
+              />
+            </div>
+          ))}
+        </div>
+      )}
 
-return (
+      {/* PAGINATION */}
+      {totalPages > 1 && (
+        <div className="flex justify-between items-center pt-4 border-t border-white/10">
+          
+          <Link
+            href={`?page=${page - 1}`}
+            className={`px-4 py-2 rounded-lg ${
+              page <= 1
+                ? "bg-gray-800 text-gray-500 pointer-events-none"
+                : "bg-gray-700 text-white"
+            }`}
+          >
+            Previous
+          </Link>
 
-<div className="space-y-6">
+          <span className="text-gray-300">
+            Page {page} / {totalPages}
+          </span>
 
-
-  {
-    playlists.length === 0 ? (
-
-      <p className="text-gray-400">
-        No playlists yet
-      </p>
-
-    ) : (
-
-      playlists.map((playlist)=>(
-
-        <PlaylistCard
-
-          key={playlist.id}
-
-          playlist={playlist}
-
-          programId={programId}
-
-        />
-
-      ))
-
-    )
-  }
-
-
-
-  {/* Pagination */}
-
-  <div className="flex gap-4 items-center">
-
-
-    {
-      page > 1 && (
-
-        <Link
-
-          href={`?page=${page - 1}`}
-
-          className="text-white bg-gray-700 px-4 py-2 rounded"
-
-        >
-
-          Previous
-
-        </Link>
-
-      )
-    }
-
-
-
-    <span className="text-white">
-
-      {page} / {totalPages}
-
-    </span>
-
-
-
-
-    {
-      page < totalPages && (
-
-        <Link
-
-          href={`?page=${page + 1}`}
-
-          className="text-white bg-blue-600 px-4 py-2 rounded"
-
-        >
-
-          Next
-
-        </Link>
-
-      )
-    }
-
-
-  </div>
-
-
-
-</div>
-
-);
-
-
+          <Link
+            href={`?page=${page + 1}`}
+            className={`px-4 py-2 rounded-lg ${
+              page >= totalPages
+                ? "bg-gray-800 text-gray-500 pointer-events-none"
+                : "bg-blue-600 text-white"
+            }`}
+          >
+            Next
+          </Link>
+        </div>
+      )}
+    </div>
+  );
 }

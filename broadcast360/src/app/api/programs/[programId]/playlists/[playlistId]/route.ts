@@ -1,213 +1,101 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { PlaylistService } from "@/services/playlist.service";
-import { updatePlaylistSchema } from "@/lib/validators/playlist.validator";
 
-
+// GET PLAYLIST
 export async function GET(
-  req: Request,
-  context: {
-    params: Promise<{
-      programId: string;
-      playlistId: string;
-    }>;
-  }
+  req: NextRequest,
+  { params }: { params: Promise<{ programId: string; playlistId: string }> }
 ) {
+  const { programId, playlistId } = await params;
 
-try {
+  const programIdNum = Number(programId);
+  const playlistIdNum = Number(playlistId);
 
+  if (isNaN(programIdNum) || isNaN(playlistIdNum)) {
+    return NextResponse.json(
+      { message: "Invalid ids" },
+      { status: 400 }
+    );
+  }
 
-const { playlistId } =
-await context.params;
+  const playlist = await PlaylistService.getPlaylistById(
+    playlistIdNum
+  );
 
+  if (!playlist) {
+    return NextResponse.json(
+      { message: "Playlist not found" },
+      { status: 404 }
+    );
+  }
 
-
-const id =
-Number(playlistId);
-
-
-
-if(isNaN(id)){
-
-
-return NextResponse.json(
-
-{
-message:"Invalid playlistId"
-},
-
-{
-status:400
+  return NextResponse.json({ data: playlist });
 }
 
-);
-
-}
-
-
-
-
-const playlist =
-await PlaylistService.getPlaylistById(id);
-
-
-
-
-if(!playlist){
-
-
-return NextResponse.json(
-
-{
-message:"Playlist not found"
-},
-
-{
-status:404
-}
-
-);
-
-}
-
-
-
-
-return NextResponse.json({
-
-data:playlist
-
-});
-
-
-
-}catch(error){
-
-
-return NextResponse.json(
-
-{
-message:
-error instanceof Error
-?
-error.message
-:
-"Error fetching playlist"
-},
-
-{
-status:500
-}
-
-);
-
-
-}
-
-}
-
-
+// UPDATE PLAYLIST
 export async function PUT(
+  req: NextRequest,
+  { params }: { params: Promise<{ playlistId: string }> }
+) {
+  try {
+    const { playlistId } = await params;
 
-request:Request,
+    const id = Number(playlistId);
 
-context:{
-params:Promise<{
-playlistId:string
-}>
+    if (isNaN(id)) {
+      return NextResponse.json(
+        { message: "Invalid playlist id" },
+        { status: 400 }
+      );
+    }
+
+    const body = await req.json();
+
+    const playlist = await PlaylistService.updatePlaylist(id, {
+      name: body.name,
+    });
+
+    return NextResponse.json({
+      data: playlist,
+    });
+  } catch (error) {
+    console.error(error);
+
+    return NextResponse.json(
+      { message: "Failed to update playlist" },
+      { status: 500 }
+    );
+  }
 }
 
-){
+// DELETE PLAYLIST
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ playlistId: string }> }
+) {
+  try {
+    const { playlistId } = await params;
 
+    const id = Number(playlistId);
 
-try{
+    if (isNaN(id)) {
+      return NextResponse.json(
+        { message: "Invalid playlist id" },
+        { status: 400 }
+      );
+    }
 
+    await PlaylistService.deletePlaylist(id);
 
-const {playlistId}=
+    return NextResponse.json({
+      message: "Playlist deleted successfully",
+    });
+  } catch (error) {
+    console.error(error);
 
-await context.params;
-
-
-
-const id =
-Number(playlistId);
-
-
-
-const body =
-await request.json();
-
-
-
-const result =
-updatePlaylistSchema.safeParse(body);
-
-
-
-if(!result.success){
-
-
-return NextResponse.json(
-
-{
-
-errors:
-result.error.flatten()
-.fieldErrors
-
-},
-
-{
-status:400
-}
-
-);
-
-}
-
-
-
-const playlist =
-
-await PlaylistService.updatePlaylist(
-
-id,
-
-result.data
-
-);
-
-
-
-return NextResponse.json({
-
-message:
-"Playlist updated successfully",
-
-data:playlist
-
-});
-
-
-
-}catch(error){
-
-
-return NextResponse.json(
-
-{
-
-message:
-"Failed to update playlist"
-
-},
-
-{
-status:500
-}
-
-);
-
-
-}
-
+    return NextResponse.json(
+      { message: "Failed to delete playlist" },
+      { status: 500 }
+    );
+  }
 }
