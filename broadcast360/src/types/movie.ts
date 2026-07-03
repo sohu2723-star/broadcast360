@@ -1,11 +1,65 @@
+/* -------------------------
+   FRONTEND FORM TYPE
+--------------------------*/
 export type MovieFormData = {
+  title: string;
+  description: string;
+  genre: string;
+  releaseYear: number;
+  video: File | null;
+  thumbnail?: File | null;
+};
 
-  title:string;
+/* -------------------------
+   DATABASE / API TYPE
+--------------------------*/
+export type Movie = {
+  id: number;
+  title: string;
+  description: string | null;
+  genre: string | null;
+  videoUrl: string;
+  thumbnail: string | null;
+  duration: number | null;
+  releaseYear: number | null;
+  createdAt?: Date;
+  updatedAt?: Date;
+};
 
-  description:string;
+/* -------------------------
+   PRISMA CREATE INPUT (SERVER ONLY)
+--------------------------*/
+export type MovieCreateInput = {
+  title: string;
+  description: string;
+  genre: string;
+  releaseYear: number;
+  videoUrl: string;
+  thumbnail: string;
+  duration: number;
+};
 
-  video?: File | null;
+/* -------------------------
+   UPDATE INPUT
+--------------------------*/
+export type MovieUpdateInput = {
+  title?: string;
+  description?: string;
+  genre?: string;
+  releaseYear?: number;
+  thumbnail?: string;
+};
 
-  releaseYear:number;
+/* -------------------------
+   PAGINATION TYPES
+--------------------------*/
+export type Pagination = {
+  page: number;
+  limit: number;
+  total: number;
+};
 
+export type PaginatedMoviesResponse = {
+  data: Movie[];
+  pagination: Pagination;
 };

@@ -1,19 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-
 import {
   fetchMovieById,
   removeMovie,
   editMovie,
 } from "@/services/movie.service";
 
-/*  GET MOVIE BY ID */
+// GET MOVIE BY ID
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
-
     const movieId = Number(id);
 
     if (isNaN(movieId)) {
@@ -34,16 +32,15 @@ export async function GET(
 
     return NextResponse.json(movie);
   } catch (error) {
-    console.error("GET ERROR =", error);
-
+    console.error("Database operation failed: to get movie by id", error);
     return NextResponse.json(
-      { message: "Failed to fetch movie" },
+      { message: "Failed to get movie by id" },
       { status: 500 }
     );
   }
 }
 
-/*  UPDATE MOVIE */
+// UPDATE MOVIE
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -60,17 +57,13 @@ export async function PUT(
       );
     }
 
-    const body = await req.json();
+    const formData = await req.formData();
 
-    const movie = await editMovie(movieId, {
-      title: body.title,
-      description: body.description,
-      releaseYear: Number(body.releaseYear),
-    });
+    const updatedMovie = await editMovie(formData, movieId);
 
-    return NextResponse.json(movie);
+    return NextResponse.json(updatedMovie);
   } catch (error) {
-    console.error("PUT ERROR =", error);
+    console.error(error);
 
     return NextResponse.json(
       { message: "Update failed" },
@@ -78,15 +71,13 @@ export async function PUT(
     );
   }
 }
-
-/*  DELETE MOVIE */
+// DELETE MOVIE
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
-
     const movieId = Number(id);
 
     if (isNaN(movieId)) {
@@ -96,16 +87,24 @@ export async function DELETE(
       );
     }
 
+    // Verify movie exists before attempting deletion (from origin/main)
+    const movie = await fetchMovieById(movieId);
+    if (!movie) {
+      return NextResponse.json(
+        { message: "Movie not found" },
+        { status: 404 }
+      );
+    }
+
     await removeMovie(movieId);
 
     return NextResponse.json({
       message: "Movie deleted successfully",
     });
   } catch (error) {
-    console.error("DELETE ERROR =", error);
-
+    console.error("Database operation failed: to delete movie", error);
     return NextResponse.json(
-      { message: "Delete failed" },
+      { message: "Failed to delete movie" },
       { status: 500 }
     );
   }

@@ -13,17 +13,15 @@ export default function CreateMoviePage() {
 
       formData.append("title", data.title);
       formData.append("description", data.description);
-
-     
-      const releaseYear =
-        typeof data.releaseYear === "number"
-          ? data.releaseYear
-          : Number(data.releaseYear);
-
-      formData.append("releaseYear", String(releaseYear));
+      formData.append("genre", data.genre);
+      formData.append("releaseYear", String(data.releaseYear));
 
       if (data.video) {
         formData.append("video", data.video);
+      }
+
+      if (data.thumbnail) {
+        formData.append("thumbnail", data.thumbnail);
       }
 
       const res = await fetch("/api/movies", {

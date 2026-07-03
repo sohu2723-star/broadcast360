@@ -13,6 +13,8 @@ const baseMovieSchema = z.object({
     .min(1, "Description is required")
     .max(1000, "Description is too long"),
 
+    genre: z.string().min(1, "Genre is required"),
+
   releaseYear: z
     .number()
     .min(1900, "Release year must be after 1900")
@@ -20,6 +22,8 @@ const baseMovieSchema = z.object({
       new Date().getFullYear(),
       "Release year cannot be in the future"
     ),
+
+    
 });
 
 export const createMovieSchema = baseMovieSchema.extend({

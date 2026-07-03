@@ -1,117 +1,128 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 
 import MovieForm from "@/components/admin/movies/movieForm";
-import type { MovieFormData } from "@/types/movie";
-
-type Movie = {
-  id: number;
-  title: string;
-  description: string | null;
-  videoUrl: string;
-  thumbnail: string | null;
-  duration: number | null;
-  releaseYear: number | null;
-};
+import type { Movie, MovieFormData } from "@/types/movie";
 
 export default function EditMoviePage() {
   const params = useParams();
+  const router = useRouter();
 
-  const id = Number(params.id); 
+  const id = Number(params.id);
 
   const [movie, setMovie] = useState<Movie | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadMovie() {
       try {
         const res = await fetch(`/api/movies/${id}`);
-
-        if (!res.ok) {
-          throw new Error("Movie not found");
-        }
-
         const data: Movie = await res.json();
         setMovie(data);
       } catch (err) {
         console.log(err);
+      } finally {
+        setLoading(false);
       }
     }
 
-    if (id) {
-      loadMovie();
-    }
+    if (id) loadMovie();
   }, [id]);
 
-  if (!movie) return <p>Loading...</p>;
+  if (loading) return <p className="p-10 text-gray-400">Loading...</p>;
+  if (!movie) return <p className="p-10 text-red-400">Movie not found</p>;
 
   const initialData: MovieFormData = {
     title: movie.title,
     description: movie.description ?? "",
-    releaseYear:
-      movie.releaseYear ?? new Date().getFullYear(), 
-    video: null, 
+    genre: movie.genre ?? "",
+    releaseYear: movie.releaseYear ?? new Date().getFullYear(),
+    video: null,
+    thumbnail: null, // IMPORTANT ADD
   };
 
   return (
-    <div className="p-6 text-white">
-      <h1 className="text-2xl font-bold mb-5">
-        Edit Movie
-      </h1>
+    <div className="p-6 text-white space-y-6">
 
-      {/* Video Preview */}
-      <div>
-        <h2 className="font-semibold">Video</h2>
+      {/* HEADER */}
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Edit Movie</h1>
 
-        <video
-          width="600"
-          controls
-          className="rounded"
+        <button
+          onClick={() => router.push("/admin/movies")}
+          className="px-4 py-2 bg-white/10 rounded-lg"
         >
-          <source src={movie.videoUrl} type="video/mp4" />
-        </video>
+          Back
+        </button>
       </div>
 
-      {/* Thumbnail Preview */}
-      <div className="mt-5">
-        <h2 className="font-semibold">Thumbnail</h2>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-        {movie.thumbnail && (
-          <Image
-            src={movie.thumbnail}
-            width={250}
-            height={150}
-            className="rounded"
-            alt="thumbnail"
-          />
-        )}
-      </div>
+        {/* LEFT SIDE - PREVIEW */}
+        <div className="space-y-6">
 
-      {/* Duration */}
-      <div className="mt-5">
-        <p>
-          Duration:{" "}
-          {movie.duration
-            ? `${movie.duration} seconds`
-            : "No duration"}
-        </p>
-      </div>
+          {/* VIDEO PLAYER */}
+          <div className="bg-[#0B1026] p-4 rounded-xl border border-white/10">
+            <p className="text-gray-400 mb-2">Video Preview</p>
 
-      {/* Edit Form */}
-      <div className="mt-8">
+            <video
+              controls
+              className="w-full rounded-lg border border-white/10"
+            >
+              <source src={movie.videoUrl} type="video/mp4" />
+            </video>
+          </div>
+
+          {/* THUMBNAIL PREVIEW */}
+          <div className="bg-[#0B1026] p-4 rounded-xl border border-white/10">
+            <p className="text-gray-400 mb-2">Thumbnail Preview</p>
+
+            {movie.thumbnail ? (
+              <div className="relative w-full h-[200px] rounded-lg overflow-hidden">
+                <Image
+                  src={movie.thumbnail}
+                  alt="thumbnail"
+                  
+                  fill
+                  className="object-cover"
+                />
+              </div>
+            ) : (
+              <p className="text-gray-500">No thumbnail</p>
+            )}
+          </div>
+
+        </div>
+
+        {/* RIGHT SIDE - FORM */}
         <MovieForm
           initialData={initialData}
           movieId={movie.id}
-          onSubmit={async (data) => {
+          onSubmit={async (form) => {
+            const formData = new FormData();
+
+            formData.append("title", form.title);
+            formData.append("description", form.description);
+            formData.append("genre", form.genre);
+            formData.append("releaseYear", String(form.releaseYear));
+
+            if (form.video) {
+              formData.append("video", form.video);
+            }
+
+            if (form.thumbnail) {
+              formData.append("thumbnail", form.thumbnail);
+            }
+
             await fetch(`/api/movies/${movie.id}`, {
               method: "PUT",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(data),
+              body: formData,
             });
+
+            router.push("/admin/movies");
           }}
         />
       </div>

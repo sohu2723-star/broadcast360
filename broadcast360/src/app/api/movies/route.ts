@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-import { fetchMovies, addMovie } from "@/services/movie.service";
+import { fetchPaginatedMovies, addMovie } from "@/services/movie.service";
 
 /* -------------------------
-   ZOD VALIDATION (SERVER)
+   ZOD VALIDATION
 --------------------------*/
 const movieSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -12,10 +12,28 @@ const movieSchema = z.object({
   releaseYear: z.number().optional(),
 });
 
-export async function GET() {
+/* -------------------------
+   GET MOVIES (pagination + search)
+--------------------------*/
+export async function GET(request: NextRequest) {
   try {
-    const movies = await fetchMovies();
-    return NextResponse.json(movies);
+    const { searchParams } = new URL(request.url);
+
+    const page = Math.max(
+      1,
+      parseInt(searchParams.get("page") ?? "1", 10) || 1
+    );
+
+    const limit = Math.max(
+      1,
+      parseInt(searchParams.get("limit") ?? "10", 10) || 10
+    );
+
+    const search = searchParams.get("search") ?? undefined;
+
+    const result = await fetchPaginatedMovies(page, limit, search);
+
+    return NextResponse.json(result);
   } catch (error) {
     console.error("GET ERROR =", error);
 
@@ -26,18 +44,20 @@ export async function GET() {
   }
 }
 
+/* -------------------------
+   CREATE MOVIE
+--------------------------*/
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
 
-    // extract data
     const rawData = {
       title: formData.get("title"),
       description: formData.get("description"),
+      genre: formData.get("genre"),
       releaseYear: Number(formData.get("releaseYear")),
     };
 
-    // validate (Zod)
     const result = movieSchema.safeParse(rawData);
 
     if (!result.success) {
@@ -50,7 +70,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ensure video exists
     const video = formData.get("video") as File | null;
 
     if (!video) {
@@ -60,7 +79,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    //  call service (NO extra logs needed)
     const movie = await addMovie(formData);
 
     return NextResponse.json(movie);
