@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import Image from "next/image";
 
 type Episode = {
   id: number;
@@ -39,55 +40,51 @@ export default function SeriesDetailPage() {
 
   const limit = 5;
 
-  const loadSeries = async (seriesId: string, pageNum: number) => {
-    try {
-      setLoading(true);
+  const loadSeries = async (pageNum: number) => {
+  setLoading(true);
 
-      const res = await fetch(
-        `/api/series/${seriesId}?page=${pageNum}&limit=${limit}`
-      );
-
-      if (!res.ok) throw new Error("Failed to fetch series");
-
-      const result = await res.json();
-
-      setSeries(result.data || null);
-      setTotalPages(result.totalPages || 1);
-      setTotalEpisodes(result.total || 0);
-    } catch (error) {
-      console.error(error);
-      setSeries(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!id) return;
-    loadSeries(id, page);
-  }, [id, page]);
-
-  const handleDelete = async (episodeId: number) => {
-    if (!id) return;
-
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this episode?"
+  try {
+    const res = await fetch(
+      `/api/series/${id}?page=${pageNum}&limit=${limit}`
     );
-    if (!confirmed) return;
 
-    try {
-      const res = await fetch(`/api/episodes/${episodeId}`, {
-        method: "DELETE",
-      });
+    const result = await res.json();
 
-      if (!res.ok) throw new Error("Delete failed");
+    setSeries(result.data || null);
+    setTotalPages(result.totalPages || 1);
+    setTotalEpisodes(result.total || 0);
+  } finally {
+    setLoading(false);
+  }
+};
+    useEffect(() => {
+      if (!id) return;
 
-      await loadSeries(id, page);
-    } catch (error) {
-      console.error(error);
-      alert("Delete failed");
-    }
-  };
+      loadSeries(page);
+    }, [page]);
+
+    const handleDelete = async (episodeId: number) => {
+      if (!id) return;
+
+      const confirmed = window.confirm(
+        "Are you sure you want to delete this episode?"
+      );
+      if (!confirmed) return;
+
+      try {
+        const res = await fetch(`/api/episodes/${episodeId}`, {
+          method: "DELETE",
+        });
+
+        if (!res.ok) throw new Error("Delete failed");
+
+        // IMPORTANT: reload AFTER delete (safe)
+        await loadSeries(page);
+      } catch (error) {
+        console.error(error);
+        alert("Delete failed");
+      }
+    };
 
   if (!id) return <div className="text-white p-6">Invalid series id</div>;
   if (loading) return <div className="text-white p-6">Loading...</div>;
@@ -102,9 +99,11 @@ export default function SeriesDetailPage() {
         <div className="flex flex-row gap-8 items-start">
 
           {/* Widescreen Thumbnail */}
-          <div className="w-[450px] h-[350px] flex-shrink-0 bg-gray-800 rounded-xl overflow-hidden border border-white/10 shadow-lg">
+          <div className="w-112.5 h-87.5 shrink-0 bg-gray-800 rounded-xl overflow-hidden border border-white/10 shadow-lg">
             {series?.thumbnail ? (
-              <img src={series.thumbnail} alt={series.title} className="w-full h-full object-cover" />
+              <Image src={series.thumbnail} alt={series.title} 
+              width={450} height={350}
+              className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-500">No Image</div>
             )}
@@ -200,9 +199,11 @@ export default function SeriesDetailPage() {
                   {ep.thumbnailUrl ? (
                     <div className="flex flex-col gap-2">
                       <Link href={`/admin/series/${id}/episodes/${ep.id}`}>
-                        <img
+                        <Image
                           src={ep.thumbnailUrl}
                           alt={ep.title}
+                          width={96}
+                          height={56}
                           className="w-24 h-14 object-cover rounded cursor-pointer hover:opacity-80"
                         />
                       </Link>

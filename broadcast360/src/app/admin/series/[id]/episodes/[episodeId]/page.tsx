@@ -79,13 +79,13 @@ export default function EpisodePlayerPage() {
       <div className="w-80 bg-[#0B1026] border-r border-white/10 flex flex-col h-screen min-h-0">
 
         {/* Header (fixed) */}
-        <div className="p-4 flex-shrink-0">
-          <Link
+        <div className="p-4 shrink-0">
+          {/* <Link
             href={`/admin/series/${series.id}`}
             className="text-blue-400 text-sm"
           >
             ← Back to Series
-          </Link>
+          </Link> */}
 
           <h2 className="text-xl font-bold mt-4 mb-4">
             {series.title}

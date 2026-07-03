@@ -42,8 +42,5 @@ next-env.d.ts
 
 /src/generated/prisma
 
-# videos
 public/videos/
-
-# images
 public/thumbnails/
