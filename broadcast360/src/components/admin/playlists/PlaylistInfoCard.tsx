@@ -5,7 +5,6 @@ interface Props {
   programName: string;
   playlistName: string;
   duration: number | null;
-
   programId: number;
   playlistId: number;
 }
@@ -14,16 +13,11 @@ interface Props {
 function formatDuration(seconds:number | null){
 
   if(!seconds) return "00:00:00";
-
   const h = Math.floor(seconds / 3600);
-
   const m = Math.floor(
     (seconds % 3600) / 60
   );
-
   const s = seconds % 60;
-
-
   return [
     h,
     m,
@@ -33,8 +27,6 @@ function formatDuration(seconds:number | null){
   .join(":");
 
 }
-
-
 
 export default function PlaylistInfoCard({
 

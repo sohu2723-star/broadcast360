@@ -141,11 +141,9 @@ rounded-lg
 
 
 <PlaylistItemList
-
-items={
-playlist.items ?? []
-}
-
+  items={playlist.items ?? []}
+  programId={Number(programId)}
+  playlistId={Number(playlistId)}
 />
 
 

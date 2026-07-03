@@ -5,13 +5,12 @@ import { CreateProgramInput, UpdateProgramInput }
 from "@/types/program";
 
 
+
 export async function addProgram(
  data:CreateProgramInput
 ){
 
  const program = await createProgram(data);
-
-
  return {
   id:program.id,
   title:program.title,
@@ -42,10 +41,7 @@ export async function fetchProgramDetails(
     throw new Error(
       "Invalid program id"
     );
-
   }
-
-
   return getProgramDetails(id);
 
 }
