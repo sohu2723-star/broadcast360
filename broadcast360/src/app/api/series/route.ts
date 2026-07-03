@@ -1,11 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchSeries, addSeries } from "@/services/serie.service";
+import {
+  fetchPaginatedSeries,
+  addSeries,
+} from "@/services/serie.service";
 
 /* ================= GET ================= */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const series = await fetchSeries();
-    return NextResponse.json(series, { status: 200 });
+    const { searchParams } = new URL(request.url);
+
+    const page = Math.max(
+      1,
+      parseInt(searchParams.get("page") ?? "1", 10) || 1
+    );
+
+    const limit = Math.max(
+      1,
+      parseInt(searchParams.get("limit") ?? "10", 10) || 10
+    );
+
+    const search = searchParams.get("search") ?? undefined;
+
+    const result = await fetchPaginatedSeries(page, limit, search);
+
+    return NextResponse.json(result);
   } catch (error) {
     console.error("GET /api/series error:", error);
 
@@ -19,7 +37,6 @@ export async function GET() {
 /* ================= POST ================= */
 export async function POST(req: NextRequest) {
   try {
-    // ✅ directly parse form-data (no manual header check)
     const formData = await req.formData();
 
     const series = await addSeries(formData);
