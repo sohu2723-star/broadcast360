@@ -116,17 +116,12 @@ model Series {
   title String
 
   description String?
-<<<<<<< HEAD
-  genre      String?
-  thumbnail   String?
-=======
 
   genre String?
   
   releaseYear Int?
 
   thumbnail String?
->>>>>>> origin/main
 
   episodes Episode[]
 
@@ -150,11 +145,7 @@ model Episode {
 
   videoUrl String?
 
-<<<<<<< HEAD
-  thumbnailurl String?
-=======
   thumbnailUrl String?
->>>>>>> 1007d215bdf786cd2ffcb488b361a209593e2dd5
 
   series Series @relation(fields: [seriesId], references: [id])
 
