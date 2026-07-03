@@ -1,6 +1,27 @@
-import { getPaginatedSeries, deleteSeries } from "@/repositories/series.repository";
+import {
+  getSeriesById,
+  getPaginatedSeries,
+  deleteSeries,
+} from "@/repositories/series.repository";
 
-export async function fetchPaginatedSeries(page: number, limit: number, search?: string) {
+/**
+ * Get single series by ID
+ */
+export function fetchSeriesById(
+  id: number,
+  opts?: { skip: number; take: number }
+) {
+  return getSeriesById(id, opts);
+}
+
+/**
+ * Get paginated series list
+ */
+export async function fetchPaginatedSeries(
+  page: number,
+  limit: number,
+  search?: string
+) {
   const validatedPage = Math.max(1, page);
   const validatedLimit = Math.max(1, limit);
 
@@ -20,6 +41,9 @@ export async function fetchPaginatedSeries(page: number, limit: number, search?:
   };
 }
 
+/**
+ * Delete series
+ */
 export function removeSeries(id: number) {
   return deleteSeries(id);
 }

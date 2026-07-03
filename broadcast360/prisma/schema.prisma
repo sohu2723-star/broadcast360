@@ -116,17 +116,12 @@ model Series {
   title String
 
   description String?
-<<<<<<< HEAD
-  genre      String?
-  thumbnail   String?
-=======
 
   genre String?
   
   releaseYear Int?
 
   thumbnail String?
->>>>>>> origin/main
 
   episodes Episode[]
 
