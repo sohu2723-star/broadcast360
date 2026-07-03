@@ -29,14 +29,19 @@ return (
 <div>
 
 
-<h1 className="
-text-3xl
-font-bold
-mb-8
-">
-Dashboard
-</h1>
-
+ {/* Search Box */}
+        <div
+          className="
+          bg-[#0B1026]
+          rounded-xl
+          px-5
+          py-3
+          text-gray-400
+          mb-8
+          "
+        >
+          Search...
+        </div>
 
 
 {/* Cards */}

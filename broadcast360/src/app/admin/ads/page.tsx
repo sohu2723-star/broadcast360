@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
@@ -206,4 +207,16 @@ export default function SeriesPage() {
       </div>
     </div>
   );
+=======
+export default function AdsPage(){
+
+return (
+
+<div>
+    <h1>This is  ads page</h1>
+</div>
+
+)
+
+>>>>>>> origin/main
 }
