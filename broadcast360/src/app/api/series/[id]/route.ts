@@ -1,5 +1,45 @@
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { removeSeries } from "@/services/series.service";
+
+import {
+  removeSeries,
+  editSeries,
+} from "@/services/serie.service";
+
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const numericId = Number(id);
+
+    const formData = await req.formData();
+
+    const title = String(formData.get("title"));
+    const description = String(formData.get("description"));
+    const genre = String(formData.get("genre"));
+    const releaseYear = Number(formData.get("releaseYear"));
+    const thumbnail = formData.get("thumbnail") as File | null;
+
+    const series = await editSeries(numericId, {
+      title,
+      description,
+      genre,
+      releaseYear,
+      thumbnail,
+    });
+
+    return NextResponse.json(series);
+  } catch (error) {
+    console.error(error);
+
+    return NextResponse.json(
+      { message: "Update failed" },
+      { status: 500 }
+    );
+  }
+}
 
 export async function GET(
   request: Request,
@@ -63,36 +103,20 @@ export async function GET(
 }
 
 export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const seriesId = Number(params.id);
+    const { id } = await params;
 
-    if (isNaN(seriesId)) {
-      return Response.json(
-        { message: "Invalid or missing Series ID" },
-        { status: 400 }
-      );
-    }
+    await removeSeries(Number(id));
 
-    await removeSeries(seriesId);
-
-    return Response.json({
-      message:
-        "Series and all its related episodes have been deleted successfully",
-    });
-  } catch (error: unknown) {
+    return NextResponse.json({ message: "deleted" });
+  } catch (error) {
     console.error(error);
 
-    const message =
-      error instanceof Error ? error.message : "Unknown error";
-
-    return Response.json(
-      {
-        message: "Failed to delete series",
-        error: message,
-      },
+    return NextResponse.json(
+      { message: "Delete failed" },
       { status: 500 }
     );
   }

@@ -1,5 +1,9 @@
 import { prisma } from "@/lib/prisma";
 
+export function getSeries() {
+  return prisma.series.findMany();
+}
+
 /**
  * Get single series by ID
  */
@@ -81,6 +85,40 @@ export async function getPaginatedSeries({
   }));
 
   return { data: formattedData, total };
+}
+
+/* =========================
+   CREATE
+========================= */
+export function createSeries(data: {
+  title: string;
+  description: string;
+  genre: string;
+  releaseYear: number;
+  thumbnail: string;
+}) {
+  return prisma.series.create({
+    data,
+  });
+}
+
+/* =========================
+   UPDATE
+========================= */
+export function updateSeries(
+  id: number,
+  data: {
+    title: string;
+    description: string;
+    genre: string;
+    releaseYear: number;
+    thumbnail?: string; // optional for edit
+  }
+) {
+  return prisma.series.update({
+    where: { id },
+    data,
+  });
 }
 
 /**
