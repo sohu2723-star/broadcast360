@@ -21,7 +21,6 @@ export async function addProgram(
 }
 
 export function fetchProgramById(id:number){
-  
   return getProgramById(id);
 }
 
