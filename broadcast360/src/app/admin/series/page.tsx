@@ -136,7 +136,7 @@ const handleDelete = async (id: number) => {
           <table className="w-full">
             <thead>
               <tr className="border-b border-white/10 text-gray-400">
-                <th className="p-5 text-left w-[80px]">Cover</th>
+                <th className="p-5 text-left w-20">Cover</th>
                 <th className="p-5 text-left">Series Title</th>
                 <th className="p-5 text-left">Genre</th>
                 <th className="p-5 text-left">Episode Count</th>
