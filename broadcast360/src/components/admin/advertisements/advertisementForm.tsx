@@ -60,7 +60,7 @@ export default function AdvertisementForm({
 
   try {
     const currentId = (form as any).id || (initialData as any)?.id || ""; 
-    const url = `/api/advertisements/check-title?title=${encodeURIComponent(trimmedTitle)}&id=${currentId}`;
+    const url = `/api/ads/check-title?title=${encodeURIComponent(trimmedTitle)}&id=${currentId}`;
     const res = await fetch(url);
     const data = await res.json();
 
@@ -113,7 +113,7 @@ export default function AdvertisementForm({
 
     if (!isSameAsOriginal) {
       const currentId = (form as any).id || (initialData as any)?.id || ""; 
-      const url = `/api/advertisements/check-title?title=${encodeURIComponent(trimmedTitle)}&id=${currentId}`;
+      const url = `/api/ads/check-title?title=${encodeURIComponent(trimmedTitle)}&id=${currentId}`;
       
       const res = await fetch(url);
       const data = await res.json();
