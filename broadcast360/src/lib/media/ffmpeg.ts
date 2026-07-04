@@ -78,27 +78,27 @@ export function getVideoDuration(
 
 }
 
-// export function generateThumbnail(
-//   videoPath: string,
-//   outputPath: string
-// ): Promise<string> {
+export function generateThumbnail(
+  videoPath: string,
+  outputPath: string
+): Promise<string> {
 
-//   return new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
 
-//     ffmpeg(videoPath)
-//       .screenshots({
-//         timestamps: ["00:00:01"],
-//         filename: path.basename(outputPath),
-//         folder: path.dirname(outputPath),
-//         size: "320x180"
-//       })
-//       .on("end", () => {
-//         resolve(outputPath);
-//       })
-//       .on("error", (err) => {
-//         reject(err);
-//       });
+    ffmpeg(videoPath)
+      .screenshots({
+        timestamps: ["00:00:01"],
+        filename: path.basename(outputPath),
+        folder: path.dirname(outputPath),
+        size: "320x180"
+      })
+      .on("end", () => {
+        resolve(outputPath);
+      })
+      .on("error", (err) => {
+        reject(err);
+      });
 
-//   });
+  });
 
-// }
+}
