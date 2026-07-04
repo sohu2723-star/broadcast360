@@ -28,8 +28,24 @@ const menus=[
         path: "/admin/news"
     },
     {
+        name: "Entertainments",
+        path: "/admin/entertainments"
+    },
+    {
+        name: "Advertisements",
+        path: "/admin/advertisements"
+    },
+    {
         name: "Programs",
         path: "/admin/programs"
+    },
+     {
+        name: "Playlists",
+        path: "/admin/playlists"
+    },
+    {
+        name: "Schedules",
+        path: "/admin/schedules"
     },
     {
         name: "Recordings",

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 type SeriesItem = {
   id: number;
@@ -44,15 +45,36 @@ export default function SeriesPage() {
   }, []);
 
   useEffect(() => {
-    loadSeries(pagination.page, search);
-  }, [loadSeries, pagination.page]);
+  let cancelled = false;
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearch(value);
-    setPagination((prev) => ({ ...prev, page: 1 }));
-    loadSeries(1, value);
+  const fetchSeries = async () => {
+    try {
+      if (!cancelled) {
+        await loadSeries(pagination.page, search);
+      }
+    } catch (error) {
+      console.error(error);
+    }
   };
+
+  void fetchSeries();
+
+  return () => {
+    cancelled = true;
+  };
+}, [loadSeries, pagination.page, search]);
+
+const handleSearchChange = (
+  e: React.ChangeEvent<HTMLInputElement>
+) => {
+  const value = e.target.value;
+
+  setSearch(value);
+  setPagination((prev) => ({
+    ...prev,
+    page: 1,
+  }));
+};
 
 const handleDelete = async (id: number) => {
   const confirmDelete = window.confirm("Are you sure you want to delete this series and all its episodes?");
@@ -75,9 +97,9 @@ const handleDelete = async (id: number) => {
     
     
     loadSeries(pagination.page, search);
-  } catch (error: any) {
+  } catch (error) {
     console.error("Delete UI Error:", error);
-    alert(error.message || "Delete failed. Please try again.");
+    alert("Delete failed. Please try again.");
   }
 };
 
@@ -86,15 +108,9 @@ const handleDelete = async (id: number) => {
   return (
     <div>
       {/* Header Section */}
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">TV Series</h1>
-        <Link href="/admin/series/create" className="bg-[#106EE9] px-5 py-3 rounded-xl">
-          + Add Series
-        </Link>
-      </div>
+      <div className="flex justify-between items-center mb-8 gap-4">
 
-      {/* Search Bar */}
-      <div className="mb-6 max-w-md">
+      <div className="w-full max-w-md">
         <input
           type="text"
           placeholder="Search series by title or genre..."
@@ -104,6 +120,14 @@ const handleDelete = async (id: number) => {
         />
       </div>
 
+      <Link
+        href="/admin/series/create"
+        className="bg-[#106EE9] px-5 py-3 rounded-xl whitespace-nowrap"
+      >
+        + Add Series
+      </Link>
+    </div>
+
       {/* Main Data Table */}
       <div className="bg-[#0B1026] rounded-2xl border border-white/10 overflow-hidden">
         {loading ? (
@@ -112,7 +136,7 @@ const handleDelete = async (id: number) => {
           <table className="w-full">
             <thead>
               <tr className="border-b border-white/10 text-gray-400">
-                <th className="p-5 text-left w-[80px]">Cover</th>
+                <th className="p-5 text-left w-20">Cover</th>
                 <th className="p-5 text-left">Series Title</th>
                 <th className="p-5 text-left">Genre</th>
                 <th className="p-5 text-left">Episode Count</th>
@@ -135,9 +159,11 @@ const handleDelete = async (id: number) => {
                     <td className="p-5">
                       {series.thumbnail ? (
                         <div className="w-12 h-16 relative overflow-hidden rounded-lg border border-white/10 bg-gray-900 shadow-md">
-                          <img 
+                          <Image
                             src={series.thumbnail} 
                             alt={series.title} 
+                            width={48}
+                            height={64}
                             className="w-full h-full object-cover block"
                             referrerPolicy="no-referrer" // External Image Block ဖြစ်ခြင်းမှ ကာကွယ်ရန်
                             onError={(e) => {

@@ -1,20 +1,52 @@
-import { NextRequest } from "next/server";
-import { fetchPaginatedSeries } from "@/services/series.service";
+import { NextRequest, NextResponse } from "next/server";
+import {
+  fetchPaginatedSeries,
+  addSeries,
+} from "@/services/serie.service";
 
+/* ================= GET ================= */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    
-    const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10) || 1);
-    const limit = Math.max(1, parseInt(searchParams.get("limit") ?? "10", 10) || 10);
+
+    const page = Math.max(
+      1,
+      parseInt(searchParams.get("page") ?? "1", 10) || 1
+    );
+
+    const limit = Math.max(
+      1,
+      parseInt(searchParams.get("limit") ?? "10", 10) || 10
+    );
+
     const search = searchParams.get("search") ?? undefined;
 
     const result = await fetchPaginatedSeries(page, limit, search);
-    return Response.json(result);
+
+    return NextResponse.json(result);
   } catch (error) {
-    console.error("Database operation failed: to get series", error);
-    return Response.json(
-      { message: "Failed to get series" },
+    console.error("GET /api/series error:", error);
+
+    return NextResponse.json(
+      { message: "Failed to fetch series" },
+      { status: 500 }
+    );
+  }
+}
+
+/* ================= POST ================= */
+export async function POST(req: NextRequest) {
+  try {
+    const formData = await req.formData();
+
+    const series = await addSeries(formData);
+
+    return NextResponse.json(series, { status: 201 });
+  } catch (error) {
+    console.error("POST /api/series error:", error);
+
+    return NextResponse.json(
+      { message: "Create error" },
       { status: 500 }
     );
   }
