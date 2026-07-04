@@ -22,16 +22,23 @@ export function createProgram(
 
 }
 
-
-
-export function getProgramById(id:number){
+export async function getProgramById(id: number) {
   return prisma.program.findUnique({
-    where:{
-      id
+    where: { id },
+    include: {
+      channel: true,
+      playlists: {
+        select: {
+          id: true,
+          name: true,
+          totalDuration: true,
+          createdAt: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      },
     },
-    include:{
-      channel:true
-    }
   });
 }
 
@@ -48,27 +55,33 @@ export function updateProgram(
   });
 }
 
-export function getProgramDetails(id:number){
+
+export function getProgramDetails(
+  id:number
+){
 
   return prisma.program.findUnique({
 
     where:{
-      id
+      id:id
     },
 
-    include:{
-      channel:true,
 
+    include:{
+
+      channel:true,
       playlists:{
         select:{
           id:true,
           name:true,
+          totalDuration:true,
           createdAt:true
         },
-
         orderBy:{
           createdAt:"desc"
+
         }
+
       }
 
     }

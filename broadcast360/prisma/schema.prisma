@@ -152,6 +152,8 @@ model Episode {
   createdAt DateTime @default(now())
 
   playlistItems PlaylistItem[]
+
+  @@unique([seriesId, episodeNo])
 }
 
 // =====================
@@ -338,6 +340,8 @@ model PlaylistItem {
   entertainment Entertainment? @relation(fields:[entertainmentId], references:[id])
 
   createdAt DateTime @default(now())
+
+  @@unique([playlistId, order])
 }
 
 enum ScheduleStatus {
