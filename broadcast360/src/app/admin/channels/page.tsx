@@ -131,7 +131,7 @@ export default function ChannelsPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-white/10 text-gray-400">
-                <th className="p-5 text-left w-[80px]">Logo</th>
+                <th className="p-5 text-left w-20">Logo</th>
                 <th className="p-5 text-left">Name</th>
                 <th className="p-5 text-left">Country</th>
                 <th className="p-5 text-left">Action</th>

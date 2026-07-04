@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { createAdvertisement } from "@/services/advertisement.service"; 
+import { createAdvertisement, fetchAdvertisements } from "@/services/ads.service"; 
 const advertisementSchema = z.object({
   title: z.string().min(1, "Title is required"),
   active: z.preprocess((val) => val === "true" || val === true, z.boolean()),
@@ -45,4 +45,30 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+
+  const page = Number(searchParams.get("page")) || 1;
+  const limit = Number(searchParams.get("limit")) || 5;
+  const search = searchParams.get("search") || "";
+  const status = searchParams.get("status") || "all";
+
+  const result = await fetchAdvertisements(
+    page,
+    limit,
+    search,
+    status
+  );
+
+  return Response.json({
+    data: result.advertisements,
+    pagination: {
+      page,
+      limit,
+      total: result.total,
+      totalPages: Math.ceil(result.total / limit),
+    },
+  });
 }
