@@ -25,6 +25,20 @@ export default function MoviesPage() {
   const [search, setSearch] = useState(""); // Search state
   const [loading, setLoading] = useState(true);
 
+  const formatDuration = (sec: number) => {
+  const hours = Math.floor(sec / 3600);
+  const mins = Math.floor((sec % 3600) / 60);
+  const seconds = sec % 60;
+
+  if (hours > 0) {
+    return `${hours}:${mins.toString().padStart(2, "0")}:${seconds
+      .toString()
+      .padStart(2, "0")}`;
+  }
+
+  return `${mins}:${seconds.toString().padStart(2, "0")}`;
+};
+
   // FETCH MOVIES WITH SEARCH & PAGINATION
   const loadMovies = useCallback(async (page: number, query: string) => {
     setLoading(true);
@@ -148,7 +162,7 @@ export default function MoviesPage() {
                       <td className="p-5 font-medium text-white">{movie.title}</td>
                       <td className="p-5 text-gray-300">{movie.genre ?? "-"}</td>
                       <td className="p-4 text-gray-300">{movie.releaseYear ?? "-"}</td>
-                      <td className="p-4 text-gray-300">{movie.duration ? `${movie.duration} mins` : "-"}</td>
+                      <td className="p-4 text-gray-300">{movie.duration ? formatDuration(movie.duration) : "-"}</td>
 
                       <td className="p-5">
                         <div className="flex gap-3">

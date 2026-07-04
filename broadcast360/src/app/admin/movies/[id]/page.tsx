@@ -14,6 +14,20 @@ type Movie = {
   createdAt: string;
 };
 
+  const formatDuration = (sec: number) => {
+  const hours = Math.floor(sec / 3600);
+  const mins = Math.floor((sec % 3600) / 60);
+  const seconds = sec % 60;
+
+  if (hours > 0) {
+    return `${hours}:${mins.toString().padStart(2, "0")}:${seconds
+      .toString()
+      .padStart(2, "0")}`;
+  }
+
+  return `${mins}:${seconds.toString().padStart(2, "0")}`;
+};
+
 export default function MovieDetailPage({
   params,
 }: {
@@ -103,7 +117,7 @@ export default function MovieDetailPage({
 
   <div>
     <p className="text-gray-400">Duration</p>
-    <p>{movie.duration} minutes</p>
+    <p>{formatDuration(movie.duration)}</p>
   </div>
 
   <div>

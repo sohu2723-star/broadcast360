@@ -2,18 +2,16 @@ import PlaylistItemList from "@/components/admin/playlist-items/PlaylistItemList
 import PlaylistInfoCard from "@/components/admin/playlists/PlaylistInfoCard";
 
 async function getPlaylist(programId: number, playlistId: number) {
+  const baseUrl = process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
+
   const res = await fetch(
-    `http://localhost:3000/api/programs/${programId}/playlists/${playlistId}`,
-    {
-      cache: "no-store",
-    },
+    `${baseUrl}/api/programs/${programId}/playlists/${playlistId}`,
+    { cache: "no-store" }
   );
 
   const data = await res.json();
 
   if (!res.ok) {
-    console.error(data);
-
     throw new Error(data.message || "Failed to load playlist");
   }
 
@@ -21,17 +19,20 @@ async function getPlaylist(programId: number, playlistId: number) {
 }
 
 interface Props {
-    params: Promise<{
+  params: {
     programId: string;
     playlistId: string;
-  }>;
+  };
 }
 
-export default async function PlaylistPage({ params }: Props) {
+export default async function PlaylistPage({
+  params,
+}: {
+  params: Promise<{ programId: string; playlistId: string }>;
+}) {
   const { programId, playlistId } = await params;
 
   const programIdNumber = Number(programId);
-
   const playlistIdNumber = Number(playlistId);
 
   if (isNaN(programIdNumber) || isNaN(playlistIdNumber)) {
@@ -53,7 +54,11 @@ export default async function PlaylistPage({ params }: Props) {
         playlistId={playlist.id}
       />
 
-      <PlaylistItemList items={playlist.items ?? []} />
+      <PlaylistItemList
+        items={playlist.items ?? []}
+        programId={programIdNumber}
+        playlistId={playlistIdNumber}
+      />
     </div>
   );
 }

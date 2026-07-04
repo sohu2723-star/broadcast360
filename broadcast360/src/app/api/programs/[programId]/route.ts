@@ -86,9 +86,6 @@ export async function GET(
 
 
     const id = Number(programId);
-
-
-
     if(isNaN(id)){
 
       return NextResponse.json(
@@ -102,13 +99,8 @@ export async function GET(
 
     }
 
-
-
     const program =
       await fetchProgramDetails(id);
-
-
-
     if(!program){
 
       return NextResponse.json(
@@ -121,7 +113,6 @@ export async function GET(
       );
 
     }
-
 
 
     return NextResponse.json({
@@ -139,8 +130,6 @@ export async function GET(
         description:program.description,
 
         createdAt:program.createdAt,
-
-        playlists:program.playlists
 
       }
 

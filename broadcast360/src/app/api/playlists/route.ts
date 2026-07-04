@@ -47,73 +47,38 @@ export async function POST(
 }
 
 export async function GET(
-  req: Request,
+  req: NextRequest,
   context: {
-    params: Promise<{
-      programId: string;
-    }>;
+    params: Promise<{ programId: string }>;
   }
 ) {
   try {
     const { programId } = await context.params;
-
     const id = Number(programId);
 
     if (isNaN(id)) {
       return NextResponse.json(
-        {
-          message: "Invalid programId",
-        },
-        {
-          status: 400,
-        }
+        { message: "Invalid programId" },
+        { status: 400 }
       );
     }
 
+    const { searchParams } = new URL(req.url);
 
-    const { searchParams } =
-      new URL(req.url);
+    const page = Number(searchParams.get("page") ?? 1);
+    const limit = Number(searchParams.get("limit") ?? 10);
 
-
-    const page =
-      Number(
-        searchParams.get("page") ?? 1
-      );
-
-
-    const limit = 5;
-
-
-    const data =
-      await PlaylistService.getProgramPlaylists(
-        id,
-        page,
-        limit
-      );
-
-
-    return NextResponse.json({
-      data,
-    });
-
-
-  } catch (error) {
-
-
-    console.error(error);
-
-
-    return NextResponse.json(
-      {
-        message:
-          error instanceof Error
-            ? error.message
-            : "Failed to get playlists",
-      },
-      {
-        status:500,
-      }
+    const data = await PlaylistService.getProgramPlaylists(
+      id,
+      page,
+      limit
     );
 
+    return NextResponse.json({ data });
+  } catch (error) {
+    return NextResponse.json(
+      { message: "Failed to load program playlists" },
+      { status: 500 }
+    );
   }
 }
