@@ -39,7 +39,7 @@ export default function AdvertisementsPage() {
       params.set("status", statusFilter);
 
       const res = await fetch(
-        `/api/advertisements?${params.toString()}`
+        `/api/ads?${params.toString()}`
       );
 
       const result = await res.json();
@@ -75,7 +75,7 @@ export default function AdvertisementsPage() {
     if (!confirmDelete) return;
 
     try {
-      const res = await fetch(`/api/advertisements/${id}`, {
+      const res = await fetch(`/api/ads/${id}`, {
         method: "DELETE",
       });
 

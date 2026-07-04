@@ -99,6 +99,4 @@ export function generateThumbnail(
         reject(err);
       });
 
-  });
-
-}
+  }); }
