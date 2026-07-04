@@ -15,7 +15,8 @@ export function getEpisodesBySeriesId(seriesId: number) {
 // ========================
 // GET SINGLE EPISODE
 // ========================
-export function getEpisodeById(id: number) {
+export async function getEpisodeById(id: number) {
+
   return prisma.episode.findUnique({
     where: { id },
   });

@@ -33,10 +33,14 @@ export default function EditSeriesPage() {
       try {
         const res = await fetch(`/api/series/${id}`);
 
+        const data = await res.json();
+
+        console.log(data);
+
         if (!res.ok) throw new Error("Series not found");
 
-        const data: Series = await res.json();
-        setSeries(data);
+        // const data: Series = await res.json();
+        setSeries(data.data);
       } catch (err) {
         console.error(err);
         setSeries(null);
