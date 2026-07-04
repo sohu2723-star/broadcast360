@@ -1,8 +1,9 @@
-import { createProgram, getProgramById, updateProgram, getProgramDetails } 
+import { createProgram, getProgramById, updateProgram, getProgramDetails, programRepository } 
 from "@/repositories/program.repository";
 
 import { CreateProgramInput, UpdateProgramInput } 
 from "@/types/program";
+
 
 
 export async function addProgram(
@@ -10,8 +11,6 @@ export async function addProgram(
 ){
 
  const program = await createProgram(data);
-
-
  return {
   id:program.id,
   title:program.title,
@@ -33,8 +32,44 @@ export function editProgram(
  return updateProgram(id,data);
 }
 
-export function fetchProgramDetails(id:number){
+export async function fetchProgramDetails(
+  id:number
+){
 
- return getProgramDetails(id);
+  if(!id || isNaN(id)){
+
+    throw new Error(
+      "Invalid program id"
+    );
+  }
+  return getProgramDetails(id);
 
 }
+
+// list all programs with filters
+class ProgramService {
+  public async getAllPrograms(filters: { search?: string; type?: string; channelName?: string; page?: number; limit?: number }) {
+
+    const programs = await programRepository.findMany(filters);
+
+    return programs.map((p) => ({
+      id: p.id,
+      channel: p.channel?.name || "Unassigned",
+      title: p.title,
+      type: p.type,
+      description: p.channel?.description || "",
+      createdAt: p.createdAt.toISOString().split("T")[0],
+    }));
+  }
+
+  public async deleteProgram(id: number) {
+    const existing = await programRepository.findById(id);
+    if (!existing) {
+      throw new Error("Target program context index not found inside storage");
+    }
+    
+    return await programRepository.delete(id);
+  }
+}
+
+export const programService = new ProgramService();

@@ -1,69 +1,413 @@
-Database Design
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
 
-users 
+datasource db {
+  provider = "postgresql"
+}
 
-id
-name
-email
-password
-role
-created_at
---------------------
+enum Role {
+  ADMIN
+  GUEST
+}
 
-channels 
+model User {
+  id Int @id @default(autoincrement())
 
-id
-name
-description
-logo_url
-category
-status
-created_at
----------------------
+  name String
 
-live_streams
+  email String @unique
 
-id
-channel_id
-stream_name
-stream_url
-status
-created_at
-------------------------
+  password String
 
-videos
+  role Role @default(GUEST)
 
-id
-channel_id
-title
-description
-video_url
-thumbnail_url
-duration
-created_at
----------------------
+  createdAt DateTime @default(now())
+}
 
-<<<<<<< HEAD
-hot news
+// =====================
+// CHANNEL
+// =====================
 
-id
-channel_id
-=======
-news
+model Channel {
+  id Int @id @default(autoincrement())
 
-id
->>>>>>> b85e503c3ec185806db409b9c0f1e5936e60e029
-title
-content
-image_url
-published_at
-created_by
-----------------------
+  name String @unique
 
-categories
+  description String?
 
-id
-name (name, sport, Movies, Series)
----------------------------
+  logo String?
 
+  country String?
 
+  streams Stream[]
+
+  streamKey String? @unique
+
+  news News[]
+
+  schedules Schedule[]
+
+  recordings Recording[]
+
+  broadcastSessions BroadcastSession[]
+
+  createdAt DateTime @default(now())
+
+  programs Program[]
+}
+
+// =====================
+// STREAM INPUT
+// =====================
+
+model Stream {
+  id Int @id @default(autoincrement())
+
+  channelId Int
+
+  url String
+
+  protocol String
+
+  status String @default("offline")
+
+  channel Channel @relation(fields: [channelId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  playlistItems PlaylistItem[]
+}
+
+// =====================
+// MOVIE
+// =====================
+
+model Movie {
+  id Int @id @default(autoincrement())
+
+  title String
+
+  description String?
+
+  genre String?
+
+  thumbnail String?
+
+  videoUrl String?
+
+  duration Int
+
+  releaseYear Int?
+
+  createdAt DateTime @default(now())
+
+  playlistItems PlaylistItem[]
+}
+
+// =====================
+// SERIES
+// =====================
+
+model Series {
+  id Int @id @default(autoincrement())
+
+  title String
+
+  description String?
+
+  genre String?
+  
+  releaseYear Int?
+
+  thumbnail String?
+
+  episodes Episode[]
+
+  createdAt DateTime @default(now())
+}
+
+// =====================
+// EPISODE
+// =====================
+
+model Episode {
+  id Int @id @default(autoincrement())
+
+  seriesId Int
+
+  title String
+
+  episodeNo Int
+
+  duration Int
+
+  videoUrl String?
+
+  thumbnailUrl String?
+
+  series Series @relation(fields: [seriesId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  playlistItems PlaylistItem[]
+
+  @@unique([seriesId, episodeNo])
+}
+
+// =====================
+// ADVERTISEMENT
+// =====================
+
+model Advertisement {
+  id Int @id @default(autoincrement())
+
+  title String
+
+  videoUrl String
+  
+  thumbnailUrl String?
+
+  duration Int
+
+  active Boolean @default(true)
+
+  createdAt DateTime @default(now())
+
+  playlistItems PlaylistItem[]
+}
+
+// =====================
+// NEWS
+// =====================
+
+model News {
+  id Int @id @default(autoincrement())
+
+  channelId Int?
+
+  title String
+
+  content String?
+
+  image String?
+
+  videoUrl String?
+
+  type String
+
+  channel Channel? @relation(fields: [channelId], references: [id])
+
+  playlistItems PlaylistItem[]
+
+  createdAt DateTime @default(now())
+}
+
+// =====================
+// ENTERTAINMENT
+// =====================
+
+model Entertainment {
+  id Int @id @default(autoincrement())
+
+  title String
+
+  description String?
+
+  category String?
+
+  thumbnail String?
+
+  videoUrl String
+
+  duration Int
+
+  releaseYear Int?
+
+  createdAt DateTime @default(now())
+
+  playlistItems PlaylistItem[]
+}
+
+// =====================
+// PROGRAM
+// =====================
+// Container/show name
+
+enum ProgramType {
+  MOVIE
+
+  SERIES
+
+  NEWS
+
+  LIVE
+
+  ENTERTAINMENT
+}
+
+model Program {
+  id Int @id @default(autoincrement())
+
+  channelId Int
+
+  title String
+
+  type ProgramType
+
+  description String?
+
+  playlists Playlist[]
+
+  channel Channel @relation(fields: [channelId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+// =====================
+// PLAYLIST
+// =====================
+// Actual broadcast package
+
+model Playlist {
+  id Int @id @default(autoincrement())
+
+  name String
+
+  programId Int
+
+  totalDuration Int?
+
+  program Program @relation(fields: [programId], references: [id])
+
+  items PlaylistItem[]
+
+  schedules Schedule[]
+
+  createdAt DateTime @default(now())
+}
+
+enum PlaylistItemType {
+  MOVIE
+
+  EPISODE
+
+  ADVERTISEMENT
+
+  ENTERTAINMENT
+
+  NEWS
+
+  STREAM
+}
+
+model PlaylistItem {
+  id Int @id @default(autoincrement())
+
+  playlistId Int
+
+  order Int
+
+  type PlaylistItemType
+
+  movieId Int?
+
+  episodeId Int?
+
+  advertisementId Int?
+
+  entertainmentId Int?
+
+  newsId Int?
+
+  streamId Int?
+
+  duration Int?
+
+  playlist Playlist @relation(fields: [playlistId], references: [id])
+
+  movie Movie? @relation(fields: [movieId], references: [id])
+
+  episode Episode? @relation(fields: [episodeId], references: [id])
+
+  advertisement Advertisement? @relation(fields: [advertisementId], references: [id])
+
+  news News? @relation(fields: [newsId], references: [id])
+
+  stream Stream? @relation(fields: [streamId], references: [id])
+
+  entertainment Entertainment? @relation(fields:[entertainmentId], references:[id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([playlistId, order])
+}
+
+enum ScheduleStatus {
+  SCHEDULED
+  LIVE
+  COMPLETED
+  CANCELLED
+}
+
+model Schedule {
+  id Int @id @default(autoincrement())
+
+  channelId Int
+
+  playlistId Int
+
+  startTime DateTime
+
+  endTime DateTime?
+
+  status ScheduleStatus @default(SCHEDULED)
+
+  channel Channel @relation(fields: [channelId], references: [id])
+
+  playlist Playlist @relation(fields: [playlistId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+enum BroadcastStatus {
+  LIVE
+  STOPPED
+  SWITCHING
+}
+
+model BroadcastSession {
+  id Int @id @default(autoincrement())
+
+  channelId Int
+
+  scheduleId Int?
+
+  status BroadcastStatus @default(STOPPED)
+
+  startedAt DateTime?
+
+  channel   Channel  @relation(fields: [channelId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Recording {
+  id Int @id @default(autoincrement())
+
+  channelId Int
+
+  title String
+
+  fileUrl String
+
+  duration Int
+
+  startedAt DateTime
+
+  endedAt DateTime
+
+  channel Channel @relation(fields: [channelId], references: [id])
+
+  createdAt DateTime @default(now())
+}
