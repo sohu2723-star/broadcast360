@@ -178,6 +178,13 @@ export default function AdvertisementsPage() {
 
                 <td className="p-5 flex gap-3">
                   <Link
+                    href={`/admin/advertisements/${ad.id}`}
+                    className="bg-[#106EE9] px-4 py-2 rounded-lg"
+                  >
+                    View
+                  </Link>
+
+                  <Link
                     href={`/admin/advertisements/edit/${ad.id}`}
                     className="bg-[#400FD3] px-4 py-2 rounded-lg"
                   >
