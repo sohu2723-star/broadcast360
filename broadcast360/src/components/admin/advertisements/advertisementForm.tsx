@@ -243,7 +243,7 @@ export default function AdvertisementForm({
   
             <button
               type="button"
-              onClick={() => router.push("/admin/advertisements")}
+              onClick={() => router.push("/admin/ads")}
               className="bg-[#F41010] px-6 py-3 rounded-xl font-bold hover:opacity-90 text-sm transition-all text-white"
             >
               Cancel
