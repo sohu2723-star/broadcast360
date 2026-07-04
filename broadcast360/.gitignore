@@ -44,3 +44,5 @@ next-env.d.ts
 
 public/videos/
 public/thumbnails/
+public/uploads/
+public/logos/
