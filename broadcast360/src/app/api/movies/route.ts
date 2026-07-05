@@ -82,12 +82,19 @@ export async function POST(req: NextRequest) {
     const movie = await addMovie(formData);
 
     return NextResponse.json(movie);
-  } catch (error) {
-    console.error("POST ERROR =", error);
+  }catch (error: any) {
+  console.error("POST ERROR =", error);
 
+  if (error.code === "P2002") {
     return NextResponse.json(
-      { message: "Create error" },
-      { status: 500 }
+      { message: "Movie already exists for this title and year" },
+      { status: 400 }
     );
   }
+
+  return NextResponse.json(
+    { message: "Create error" },
+    { status: 500 }
+  );
+}
 }

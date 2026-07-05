@@ -29,7 +29,7 @@ export default function MovieForm({
       genre: "",
       video: null,
       thumbnail: null,
-      releaseYear: new Date().getFullYear(),
+      releaseYear: 0,
     }
   );
 
@@ -37,6 +37,20 @@ export default function MovieForm({
 
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  function clearForm() {
+    setForm({
+      title: "",
+      description: "",
+      genre: "",
+      video: null,
+      thumbnail: null,
+      releaseYear: 0,
+    });
+
+    setErrors({});
+    setThumbnailPreview(null);
+    setVideoPreview(null);
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -105,6 +119,10 @@ export default function MovieForm({
               setForm({ ...form, genre: e.target.value })
             }
           />
+
+          {errors.genre && (
+            <p className="text-red-500 text-sm">{errors.genre}</p>
+          )}
         </div>
 
         {/* VIDEO */}
@@ -117,13 +135,28 @@ export default function MovieForm({
             onChange={(e) => {
               const file = e.target.files?.[0] ?? null;
 
-              setForm({ ...form, video: file });
-
-              if (file) {
-                setVideoPreview(URL.createObjectURL(file));
+              if (!file) {
+                setErrors((p) => ({ ...p, video: "Movie file is required" }));
+                return;
               }
+
+              const allowedTypes = ["video/mp4", "video/webm", "video/quicktime"];
+
+              if (!allowedTypes.includes(file.type)) {
+                setErrors((p) => ({ ...p, video: "Invalid video format" }));
+                return;
+              }
+
+              setErrors((p) => ({ ...p, video: "" }));
+
+              setForm({ ...form, video: file });
+              setVideoPreview(URL.createObjectURL(file));
             }}
           />
+
+          {errors.video && (
+            <p className="text-red-500 text-sm">{errors.video}</p>
+          )}
 
           {/* VIDEO PREVIEW */}
           {videoPreview && (
@@ -145,13 +178,31 @@ export default function MovieForm({
             onChange={(e) => {
               const file = e.target.files?.[0] ?? null;
 
-              setForm({ ...form, thumbnail: file });
-
-              if (file) {
-                setThumbnailPreview(URL.createObjectURL(file));
+              if (!file) {
+                setErrors((p) => ({ ...p, thumbnail: "Thumbnail is required" }));
+                return;
               }
+
+              const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+
+              if (!allowedTypes.includes(file.type)) {
+                setErrors((p) => ({
+                  ...p,
+                  thumbnail: "Invalid image format",
+                }));
+                return;
+              }
+
+              setErrors((p) => ({ ...p, thumbnail: "" }));
+
+              setForm({ ...form, thumbnail: file });
+              setThumbnailPreview(URL.createObjectURL(file));
             }}
           />
+
+          {errors.thumbnail && (
+            <p className="text-red-500 text-sm">{errors.thumbnail}</p>
+          )}
 
           {/* THUMBNAIL PREVIEW */}
           {thumbnailPreview && (
@@ -171,11 +222,12 @@ export default function MovieForm({
           <input
             type="number"
             className="w-full bg-[#111936] border border-white/10 rounded-xl p-3"
-            value={form.releaseYear}
+            value={form.releaseYear || ""}
+            placeholder="Choose release year"
             onChange={(e) =>
               setForm({
                 ...form,
-                releaseYear: Number(e.target.value),
+                releaseYear: e.target.value === "" ? 0 : Number(e.target.value),
               })
             }
           />
@@ -191,6 +243,13 @@ export default function MovieForm({
             className="flex-1 bg-[#106EE9] py-3 rounded-xl font-bold"
           >
             Save Movie
+          </button>
+          <button
+            type="button"
+            onClick={clearForm}
+            className="bg-gray-500 px-6 py-3 rounded-xl font-bold"
+          >
+            Clear
           </button>
 
           <button
