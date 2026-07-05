@@ -1,125 +1,76 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import AdvertisementForm from "@/components/admin/advertisements/advertisementForm";
-import type { AdvertisementFormData } from "@/types/advertisement";
+import { useState, useEffect, use } from "react";
+import { useRouter } from "next/navigation";
+import AdvertisementForm from "@/components/admin/advertisements/advertisementForm"; 
 
-type Advertisement = {
-  id: number;
-  title: string;
-  videoUrl: string;
-  duration: number | null;
-  active: boolean;
-};
-
-export default function EditAdvertisementPage() {
-  const params = useParams();
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
+export default function EditAdvertisementPage({ params }: PageProps) {
   const router = useRouter();
-  const id = Number(params.id); 
+  const resolvedParams = use(params);
+  const adId = Number(resolvedParams.id);
 
-  const [advertisement, setAdvertisement] = useState<Advertisement | null>(null);
+  const [adData, setAdData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function loadAdvertisement() {
+    const fetchAdDetails = async () => {
       try {
-        const res = await fetch(`/api/ads/${id}`);
-        if (!res.ok) throw new Error("Advertisement not found");
-        const data: Advertisement = await res.json();
-        setAdvertisement(data);
-      } catch (err) {
-        console.log(err);
+        setLoading(true);
+        const res = await fetch(`/api/ads/${adId}`);
+        if (!res.ok) throw new Error("Failed to fetch advertisement data.");
+        
+        const result = await res.json();
+        setAdData(result.data);
+      } catch (err: any) {
+        setError(err.message || "Something went wrong.");
+      } finally {
+        setLoading(false);
       }
-    }
+    };
 
-    if (id) loadAdvertisement();
-  }, [id]);
+    if (adId) fetchAdDetails();
+  }, [adId]);
 
-  if (!advertisement) {
-    return <p className="p-6 text-white text-sm animate-pulse">Loading Asset...</p>;
-  }
-
-  const initialData: AdvertisementFormData = {
-    title: advertisement.title,
-    active: advertisement.active,
-    video: null, 
-  };
-
-  async function handleSubmit(data: AdvertisementFormData) {
-    if (!advertisement) return;
-
+  async function handleEditSubmit(data: any) {
     const formData = new FormData();
     formData.append("title", data.title);
     formData.append("active", String(data.active));
-    if (data.video) {
-      formData.append("video", data.video);
-    }
+    
+    if (data.video) formData.append("video", data.video);
+    if (data.thumbnail) formData.append("thumbnail", data.thumbnail);
 
-    const res = await fetch(`/api/ads/${advertisement.id}`, {
+    const res = await fetch(`/api/ads/${adId}`, {
       method: "PUT",
       body: formData,
     });
 
     if (res.ok) {
       router.push("/admin/ads");
+      router.refresh();
+    } else {
+      const errorData = await res.json().catch(() => ({}));
+      console.error("API Error Response From Server:", errorData);
+      alert(errorData.message || "Update failed");
     }
   }
 
+  if (loading) return <div className="p-6 text-white text-center">Loading Advertisement Data...</div>;
+  if (error || !adData) return <div className="p-6 text-red-400 text-center">{error || "Data missing"}</div>;
+
   return (
-    <div className="p-6  text-white">
-      <h1 className="text-2xl font-bold mb-5">
-        Edit Advertisement
-      </h1>
-
-      {/* Video Preview */}
-      <div className="mt-10">
-        <h2 className="font-semibold">
-          PreviewVideo
-        </h2>
-        <video
-          width="250"
-          height="250"
-          controls
-          className="rounded object-cover"
-        >
-          <source src={advertisement.videoUrl} type="video/mp4" />
-          Your browser does not support video.
-        </video>
-      </div>
-
-      {/* Duration from ffmpeg */}
-      <div className="mt-5">
-        <p>
-          Duration:{" "}
-          {advertisement.duration
-            ? `${advertisement.duration} seconds`
-            : "No duration"}
-        </p>
-      </div>
-
+    <div className="p-6 text-white">
+      <h1 className="text-2xl font-bold mb-5">Edit Advertisement</h1>
       <div className="mt-8">
-  <AdvertisementForm
-    initialData={initialData}
-    advertisementId={advertisement.id}
-    onSubmit={async (data) => {
-      const formData = new FormData();
-      formData.append("title", data.title);
-      formData.append("active", String(data.active));
-      if (data.video) {
-        formData.append("video", data.video);
-      }
-
-      const res = await fetch(`/api/ads/${advertisement.id}`, {
-        method: "PUT",
-        body: formData,
-      });
-
-      if (res.ok) {
-        router.push("/admin/ads");
-      }
-    }}
-  />
-</div>
+        <AdvertisementForm 
+          initialData={adData} 
+          advertisementId={adId} 
+          onSubmit={handleEditSubmit} 
+        />
+      </div>
     </div>
   );
 }
