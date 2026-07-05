@@ -21,7 +21,7 @@ export default function ScheduleButton({ id }: Props) {
     <div className="flex gap-3">
 
       <Link
-        href={`/admin/schedules/view/${id}`}
+        href={`/admin/schedules/${id}`}
         className="bg-[#106EE9] px-4 py-2 rounded-lg text-sm"
       >
         View

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PlaylistService } from "@/services/playlist.service";
+import {prisma } from "@/lib/prisma"
 
 export async function POST(
   req: NextRequest,
@@ -46,39 +47,60 @@ export async function POST(
   }
 }
 
-export async function GET(
-  req: NextRequest,
-  context: {
-    params: Promise<{ programId: string }>;
-  }
-) {
-  try {
-    const { programId } = await context.params;
-    const id = Number(programId);
+// export async function GET(
+//   req: NextRequest,
+//   context: {
+//     params: Promise<{ programId: string }>;
+//   }
+// ) {
+//   try {
+//     const { programId } = await context.params;
+//     const id = Number(programId);
 
-    if (isNaN(id)) {
-      return NextResponse.json(
-        { message: "Invalid programId" },
-        { status: 400 }
-      );
+//     if (isNaN(id)) {
+//       return NextResponse.json(
+//         { message: "Invalid programId" },
+//         { status: 400 }
+//       );
+//     }
+
+//     const { searchParams } = new URL(req.url);
+
+//     const page = Number(searchParams.get("page") ?? 1);
+//     const limit = Number(searchParams.get("limit") ?? 10);
+
+//     const data = await PlaylistService.getProgramPlaylists(
+//       id,
+//       page,
+//       limit
+//     );
+
+//     return NextResponse.json({ data });
+//   } catch (error) {
+//     return NextResponse.json(
+//       { message: "Failed to load program playlists" },
+//       { status: 500 }
+//     );
+//   }
+// }
+
+
+export async function GET(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const programId = searchParams.get("programId");
+
+    if (!programId) {
+      return NextResponse.json({ message: "programId query param required" }, { status: 400 });
     }
 
-    const { searchParams } = new URL(req.url);
+    const playlists = await prisma.playlist.findMany({
+      where: { programId: Number(programId) },
+      orderBy: { name: "asc" },
+    });
 
-    const page = Number(searchParams.get("page") ?? 1);
-    const limit = Number(searchParams.get("limit") ?? 10);
-
-    const data = await PlaylistService.getProgramPlaylists(
-      id,
-      page,
-      limit
-    );
-
-    return NextResponse.json({ data });
+    return NextResponse.json({ data: playlists });
   } catch (error) {
-    return NextResponse.json(
-      { message: "Failed to load program playlists" },
-      { status: 500 }
-    );
+    return NextResponse.json({ message: "Error loading playlists" }, { status: 500 });
   }
 }

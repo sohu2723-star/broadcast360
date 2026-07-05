@@ -1,20 +1,19 @@
-export type Schedule = {
-  id: number;
+export enum ScheduleStatus {
+  SCHEDULED = "SCHEDULED",
+  LIVE = "LIVE",
+  COMPLETED = "COMPLETED",
+  CANCELLED = "CANCELLED",
+}
 
-  channel: {
-    id: number;
-    name: string;
-  };
+export type ScheduleFormData = {
+  channelId: number;
+  playlistId: number;
+  startTime: string;
+  endTime: string;
+};
 
-  playlist: {
-    id: number;
-    name: string;
-  };
+export type CreateScheduleDTO = ScheduleFormData;
 
-  startTime: string;   // formatted for UI (e.g. "08:00")
-  endTime: string | null;
-
-  scheduleDate: string; // derived from startTime (YYYY-MM-DD)
-
-  createdDate: string;  // createdAt from DB
+export type UpdateScheduleDTO = ScheduleFormData & {
+  status?: ScheduleStatus;
 };

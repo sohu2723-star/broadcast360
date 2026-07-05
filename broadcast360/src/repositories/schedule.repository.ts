@@ -1,100 +1,109 @@
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@/generated/prisma/client";
 
-export async function deleteSchedule(id: number) {
-  if (!id || isNaN(id)) {
-    throw new Error("Invalid schedule id");
-  }
+export const ScheduleRepository = {
+  findAll: async () => {
+    return prisma.schedule.findMany({
+      include: { channel: true, playlist: true },
+      orderBy: { startTime: "asc" },
+    });
+  },
 
-  return prisma.schedule.delete({
-    where: { id },
-  });
-}
+  findById: async (id: number) => {
+    return prisma.schedule.findUnique({
+      where: { id },
+      include: { channel: true, playlist: true },
+    });
+  },
 
-// GET BY ID
-export function getScheduleById(id: number) {
-  return prisma.schedule.findUnique({
-    where: { id },
-    include: {
-      channel: true,
-      playlist: true,
-    },
-  });
-}
+  findByChannel: async (channelId: number) => {
+    return prisma.schedule.findMany({
+      where: { channelId },
+    });
+  },
 
-// PAGINATION + SEARCH + SINGLE DATE FILTER
-export async function getPaginatedSchedules({
-  page,
-  limit,
-  search,
-  date,
-}: {
-  page: number;
-  limit: number;
-  search?: string;
-  date?: string;
-}) {
-  const skip = (page - 1) * limit;
+  getPaginatedSchedules: async ({
+    page,
+    limit,
+    search,
+    date,
+  }: {
+    page: number;
+    limit: number;
+    search?: string;
+    date?: string;
+  }) => {
+    const skip = (page - 1) * limit;
+    const start = date ? new Date(`${date}T00:00:00`) : undefined;
+    const end = date ? new Date(`${date}T23:59:59.999`) : undefined;
 
-  const start = date ? new Date(`${date}T00:00:00`) : undefined;
-  const end = date ? new Date(`${date}T23:59:59.999`) : undefined;
+    const where: Prisma.ScheduleWhereInput = {
+      AND: [
+        search
+          ? {
+              OR: [
+                { channel: { name: { contains: search, mode: "insensitive" } } },
+                { playlist: { name: { contains: search, mode: "insensitive" } } },
+              ],
+            }
+          : {},
+        date
+          ? {
+              OR: [
+                { startTime: { gte: start, lte: end } },
+                { endTime: { gte: start, lte: end } },
+              ],
+            }
+          : {},
+      ],
+    };
 
-  const where: Prisma.ScheduleWhereInput = {
-    AND: [
-      search
-        ? {
-            OR: [
-              {
-                channel: {
-                  name: { contains: search, mode: "insensitive" },
-                },
-              },
-              {
-                playlist: {
-                  name: { contains: search, mode: "insensitive" },
-                },
-              },
-            ],
-          }
-        : {},
+    const [data, total] = await prisma.$transaction([
+      prisma.schedule.findMany({
+        where,
+        skip,
+        take: limit,
+        include: { channel: true, playlist: true },
+        orderBy: { startTime: "desc" },
+      }),
+      prisma.schedule.count({ where }),
+    ]);
 
-      date
-        ? {
-            OR: [
-              {
-                startTime: {
-                  gte: start,
-                  lte: end,
-                },
-              },
-              {
-                endTime: {
-                  gte: start,
-                  lte: end,
-                },
-              },
-            ],
-          }
-        : {},
-    ],
-  };
+    return { data, total };
+  },
 
-  const [data, total] = await prisma.$transaction([
-    prisma.schedule.findMany({
-      where,
-      skip,
-      take: limit,
-      include: {
-        channel: true,
-        playlist: true,
-      },
-      orderBy: {
-        startTime: "desc",
-      },
-    }),
+  create: async (data: {
+    channelId: number;
+    playlistId: number;
+    startTime: Date;
+    endTime: Date | null;
+  }) => {
+    return prisma.schedule.create({
+      data,
+      include: { channel: true, playlist: true },
+    });
+  },
 
-    prisma.schedule.count({ where }),
-  ]);
+  update: async (
+    id: number,
+    data: {
+      channelId: number;
+      playlistId: number;
+      startTime: Date;
+      endTime: Date | null;
+    }
+  ) => {
+    return prisma.schedule.update({
+      where: { id },
+      data,
+      include: { channel: true, playlist: true },
+    });
+  },
 
-  return { data, total };
-}
+  delete: async (id: number) => {
+    if (!id || isNaN(id)) throw new Error("Invalid schedule id");
+    return prisma.schedule.delete({
+      where: { id },
+    });
+  },
+};
