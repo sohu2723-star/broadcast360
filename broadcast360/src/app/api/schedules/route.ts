@@ -1,35 +1,32 @@
-import { NextRequest } from "next/server";
-import { getPaginatedSchedules } from "@/repositories/schedule.repository";
+import { NextRequest, NextResponse } from "next/server";
+import { ScheduleService } from "@/services/schedule.service";
 
-export async function GET(request: NextRequest) {
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const page = Number(searchParams.get("page") ?? "1");
+  const limit = Number(searchParams.get("limit") ?? "10");
+  const search = searchParams.get("search") || undefined;
+  const date = searchParams.get("date") || undefined;
+
+  // Use the clear paginated strategy if queries are active, otherwise fall back to getAll
+  if (searchParams.has("page") || searchParams.has("search") || searchParams.has("date")) {
+    const data = await ScheduleService.getPaginated(page, limit, search, date);
+    return NextResponse.json(data);
+  }
+
+  const schedules = await ScheduleService.getAll();
+  return NextResponse.json(schedules);
+}
+
+export async function POST(req: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-
-    const page = Number(searchParams.get("page") ?? 1);
-    const limit = Number(searchParams.get("limit") ?? 5);
-    const search = searchParams.get("search") ?? undefined;
-    const date = searchParams.get("date") ?? undefined;
-
-    const result = await getPaginatedSchedules({
-      page,
-      limit,
-      search,
-      date,
-    });
-
-    return Response.json({
-      data: result.data,
-      pagination: {
-        page,
-        limit,
-        total: result.total,
-      },
-    });
+    const body = await req.json();
+    const schedule = await ScheduleService.create(body);
+    return NextResponse.json(schedule, { status: 201 });
   } catch (error) {
-    console.error(error);
-    return Response.json(
-      { message: "Failed to get schedules" },
-      { status: 500 }
+    return NextResponse.json(
+      { message: error instanceof Error ? error.message : "Create failed" },
+      { status: 400 }
     );
   }
 }
