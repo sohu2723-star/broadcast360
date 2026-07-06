@@ -2,6 +2,8 @@ export type EpisodeFormData = {
   title: string;
   episodeNo: number;
   videoFile: File | null; // ✅ always defined in form state
+  thumbnailFile: File | null;
+
 };
 
 export type Episode = {
@@ -20,4 +22,5 @@ export type EpisodeUpdateData = {
   title: string;
   episodeNo: number;
   videoFile?: File | null; // ✅ optional + nullable (edit-safe)
+  thumbnailFile?: File | null; 
 };
