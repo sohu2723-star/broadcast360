@@ -109,4 +109,21 @@ export const PlaylistRepository = {
 
   return totalSeconds;
 },
+
+};
+
+export const getPlaylistItemsWithRelations = async (playlistId: number) => {
+  return prisma.playlistItem.findMany({
+    where: { playlistId },
+    orderBy: { order: "asc" },
+
+    include: {
+      movie: true,
+      episode: true,
+      advertisement: true,
+      news: true,
+      entertainment: true,
+      stream: true,
+    },
+  });
 };

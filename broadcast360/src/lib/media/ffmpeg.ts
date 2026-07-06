@@ -100,3 +100,17 @@ export function generateThumbnail(
       });
 
   }); }
+
+
+export async function startFFmpegStream(
+  videos: string[],
+  streamKey: string
+) {
+  console.log("Streaming...");
+
+  console.log(videos);
+
+  console.log(streamKey);
+
+  // Spawn FFmpeg here
+}
