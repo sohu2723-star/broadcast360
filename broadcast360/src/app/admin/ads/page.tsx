@@ -15,6 +15,17 @@ type Advertisement = {
 };
 
 export default function AdvertisementsPage() {
+  const formatDuration = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+
+    return `${minutes
+      .toString()
+      .padStart(2, "0")}:${remainingSeconds
+      .toString()
+      .padStart(2, "0")}`;
+  };
+
   const [advertisements, setAdvertisements] = useState<
     Advertisement[]
   >([]);
@@ -166,7 +177,9 @@ export default function AdvertisementsPage() {
                   />
                 </td>
 
-                <td className="p-5">{ad.duration}s</td>
+                <td className="p-5">
+                  {formatDuration(ad.duration)}
+                </td>
 
                 <td className="p-5">
                   {ad.active ? "Active" : "Inactive"}
