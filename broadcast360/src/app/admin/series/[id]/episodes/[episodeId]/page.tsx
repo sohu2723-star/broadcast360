@@ -19,6 +19,18 @@ type Series = {
   episodes: Episode[];
 };
 
+function formatDuration(seconds: number) {
+  const hrs = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+
+  const hh = String(hrs).padStart(2, "0");
+  const mm = String(mins).padStart(2, "0");
+  const ss = String(secs).padStart(2, "0");
+
+  return `${hh}:${mm}:${ss}`;
+}
+
 export default function EpisodePlayerPage() {
   const params = useParams();
 
@@ -93,33 +105,33 @@ export default function EpisodePlayerPage() {
         </div>
 
         {/* Scrollable Episode List */}
-        <div className="flex-1 overflow-y-auto px-4 pb-4 min-h-0 custom-scrollbar">
-          <div className="space-y-2">
-            {series.episodes.map((ep) => (
-              <Link
-                key={ep.id}
-                href={`/admin/series/${series.id}/episodes/${ep.id}`}
-                className={`block p-3 rounded-lg ${ep.id === episode.id
-                  ? "bg-blue-600"
-                  : "bg-white/5 hover:bg-white/10"
-                  }`}
-              >
-                <div className="font-semibold">
-                  EP {ep.episodeNo}
-                </div>
-
-                <div className="text-sm text-gray-300">
-                  {ep.title}
-                </div>
-              </Link>
-            ))}
-          </div>
+       <div className="max-h-[500px] overflow-y-auto px-4 pb-4 custom-scrollbar">
+  <div className="space-y-2">
+    {series.episodes.map((ep) => (
+      <Link
+        key={ep.id}
+        href={`/admin/series/${series.id}/episodes/${ep.id}`}
+        className={`block p-3 rounded-lg ${
+          ep.id === episode.id
+            ? "bg-blue-600"
+            : "bg-white/5 hover:bg-white/10"
+        }`}
+      >
+        <div className="font-semibold">
+          EP {ep.episodeNo}
         </div>
 
+        <div className="text-sm text-gray-300">
+          {ep.title}
+        </div>
+      </Link>
+    ))}
+  </div>
+</div>
       </div>
 
       {/* MAIN CONTENT */}
-      <div className="flex-1 flex flex-col">
+     <div className="flex-1 flex flex-col min-h-0">
 
         {/* TOP BAR */}
         <div className="h-16 border-b border-white/10 bg-[#0B1026] flex items-center justify-between px-6">
@@ -134,28 +146,17 @@ export default function EpisodePlayerPage() {
         </div>
 
         {/* PLAYER */}
-        <div className="flex-1 overflow-auto p-6">
+      <div className="flex-1 p-6 flex flex-col gap-4">
           <div className="max-w-6xl mx-auto">
 
             <video
               src={episode.videoUrl}
               controls
               autoPlay
-              className="w-full rounded-xl bg-black"
+               className="w-full max-h-[55vh] rounded-xl bg-black"
               onLoadedMetadata={(e) => {
                 const totalSeconds = Math.floor(e.currentTarget.duration);
-
-                const hours = Math.floor(totalSeconds / 3600);
-                const minutes = Math.floor((totalSeconds % 3600) / 60);
-                const seconds = totalSeconds % 60;
-
-                if (hours > 0) {
-                  setDuration(`${hours}h ${minutes}m ${seconds}s`);
-                } else if (minutes > 0) {
-                  setDuration(`${minutes}m ${seconds}s`);
-                } else {
-                  setDuration(`${seconds}s`);
-                }
+                setDuration(formatDuration(totalSeconds));
               }}
             />
 
@@ -175,7 +176,7 @@ export default function EpisodePlayerPage() {
                 </span>
 
                 <span className="bg-white/5 px-3 py-1 rounded-full">
-                  ⏱ {duration || "Loading..."}
+                  ⏱ {duration ?? "Loading..."}
                 </span>
 
                 <span className="bg-white/5 px-3 py-1 rounded-full">
@@ -189,7 +190,7 @@ export default function EpisodePlayerPage() {
               </div>
 
               {/* Navigation */}
-              <div className="flex justify-between mt-8">
+              <div className="flex justify-between mt-auto pt-6">
                 {series.episodes.findIndex((ep) => ep.id === episode.id) > 0 ? (
                   <Link
                     href={`/admin/series/${series.id}/episodes/${series.episodes[
