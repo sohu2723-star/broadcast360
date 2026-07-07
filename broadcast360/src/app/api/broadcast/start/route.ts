@@ -28,7 +28,17 @@ export async function POST(req: Request) {
     }
 
     // 2. start broadcast manually
-    await broadcast.start(schedule as ScheduleWithRelations);
+    if (!schedule) {
+  return Response.json(
+    { error: "No schedule found" },
+    { status: 404 }
+  );
+}
+
+await broadcast.start(
+  schedule,
+  schedule.channelId
+);
 
     return NextResponse.json({
       message: "Broadcast started",

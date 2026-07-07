@@ -1,32 +1,54 @@
-import { spawn, ChildProcessWithoutNullStreams } from "child_process";
+import { spawn } from "child_process";
 import path from "path";
 import fs from "fs";
 
 export class FFmpegManager {
-  private processes: Map<number, ChildProcessWithoutNullStreams> = new Map();
+  // ✔ FIX: correct type for spawned process
+  private processes: Map<number, ReturnType<typeof spawn>> = new Map();
 
-  start(channelId: number, inputs: string[], outputDir: string) {
-    // ⚠️ MVP RULE: use only FIRST input first (no mixing yet)
-  
-
-    function resolveInputPath(videoUrl: string) {
-  if (videoUrl.startsWith("/")) {
-    return path.join(process.cwd(), "public", videoUrl);
-  }
-
-  return videoUrl;
-}
-    const input = resolveInputPath(inputs[0]);
-
-    if (!input) {
+  start(
+    channelId: number,
+    inputs: string[],
+    outputDir: string
+  ): ReturnType<typeof spawn> | null {
+    if (!inputs || inputs.length === 0) {
       console.log("❌ No input for FFmpeg");
       return null;
     }
 
-    // ensure folder exists
-    const fullPath = path.resolve(process.cwd(), "public", "streams", `channel-${channelId}`);
+    const resolveInputPath = (videoUrl: string) => {
+      if (videoUrl.startsWith("/")) {
+        return path.join(process.cwd(), "public", videoUrl);
+      }
+      return videoUrl;
+    };
 
-    fs.mkdirSync(fullPath, { recursive: true });
+    const input = resolveInputPath(inputs[0]);
+
+    // ✔ FIX: validate file exists
+    if (!fs.existsSync(input)) {
+      console.log("❌ File not found:", input);
+      return null;
+    }
+
+    // ✔ create output folder
+    const fullPath = path.resolve(
+      process.cwd(),
+      "public",
+      "streams",
+      `channel-${channelId}`
+    );
+
+    if (fs.existsSync(fullPath)) {
+    fs.rmSync(fullPath, {
+      recursive: true,
+      force: true,
+    });
+  }
+
+  fs.mkdirSync(fullPath, {
+    recursive: true,
+  });
 
     const outputPath = path.join(fullPath, "index.m3u8");
 
@@ -38,7 +60,7 @@ export class FFmpegManager {
       "-i",
       input,
 
-      // video codec
+      // video
       "-c:v",
       "libx264",
       "-preset",
@@ -60,30 +82,34 @@ export class FFmpegManager {
       "-hls_list_size",
       "6",
       "-hls_flags",
-      "delete_segments+append_list",
+      "delete_segments",
+      "-hls_allow_cache",
+      "1",
 
       outputPath,
     ];
 
-    const ffmpeg = spawn("ffmpeg", ffmpegArgs);
+    const ffmpeg = spawn("ffmpeg", ffmpegArgs, {
+      stdio: ["ignore", "pipe", "pipe"],
+    });
 
-    // IMPORTANT FIX: avoid your TypeScript error
+    // ✔ store process safely
     this.processes.set(channelId, ffmpeg);
 
-    ffmpeg.stdout.on("data", (data) => {
+    ffmpeg.stderr.on("data", (data) => {
       console.log(`[FFMPEG ${channelId}]`, data.toString());
     });
 
-    ffmpeg.stderr.on("data", (data) => {
-      console.log(`[FFMPEG ERROR ${channelId}]`, data.toString());
+    ffmpeg.on("error", (err) => {
+      console.log(`❌ FFmpeg error channel ${channelId}:`, err);
     });
 
     ffmpeg.on("close", (code) => {
-      console.log(`❌ FFmpeg exited for channel ${channelId} code:`, code);
+      console.log(`❌ FFmpeg exited channel ${channelId} code: ${code}`);
       this.processes.delete(channelId);
     });
 
-    return ffmpeg.pid;
+    return ffmpeg;
   }
 
   stop(channelId: number) {

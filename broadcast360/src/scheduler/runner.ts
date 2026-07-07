@@ -1,11 +1,35 @@
-import { TVScheduler } from "./tv.scheduler";
+import { ScheduleRepository } from "@/repositories/schedule.repository";
+import { ScheduleWithRelations } from "@/types/schedule.types";
+export class TVRunner {
+  private runningChannels = new Map<number, NodeJS.Timeout>();
 
-const scheduler = new TVScheduler();
+  start(channelId: number, callback: (schedule: ScheduleWithRelations) => void) {
+    if (this.runningChannels.has(channelId)) return;
 
-export function startTVEngine() {
-  console.log("🚀 TV Engine Started");
+    const tick = async () => {
+      const now = new Date();
 
-  setInterval(() => {
-    scheduler.tick();
-  }, 30000); // every 30s
+      const schedules = await ScheduleRepository.getSchedulesAroundTime(now);
+
+      const active = schedules.find(
+        (s) =>
+          s.channelId === channelId &&
+          s.startTime <= now &&
+          (!s.endTime || s.endTime >= now)
+      );
+
+      if (active) {
+        callback(active);
+      }
+    };
+
+    const interval = setInterval(tick, 5000); // check every 5 sec
+    this.runningChannels.set(channelId, interval);
+  }
+
+  stop(channelId: number) {
+    const interval = this.runningChannels.get(channelId);
+    if (interval) clearInterval(interval);
+    this.runningChannels.delete(channelId);
+  }
 }

@@ -112,18 +112,31 @@ export const PlaylistRepository = {
 
 };
 
-export const getPlaylistItemsWithRelations = async (playlistId: number) => {
-  return prisma.playlistItem.findMany({
-    where: { playlistId },
-    orderBy: { order: "asc" },
+export const getDefaultPlaylist = async (channelId: number) => {
+  return prisma.channel.findUnique({
+    where: {
+      id: channelId,
+    },
 
     include: {
-      movie: true,
-      episode: true,
-      advertisement: true,
-      news: true,
-      entertainment: true,
-      stream: true,
+      defaultPlaylist: {
+        include: {
+          items: {
+            orderBy: {
+              order: "asc",
+            },
+
+            include: {
+              movie: true,
+              episode: true,
+              advertisement: true,
+              news: true,
+              entertainment: true,
+              stream: true,
+            },
+          },
+        },
+      },
     },
   });
 };

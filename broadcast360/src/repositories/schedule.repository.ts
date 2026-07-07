@@ -17,7 +17,6 @@ export const ScheduleRepository = {
       playlist: {
         include: {
           items: {
-            orderBy: { order: "asc" },
             include: {
               movie: true,
               episode: true,
@@ -128,30 +127,79 @@ export const ScheduleRepository = {
  * Get schedules around current time
  */
   getSchedulesAroundTime: async (now: Date) => {
-    return prisma.schedule.findMany({
-      where: {
-        startTime: {
-          lte: new Date(now.getTime() + 60 * 60 * 1000),
-        },
+  return prisma.schedule.findMany({
+    where: {
+      startTime: {
+        lte: new Date(now.getTime() + 60 * 60 * 1000),
       },
-      include: {
-        channel: true,
-        playlist: {
-          include: {
-            items: {
-              orderBy: { order: "asc" },
-              include: {
-                movie: true,
-                episode: true,
-                advertisement: true,
-                entertainment: true,
-                news: true,
-                stream: true,
-              },
+    },
+    include: {
+      playlist: {
+        include: {
+          items: {
+            orderBy: {
+              order: "asc",
+            },
+            include: {
+              movie: true,
+              episode: true,
+              advertisement: true,
+              entertainment: true,
+              news: true,
+              stream: true,
             },
           },
         },
       },
-    });
-  },
+    },
+  });
+},
+
+  findLiveSchedule: async (
+  channelId: number,
+  now: Date
+) => {
+  return prisma.schedule.findFirst({
+    where: {
+      channelId,
+
+      startTime: {
+        lte: now,
+      },
+
+      OR: [
+        {
+          endTime: null,
+        },
+        {
+          endTime: {
+            gt: now,
+          },
+        },
+      ],
+    },
+
+    include: {
+      playlist: {
+        include: {
+          items: {
+            orderBy: {
+              order: "asc",
+            },
+            include: {
+              movie: true,
+              episode: true,
+              advertisement: true,
+              entertainment: true,
+              news: true,
+              stream: true,
+            },
+          },
+        },
+      },
+    },
+  });
+},
+
+
 }

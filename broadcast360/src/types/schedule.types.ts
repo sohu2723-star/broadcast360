@@ -2,7 +2,6 @@ import { Prisma } from "@/generated/prisma/client";
 
 export type ScheduleWithRelations = Prisma.ScheduleGetPayload<{
   include: {
-  channel: true,
   playlist: {
     include: {
       items: {
@@ -20,3 +19,6 @@ export type ScheduleWithRelations = Prisma.ScheduleGetPayload<{
   },
 }
 }>;
+
+export type PlaylistItemWithRelations =
+  ScheduleWithRelations["playlist"]["items"][number];

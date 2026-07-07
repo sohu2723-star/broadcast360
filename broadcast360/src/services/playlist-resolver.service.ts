@@ -1,6 +1,10 @@
+import { PlaylistItemWithRelations } from "@/types/schedule.types";
+
 export class PlaylistResolverService {
-  resolve(items: any[]) {
-    return items.map((item) => {
+  resolve(items: any | string[]) {
+    const list = Array.isArray(items) ? items : [items];
+
+    return list.map((item) => {
       const url =
         item.movie?.videoUrl ||
         item.episode?.videoUrl ||
