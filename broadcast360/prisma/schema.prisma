@@ -25,11 +25,16 @@ model Channel {
   streamKey         String?            @unique
   createdAt         DateTime           @default(now())
   broadcastSessions BroadcastSession[]
-  news              News[]
-  programs          Program[]
-  recordings        Recording[]
-  schedules         Schedule[]
-  streams           Stream[]
+
+  createdAt DateTime @default(now())
+
+  programs Program[]
+
+
+  // 24/7 fallback playlist
+  defaultPlaylistId Int?
+
+  defaultPlaylist Playlist? @relation("ChannelDefaultPlaylist",fields: [defaultPlaylistId],references: [id])
 }
 
 model Stream {
@@ -196,6 +201,7 @@ model Recording {
   startedAt DateTime
   endedAt   DateTime
   createdAt DateTime @default(now())
+<<<<<<< HEAD
   channel   Channel  @relation(fields: [channelId], references: [id])
 }
 
@@ -210,6 +216,12 @@ enum ProgramType {
   NEWS
   LIVE
   ENTERTAINMENT
+=======
+
+
+  // channels using this playlist as 24/7 fallback
+  defaultForChannels Channel[] @relation("ChannelDefaultPlaylist")
+>>>>>>> origin/main
 }
 
 enum PlaylistItemType {

@@ -29,19 +29,18 @@ export default function SeriesForm({
       title: "",
       description: "",
       genre: "",
-      releaseYear: new Date().getFullYear(),
+      releaseYear: "",
       thumbnail: null,
-    }
+    },
   );
-
-  const [fileName, setFileName] = useState<string>("");
+  const [fileName, setFileName] = useState("");
 
   const [errors, setErrors] = useState<{
-    title?: string[];
-    description?: string[];
-    genre?: string[];
-    releaseYear?: string[];
-    thumbnail?: string[];
+    title?: string;
+    description?: string;
+    genre?: string;
+    releaseYear?: string;
+    thumbnail?: string;
   }>({});
 
   async function handleSubmit(e: React.FormEvent) {
@@ -49,25 +48,29 @@ export default function SeriesForm({
 
     const schema = seriesId ? editSeriesSchema : createSeriesSchema;
 
-    // ✅ FIX: prevent NaN crash
-    const safeData = {
-      ...form,
-      releaseYear:
-        typeof form.releaseYear === "number" &&
-        !isNaN(form.releaseYear)
-          ? form.releaseYear
-          : undefined,
-    };
-
-    const result = schema.safeParse(safeData);
+    const result = schema.safeParse(form);
 
     if (!result.success) {
-      setErrors(result.error.flatten().fieldErrors);
+      const fieldErrors: typeof errors = {};
+
+      result.error.issues.forEach((issue) => {
+        const field = issue.path[0] as keyof typeof errors;
+
+        if (!fieldErrors[field]) {
+          fieldErrors[field] = issue.message;
+        }
+      });
+
+      setErrors(fieldErrors);
       return;
     }
 
     setErrors({});
-    await onSubmit(form);
+
+    await onSubmit({
+      ...result.data,
+      thumbnail: result.data.thumbnail ?? null,
+    });
   }
 
   return (
@@ -79,16 +82,12 @@ export default function SeriesForm({
 
           <input
             value={form.title}
-            onChange={(e) =>
-              setForm({ ...form, title: e.target.value })
-            }
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
             className="w-full bg-[#111936] border border-white/10 rounded-xl p-3"
           />
 
           {errors.title && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.title[0]}
-            </p>
+            <p className="text-red-500 text-sm mt-1">{errors.title}</p>
           )}
         </div>
 
@@ -109,9 +108,7 @@ export default function SeriesForm({
           />
 
           {errors.description && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.description[0]}
-            </p>
+            <p className="text-red-500 text-sm mt-1">{errors.description}</p>
           )}
         </div>
 
@@ -121,48 +118,62 @@ export default function SeriesForm({
 
           <input
             value={form.genre}
-            onChange={(e) =>
-              setForm({ ...form, genre: e.target.value })
-            }
+            onChange={(e) => setForm({ ...form, genre: e.target.value })}
             className="w-full bg-[#111936] border border-white/10 rounded-xl p-3"
           />
 
           {errors.genre && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.genre[0]}
-            </p>
+            <p className="text-red-500 text-sm mt-1">{errors.genre}</p>
           )}
         </div>
 
         {/* RELEASE YEAR */}
-        <div>
-          <label className="block mb-2">Release Year</label>
+       <div>
+  <label className="block mb-2">
+    Release Year
+  </label>
 
-          <input
-            type="number"
-            value={form.releaseYear || ""}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                releaseYear: Number(e.target.value),
-              })
-            }
-            className="w-full bg-[#111936] border border-white/10 rounded-xl p-3"
-          />
+<input
+  type="text"
+  inputMode="numeric"
+  maxLength={4}
+  placeholder="eg. 2020"
+  value={
+    form.releaseYear === ""
+      ? ""
+      : String(form.releaseYear)
+  }
+  onChange={(e) => {
+    const value = e.target.value;
 
-          {errors.releaseYear && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.releaseYear[0]}
-            </p>
-          )}
-        </div>
+    if (/^\d*$/.test(value)) {
+      setForm({
+        ...form,
+        releaseYear:
+          value === ""
+            ? ""
+            : Number(value),
+      });
+    }
+  }}
+  className={`w-full bg-[#111936] rounded-xl p-4 h-14 text-lg border ${
+    errors.releaseYear
+      ? "border-red-500"
+      : "border-white/10"
+  }`}
+/>
+
+{errors.releaseYear && (
+  <p className="text-red-500 text-sm mt-1">
+    {errors.releaseYear}
+  </p>
+)}
+</div>
 
         {/* CURRENT THUMBNAIL */}
         {thumbnailUrl && (
           <div>
-            <label className="block mb-2">
-              Current Thumbnail
-            </label>
+            <label className="block mb-2">Current Thumbnail</label>
 
             <Image
               src={thumbnailUrl}
@@ -203,9 +214,7 @@ export default function SeriesForm({
           </label>
 
           {errors.thumbnail && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.thumbnail[0]}
-            </p>
+            <p className="text-red-500 text-sm mt-1">{errors.thumbnail}</p>
           )}
         </div>
 

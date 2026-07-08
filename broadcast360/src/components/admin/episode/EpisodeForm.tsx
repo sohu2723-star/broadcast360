@@ -32,6 +32,7 @@ export default function EpisodeForm({
     title: defaultValues?.title ?? "",
     episodeNo: defaultValues?.episodeNo ?? 1,
     videoFile: null,
+    thumbnailFile: null,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -128,6 +129,27 @@ export default function EpisodeForm({
           {errors.videoFile && (
             <p className="mt-1 text-sm text-red-500">
               {errors.videoFile}
+            </p>
+          )}
+        </div>
+         {/* THUMBNAIL */}
+        <div>
+          <label className="mb-2 block">Thumbnail Image</label>
+
+          <input
+            type="file"
+            accept="image/*"
+            className="w-full rounded-xl border border-white/10 bg-[#111936] p-3"
+            onChange={(e) =>
+              setForm({
+                ...form,
+                thumbnailFile: e.target.files?.[0] ?? null,
+              })
+            }
+          />
+          {errors.thumbnailFile && (
+            <p className="mt-1 text-sm text-red-500">
+              {errors.thumbnailFile}
             </p>
           )}
         </div>

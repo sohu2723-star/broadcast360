@@ -38,6 +38,24 @@ export async function GET(request: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
+    const releaseYearRaw = formData.get("releaseYear");
+    const releaseYear = Number(releaseYearRaw);
+
+    const currentYear = new Date().getFullYear();
+
+    if (
+      releaseYearRaw === null ||
+      releaseYearRaw === "" ||
+      Number.isNaN(releaseYear) ||
+      !Number.isInteger(releaseYear) ||
+      releaseYear < 1900 ||
+      releaseYear > currentYear
+    ) {
+      return NextResponse.json(
+        { message: "Invalid release year" },
+        { status: 400 }
+      );
+    }
 
     const series = await addSeries(formData);
 

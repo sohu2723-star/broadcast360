@@ -172,3 +172,30 @@ export async function deleteChannel(id: number) {
     }),
   ]);
 }
+
+export async function getDefaultPlaylist(channelId: number) {
+  return prisma.channel.findUnique({
+    where: {
+      id: channelId,
+    },
+    include: {
+      defaultPlaylist: {
+        include: {
+          items: {
+            orderBy: {
+              order: "asc",
+            },
+            include: {
+              movie: true,
+              episode: true,
+              advertisement: true,
+              entertainment: true,
+              news: true,
+              stream: true,
+            },
+          },
+        },
+      },
+    },
+  });
+}

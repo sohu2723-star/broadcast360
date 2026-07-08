@@ -10,11 +10,27 @@ export const ScheduleRepository = {
   },
 
   findById: async (id: number) => {
-    return prisma.schedule.findUnique({
-      where: { id },
-      include: { channel: true, playlist: true },
-    });
-  },
+  return prisma.schedule.findUnique({
+    where: { id },
+    include: {
+      channel: true,
+      playlist: {
+        include: {
+          items: {
+            include: {
+              movie: true,
+              episode: true,
+              advertisement: true,
+              entertainment: true,
+              news: true,
+              stream: true,
+            },
+          },
+        },
+      },
+    },
+  });
+},
 
   findByChannel: async (channelId: number) => {
     return prisma.schedule.findMany({
@@ -106,4 +122,84 @@ export const ScheduleRepository = {
       where: { id },
     });
   },
-};
+
+/**
+ * Get schedules around current time
+ */
+  getSchedulesAroundTime: async (now: Date) => {
+  return prisma.schedule.findMany({
+    where: {
+      startTime: {
+        lte: new Date(now.getTime() + 60 * 60 * 1000),
+      },
+    },
+    include: {
+      playlist: {
+        include: {
+          items: {
+            orderBy: {
+              order: "asc",
+            },
+            include: {
+              movie: true,
+              episode: true,
+              advertisement: true,
+              entertainment: true,
+              news: true,
+              stream: true,
+            },
+          },
+        },
+      },
+    },
+  });
+},
+
+  findLiveSchedule: async (
+  channelId: number,
+  now: Date
+) => {
+  return prisma.schedule.findFirst({
+    where: {
+      channelId,
+
+      startTime: {
+        lte: now,
+      },
+
+      OR: [
+        {
+          endTime: null,
+        },
+        {
+          endTime: {
+            gt: now,
+          },
+        },
+      ],
+    },
+
+    include: {
+      playlist: {
+        include: {
+          items: {
+            orderBy: {
+              order: "asc",
+            },
+            include: {
+              movie: true,
+              episode: true,
+              advertisement: true,
+              entertainment: true,
+              news: true,
+              stream: true,
+            },
+          },
+        },
+      },
+    },
+  });
+},
+
+
+}
