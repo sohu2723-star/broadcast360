@@ -12,13 +12,14 @@ export async function GET() {
       },
     });
     const channels = dbChannels.map((channel) => {
-      const primaryStream = channel.streams?.[0]; 
+      // const primaryStream = channel.streams?.[0]; 
       
       return {
         id: channel.id.toString(),
         name: channel.name,
         description: channel.description || "",
-        streamUrl: primaryStream ? (primaryStream as any).url : "", 
+        // streamUrl: primaryStream ? (primaryStream as any).url : "", 
+        streamUrl: `http://localhost:3000/streams/channel-${channel.id}/index.m3u8`,
       };
     });
 

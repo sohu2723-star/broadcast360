@@ -56,6 +56,12 @@ model Channel {
   createdAt DateTime @default(now())
 
   programs Program[]
+
+
+  // 24/7 fallback playlist
+  defaultPlaylistId Int?
+
+  defaultPlaylist Playlist? @relation("ChannelDefaultPlaylist",fields: [defaultPlaylistId],references: [id])
 }
 
 // =====================
@@ -286,6 +292,10 @@ model Playlist {
   schedules Schedule[]
 
   createdAt DateTime @default(now())
+
+
+  // channels using this playlist as 24/7 fallback
+  defaultForChannels Channel[] @relation("ChannelDefaultPlaylist")
 }
 
 enum PlaylistItemType {

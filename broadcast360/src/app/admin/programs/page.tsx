@@ -217,7 +217,7 @@ export default function ProgramsPage() {
                       onClick={() => router.push(`/admin/programs/${program.id}`)}
                       className="text-white/70 hover:text-white text-xs"
                     >
-                      Details
+                      View
                     </button>
 
                     <button
