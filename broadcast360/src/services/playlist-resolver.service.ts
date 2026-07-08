@@ -1,21 +1,52 @@
 import { PlaylistItemWithRelations } from "@/types/schedule.types";
 
 export class PlaylistResolverService {
-  resolve(items: any | string[]) {
-    const list = Array.isArray(items) ? items : [items];
 
-    return list.map((item) => {
-      const url =
-        item.movie?.videoUrl ||
-        item.episode?.videoUrl ||
-        item.advertisement?.videoUrl ||
-        item.news?.videoUrl ||
-        item.entertainment?.videoUrl ||
-        item.stream?.url;
+  resolve(items: PlaylistItemWithRelations[]) {
 
-      if (!url) throw new Error("Missing video URL");
+    return items.map((item) => {
 
-      return url;
+      let videoUrl: string | null = null;
+
+      switch (item.type) {
+
+        case "MOVIE":
+          videoUrl = item.movie?.videoUrl ?? null;
+          break;
+
+        case "ADVERTISEMENT":
+          videoUrl = item.advertisement?.videoUrl ?? null;
+          break;
+
+        case "EPISODE":
+          videoUrl = item.episode?.videoUrl ?? null;
+          break;
+
+        case "NEWS":
+          videoUrl = item.news?.videoUrl ?? null;
+          break;
+
+        case "ENTERTAINMENT":
+          videoUrl = item.entertainment?.videoUrl ?? null;
+          break;
+
+        case "STREAM":
+          videoUrl = item.stream?.url ?? null;
+          break;
+      }
+
+
+      if (!videoUrl) {
+        throw new Error(
+          `Missing video URL for playlist item type: ${item.type}`
+        );
+      }
+
+
+      return videoUrl;
+
     });
+
   }
+
 }

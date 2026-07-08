@@ -1,36 +1,28 @@
 import { PlaylistItem } from "@/generated/prisma/client";
 
+
 export class PlaylistManager {
-  private items: PlaylistItem[] = [];
+  private items: any[] = [];
   private index = 0;
 
-  load(items: PlaylistItem[]) {
-    this.items = [...items].sort((a, b) => a.order - b.order);
+
+  load(items: any[]) {
+    this.items = items;
     this.index = 0;
   }
 
+
   current() {
-    return this.items[this.index] ?? null;
-  }
-
-  next() {
-    if (this.index + 1 >= this.items.length) {
-      return null;
-    }
-
-    this.index++;
     return this.items[this.index];
   }
 
-  hasNext() {
-    return this.index + 1 < this.items.length;
-  }
 
-  reset() {
-    this.index = 0;
-  }
+  next() {
+    this.index++;
 
-  isFinished() {
-    return this.index >= this.items.length - 1;
+    // 🔥 24/7 LOOP
+    if (this.index >= this.items.length) {
+      this.index = 0;
+    }
   }
 }

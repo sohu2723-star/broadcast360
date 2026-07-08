@@ -38,10 +38,10 @@ export async function POST(req: NextRequest) {
     const newAdvertisement = await createAdvertisement(formData);
     return NextResponse.json(newAdvertisement, { status: 201 });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("POST ERROR =", error);
     return NextResponse.json(
-      { message: error.message || "Create error" },
+      { message: error || "Create error" },
       { status: 500 }
     );
   }

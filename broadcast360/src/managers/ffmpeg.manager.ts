@@ -3,35 +3,29 @@ import path from "path";
 import fs from "fs";
 
 export class FFmpegManager {
-  // ✔ FIX: correct type for spawned process
+
   private processes: Map<number, ReturnType<typeof spawn>> = new Map();
+
 
   start(
     channelId: number,
-    inputs: string[],
+    concatFile: string,
     outputDir: string
   ): ReturnType<typeof spawn> | null {
-    if (!inputs || inputs.length === 0) {
-      console.log("❌ No input for FFmpeg");
+
+
+    if (!fs.existsSync(concatFile)) {
+
+      console.log(
+        "❌ Concat file not found:",
+        concatFile
+      );
+
       return null;
     }
 
-    const resolveInputPath = (videoUrl: string) => {
-      if (videoUrl.startsWith("/")) {
-        return path.join(process.cwd(), "public", videoUrl);
-      }
-      return videoUrl;
-    };
 
-    const input = resolveInputPath(inputs[0]);
 
-    // ✔ FIX: validate file exists
-    if (!fs.existsSync(input)) {
-      console.log("❌ File not found:", input);
-      return null;
-    }
-
-    // ✔ create output folder
     const fullPath = path.resolve(
       process.cwd(),
       "public",
@@ -39,94 +33,227 @@ export class FFmpegManager {
       `channel-${channelId}`
     );
 
-    if (fs.existsSync(fullPath)) {
-    fs.rmSync(fullPath, {
+
+    fs.mkdirSync(fullPath, {
       recursive: true,
-      force: true,
     });
-  }
 
-  fs.mkdirSync(fullPath, {
-    recursive: true,
-  });
 
-    const outputPath = path.join(fullPath, "index.m3u8");
 
-    console.log("📡 FFmpeg input:", input);
-    console.log("📁 Output:", outputPath);
+    const outputPath = path.join(
+      fullPath,
+      "index.m3u8"
+    );
+
+
+    console.log(
+      "📄 FFmpeg concat:",
+      concatFile
+    );
+
+
+    console.log(
+      "📁 Output:",
+      outputPath
+    );
+
+
 
     const ffmpegArgs = [
+
       "-re",
+
+      // generate clean timestamps
+      "-fflags",
+      "+genpts",
+
+      "-avoid_negative_ts",
+      "make_zero",
+
+
+      // concat input
+      "-f",
+      "concat",
+
+      "-safe",
+      "0",
+
       "-i",
-      input,
+      concatFile,
+
+
+      // force same output format
+      "-map_metadata",
+      "-1",
+
+
+      "-vf",
+      // "scale=1280:720,fps=30",
+      "scale=854:480,fps=30",
+
 
       // video
       "-c:v",
       "libx264",
+
       "-preset",
-      "veryfast",
+      // "veryfast",
+      "ultrafast",
+
       "-tune",
       "zerolatency",
+
+
+      // force constant frame rate
+      "-vsync",
+      "cfr",
+
 
       // audio
       "-c:a",
       "aac",
+
+      "-ar",
+      "48000",
+
+      "-ac",
+      "2",
+
       "-b:a",
       "128k",
 
-      // HLS settings
+
+      // HLS
       "-f",
       "hls",
+
       "-hls_time",
       "4",
+
       "-hls_list_size",
-      "6",
+      "10",
+
+      "-hls_segment_type",
+      "mpegts",
+
       "-hls_flags",
-      "delete_segments",
-      "-hls_allow_cache",
-      "1",
+      "delete_segments+append_list+omit_endlist",
+
 
       outputPath,
     ];
 
-    const ffmpeg = spawn("ffmpeg", ffmpegArgs, {
-      stdio: ["ignore", "pipe", "pipe"],
-    });
 
-    // ✔ store process safely
-    this.processes.set(channelId, ffmpeg);
 
-    ffmpeg.stderr.on("data", (data) => {
-      console.log(`[FFMPEG ${channelId}]`, data.toString());
-    });
+    const ffmpeg = spawn(
+      "ffmpeg",
+      ffmpegArgs,
+      {
+        stdio: [
+          "ignore",
+          "pipe",
+          "pipe",
+        ],
+      }
+    );
 
-    ffmpeg.on("error", (err) => {
-      console.log(`❌ FFmpeg error channel ${channelId}:`, err);
-    });
 
-    ffmpeg.on("close", (code) => {
-      console.log(`❌ FFmpeg exited channel ${channelId} code: ${code}`);
-      this.processes.delete(channelId);
-    });
+
+    this.processes.set(
+      channelId,
+      ffmpeg
+    );
+
+
+
+    ffmpeg.stderr.on(
+      "data",
+      (data) => {
+
+        console.log(
+          `[FFMPEG ${channelId}]`,
+          data.toString()
+        );
+
+      }
+    );
+
+
+
+    ffmpeg.on(
+      "error",
+      (err) => {
+
+        console.log(
+          `❌ FFmpeg error channel ${channelId}:`,
+          err
+        );
+
+      }
+    );
+
+
+
+    ffmpeg.on(
+      "close",
+      (code) => {
+
+        console.log(
+          `❌ FFmpeg exited channel ${channelId} code: ${code}`
+        );
+
+
+        this.processes.delete(
+          channelId
+        );
+
+      }
+    );
+
 
     return ffmpeg;
   }
 
+
   stop(channelId: number) {
-    const process = this.processes.get(channelId);
+
+    const process =
+      this.processes.get(channelId);
+
 
     if (!process) {
-      console.log("⚠ No FFmpeg process found");
+
+      console.log(
+        "⚠ No FFmpeg process found"
+      );
+
       return;
     }
 
-    process.kill("SIGINT");
-    this.processes.delete(channelId);
 
-    console.log(`🛑 FFmpeg stopped for channel ${channelId}`);
+
+    process.kill("SIGINT");
+
+
+    this.processes.delete(
+      channelId
+    );
+
+
+    console.log(
+      `🛑 FFmpeg stopped for channel ${channelId}`
+    );
+
   }
+
+
 
   isRunning(channelId: number) {
-    return this.processes.has(channelId);
+
+    return this.processes.has(
+      channelId
+    );
+
   }
+
 }

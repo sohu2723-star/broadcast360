@@ -1,169 +1,304 @@
 import { SessionManager } from "@/managers/session.manager";
 import { FFmpegManager } from "@/managers/ffmpeg.manager";
-import { PlaylistResolverService } from "@/services/playlist-resolver.service";
-import { PlaylistManager } from "@/managers/playlist.manager";
-import { ScheduleWithRelations } from "@/types/schedule.types";
 import { getDefaultPlaylist } from "@/repositories/channel.repository";
+import { ScheduleWithRelations } from "@/types/schedule.types";
+import { PlaylistItemWithRelations } from "@/types/playlist";
+import { BroadcastStateManager } from "@/managers/broadcast-state.manager";
+import { ConcatManager } from "@/managers/concat.manager";
+
 
 export class BroadcastService {
-  private session = new SessionManager();
-  private ffmpeg = new FFmpegManager();
-  private resolver = new PlaylistResolverService();
 
-  // per-channel playlist state
-  private playlists = new Map<number, PlaylistManager>();
+  private session = new SessionManager();
+
+  private ffmpeg = new FFmpegManager();
+
+  private state = new BroadcastStateManager();
+
+  private concat = new ConcatManager();
+
+
+  // keep current playlist items per channel
+  private currentItems =
+    new Map<number, PlaylistItemWithRelations>();
+
+
 
   /**
    * START BROADCAST
    */
-  async start(schedule: ScheduleWithRelations | null, channelId: number): Promise<void> {
+  async start(
+    schedule: ScheduleWithRelations | null,
+    channelId: number
+  ): Promise<void> {
 
-      console.log("DEBUG schedule:", schedule);
-      console.log("DEBUG channelId:", channelId);
-
-  // prevent duplicate broadcast
-  if (this.session.isLive(channelId)) {
-    console.log("⚠ Channel already live");
-    return;
-  }
-
-
-  let playlist;
-
-
-  // 1. use scheduled playlist
-  if (schedule?.playlist) {
-
-    playlist = schedule.playlist;
 
     console.log(
-      "📺 Using scheduled playlist:",
-      playlist.name
+      "DEBUG channelId:",
+      channelId
     );
 
-  } 
-  else {
 
-    // 2. fallback to default playlist
-    const channel = await getDefaultPlaylist(channelId);
+    // prevent duplicate stream
+    if (this.session.isLive(channelId)) {
 
-    playlist = channel?.defaultPlaylist;
-
-
-    if (!playlist) {
       console.log(
-        "⚠ No schedule and no default playlist"
+        "⚠ Channel already live"
       );
+
       return;
     }
+
+
+
+    let playlist;
+
+
+
+    // ==========================
+    // 1. Scheduled playlist
+    // ==========================
+
+    if (schedule?.playlist) {
+
+
+      playlist = schedule.playlist;
+
+
+      console.log(
+        "📺 Using scheduled playlist:",
+        playlist.name
+      );
+
+
+    }
+
+
+    // ==========================
+    // 2. Default playlist
+    // ==========================
+
+    else {
+
+
+      const channel =
+        await getDefaultPlaylist(channelId);
+
+
+      playlist =
+        channel?.defaultPlaylist;
+
+
+
+      if (!playlist) {
+
+        console.log(
+          "⚠ No default playlist"
+        );
+
+        return;
+      }
+
+
+
+      console.log(
+        "📺 Using default playlist:",
+        playlist.name
+      );
+
+    }
+
+
+
+
+    const items =
+      playlist.items;
+
 
 
     console.log(
-      "📺 Using default playlist:",
-      playlist.name
+      "Playlist items:",
+      items.length
     );
-  }
-
-console.log("Playlist:", playlist);
-console.log("Items:", playlist.items);
-console.log("Items count:", playlist.items?.length);
-
-  const items = playlist.items;
-
-
-  if (!items || items.length === 0) {
-    console.log("⚠ Playlist has no items");
-    return;
-  }
 
 
 
-  // create session
-  this.session.start(channelId);
+    if (!items || items.length === 0) {
 
+      console.log(
+        "⚠ Playlist has no items"
+      );
 
-
-  // create playlist manager
-  const manager = new PlaylistManager();
-
-  manager.load(items);
-
-
-  this.playlists.set(
-    channelId,
-    manager
-  );
-
-
-  console.log(
-    `▶ Broadcast started channel ${channelId}`
-  );
-
-
-  await this.playNext(channelId);
-}
-
-  /**
-   * PLAY NEXT ITEM
-   */
-  private async playNext(channelId: number): Promise<void> {
-    const manager = this.playlists.get(channelId);
-
-    if (!manager) return;
-
-    const item = manager.current();
-
-    if (!item) {
-      console.log("📺 Playlist ended");
-      this.stop(channelId);
       return;
     }
 
-    const inputs = this.resolver.resolve([item]);
 
-    const input = inputs[0];
 
-    if (!input) {
-      console.log("⚠ Skip invalid item");
-      manager.next();
-      return this.playNext(channelId);
-    }
 
-    const outputDir = `./public/streams/channel-${channelId}`;
-
-    console.log(`▶ Playing: ${input}`);
-
-    const ffmpeg = this.ffmpeg.start(
+    // save first item state
+    this.currentItems.set(
       channelId,
-      [input],
-      outputDir
+      items[0]
     );
+
+
+
+    this.state.start(
+      channelId,
+      items[0]
+    );
+
+
+
+
+    // start session
+
+    this.session.start(
+      channelId
+    );
+
+
+
+
+
+    // create concat file
+
+    const concatFile =
+      this.concat.create(
+        channelId,
+        items
+      );
+
+
+
+
+
+    const outputDir =
+      `./public/streams/channel-${channelId}`;
+
+
+
+
+
+    console.log(
+      "🚀 Starting continuous FFmpeg pipeline"
+    );
+
+
+
+
+
+    const ffmpeg =
+      this.ffmpeg.start(
+        channelId,
+        concatFile,
+        outputDir
+      );
+
+
+
+
 
     if (!ffmpeg) {
-      console.log("❌ FFmpeg failed");
+
+      console.log(
+        "❌ FFmpeg failed"
+      );
+
+
+      this.session.stop(channelId);
+
+
       return;
     }
 
 
-    ffmpeg.on("close", async () => {
-  console.log("⏭ Video finished");
 
-  manager.next();
 
-  setTimeout(() => {
-    this.playNext(channelId);
-  }, 1000);
-});
+
+    ffmpeg.on(
+      "close",
+      (code) => {
+
+
+        console.log(
+          `❌ FFmpeg stopped channel ${channelId} code ${code}`
+        );
+
+
+
+        this.session.stop(
+          channelId
+        );
+
+
+
+        this.currentItems.delete(
+          channelId
+        );
+
+      }
+    );
+
+
+
+    console.log(
+      `▶ Channel ${channelId} broadcast started`
+    );
+
   }
+
+
+
 
   /**
    * STOP BROADCAST
    */
-  stop(channelId: number): void {
-    this.ffmpeg.stop(channelId);
-    this.session.stop(channelId);
-    this.playlists.delete(channelId);
+  stop(
+    channelId:number
+  ):void {
 
-    console.log(`🛑 Broadcast stopped for channel ${channelId}`);
+
+    this.ffmpeg.stop(
+      channelId
+    );
+
+
+    this.session.stop(
+      channelId
+    );
+
+
+
+    this.currentItems.delete(
+      channelId
+    );
+
+
+
+    console.log(
+      `🛑 Broadcast stopped channel ${channelId}`
+    );
+
   }
+
+
+
+
+
+  /**
+   * CURRENT PLAYING ITEM
+   */
+  getCurrentItem(
+    channelId:number
+  ) {
+
+
+    return this.currentItems.get(
+      channelId
+    );
+
+  }
+
+
 }
