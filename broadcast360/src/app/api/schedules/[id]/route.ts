@@ -1,40 +1,56 @@
-import { removeSchedule } from "@/services/schedule.service";
+import { NextRequest, NextResponse } from "next/server";
+import { ScheduleService } from "@/services/schedule.service";
+import { prisma } from "@/lib/prisma";
 
-// DELETE SCHEDULE
-export async function DELETE(
-  _req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+interface RouteContext {
+  params: Promise<{ id: string }>;
+}
+
+export async function GET(req: NextRequest, context: RouteContext) {
+  const { id } = await context.params;
+  const schedule = await ScheduleService.getById(Number(id));
+  if (!schedule) return NextResponse.json({ message: "Not found" }, { status: 404 });
+  return NextResponse.json(schedule);
+}
+
+export async function PUT(req: NextRequest, context: RouteContext) {
   try {
-    // ✅ MUST await params (Next.js requirement)
-    const { id } = await params;
+    const { id } = await context.params;
+    const scheduleId = Number(id);
 
-    if (!id) {
-      return Response.json(
-        { message: "Schedule id is required" },
-        { status: 400 }
-      );
+    if (isNaN(scheduleId)) {
+      return NextResponse.json({ message: "Invalid schedule target ID" }, { status: 400 });
     }
 
-    const numericId = Number(id);
+    const body = await req.json();
+    const { channelId, playlistId, startTime, endTime } = body;
 
-    if (isNaN(numericId)) {
-      return Response.json(
-        { message: "Invalid schedule id" },
-        { status: 400 }
-      );
-    }
-
-    await removeSchedule(numericId);
-
-    return Response.json({
-      message: "Schedule deleted successfully",
+    // Execute the database alteration record
+    const updatedSchedule = await prisma.schedule.update({
+      where: { id: scheduleId },
+      data: {
+        channelId: Number(channelId),
+        playlistId: Number(playlistId),
+        startTime: new Date(startTime),
+        endTime: new Date(endTime),
+      },
     });
-  } catch (error) {
-    console.error("DELETE schedule failed:", error);
 
-    return Response.json(
-      { message: "Failed to delete schedule" },
+    return NextResponse.json({ success: true, data: updatedSchedule });
+  } catch (error) {
+    console.error("[SCHEDULE PUT API ERROR]:", error);
+    return NextResponse.json({ message: "Failed to update broadcast schedule window" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest, context: RouteContext) {
+  try {
+    const { id } = await context.params;
+    await ScheduleService.delete(Number(id));
+    return NextResponse.json({ message: "Deleted" });
+  } catch (error) {
+    return NextResponse.json(
+      { message: error instanceof Error ? error.message : "Delete failed" },
       { status: 500 }
     );
   }

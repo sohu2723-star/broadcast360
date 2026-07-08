@@ -109,4 +109,34 @@ export const PlaylistRepository = {
 
   return totalSeconds;
 },
+
+};
+
+export const getDefaultPlaylist = async (channelId: number) => {
+  return prisma.channel.findUnique({
+    where: {
+      id: channelId,
+    },
+
+    include: {
+      defaultPlaylist: {
+        include: {
+          items: {
+            orderBy: {
+              order: "asc",
+            },
+
+            include: {
+              movie: true,
+              episode: true,
+              advertisement: true,
+              news: true,
+              entertainment: true,
+              stream: true,
+            },
+          },
+        },
+      },
+    },
+  });
 };

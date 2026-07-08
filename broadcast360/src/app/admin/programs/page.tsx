@@ -8,7 +8,8 @@ interface Program {
   title: string;
   type: string;
   description: string;
-  channel: string;
+  // Adjusted type definition to match what your prisma service returns safely
+  channel: string | { id: number; name: string } | null;
   createdAt: string;
 }
 
@@ -110,179 +111,162 @@ export default function ProgramsPage() {
   return (
     <div className="min-h-screen bg-[#010312] text-white p-3 space-y-6">
 
-  {/* HEADER */}
-  <div className="flex justify-between items-center mb-2">
+      {/* HEADER */}
+      <div className="flex justify-between items-center mb-2">
+        <button
+          onClick={() => router.back()}
+          className="px-5 py-2.5 rounded-xl bg-[#0B1026] border border-white/10 hover:border-[#106EE9] transition text-sm"
+        >
+          ← Back
+        </button>
 
-    <button
-      onClick={() => router.back()}
-      className="px-5 py-2.5 rounded-xl bg-[#0B1026] border border-white/10 
-                 hover:border-[#106EE9] transition text-sm"
-    >
-      ← Back
-    </button>
-
-    <button
-      onClick={() => router.push("/admin/programs/create")}
-      className="px-5 py-2.5 rounded-xl bg-[#106EE9] hover:bg-[#400FD3] 
-                 transition text-sm font-semibold"
-    >
-      + Create Program
-    </button>
-
-  </div>
-
-  {/* FILTER CARD */}
-  <div className="bg-[#0B1026] border border-white/10 rounded-2xl p-2">
-    <div className="grid grid-cols-3 gap-4">
-
-      <input
-        type="text"
-        placeholder="Search programs..."
-        className="w-full bg-[#010312] border border-white/10 rounded-xl px-4 py-3 
-                   text-sm focus:outline-none focus:border-[#106EE9]"
-        value={search}
-        onChange={(e) => handleSearchChange(e.target.value)}
-      />
-
-      <select
-        className="w-full bg-[#010312] border border-white/10 rounded-xl px-4 py-3 text-sm
-                   focus:border-[#106EE9]"
-        value={selectedType}
-        onChange={(e) => handleTypeChange(e.target.value)}
-      >
-        <option value="">All Types</option>
-        {dynamicTypes.map((type) => (
-          <option key={type} value={type}>{type}</option>
-        ))}
-      </select>
-
-      <select
-        className="w-full bg-[#010312] border border-white/10 rounded-xl px-4 py-3 text-sm
-                   focus:border-[#106EE9]"
-        value={selectedChannel}
-        onChange={(e) => handleChannelChange(e.target.value)}
-      >
-        <option value="">All Channels</option>
-        {dynamicChannels.map((channel) => (
-          <option key={channel} value={channel}>{channel}</option>
-        ))}
-      </select>
-
-    </div>
-  </div>
-
-  {/* TABLE CARD */}
-  <div className="bg-[#0B1026] border border-white/10 rounded-2xl overflow-hidden">
-
-    {loading ? (
-      <div className="p-10 text-center text-white/60">
-        Loading programs...
+        <button
+          onClick={() => router.push("/admin/programs/create")}
+          className="px-5 py-2.5 rounded-xl bg-[#106EE9] hover:bg-[#400FD3] transition text-sm font-semibold"
+        >
+          + Create Program
+        </button>
       </div>
-    ) : programs.length === 0 ? (
-      <div className="p-10 text-center text-white/60">
-        No programs found
+
+      {/* FILTER CARD */}
+      <div className="bg-[#0B1026] border border-white/10 rounded-2xl p-2">
+        <div className="grid grid-cols-3 gap-4">
+          <input
+            type="text"
+            placeholder="Search programs..."
+            className="w-full bg-[#010312] border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#106EE9]"
+            value={search}
+            onChange={(e) => handleSearchChange(e.target.value)}
+          />
+
+          <select
+            className="w-full bg-[#010312] border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-[#106EE9]"
+            value={selectedType}
+            onChange={(e) => handleTypeChange(e.target.value)}
+          >
+            <option value="">All Types</option>
+            {dynamicTypes.map((type) => (
+              <option key={type} value={type}>{type}</option>
+            ))}
+          </select>
+
+          <select
+            className="w-full bg-[#010312] border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-[#106EE9]"
+            value={selectedChannel}
+            onChange={(e) => handleChannelChange(e.target.value)}
+          >
+            <option value="">All Channels</option>
+            {dynamicChannels.map((channel) => (
+              <option key={channel} value={channel}>{channel}</option>
+            ))}
+          </select>
+        </div>
       </div>
-    ) : (
-      <table className="w-full text-sm">
 
-        <thead className="bg-[#010312] border-b border-white/10">
-          <tr className="text-left text-white/60">
-            <th className="p-4">Channel</th>
-            <th>Title</th>
-            <th>Type</th>
-            <th>Created</th>
-            <th className="text-center">Actions</th>
-          </tr>
-        </thead>
+      {/* TABLE CARD */}
+      <div className="bg-[#0B1026] border border-white/10 rounded-2xl overflow-hidden">
+        {loading ? (
+          <div className="p-10 text-center text-white/60">
+            Loading programs...
+          </div>
+        ) : programs.length === 0 ? (
+          <div className="p-10 text-center text-white/60">
+            No programs found
+          </div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead className="bg-[#010312] border-b border-white/10">
+              <tr className="text-left text-white/60">
+                <th className="p-4">Channel</th>
+                <th>Title</th>
+                <th>Type</th>
+                <th>Created</th>
+                <th className="text-center">Actions</th>
+              </tr>
+            </thead>
 
-        <tbody>
-          {programs.map((program) => (
-            <tr
-              key={program.id}
-              className="border-b border-white/5 hover:bg-white/5 transition"
+            <tbody>
+              {programs.map((program) => (
+                <tr
+                  key={program.id}
+                  className="border-b border-white/5 hover:bg-white/5 transition"
+                >
+                  {/* 👇 SAFE INTERCEPT FIX: Safely parse object vs string relation layouts */}
+                  <td className="p-4 text-[#106EE9] font-medium">
+                    {program.channel && typeof program.channel === "object"
+                      ? (program.channel as any).name
+                      : program.channel || "Unassigned"}
+                  </td>
+
+                  <td className="font-medium">
+                    {program.title}
+                  </td>
+
+                  <td>
+                    <span className="px-2 py-1 rounded bg-white/5 border border-white/10 text-xs">
+                      {program.type}
+                    </span>
+                  </td>
+
+                  <td className="text-white/60 text-xs">
+                    {program.createdAt ? new Date(program.createdAt).toLocaleDateString() : ""}
+                  </td>
+
+                  <td className="text-center space-x-3">
+                    <button
+                      onClick={() => router.push(`/admin/programs/${program.id}`)}
+                      className="text-white/70 hover:text-white text-xs"
+                    >
+                      View
+                    </button>
+
+                    <button
+                      onClick={() => router.push(`/admin/programs/edit/${program.id}`)}
+                      className="text-[#106EE9] hover:text-[#400FD3] text-xs"
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      onClick={() => handleDelete(program.id)}
+                      className="text-[#F41010] hover:opacity-70 text-xs"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {/* PAGINATION */}
+      {pagination && pagination.totalPages > 1 && (
+        <div className="flex justify-between items-center text-sm text-white/60 px-2">
+          <div>
+            Showing {programs.length} of {pagination.totalCount} entries
+          </div>
+
+          <div className="flex gap-2">
+            <button
+              disabled={!pagination.hasPrevPage}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              className="px-3 py-1 rounded bg-[#0B1026] border border-white/10 disabled:opacity-40"
             >
+              Prev
+            </button>
 
-              <td className="p-4 text-[#106EE9] font-medium">
-                {program.channel}
-              </td>
-
-              <td className="font-medium">
-                {program.title}
-              </td>
-
-              <td>
-                <span className="px-2 py-1 rounded bg-white/5 border border-white/10 text-xs">
-                  {program.type}
-                </span>
-              </td>
-
-              <td className="text-white/60 text-xs">
-                {program.createdAt}
-              </td>
-
-              <td className="text-center space-x-3">
-
-                <button
-                  onClick={() => router.push(`/admin/programs/${program.id}`)}
-                  className="text-white/70 hover:text-white"
-                >
-                  Details
-                </button>
-
-                <button
-                  onClick={() => router.push(`/admin/programs/edit/${program.id}`)}
-                  className="text-[#106EE9] hover:text-[#400FD3]"
-                >
-                  Edit
-                </button>
-
-                <button
-                  onClick={() => handleDelete(program.id)}
-                  className="text-[#F41010] hover:opacity-70"
-                >
-                  Delete
-                </button>
-
-              </td>
-
-            </tr>
-          ))}
-        </tbody>
-
-      </table>
-    )}
-
-  </div>
-
-  {/* PAGINATION */}
-  {pagination?.totalPages > 1 && (
-    <div className="flex justify-between items-center text-sm text-white/60">
-
-      <div>
-        {programs.length} / {pagination.totalCount}
-      </div>
-
-      <div className="flex gap-2">
-
-        <button
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
-          className="px-3 py-1 rounded bg-[#0B1026] border border-white/10"
-        >
-          Prev
-        </button>
-
-        <button
-          onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
-          className="px-3 py-1 rounded bg-[#0B1026] border border-white/10"
-        >
-          Next
-        </button>
-
-      </div>
-
+            <button
+              disabled={!pagination.hasNextPage}
+              onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
+              className="px-3 py-1 rounded bg-[#0B1026] border border-white/10 disabled:opacity-40"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
-  )}
-
-</div>
   );
 }
