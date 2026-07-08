@@ -60,8 +60,16 @@ export async function POST(
 
     const title = formData.get("title")?.toString();
     const episodeNo = Number(formData.get("episodeNo"));
+     const videoFile= formData.get("video");
+    const thumbnailFile = formData.get("thumbnail");
 
-    if (!title || isNaN(episodeNo)) {
+    const video =
+      videoFile instanceof File ? videoFile : null;
+
+    const thumbnail =
+      thumbnailFile instanceof File ? thumbnailFile : null;
+
+    if (!title || isNaN(episodeNo) || !video) {
       return NextResponse.json(
         { message: "Missing required fields" },
         { status: 400 }
@@ -71,7 +79,9 @@ export async function POST(
     const episode = await addEpisode(seriesId, {
       title,
       episodeNo,
-      formData,
+      videoFile: video,
+      thumbnailFile: thumbnail ?? null,
+
     });
 
     return NextResponse.json({
@@ -90,3 +100,4 @@ export async function POST(
     );
   }
 }
+

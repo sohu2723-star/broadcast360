@@ -5,8 +5,6 @@ import EpisodeForm from "@/components/admin/episode/EpisodeForm";
 import type { EpisodeFormData } from "@/types/episode";
 
 export default function CreateEpisodePage() {
-  console.log("What is EpisodeForm?", EpisodeForm);
-
   const router = useRouter();
   const params = useParams();
 
@@ -22,6 +20,9 @@ export default function CreateEpisodePage() {
     if (data.videoFile) {
       formData.append("video", data.videoFile);
     }
+ if (data.thumbnailFile) {
+      formData.append("thumbnail", data.thumbnailFile);
+    }
 
     const res = await fetch(
       `/api/series/${seriesId}/episodes`,
@@ -31,14 +32,18 @@ export default function CreateEpisodePage() {
       }
     );
 
-    const result = await res.json();
+let result;
 
-    if (!res.ok) {
-      console.error("Create Episode Error:", result);
-      alert(result.message || "Failed to create episode");
-      return;
-    }
+try {
+  result = await res.json();
+} catch {
+  result = {};
+}
 
+if (!res.ok) {
+  alert(result?.message || "Failed to create episode");
+  return;
+}
     router.push(`/admin/series/${seriesId}`);
     router.refresh();
   }

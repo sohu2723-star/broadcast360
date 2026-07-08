@@ -1,6 +1,4 @@
 import { z } from "zod";
-
-videoFile: z.any().optional().nullable()
 const baseEpisodeSchema = z.object({
   title: z
     .string()
@@ -21,6 +19,9 @@ export const createEpisodeSchema = baseEpisodeSchema.extend({
   videoFile: z.instanceof(File, {
     message: "Video file is required",
   }),
+thumbnailFile: z.instanceof(File, {
+    message: "Thumbnail image is required",
+  })
 });
 
 // =======================
@@ -37,6 +38,19 @@ export const editEpisodeSchema = baseEpisodeSchema.extend({
         return file instanceof File;
       },
       { message: "Invalid video file" }
+    ),
+    thumbnailFile: z
+    .any()
+    .optional()
+    .nullable()
+    .refine(
+      (file) => {
+        if (!file) return true;
+        return file instanceof File;
+      },
+      {
+        message: "Invalid thumbnail image",
+      }
     ),
 });
 
