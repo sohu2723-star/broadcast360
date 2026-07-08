@@ -25,6 +25,7 @@ export default function CreateAdvertisementPage() {
   });
 
   if (res.ok) {
+    alert("Advertisement created successfully!");
     router.push("/admin/ads");
     router.refresh();
   } else {

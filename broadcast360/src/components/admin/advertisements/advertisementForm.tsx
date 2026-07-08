@@ -71,10 +71,11 @@ export default function AdvertisementForm({ initialData, advertisementId, onSubm
     }
   }
 
-  function validateFormOnSubmit(): boolean {
+  async function validateFormOnSubmit(): Promise<boolean> {
     const tempErrors: Record<string, string> = {};
+    const trimmedTitle = form.title.trim();
 
-    if (!form.title.trim()) {
+    if (!trimmedTitle) {
       tempErrors.title = "Advertisement title is required";
     }
 
@@ -82,9 +83,32 @@ export default function AdvertisementForm({ initialData, advertisementId, onSubm
       tempErrors.video = "Advertisement video file is required";
     }
 
+    
+    let isCurrentTitleAvailable = titleAvailable;
+    
+    if (trimmedTitle && (!isEditMode || trimmedTitle.toLowerCase().replace(/\s+/g, " ") !== initialData?.title?.trim().toLowerCase().replace(/\s+/g, " "))) {
+      try {
+        const url = `/api/ads/check-title?title=${encodeURIComponent(trimmedTitle)}&id=${advertisementId || ""}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        
+        setIsTitleChecked(true);
+        if (data.exists) {
+          tempErrors.title = "This title is already taken";
+          setTitleAvailable(false);
+          isCurrentTitleAvailable = false;
+        } else {
+          setTitleAvailable(true);
+          isCurrentTitleAvailable = true;
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
     setErrors((prev) => ({ ...prev, ...tempErrors }));
   
-    if (tempErrors.title || (!isEditMode && tempErrors.video) || !titleAvailable) {
+    if (tempErrors.title || (!isEditMode && tempErrors.video) || !isCurrentTitleAvailable) {
       return false;
     }
     return true;
@@ -94,7 +118,7 @@ export default function AdvertisementForm({ initialData, advertisementId, onSubm
     e.preventDefault();
     setHasSubmittedAttempt(true);
 
-    const isValid = validateFormOnSubmit();
+    const isValid = await validateFormOnSubmit();
     if (!isValid) return; 
 
     try {
@@ -107,7 +131,7 @@ export default function AdvertisementForm({ initialData, advertisementId, onSubm
     }
   }
 
-  const shouldShowTitleError = errors.title && hasSubmittedAttempt;
+  const shouldShowTitleError = errors.title || (!titleAvailable && (hasSubmittedAttempt || isTitleChecked));
   const shouldShowVideoError = errors.video && hasSubmittedAttempt;
 
   return (
@@ -167,7 +191,7 @@ export default function AdvertisementForm({ initialData, advertisementId, onSubm
                 onBlur={handleTitleBlur}
               />
               <div className="mt-1">
-                {errors.title && hasSubmittedAttempt && <p className="text-xs text-red-400 font-medium">⚠ {errors.title}</p>}
+                {shouldShowTitleError && errors.title && <p className="text-xs text-red-400 font-medium">⚠ {errors.title}</p>}
                 {!errors.title && !titleAvailable && (hasSubmittedAttempt || isTitleChecked) && <p className="text-xs text-red-400 font-medium">⚠ This title is already taken</p>}
                 {titleAvailable && isTitleChecked && form.title.trim() && !errors.title && <p className="text-xs text-green-400 font-medium">✓ Title is verified and available</p>}
               </div>

@@ -71,7 +71,7 @@ export async function GET(request: Request) {
       return {
         id: ad.id,
         title: ad.title,
-        duration: ad.duration ? (typeof ad.duration === "string" && ad.duration.endsWith("s") ? ad.duration : `${ad.duration}s`) : "0s",
+        duration: ad.duration ? Number(String(ad.duration).replace('s', '')) : 0,
         status: ad.active ? "Active" : "Inactive", 
         active: ad.active,
         createdAt: ad.createdAt instanceof Date 

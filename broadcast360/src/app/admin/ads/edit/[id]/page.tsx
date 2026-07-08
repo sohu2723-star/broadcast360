@@ -49,6 +49,7 @@ export default function EditAdvertisementPage({ params }: PageProps) {
     });
 
     if (res.ok) {
+      alert("Advertisement updated successfully!");
       router.push("/admin/ads");
       router.refresh();
     } else {
