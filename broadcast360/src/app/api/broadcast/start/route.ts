@@ -7,47 +7,50 @@ const broadcast = new BroadcastService();
 
 export async function POST(req: Request) {
   try {
+
     const body = await req.json();
-    const { scheduleId } = body;
 
-    if (!scheduleId) {
+    const { channelId } = body;
+
+
+    if (!channelId) {
       return NextResponse.json(
-        { error: "scheduleId required" },
-        { status: 400 }
+        { error: "channelId required" },
+        { status:400 }
       );
     }
 
-    // 1. load schedule with playlist + items
-    const schedule = await ScheduleRepository.findById(scheduleId);
 
-    if (!schedule) {
-      return NextResponse.json(
-        { error: "Schedule not found" },
-        { status: 404 }
+    const schedule =
+      await ScheduleRepository.findLiveSchedule(
+        Number(channelId),
+        new Date()
       );
-    }
 
-    // 2. start broadcast manually
-    if (!schedule) {
-  return Response.json(
-    { error: "No schedule found" },
-    { status: 404 }
-  );
-}
 
-await broadcast.start(
-  schedule,
-  schedule.channelId
-);
+    await broadcast.start(
+      schedule,
+      Number(channelId)
+    );
+
 
     return NextResponse.json({
-      message: "Broadcast started",
-      scheduleId,
+      message:"Broadcast started",
+      channelId
     });
-  } catch (err: unknown) {
+
+
+  } catch(err){
+
+    console.error(err);
+
     return NextResponse.json(
-      { error: err || "Internal error" },
-      { status: 500 }
+      {
+        error:"Internal error"
+      },
+      {
+        status:500
+      }
     );
   }
 }
