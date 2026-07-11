@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { editProgram, fetchProgramDetails } from "@/services/program.service";
 import { updateProgramSchema } from "@/lib/validators/program.validator";
-
+import { programService } from "@/services/program.service";
 
 export async function PUT(
  request:Request,
@@ -86,9 +86,6 @@ export async function GET(
 
 
     const id = Number(programId);
-
-
-
     if(isNaN(id)){
 
       return NextResponse.json(
@@ -102,13 +99,8 @@ export async function GET(
 
     }
 
-
-
     const program =
       await fetchProgramDetails(id);
-
-
-
     if(!program){
 
       return NextResponse.json(
@@ -121,7 +113,6 @@ export async function GET(
       );
 
     }
-
 
 
     return NextResponse.json({
@@ -139,8 +130,6 @@ export async function GET(
         description:program.description,
 
         createdAt:program.createdAt,
-
-        playlists:program.playlists
 
       }
 
@@ -168,4 +157,27 @@ export async function GET(
 
   }
 
+}
+
+interface RouteContext {
+  params: Promise<{ id: string }>;
+}
+
+export async function DELETE(req: NextRequest, { params }: RouteContext) {
+  try {
+    const { id: rawId } = await params;
+    const id = parseInt(rawId, 10);
+
+    if (isNaN(id)) {
+      return NextResponse.json({ message: "Invalid parameter numeric ID" }, { status: 400 });
+    }
+
+    await programService.deleteProgram(id);
+
+    return NextResponse.json({ message: "Program deleted successfully" }, { status: 200 });
+  } catch (error: any) {
+    console.error("[PROGRAM DELETE API ERROR]:", error);
+    const statusCode = error.message.includes("not found") ? 404 : 500;
+    return NextResponse.json({ message: error.message || "Internal Server Error" }, { status: statusCode });
+  }
 }

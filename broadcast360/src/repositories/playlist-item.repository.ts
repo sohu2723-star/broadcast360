@@ -105,4 +105,12 @@ export const PlaylistItemRepository = {
       },
     });
   },
+
+  deleteItem: (id: number) => {
+  return prisma.playlistItem.delete({
+    where: {
+      id,
+    },
+  });
+},
 };

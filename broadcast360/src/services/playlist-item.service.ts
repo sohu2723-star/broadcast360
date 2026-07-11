@@ -40,7 +40,7 @@ export const PlaylistItemService = {
 
 
 
-      case "EPISODE":
+      case "SERIES":
 
         return PlaylistItemRepository.createEpisode(
           playlistId,
@@ -97,17 +97,45 @@ export const PlaylistItemService = {
 
 
 
-  getByPlaylistId: async (
-    playlistId:number
-  ) => {
+  getByPlaylistId: async (playlistId: number) => {
+  const items =
+    await PlaylistItemRepository.getByPlaylistId(playlistId);
 
+  return items.map((item) => {
+    let duration = 0;
 
-    return PlaylistItemRepository.getByPlaylistId(
-      playlistId
-    );
+    switch (item.type) {
+      case "MOVIE":
+        duration = item.movie?.duration ?? 0;
+        break;
 
+      case "EPISODE":
+        duration = item.episode?.duration ?? 0;
+        break;
 
-  },
+      case "ADVERTISEMENT":
+        duration = item.advertisement?.duration ?? 0;
+        break;
+
+      case "ENTERTAINMENT":
+        duration = item.entertainment?.duration ?? 0;
+        break;
+    }
+
+    return {
+      ...item,
+      duration,
+    };
+  });
+},
+
+  delete: async (id: number) => {
+  if (!id || isNaN(id)) {
+    throw new Error("Invalid playlist item id");
+  }
+
+  return PlaylistItemRepository.deleteItem(id);
+},
 
 
 };

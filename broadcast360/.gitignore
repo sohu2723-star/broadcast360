@@ -42,8 +42,8 @@ next-env.d.ts
 
 /src/generated/prisma
 
-
-# uploaded media files
-/public/videos/
-/public/thumbnails/
-/public/uploads/
+public/videos/
+public/thumbnails/
+public/uploads/
+public/logos/
+public/streams/

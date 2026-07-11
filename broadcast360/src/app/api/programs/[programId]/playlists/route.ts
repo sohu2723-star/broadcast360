@@ -1,18 +1,58 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PlaylistService } from "@/services/playlist.service";
 
-export async function POST(
+export async function GET(
   req: NextRequest,
-  context: {
+  {
+    params,
+  }: {
     params: Promise<{ programId: string }>;
   }
 ) {
   try {
-    const { programId } = await context.params;
+    const { programId } = await params;
 
-    const programIdNum = Number(programId);
+    const id = Number(programId);
 
-    if (isNaN(programIdNum)) {
+    if (isNaN(id)) {
+      return NextResponse.json(
+        { message: "Invalid programId" },
+        { status: 400 }
+      );
+    }
+
+    const { searchParams } = new URL(req.url);
+    const page = Number(searchParams.get("page") ?? 1);
+    const limit = 3;
+
+    const data = await PlaylistService.getProgramPlaylists(
+      id,
+      page,
+      limit
+    );
+
+    return NextResponse.json({ data });
+  } catch (error) {
+    return NextResponse.json(
+      { message: "Failed to load playlists" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(
+  req: NextRequest,
+  {
+    params,
+  }: {
+    params: Promise<{ programId: string }>;
+  }
+) {
+  try {
+    const { programId } = await params;
+    const id = Number(programId);
+
+    if (isNaN(id)) {
       return NextResponse.json(
         { message: "Invalid programId" },
         { status: 400 }
@@ -21,98 +61,27 @@ export async function POST(
 
     const body = await req.json();
 
-    const playlist = await PlaylistService.createPlaylist(
-      programIdNum,
-      body
-    );
+    if (!body.name) {
+      return NextResponse.json(
+        { message: "Playlist name is required" },
+        { status: 400 }
+      );
+    }
+
+    const playlist = await PlaylistService.createPlaylist(id, {
+      name: body.name,
+    });
 
     return NextResponse.json(
-      {
-        message: "Playlist created successfully",
-        data: playlist,
-      },
+      { data: playlist },
       { status: 201 }
     );
   } catch (error) {
+    console.error(error);
+
     return NextResponse.json(
-      {
-        message:
-          error instanceof Error
-            ? error.message
-            : "Something went wrong",
-      },
+      { message: "Failed to create playlist" },
       { status: 500 }
     );
   }
-}
-
-
-export async function GET(
-req:Request,
-context:{
- params:Promise<{
-  programId:string
- }>
-}
-
-){
-
-
-try{
-
-
-const {programId}=await context.params;
-
-
-const id=Number(programId);
-
-
-
-const {searchParams}=new URL(req.url);
-
-
-
-const page =
-Number(
-searchParams.get("page") ?? 1
-);
-
-
-
-const limit = 5;
-
-
-
-const data =
-await PlaylistService.getProgramPlaylists(
- id,
- page,
- limit
-);
-
-
-
-return NextResponse.json({
-
-data
-
-});
-
-
-
-}catch(error){
-
-
-return NextResponse.json({
-
-message:
-"Failed to load playlists"
-
-},{
-status:500
-});
-
-
-}
-
 }
