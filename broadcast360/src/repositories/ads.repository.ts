@@ -13,6 +13,7 @@ export function getAdvertisementById(id: number) {
 export function createAdvertisement(data: {
   title: string;
   videoUrl: string;
+  thumbnailUrl?: string;
   duration: number;
   active: boolean;
 }) {
@@ -27,6 +28,7 @@ export function updateAdvertisement(
     title: string;
     active: boolean;
     videoUrl?: string;
+    thumbnailUrl?: string;
     duration?: number;
   }
 ) {

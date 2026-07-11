@@ -3,23 +3,26 @@
 import { useRouter } from "next/navigation";
 import SeriesForm from "@/components/admin/series/serieForm";
 import type { SeriesFormData } from "@/types/serie";
-
+import { useState } from "react";
 import { createSeriesSchema } from "@/lib/validators/serie.validator";
 
 export default function CreateSeriesPage() {
   const router = useRouter();
+  const [errors, setErrors] = useState<{ api?: string }>({});
 
   async function handleSubmit(data: SeriesFormData) {
     try {
       // ✅ SAFE NORMALIZATION
+     const releaseYear =
+        typeof data.releaseYear === "string"
+          ? Number(data.releaseYear)
+          : data.releaseYear;
+
       const payload = {
         title: data.title,
         description: data.description,
         genre: data.genre || "",
-        releaseYear:
-          typeof data.releaseYear === "number"
-            ? data.releaseYear
-            : Number(data.releaseYear),
+        releaseYear,
         thumbnail: data.thumbnail ?? null,
       };
 
@@ -28,7 +31,18 @@ export default function CreateSeriesPage() {
 
       if (!result.success) {
         console.log(result.error.flatten().fieldErrors);
-        alert(result.error.issues[0].message);
+        setErrors({ api: result.error.issues[0].message });
+        return;
+      }
+const year = result.data.releaseYear;
+      const currentYear = new Date().getFullYear();
+
+      if (
+        !Number.isInteger(year) ||
+        year < 1900 ||
+        year > currentYear
+      ) {
+       setErrors({ api: "Invalid release year format" });
         return;
       }
 
@@ -68,12 +82,19 @@ export default function CreateSeriesPage() {
   }
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold text-white mb-8">
-        Create Series
-      </h1>
+  <div>
+    <h1 className="text-3xl font-bold text-white mb-8">
+      Create Series
+    </h1>
 
-      <SeriesForm onSubmit={handleSubmit} />
-    </div>
-  );
+    {/* ✅ ADD THIS HERE */}
+    {errors.api && (
+      <div className="bg-red-900/20 text-red-400 p-3 rounded mb-4">
+        {errors.api}
+      </div>
+    )}
+
+    <SeriesForm onSubmit={handleSubmit} />
+  </div>
+);
 }

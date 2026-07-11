@@ -1,41 +1,50 @@
 import { PlaylistItemWithRelations } from "@/types/playlist";
 
 
+interface QueueState {
+  items: PlaylistItemWithRelations[];
+  loop: boolean;
+}
+
+
 export class PlayoutQueueManager {
 
 
-  // channelId -> playlist items
   private queues =
-    new Map<number, PlaylistItemWithRelations[]>();
+    new Map<number, QueueState>();
 
 
-  // current playing item
   private current =
     new Map<number, PlaylistItemWithRelations>();
 
 
-
   /**
-   * Load new playlist
+   * Load playlist
    */
   load(
     channelId:number,
-    items:PlaylistItemWithRelations[]
+    items:PlaylistItemWithRelations[],
+    loop:boolean = false
   ){
 
     this.queues.set(
       channelId,
-      [...items]
+      {
+        items:[...items],
+        loop
+      }
     );
 
 
     console.log(
       `📺 Queue loaded channel ${channelId}`,
-      items.length
+      {
+        count:items.length,
+        loop
+      }
     );
 
   }
-
 
 
 
@@ -51,8 +60,7 @@ export class PlayoutQueueManager {
       this.queues.get(channelId);
 
 
-
-    if(!queue || queue.length === 0){
+    if(!queue || queue.items.length===0){
 
       console.log(
         "⚠ Queue empty",
@@ -60,13 +68,12 @@ export class PlayoutQueueManager {
       );
 
       return null;
-
     }
 
 
 
     const item =
-      queue.shift();
+      queue.items.shift();
 
 
 
@@ -76,8 +83,6 @@ export class PlayoutQueueManager {
 
 
 
-    // save current
-
     this.current.set(
       channelId,
       item
@@ -85,26 +90,12 @@ export class PlayoutQueueManager {
 
 
 
-    /*
-       Put back to end
+    // fallback playlist loop
+    if(queue.loop){
 
-       This creates loop behavior
+      queue.items.push(item);
 
-       A
-       B
-       C
-
-       next:
-       A
-
-       queue:
-       B
-       C
-       A
-
-    */
-
-    queue.push(item);
+    }
 
 
 
@@ -114,10 +105,6 @@ export class PlayoutQueueManager {
 
 
 
-
-  /**
-   * Current playing item
-   */
   getCurrent(
     channelId:number
   ){
@@ -128,40 +115,35 @@ export class PlayoutQueueManager {
 
 
 
-
   /**
-   * Replace playlist
-   *
-   * Used when schedule switches
+   * Schedule switching
    */
   replace(
     channelId:number,
-    items:PlaylistItemWithRelations[]
+    items:PlaylistItemWithRelations[],
+    loop:boolean=false
   ){
 
     console.log(
-      `🔄 Replace queue channel ${channelId}`
+      `🔄 Replace queue ${channelId}`
     );
 
 
     this.load(
       channelId,
-      items
+      items,
+      loop
     );
 
   }
 
 
 
-
-  clear(
-    channelId:number
-  ){
+  clear(channelId:number){
 
     this.queues.delete(channelId);
 
     this.current.delete(channelId);
-
 
   }
 

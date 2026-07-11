@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const currentYear = new Date().getFullYear();
+
 const baseSeriesSchema = z.object({
   title: z
     .string()
@@ -15,12 +17,26 @@ const baseSeriesSchema = z.object({
 
   genre: z
     .string()
+    .trim()
     .min(1, "Genre is required"),
 
-  releaseYear: z
-    .number()
-    .min(1900, "Invalid year")
-    .max(new Date().getFullYear(), "Year cannot be in future"),
+ releaseYear: z
+    .union([
+      z.literal(""),
+      z.number(),
+    ])
+    .refine((value) => value !== "", {
+      message: "Release year is required",
+    })
+    .refine((value) => /^\d{4}$/.test(String(value)), {
+      message: "Release year must be a 4-digit year",
+    })
+    .refine((value) => value >= 1900, {
+      message: "Release year must be 1900 or later",
+    })
+    .refine((value) => value <= currentYear, {
+      message: `Release year cannot be later than ${currentYear}`,
+    }),
 });
 
 /* =========================
@@ -36,8 +52,5 @@ export const createSeriesSchema = baseSeriesSchema.extend({
    EDIT (thumbnail OPTIONAL)
 ========================= */
 export const editSeriesSchema = baseSeriesSchema.extend({
-  thumbnail: z
-    .instanceof(File)
-    .optional()
-    .nullable(),
+  thumbnail: z.instanceof(File).optional().nullable(),
 });

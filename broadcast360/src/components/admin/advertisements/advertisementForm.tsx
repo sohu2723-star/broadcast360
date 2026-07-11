@@ -1,255 +1,266 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { AdvertisementFormData } from "@/types/advertisement";
-import {
-  createAdvertisementSchema,
-  editAdvertisementSchema,
-} from "@/lib/validators/advertisement.validator";
 
 type Props = {
-  initialData?: AdvertisementFormData;
+  initialData?: AdvertisementFormData & { thumbnailUrl?: string; videoUrl?: string };
   advertisementId?: number;
-  onSubmit: (data: AdvertisementFormData) => Promise<void>;
+  onSubmit: (data: AdvertisementFormData & { thumbnail: File | null }) => Promise<void>;
 };
 
-export default function AdvertisementForm({
-  initialData,
-  advertisementId,
-  onSubmit,
-}: Props) {
+export default function AdvertisementForm({ initialData, advertisementId, onSubmit }: Props) {
   const router = useRouter();
   const isEditMode = !!advertisementId;
-
-  const [form, setForm] = useState<AdvertisementFormData>(
-    initialData ?? {
-      title: "",
-      active: true,
-      video: null,
-    }
-  );
-
+  const [form, setForm] = useState<AdvertisementFormData>({ title: "", active: true, video: null });
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [videoPreview, setVideoPreview] = useState<string>("");
+  const [thumbnailPreview, setThumbnailPreview] = useState<string>("");
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isCheckingTitle, setIsCheckingTitle] = useState(false);
-  const [titleAvailable, setTitleAvailable] = useState(false);
+  const [titleAvailable, setTitleAvailable] = useState(true); 
+  const [isTitleChecked, setIsTitleChecked] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  //On blur validation for title availability
-  async function handleTitleBlur() {
-  const trimmedTitle = form.title.trim();
-  setTitleAvailable(false);
+  const [hasSubmittedAttempt, setHasSubmittedAttempt] = useState(false);
 
-  if (!trimmedTitle) {
-    setErrors((prev) => ({ ...prev, title: "Advertisement title is required" }));
-    return;
-  }
-
-  const isSameAsOriginal = isEditMode && 
-    initialData?.title && 
-    trimmedTitle.toLowerCase().replace(/\s+/g, " ") === initialData.title.trim().toLowerCase().replace(/\s+/g, " ");
-
-  if (isSameAsOriginal) {
-    setErrors((prev) => {
-      const copy = { ...prev };
-      delete copy.title;
-      return copy;
-    });
-    setTitleAvailable(true);
-    return; 
-  }
-
-  try {
-    const currentId = (form as any).id || (initialData as any)?.id || ""; 
-    const url = `/api/ads/check-title?title=${encodeURIComponent(trimmedTitle)}&id=${currentId}`;
-    const res = await fetch(url);
-    const data = await res.json();
-
-    if (data.exists) {
-      setErrors((prev) => ({ ...prev, title: "This title is already taken" }));
-      setTitleAvailable(false);
-    } else {
-      setErrors((prev) => {
-        const copy = { ...prev };
-        delete copy.title;
-        return copy;
+  useEffect(() => {
+    if (initialData) {
+      setForm({
+        title: initialData.title || "",
+        active: initialData.active ?? true,
+        video: null,
       });
+      if (initialData.videoUrl) setVideoPreview(initialData.videoUrl);
+      if (initialData.thumbnailUrl) setThumbnailPreview(initialData.thumbnailUrl);
       setTitleAvailable(true);
+      setIsTitleChecked(false);
     }
-  } catch (err) {
-    console.error("Blur Check Error:", err);
-  }
-}
+  }, [initialData]);
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-  e.preventDefault();
-  
-  setTitleAvailable(false);
-  setErrors({});
-
-  if (errors.title || !form.title.trim()) return;
-
-  const schema = isEditMode ? editAdvertisementSchema : createAdvertisementSchema;
-  const result = schema.safeParse(form);
-
-  if (!result.success) {
-    const fieldErrors: Record<string, string> = {};
-    result.error.issues.forEach((issue) => {
-      const field = issue.path[0] as string;
-      if (field) {
-        fieldErrors[field] = issue.message;
-      }
-    });
-    setErrors(fieldErrors);
-    return;
-  }
-
-  try {
-    setIsSubmitting(true);
+  async function handleTitleBlur() {
     const trimmedTitle = form.title.trim();
-
-    const isSameAsOriginal = isEditMode && 
-      initialData?.title && 
-      trimmedTitle.toLowerCase().replace(/\s+/g, " ") === initialData.title.trim().toLowerCase().replace(/\s+/g, " ");
-
-    if (!isSameAsOriginal) {
-      const currentId = (form as any).id || (initialData as any)?.id || ""; 
-      const url = `/api/ads/check-title?title=${encodeURIComponent(trimmedTitle)}&id=${currentId}`;
-      
+    
+    if (!trimmedTitle) {
+      setErrors((prev) => ({ ...prev, title: "Advertisement title is required" }));
+      setTitleAvailable(false);
+      setIsTitleChecked(true);
+      return;
+    }
+    if (isEditMode && initialData?.title && trimmedTitle.toLowerCase().replace(/\s+/g, " ") === initialData.title.trim().toLowerCase().replace(/\s+/g, " ")) {
+      setErrors((prev) => { const copy = { ...prev }; delete copy.title; return copy; });
+      setTitleAvailable(true);
+      setIsTitleChecked(true);
+      return; 
+    }
+    try {
+      const url = `/api/ads/check-title?title=${encodeURIComponent(trimmedTitle)}&id=${advertisementId || ""}`;
       const res = await fetch(url);
       const data = await res.json();
 
+      setIsTitleChecked(true);
+
       if (data.exists) {
         setErrors((prev) => ({ ...prev, title: "This title is already taken" }));
-        setIsSubmitting(false);
-        return; 
+        setTitleAvailable(false);
       } else {
+        setErrors((prev) => { const copy = { ...prev }; delete copy.title; return copy; });
         setTitleAvailable(true);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
       }
-    } else {
-      setTitleAvailable(true);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  async function validateFormOnSubmit(): Promise<boolean> {
+    const tempErrors: Record<string, string> = {};
+    const trimmedTitle = form.title.trim();
+
+    if (!trimmedTitle) {
+      tempErrors.title = "Advertisement title is required";
     }
 
-    await onSubmit(form);
+    if (!isEditMode && !form.video) {
+      tempErrors.video = "Advertisement video file is required";
+    }
+
     
-  } catch (err) {
-    console.error(err);
-  } finally {
-    setIsSubmitting(false);
+    let isCurrentTitleAvailable = titleAvailable;
+    
+    if (trimmedTitle && (!isEditMode || trimmedTitle.toLowerCase().replace(/\s+/g, " ") !== initialData?.title?.trim().toLowerCase().replace(/\s+/g, " "))) {
+      try {
+        const url = `/api/ads/check-title?title=${encodeURIComponent(trimmedTitle)}&id=${advertisementId || ""}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        
+        setIsTitleChecked(true);
+        if (data.exists) {
+          tempErrors.title = "This title is already taken";
+          setTitleAvailable(false);
+          isCurrentTitleAvailable = false;
+        } else {
+          setTitleAvailable(true);
+          isCurrentTitleAvailable = true;
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    setErrors((prev) => ({ ...prev, ...tempErrors }));
+  
+    if (tempErrors.title || (!isEditMode && tempErrors.video) || !isCurrentTitleAvailable) {
+      return false;
+    }
+    return true;
   }
-}
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setHasSubmittedAttempt(true);
+
+    const isValid = await validateFormOnSubmit();
+    if (!isValid) return; 
+
+    try {
+      setIsSubmitting(true);
+      await onSubmit({ ...form, thumbnail: thumbnailFile });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  const shouldShowTitleError = errors.title || (!titleAvailable && (hasSubmittedAttempt || isTitleChecked));
+  const shouldShowVideoError = errors.video && hasSubmittedAttempt;
 
   return (
-    <div className="bg-[#0B1026] border border-white/10 rounded-2xl p-6 w-full">
-      <form className="space-y-5" onSubmit={handleSubmit}>
+    <div className="w-full">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-stretch">
         
-        {/* Title Input */}
-        <div>
-          <div className="flex justify-between items-center mb-2">
-            <label className="block text-sm font-medium text-slate-200">
-              Advertisement Title
+        {/* LEFT COLUMN: PREVIEWS */}
+        <div className="lg:col-span-2 space-y-5 flex flex-col justify-start">
+          <div className="bg-[#111936] border border-white/5 rounded-2xl p-4">
+            <label className="block text-xs font-semibold tracking-wider text-slate-400 uppercase mb-3">
+              Video Preview
             </label>
-            {isCheckingTitle && (
-              <span className="text-xs text-blue-400 animate-pulse">Checking...</span>
-            )}
-          </div>
-          
-        <input
-              type="text" style={errors.title ? { borderColor: "#ef4444" } : {}}
-              className={`w-full bg-[#111936] border rounded-xl p-3 text-white focus:outline-none transition-all 
-                ${errors.title ? "focus:!border-red-500" : "border-white/10 focus:border-blue-500" }`}
-              value={form.title}
-              onChange={(e) => {
-                                  setTitleAvailable(false); 
-                                  
-                                  setForm({ ...form, title: e.target.value });
-                                  if (errors.title) {
-                                    setErrors((prev) => {
-                                      const copy = { ...prev };
-                                      delete copy.title;
-                                      return copy;
-                                    });
-                                  }
-                                }}
-                                onBlur={handleTitleBlur}
-            />
-
-        <div className="mt-1">
-          {errors.title && (
-            <p style={{ color: "#ef4444" }} className="text-sm text-red-500">{errors.title}</p>
-          )}
-          
-          {titleAvailable && !errors.title && (
-            <p style={{ color: "#10b981" }} className="text-sm text-green-500 font-medium">✓ Title is available</p>
-          )}
-        </div>
-        </div>
-
-        {/* Compact File Upload Area */}
-        <div>
-          <label className="block text-sm font-medium text-slate-200 mb-2">
-            {isEditMode ? "Replace Video File (Optional)" : "Advertisement Video File"}
-          </label>
-          <div className="relative border border-dashed border-white/10 hover:border-white/20 rounded-xl bg-[#111936] p-4 text-center cursor-pointer transition-all">
-            <input
-              type="file"
-              accept="video/*"
-              className="absolute inset-0 opacity-0 cursor-pointer"
-              onChange={(e) => {
-                const file = e.target.files?.[0] ?? null;
-                setForm({ ...form, video: file });
-              }}
-            />
-            <div className="text-xs text-slate-400 space-y-1">
-              {form.video ? (
-                <p className="text-emerald-400 font-medium truncate">✓ {form.video.name}</p>
+            <div className="bg-[#070b19] rounded-xl aspect-video overflow-hidden border border-white/10 flex items-center justify-center">
+              {videoPreview ? (
+                <video key={videoPreview} controls className="w-full h-full object-contain bg-black">
+                  <source src={videoPreview} type="video/mp4" />
+                </video>
               ) : (
-                <p>Click or drag to upload video file</p>
+                <p className="text-xs text-slate-500 italic">Upload Video</p>
               )}
             </div>
           </div>
-          {errors.video && (
-            <p style={{ color: "#ef4444" }} className="text-xs font-semibold mt-2">⚠ {errors.video}</p>
-          )}
-          
+
+          <div className="bg-[#111936] border border-white/5 rounded-2xl p-4">
+            <label className="block text-xs font-semibold tracking-wider text-slate-400 uppercase mb-3">
+              Thumbnail Preview
+            </label>
+            <div className="bg-[#070b19] rounded-xl aspect-video overflow-hidden border border-white/10 flex items-center justify-center">
+              {thumbnailPreview ? (
+                <img src={thumbnailPreview} alt="Thumbnail" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-xs text-slate-500 italic">Upload Thumbnail</span>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Active Status Checkbox */}
-        <div className="flex items-center gap-3 py-1">
-          <input
-            type="checkbox"
-            id="active"
-            className="w-5 h-5 rounded bg-[#111936] border-white/10 accent-[#106EE9] cursor-pointer"
-            checked={form.active}
-            onChange={(e) => setForm({ ...form, active: e.target.checked })}
-          />
-          <label htmlFor="active" className="text-sm text-slate-200 cursor-pointer select-none">
-            Active Status (Visible to users)
-          </label>
-        </div>
+        {/* RIGHT COLUMN: INPUT FORM BOX */}
+        <form onSubmit={handleSubmit} className="lg:col-span-3 bg-[#0B1026] border border-white/10 rounded-2xl p-6 flex flex-col justify-between">
+          <div className="space-y-5">
+            {/* Title Input*/}
+            <div>
+              <label className="block text-sm font-medium text-slate-200 mb-2">Advertisement Title</label>
+              <input
+                type="text" 
+                style={shouldShowTitleError ? { borderColor: "#ef4444" } : {}}
+                className={`w-full bg-[#111936] border rounded-xl p-3 text-sm text-white focus:outline-none transition-all ${shouldShowTitleError ? "focus:!border-red-500" : "border-white/10 focus:border-blue-500" }`}
+                value={form.title}
+                onChange={(e) => { 
+                  const newVal = e.target.value;
+                  setForm({ ...form, title: newVal });
+                  
+                  if (newVal.trim()) {
+                    setErrors((prev) => { const copy = { ...prev }; delete copy.title; return copy; });
+                  }
+                }}
+                onBlur={handleTitleBlur}
+              />
+              <div className="mt-1">
+                {shouldShowTitleError && errors.title && <p className="text-xs text-red-400 font-medium">⚠ {errors.title}</p>}
+                {!errors.title && !titleAvailable && (hasSubmittedAttempt || isTitleChecked) && <p className="text-xs text-red-400 font-medium">⚠ This title is already taken</p>}
+                {titleAvailable && isTitleChecked && form.title.trim() && !errors.title && <p className="text-xs text-green-400 font-medium">✓ Title is verified and available</p>}
+              </div>
+            </div>
 
-        {/* Buttons Control */}
-        <div className="flex gap-4 mt-5 pt-2">
-           <button type="submit"
-                   disabled={isCheckingTitle || isSubmitting || !!errors.title}
-                    style={{
-                      opacity: (isCheckingTitle || isSubmitting || !!errors.title) ? 0.4 : 1,
-                      cursor: (isCheckingTitle || isSubmitting || !!errors.title) ? "not-allowed" : "pointer"
-                    }}
-                   className="flex-1 bg-[#106EE9] py-3 rounded-xl font-bold hover:opacity-90 text-sm transition-all text-white"
+            {/* Video File Input */}
+            <div>
+              <label className="block text-sm font-medium text-slate-200 mb-2">
+                {isEditMode ? "Replace Video File (Optional)" : "Advertisement Video File *"}
+              </label>
+              <div 
+                style={shouldShowVideoError ? { borderColor: "#ef4444" } : {}}
+                className={`relative border border-dashed rounded-xl bg-[#111936] p-3 text-center cursor-pointer transition-all hover:border-white/20 ${shouldShowVideoError ? "border-red-500 bg-red-500/5" : "border-white/10"}`}
               >
-            {isSubmitting ? "Saving..." : isEditMode ? "Update Advertisement" : "Create Advertisement"}
-           </button>
-  
-            <button
-              type="button"
-              onClick={() => router.push("/admin/ads")}
-              className="bg-[#F41010] px-6 py-3 rounded-xl font-bold hover:opacity-90 text-sm transition-all text-white"
-            >
+                <input
+                  type="file" accept="video/*" className="absolute inset-0 opacity-0 cursor-pointer"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] ?? null;
+                    setForm({ ...form, video: file });
+                    if (file) {
+                      setVideoPreview(URL.createObjectURL(file));
+                      setErrors((prev) => { const copy = { ...prev }; delete copy.video; return copy; });
+                    }
+                  }}
+                />
+                <p className="text-xs text-slate-400 truncate">{form.video ? `✓ ${form.video.name}` : "Choose File No file chosen"}</p>
+              </div>
+              {shouldShowVideoError && <p className="text-xs text-red-500 font-medium mt-1.5">⚠ {errors.video}</p>}
+            </div>
+
+            {/* Thumbnail File Input */}
+            <div>
+              <label className="block text-sm font-medium text-slate-200 mb-2">
+                {isEditMode ? "Replace Thumbnail (Optional)" : "Advertisement Thumbnail (Optional)"}
+              </label>
+              <div className="relative border border-dashed border-white/10 hover:border-white/20 rounded-xl bg-[#111936] p-3 text-center cursor-pointer transition-all">
+                <input
+                  type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] ?? null;
+                    setThumbnailFile(file);
+                    if (file) setThumbnailPreview(URL.createObjectURL(file));
+                  }}
+                />
+                <p className="text-xs text-slate-400 truncate">{thumbnailFile ? `✓ ${thumbnailFile.name}` : "Choose File No file chosen"}</p>
+              </div>
+            </div>
+
+            {/* Status Checkbox */}
+            <div className="flex items-center gap-3 py-1">
+              <input
+                type="checkbox" id="active" className="w-5 h-5 rounded bg-[#111936] border-white/10 accent-[#106EE9] cursor-pointer"
+                checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })}
+              />
+              <label htmlFor="active" className="text-sm text-slate-200 cursor-pointer select-none">Active Status (Visible to users)</label>
+            </div>
+          </div>
+
+          {/* Buttons Area */}
+          <div className="flex gap-4 pt-4 border-t border-white/5 mt-8">
+            <button type="submit" disabled={isSubmitting} className="flex-1 bg-[#106EE9] py-3 rounded-xl font-bold hover:opacity-90 text-sm transition-all text-white cursor-pointer disabled:opacity-50">
+              {isSubmitting ? "Saving..." : isEditMode ? "Save Changes" : "Create Advertisement"}
+            </button>
+            <button type="button" onClick={() => router.push("/admin/ads")} className="bg-[#F41010] px-6 py-3 rounded-xl font-bold hover:opacity-90 text-sm transition-all text-white cursor-pointer">
               Cancel
             </button>
           </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 }

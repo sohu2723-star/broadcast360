@@ -4,10 +4,9 @@ import { getDefaultPlaylist } from "@/repositories/channel.repository";
 import { ScheduleWithRelations } from "@/types/schedule.types";
 import { PlaylistItemWithRelations } from "@/types/playlist";
 import { BroadcastStateManager } from "@/managers/broadcast-state.manager";
-import { ConcatManager } from "@/managers/concat.manager";
-import { PlaylistLoopManager } from "@/managers/playlist-loop.manager";
 import { PlayoutQueueManager } from "@/managers/playout-queue.manager";
 import { PlaylistResolverService } from "@/services/playlist-resolver.service";
+import path from "path";
 
 export class BroadcastService {
   private session = new SessionManager();
@@ -16,27 +15,16 @@ export class BroadcastService {
 
   private state = new BroadcastStateManager();
 
-  private concat = new ConcatManager();
-
-  private loop = new PlaylistLoopManager();
-
   private playout = new PlayoutQueueManager();
 
   private resolver = new PlaylistResolverService();
 
-  // keep current playlist items per channel
   private currentItems = new Map<number, PlaylistItemWithRelations>();
 
   /**
-   * START BROADCAST
+   * START CHANNEL BROADCAST
    */
-  async start(
-    schedule: ScheduleWithRelations | null,
-    channelId: number,
-  ): Promise<void> {
-    console.log("DEBUG channelId:", channelId);
-
-    // prevent duplicate stream
+  async start(schedule: ScheduleWithRelations | null, channelId: number) {
     if (this.session.isLive(channelId)) {
       console.log("⚠ Channel already live");
 
@@ -44,136 +32,155 @@ export class BroadcastService {
     }
 
     let playlist;
-    let isFallback = false;
 
-    // ==========================
-    // 1. Scheduled playlist
-    // ==========================
+    /*
+      1. Scheduled playlist
+    */
 
     if (schedule?.playlist) {
       playlist = schedule.playlist;
 
-      console.log("📺 Using scheduled playlist:", playlist.name);
-    }
-
-    // ==========================
-    // 2. Default playlist
-    // ==========================
-    else {
-      isFallback = true;
+      console.log("📺 Schedule playlist:", playlist.name);
+    } else {
+      /*
+      2. Fallback playlist
+    */
       const channel = await getDefaultPlaylist(channelId);
 
       playlist = channel?.defaultPlaylist;
 
       if (!playlist) {
-        console.log("⚠ No default playlist");
+        console.log("⚠ No fallback playlist");
 
         return;
       }
 
-      console.log(" Using default playlist:", playlist.name);
+      console.log("🔁 Fallback playlist:", playlist.name);
     }
 
     const items = playlist.items ?? [];
-    console.log("Playlist items:", items.length);
 
-    const resolver = new PlaylistResolverService();
-
-    items.forEach((item) => {
-      console.log("PLAY ITEM:", item.type, resolver.resolve(item));
-    });
-
-    if (!items || items.length === 0) {
-      console.log("⚠ Playlist has no items");
+    if (items.length === 0) {
+      console.log("⚠ Playlist empty");
 
       return;
     }
 
+    console.log("📺 Items:", items.length);
+
+    /*
+      Load queue
+
+      A
+      B
+      C
+
+      becomes
+
+      A
+      B
+      C
+      A
+      B
+      C
+
+    */
+
     this.playout.load(channelId, items);
 
-    // save first item state
+    this.session.start(channelId);
+
     this.currentItems.set(channelId, items[0]);
 
     this.state.start(channelId, items[0]);
 
-    // start session
+    await this.playNext(channelId);
 
-    this.session.start(channelId);
-    console.log(` Playlist: ${playlist.name}`);
-    console.log(` Total items: ${items.length}`);
+    console.log(`▶ Channel ${channelId} started`);
+  }
 
-    // create concat file
+  /**
+   * PLAY NEXT VIDEO
+   */
+  private async playNext(channelId: number) {
+    const item = this.playout.next(channelId);
 
-    // const concatFile = this.concat.create(channelId, items);
-    this.loop.load(channelId, items);
+    if (!item) {
+      console.log("⚠ Queue empty");
+      return;
+    }
 
-    const concatFile = this.concat.create(channelId, items, isFallback);
+    const video = this.resolver.resolve(item);
 
-    const outputDir = `./public/streams/channel-${channelId}`;
+    if (!video) {
+      console.log("⚠ Cannot resolve video item:", item.id);
 
-    console.log("🚀 Starting continuous FFmpeg pipeline");
+      await this.playNext(channelId);
 
-    const ffmpeg = this.ffmpeg.start(
+      return;
+    }
+
+    const fullPath = path.join(process.cwd(), "public", video);
+
+    console.log("▶ Playing:", video);
+
+    const ffmpeg = this.ffmpeg.playSingle(
       channelId,
-      concatFile,
-      outputDir,
-      isFallback,
+      fullPath,
+      `./public/streams/channel-${channelId}`,
     );
 
     if (!ffmpeg) {
       console.log("❌ FFmpeg failed");
 
-      this.session.stop(channelId);
-
       return;
     }
 
-    ffmpeg.on("close", (code) => {
-      console.log(`❌ FFmpeg stopped channel ${channelId} code ${code}`);
+    ffmpeg.once("close", async (code) => {
+      console.log(`✔ Finished video channel ${channelId}`, code);
 
-      this.session.stop(channelId);
-
-      this.currentItems.delete(channelId);
+      await this.playNext(channelId);
     });
-
-    console.log(`▶ Channel ${channelId} broadcast started`);
   }
 
   /**
-   * STOP BROADCAST
+   * SWITCH SCHEDULE
    */
-  stop(channelId: number): void {
-    this.ffmpeg.stop(channelId);
-
-    this.session.stop(channelId);
-
-    this.currentItems.delete(channelId);
-
-    console.log(`🛑 Broadcast stopped channel ${channelId}`);
-  }
-
-  /**
-   * CURRENT PLAYING ITEM
-   */
-  getCurrentItem(channelId: number) {
-    return this.currentItems.get(channelId);
-  }
-
   async switchBroadcast(
     schedule: ScheduleWithRelations | null,
     channelId: number,
   ) {
-    console.log(`🔄 Switching channel ${channelId}`);
+    console.log("🔄 Switching playlist channel", channelId);
 
-    // stop current ffmpeg
+    // clear old queue
+
+    this.playout.clear(channelId);
+
     this.ffmpeg.stop(channelId);
 
     this.session.stop(channelId);
 
     this.currentItems.delete(channelId);
 
-    // start new playlist
-
     await this.start(schedule, channelId);
+  }
+
+  /**
+   * STOP
+   */
+  stop(channelId: number) {
+    this.ffmpeg.stop(channelId);
+
+    this.playout.clear(channelId);
+
+    this.session.stop(channelId);
+
+    this.currentItems.delete(channelId);
+
+    console.log("🛑 Broadcast stopped", channelId);
+  }
+
+  getCurrentItem(channelId: number) {
+    return this.currentItems.get(channelId);
   }
 }
