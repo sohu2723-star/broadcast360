@@ -119,11 +119,11 @@ export class FFmpegManager {
     });
 
     ffmpeg.on("error", (err) => {
-      console.log(`❌ FFmpeg error channel ${channelId}:`, err);
+      console.log(`FFmpeg error channel ${channelId}:`, err);
     });
 
     ffmpeg.on("close", (code) => {
-      console.log(`❌ FFmpeg exited channel ${channelId} code: ${code}`);
+      console.log(`FFmpeg exited channel ${channelId} code: ${code}`);
 
       this.processes.delete(channelId);
     });
@@ -150,4 +150,114 @@ export class FFmpegManager {
   isRunning(channelId: number) {
     return this.processes.has(channelId);
   }
+
+  playSingle(
+  channelId: number,
+  videoFile: string,
+  outputDir: string,
+): ReturnType<typeof spawn> | null {
+
+  if (!fs.existsSync(videoFile)) {
+    console.log("❌ Video not found:", videoFile);
+    return null;
+  }
+
+  const fullPath = path.resolve(
+    process.cwd(),
+    "public",
+    "streams",
+    `channel-${channelId}`,
+  );
+
+  fs.mkdirSync(fullPath, {
+    recursive: true,
+  });
+
+  const outputPath = path.join(fullPath, "index.m3u8");
+
+  console.log("🎬 Playing:", videoFile);
+  console.log("📁 Output:", outputPath);
+
+  const ffmpegArgs = [
+    "-re",
+
+    "-fflags",
+    "+genpts",
+
+    "-avoid_negative_ts",
+    "make_zero",
+
+    // input video
+    "-i",
+    videoFile,
+
+    "-map_metadata",
+    "-1",
+
+    "-vf",
+    "scale=854:480,fps=30",
+
+    "-c:v",
+    "libx264",
+
+    "-preset",
+    "ultrafast",
+
+    "-tune",
+    "zerolatency",
+
+    "-vsync",
+    "cfr",
+
+    "-c:a",
+    "aac",
+
+    "-ar",
+    "48000",
+
+    "-ac",
+    "2",
+
+    "-b:a",
+    "128k",
+
+    "-f",
+    "hls",
+
+    "-hls_time",
+    "4",
+
+    "-hls_list_size",
+    "10",
+
+    "-hls_segment_type",
+    "mpegts",
+
+    "-hls_flags",
+    "delete_segments+append_list+omit_endlist",
+
+    outputPath,
+  ];
+
+  const ffmpeg = spawn("ffmpeg", ffmpegArgs, {
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+
+  this.processes.set(channelId, ffmpeg);
+
+  ffmpeg.stderr.on("data", (data) => {
+    console.log(`[FFMPEG ${channelId}]`, data.toString());
+  });
+
+  ffmpeg.on("error", (err) => {
+    console.log(`FFmpeg error channel ${channelId}:`, err);
+  });
+
+  ffmpeg.on("close", (code) => {
+    console.log(`FFmpeg exited channel ${channelId} code: ${code}`);
+    this.processes.delete(channelId);
+  });
+
+  return ffmpeg;
+}
 }

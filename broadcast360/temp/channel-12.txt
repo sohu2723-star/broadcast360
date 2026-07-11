@@ -1,3 +1,2 @@
-file 'C:/broadcast360/broadcast360/public/videos/movies/1783416088690-bird.mp4'
-file 'C:/broadcast360/broadcast360/public/videos/movies/1783415954639-BBBpart2.mp4'
-file 'C:/broadcast360/broadcast360/public/videos/movies/1783410129780-BBBpart1.mp4'
+file 'C:/broadcast360/broadcast360/public/videos/movies/1783611699138-rememberMeCoco2_fixed.mp4'
+file 'C:/broadcast360/broadcast360/public/videos/movies/1783611581634-rememberMeCoco_fixed.mp4'

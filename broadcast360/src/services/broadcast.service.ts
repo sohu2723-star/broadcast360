@@ -5,6 +5,9 @@ import { ScheduleWithRelations } from "@/types/schedule.types";
 import { PlaylistItemWithRelations } from "@/types/playlist";
 import { BroadcastStateManager } from "@/managers/broadcast-state.manager";
 import { ConcatManager } from "@/managers/concat.manager";
+import { PlaylistLoopManager } from "@/managers/playlist-loop.manager";
+import { PlayoutQueueManager } from "@/managers/playout-queue.manager";
+import { PlaylistResolverService } from "@/services/playlist-resolver.service";
 
 export class BroadcastService {
   private session = new SessionManager();
@@ -14,6 +17,12 @@ export class BroadcastService {
   private state = new BroadcastStateManager();
 
   private concat = new ConcatManager();
+
+  private loop = new PlaylistLoopManager();
+
+  private playout = new PlayoutQueueManager();
+
+  private resolver = new PlaylistResolverService();
 
   // keep current playlist items per channel
   private currentItems = new Map<number, PlaylistItemWithRelations>();
@@ -35,6 +44,7 @@ export class BroadcastService {
     }
 
     let playlist;
+    let isFallback = false;
 
     // ==========================
     // 1. Scheduled playlist
@@ -50,6 +60,7 @@ export class BroadcastService {
     // 2. Default playlist
     // ==========================
     else {
+      isFallback = true;
       const channel = await getDefaultPlaylist(channelId);
 
       playlist = channel?.defaultPlaylist;
@@ -64,14 +75,21 @@ export class BroadcastService {
     }
 
     const items = playlist.items ?? [];
-
     console.log("Playlist items:", items.length);
+
+    const resolver = new PlaylistResolverService();
+
+    items.forEach((item) => {
+      console.log("PLAY ITEM:", item.type, resolver.resolve(item));
+    });
 
     if (!items || items.length === 0) {
       console.log("⚠ Playlist has no items");
 
       return;
     }
+
+    this.playout.load(channelId, items);
 
     // save first item state
     this.currentItems.set(channelId, items[0]);
@@ -86,13 +104,21 @@ export class BroadcastService {
 
     // create concat file
 
-    const concatFile = this.concat.create(channelId, items);
+    // const concatFile = this.concat.create(channelId, items);
+    this.loop.load(channelId, items);
+
+    const concatFile = this.concat.create(channelId, items, isFallback);
 
     const outputDir = `./public/streams/channel-${channelId}`;
 
     console.log("🚀 Starting continuous FFmpeg pipeline");
 
-    const ffmpeg = this.ffmpeg.start(channelId, concatFile, outputDir);
+    const ffmpeg = this.ffmpeg.start(
+      channelId,
+      concatFile,
+      outputDir,
+      isFallback,
+    );
 
     if (!ffmpeg) {
       console.log("❌ FFmpeg failed");
@@ -134,32 +160,20 @@ export class BroadcastService {
   }
 
   async switchBroadcast(
-  schedule: ScheduleWithRelations,
-  channelId: number
-) {
+    schedule: ScheduleWithRelations | null,
+    channelId: number,
+  ) {
+    console.log(`🔄 Switching channel ${channelId}`);
 
-  console.log(
-    `🔄 Switching channel ${channelId}`
-  );
+    // stop current ffmpeg
+    this.ffmpeg.stop(channelId);
 
+    this.session.stop(channelId);
 
-  // stop current ffmpeg
-  this.ffmpeg.stop(channelId);
+    this.currentItems.delete(channelId);
 
+    // start new playlist
 
-  this.session.stop(channelId);
-
-
-  this.currentItems.delete(channelId);
-
-
-
-  // start new playlist
-
-  await this.start(
-    schedule,
-    channelId
-  );
-
-}
+    await this.start(schedule, channelId);
+  }
 }

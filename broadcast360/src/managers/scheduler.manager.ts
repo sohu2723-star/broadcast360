@@ -8,6 +8,8 @@ export class SchedulerManager {
 
   private currentSchedule = new Map<number, number>();
 
+  private usingFallback = new Map<number, boolean>();
+
   start(channelId: number) {
     console.log(`🕒 Scheduler started channel ${channelId}`);
 
@@ -23,6 +25,21 @@ export class SchedulerManager {
         if (!schedule) {
           console.log("⚠ No active schedule");
 
+          const isFallback = this.usingFallback.get(channelId);
+
+          // already playing fallback
+          if (isFallback) {
+            return;
+          }
+
+          console.log("📺 Switching to default playlist");
+
+          this.currentSchedule.delete(channelId);
+
+          this.usingFallback.set(channelId, true);
+
+          await this.broadcast.switchBroadcast(null, channelId);
+
           return;
         }
 
@@ -34,6 +51,8 @@ export class SchedulerManager {
         }
 
         console.log("🔄 New schedule detected:", schedule.playlist.name);
+
+        this.usingFallback.set(channelId, false);
 
         this.currentSchedule.set(channelId, schedule.id);
 
