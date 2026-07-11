@@ -15,16 +15,6 @@ const baseMovieSchema = z.object({
 
   genre: z.string().min(1, "Genre is required"),
 
-  thumbnail: z
-    .instanceof(File, {
-      message: "Thumbnail is required",
-    })
-    .refine(
-      (file) =>
-        ["image/jpeg", "image/png", "image/webp"].includes(file.type),
-      "Invalid image format"
-    ),
-
   releaseYear: z
     .union([z.string(), z.number()])
     .transform((val) => {
@@ -43,6 +33,16 @@ const baseMovieSchema = z.object({
 });
 
 export const createMovieSchema = baseMovieSchema.extend({
+
+  thumbnail: z
+    .instanceof(File, {
+      message: "Thumbnail is required",
+    })
+    .refine(
+      (file) =>
+        ["image/jpeg", "image/png", "image/webp"].includes(file.type),
+      "Invalid image format"
+    ),
   video: z
     .instanceof(File, {
       message: "Movie file is required",
@@ -55,5 +55,13 @@ export const createMovieSchema = baseMovieSchema.extend({
 });
 
 export const editMovieSchema = baseMovieSchema.extend({
-  video: z.instanceof(File).nullable().optional(),
+  thumbnail: z
+    .instanceof(File)
+    .nullable()
+    .optional(),
+
+  video: z
+    .instanceof(File)
+    .nullable()
+    .optional(),
 });

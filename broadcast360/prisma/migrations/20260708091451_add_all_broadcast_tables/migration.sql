@@ -224,6 +224,9 @@ CREATE UNIQUE INDEX "Channel_name_key" ON "Channel"("name");
 CREATE UNIQUE INDEX "Channel_streamKey_key" ON "Channel"("streamKey");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Movie_title_releaseYear_key" ON "Movie"("title", "releaseYear");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Episode_seriesId_episodeNo_key" ON "Episode"("seriesId", "episodeNo");
 
 -- CreateIndex

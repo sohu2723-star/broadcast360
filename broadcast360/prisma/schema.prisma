@@ -104,6 +104,8 @@ model Movie {
   createdAt DateTime @default(now())
 
   playlistItems PlaylistItem[]
+
+  @@unique ([title, releaseYear])
 }
 
 // =====================
@@ -153,7 +155,7 @@ model Episode {
 
   playlistItems PlaylistItem[]
 
-  @@unique([seriesId, episodeNo])
+    @@unique([seriesId, episodeNo])
 }
 
 // =====================
@@ -339,8 +341,8 @@ model PlaylistItem {
 
   entertainment Entertainment? @relation(fields:[entertainmentId], references:[id])
 
-  createdAt DateTime @default(now())
-
+  createdAt DateTime @default(now())  
+  
   @@unique([playlistId, order])
 }
 

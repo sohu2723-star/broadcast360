@@ -79,22 +79,29 @@ export async function POST(req: NextRequest) {
       );
     }
 
+
     const movie = await addMovie(formData);
 
-    return NextResponse.json(movie);
-  }catch (error: any) {
-  console.error("POST ERROR =", error);
-
-  if (error.code === "P2002") {
     return NextResponse.json(
-      { message: "Movie already exists for this title and year" },
-      { status: 400 }
+      {
+        message: "Movie created successfully",
+        data: movie,
+      },
+      { status: 201 }
+    );
+  } catch (error: any) {
+    console.error("POST ERROR =", error);
+
+    if (error.code === "P2002") {
+      return NextResponse.json(
+        { message: "Movie already exists for this title and year" },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json(
+      { message: "Movie create failed" },
+      { status: 500 }
     );
   }
-
-  return NextResponse.json(
-    { message: "Create error" },
-    { status: 500 }
-  );
-}
 }

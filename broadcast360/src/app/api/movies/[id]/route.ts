@@ -57,17 +57,75 @@ export async function PUT(
       );
     }
 
-    const formData = await req.formData();
+   const oldMovie = await fetchMovieById(movieId);
 
-    const updatedMovie = await editMovie(formData, movieId);
+if (!oldMovie) {
+  return NextResponse.json(
+    { message: "Movie not found" },
+    { status: 404 }
+  );
+}
 
-    return NextResponse.json(updatedMovie);
-  } catch (error) {
+const formData = await req.formData();
+
+const title = formData.get("title");
+const description = formData.get("description");
+const genre = formData.get("genre");
+const releaseYear = Number(formData.get("releaseYear"));
+
+const video = formData.get("video");
+const thumbnail = formData.get("thumbnail");
+
+
+const noChanges =
+  oldMovie.title === title &&
+  oldMovie.description === description &&
+  oldMovie.genre === genre &&
+  oldMovie.releaseYear === releaseYear &&
+  !video &&
+  !thumbnail;
+
+
+if (noChanges) {
+  return NextResponse.json(
+    {
+      message: "No changes, movie update successfully",
+    },
+    { status: 200 }
+  );
+}
+
+
+const updatedMovie = await editMovie(formData, movieId);
+
+return NextResponse.json(
+  {
+    message: "Movie updated successfully",
+    data: updatedMovie,
+  },
+  { status: 200 }
+);
+  } catch (error: any) {
     console.error(error);
 
+    if (error.code === "P2002") {
+      return NextResponse.json(
+        {
+          message: "Movie already exists for this title and year",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
     return NextResponse.json(
-      { message: "Update failed" },
-      { status: 500 }
+      {
+        message: "Update failed",
+      },
+      {
+        status: 500,
+      }
     );
   }
 }
