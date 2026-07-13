@@ -1,151 +1,58 @@
 import { PlaylistItemWithRelations } from "@/types/playlist";
 
-
-interface QueueState {
-  items: PlaylistItemWithRelations[];
-  loop: boolean;
-}
-
-
 export class PlayoutQueueManager {
+  private queues = new Map<number, PlaylistItemWithRelations[]>();
 
+  private current = new Map<number, PlaylistItemWithRelations>();
 
-  private queues =
-    new Map<number, QueueState>();
+  load(channelId: number, items: PlaylistItemWithRelations[]) {
+    this.queues.set(channelId, [...items]);
 
-
-  private current =
-    new Map<number, PlaylistItemWithRelations>();
-
-
-  /**
-   * Load playlist
-   */
-  load(
-    channelId:number,
-    items:PlaylistItemWithRelations[],
-    loop:boolean = false
-  ){
-
-    this.queues.set(
-      channelId,
-      {
-        items:[...items],
-        loop
-      }
-    );
-
-
-    console.log(
-      `📺 Queue loaded channel ${channelId}`,
-      {
-        count:items.length,
-        loop
-      }
-    );
-
+    console.log(`📺 Queue loaded channel ${channelId}`, items.length);
   }
 
+  next(channelId: number) {
+    const queue = this.queues.get(channelId);
 
-
-  /**
-   * Get next item
-   */
-  next(
-    channelId:number
-  ){
-
-
-    const queue =
-      this.queues.get(channelId);
-
-
-    if(!queue || queue.items.length===0){
-
-      console.log(
-        "⚠ Queue empty",
-        channelId
-      );
+    if (!queue || queue.length === 0) {
+      console.log("⚠ Queue empty", channelId);
 
       return null;
     }
 
+    const item = queue.shift();
 
-
-    const item =
-      queue.items.shift();
-
-
-
-    if(!item){
+    if (!item) {
       return null;
     }
 
+    // save current playing item
+    this.current.set(channelId, item);
 
-
-    this.current.set(
-      channelId,
-      item
-    );
-
-
-
-    // fallback playlist loop
-    if(queue.loop){
-
-      queue.items.push(item);
-
-    }
-
-
+    // put it back for looping
+    queue.push(item);
 
     return item;
-
   }
-
-
-
-  getCurrent(
-    channelId:number
-  ){
-
-    return this.current.get(channelId);
-
-  }
-
-
 
   /**
-   * Schedule switching
+   * Replace queue while FFmpeg keeps running
    */
-  replace(
-    channelId:number,
-    items:PlaylistItemWithRelations[],
-    loop:boolean=false
-  ){
+  replace(channelId: number, items: PlaylistItemWithRelations[]) {
+    console.log(`🔄 Replacing queue channel ${channelId}`);
 
-    console.log(
-      `🔄 Replace queue ${channelId}`
-    );
+    this.queues.set(channelId, [...items]);
 
-
-    this.load(
-      channelId,
-      items,
-      loop
-    );
-
+    console.log("New queue size:", items.length);
   }
 
+  getCurrent(channelId: number) {
+    return this.current.get(channelId);
+  }
 
-
-  clear(channelId:number){
-
+  clear(channelId: number) {
     this.queues.delete(channelId);
 
     this.current.delete(channelId);
-
   }
-
-
 }

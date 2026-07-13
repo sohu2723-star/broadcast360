@@ -6,15 +6,25 @@ export class SchedulerManager {
 
   private broadcast = new BroadcastService();
 
+  // current schedule id per channel
   private currentSchedule = new Map<number, number>();
 
+  // fallback mode per channel
   private usingFallback = new Map<number, boolean>();
 
   start(channelId: number) {
+    if (this.timer) {
+      console.log("⚠ Scheduler already running");
+
+      return;
+    }
+
     console.log(`🕒 Scheduler started channel ${channelId}`);
 
     this.timer = setInterval(async () => {
       try {
+        console.log("🕒 Scheduler tick", new Date().toLocaleString());
+
         const now = new Date();
 
         const schedule = await ScheduleRepository.findLiveSchedule(
@@ -22,17 +32,19 @@ export class SchedulerManager {
           now,
         );
 
+        // ==========================
+        // FALLBACK MODE
+        // ==========================
+
         if (!schedule) {
-          console.log("⚠ No active schedule");
+          const alreadyFallback = this.usingFallback.get(channelId);
 
-          const isFallback = this.usingFallback.get(channelId);
-
-          // already playing fallback
-          if (isFallback) {
+          if (alreadyFallback) {
+            // already playing fallback
             return;
           }
 
-          console.log("📺 Switching to default playlist");
+          console.log("🔁 Switching to fallback playlist");
 
           this.currentSchedule.delete(channelId);
 
@@ -43,28 +55,32 @@ export class SchedulerManager {
           return;
         }
 
-        const oldSchedule = this.currentSchedule.get(channelId);
+        // ==========================
+        // SCHEDULE MODE
+        // ==========================
 
-        // same schedule, no restart
-        if (oldSchedule === schedule.id) {
+        const currentScheduleId = this.currentSchedule.get(channelId);
+
+        const isSameSchedule = currentScheduleId === schedule.id;
+
+        const isAlreadySchedule = this.usingFallback.get(channelId) === false;
+
+        if (isSameSchedule && isAlreadySchedule) {
+          // nothing changed
           return;
         }
 
-        console.log("🔄 New schedule detected:", schedule.playlist.name);
-
-        this.usingFallback.set(channelId, false);
+        console.log("📺 Switching schedule:", schedule.playlist?.name);
 
         this.currentSchedule.set(channelId, schedule.id);
 
-        if (oldSchedule) {
-          await this.broadcast.switchBroadcast(schedule, channelId);
-        } else {
-          await this.broadcast.start(schedule, channelId);
-        }
+        this.usingFallback.set(channelId, false);
+
+        await this.broadcast.switchBroadcast(schedule, channelId);
       } catch (error) {
         console.error("Scheduler error:", error);
       }
-    }, 10000);
+    }, 5000); // check every 5 sec
   }
 
   stop() {

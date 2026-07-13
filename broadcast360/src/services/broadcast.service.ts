@@ -85,6 +85,10 @@ export class BroadcastService {
       C
 
     */
+    console.log(
+      "QUEUE ORDER:",
+      items.map((item) => item.id),
+    );
 
     this.playout.load(channelId, items);
 
@@ -102,69 +106,196 @@ export class BroadcastService {
   /**
    * PLAY NEXT VIDEO
    */
-  private async playNext(channelId: number) {
-    const item = this.playout.next(channelId);
+  private async playNext(
+  channelId:number
+): Promise<void> {
 
-    if (!item) {
-      console.log("⚠ Queue empty");
-      return;
-    }
 
-    const video = this.resolver.resolve(item);
+  const item =
+    this.playout.next(channelId);
 
-    if (!video) {
-      console.log("⚠ Cannot resolve video item:", item.id);
 
-      await this.playNext(channelId);
+  if(!item){
 
-      return;
-    }
-
-    const fullPath = path.join(process.cwd(), "public", video);
-
-    console.log("▶ Playing:", video);
-
-    const ffmpeg = this.ffmpeg.playSingle(
-      channelId,
-      fullPath,
-      `./public/streams/channel-${channelId}`,
+    console.log(
+      "⚠ No next item"
     );
 
-    if (!ffmpeg) {
-      console.log("❌ FFmpeg failed");
+    return;
 
-      return;
-    }
+  }
 
-    ffmpeg.once("close", async (code) => {
-      console.log(`✔ Finished video channel ${channelId}`, code);
+
+
+  const video =
+    this.resolver.resolve(item);
+
+
+
+  if(!video){
+
+    console.log(
+      "⚠ Cannot resolve item"
+    );
+
+    await this.playNext(channelId);
+
+    return;
+
+  }
+
+
+
+  const path = await import("path");
+
+
+  const fullPath =
+    path.join(
+      process.cwd(),
+      "public",
+      video
+    );
+
+
+  console.log(
+    "▶ Playing:",
+    video
+  );
+
+
+
+  const ffmpeg =
+    this.ffmpeg.playSingle(
+      channelId,
+      fullPath,
+      `./public/streams/channel-${channelId}`
+    );
+
+
+
+  if(!ffmpeg){
+    return;
+  }
+
+
+
+  ffmpeg.once(
+    "close",
+    async()=>{
+
+      console.log(
+        "✔ Finished video"
+      );
+
 
       await this.playNext(channelId);
-    });
-  }
+
+    }
+  );
+
+}
 
   /**
    * SWITCH SCHEDULE
    */
   async switchBroadcast(
-    schedule: ScheduleWithRelations | null,
-    channelId: number,
-  ) {
-    console.log("🔄 Switching playlist channel", channelId);
+  schedule: ScheduleWithRelations | null,
+  channelId: number,
+) {
 
-    // clear old queue
+  console.log(
+    `🔄 Switching channel ${channelId}`
+  );
 
-    this.playout.clear(channelId);
 
-    this.ffmpeg.stop(channelId);
+  let playlist;
 
-    this.session.stop(channelId);
 
-    this.currentItems.delete(channelId);
+  // =========================
+  // Schedule playlist
+  // =========================
 
-    await this.start(schedule, channelId);
+  if(schedule?.playlist){
+
+    playlist = schedule.playlist;
+
+    console.log(
+      "📺 Using schedule playlist:",
+      playlist.name
+    );
+
   }
 
+
+  // =========================
+  // Fallback playlist
+  // =========================
+
+  else {
+
+    const channel =
+      await getDefaultPlaylist(channelId);
+
+
+    playlist =
+      channel?.defaultPlaylist;
+
+
+    if(!playlist){
+
+      console.log(
+        "⚠ No fallback playlist"
+      );
+
+      return;
+
+    }
+
+
+    console.log(
+      "🔁 Using fallback:",
+      playlist.name
+    );
+
+  }
+
+
+
+  console.log(
+    "PLAYLIST ITEMS:",
+    playlist.items.map(item=>({
+      id:item.id,
+      type:item.type
+    }))
+  );
+
+
+
+  // update queue
+
+  this.playout.replace(
+    channelId,
+    playlist.items
+  );
+
+
+
+  // =========================
+  // Start playback if stopped
+  // =========================
+
+  if(!this.ffmpeg.isRunning(channelId)){
+
+    console.log(
+      "▶ Starting playout queue"
+    );
+
+
+    await this.playNext(channelId);
+
+  }
+
+}
   /**
    * STOP
    */
@@ -182,5 +313,27 @@ export class BroadcastService {
 
   getCurrentItem(channelId: number) {
     return this.currentItems.get(channelId);
+  }
+
+  private async handleQueueEmpty(channelId: number) {
+    console.log("🔁 Queue empty, loading fallback");
+
+    const channel = await getDefaultPlaylist(channelId);
+
+    const playlist = channel?.defaultPlaylist;
+
+    if (!playlist) {
+      console.log("⚠ No fallback playlist");
+
+      return;
+    }
+
+    this.playout.replace(channelId, playlist.items);
+
+    console.log("🔁 Fallback loaded:", playlist.name);
+  }
+
+  isLive(channelId: number) {
+    return this.session.isLive(channelId);
   }
 }

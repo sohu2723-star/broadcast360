@@ -151,154 +151,96 @@ export class FFmpegManager {
     return this.processes.has(channelId);
   }
 
- playSingle(
-  channelId: number,
-  videoFile: string,
-  outputDir: string,
-): ReturnType<typeof spawn> | null {
+  playSingle(
+    channelId: number,
+    videoFile: string,
+    outputDir: string,
+  ): ReturnType<typeof spawn> | null {
+    if (!fs.existsSync(videoFile)) {
+      console.log("❌ Video not found:", videoFile);
 
+      return null;
+    }
 
-  if (!fs.existsSync(videoFile)) {
-    console.log(
-      "❌ Video not found:",
-      videoFile
+    const fullPath = path.resolve(
+      process.cwd(),
+      "public",
+      "streams",
+      `channel-${channelId}`,
     );
 
-    return null;
+    fs.mkdirSync(fullPath, {
+      recursive: true,
+    });
+
+    const outputPath = path.join(fullPath, "index.m3u8");
+
+    console.log("🎬 Playing:", videoFile);
+
+    const args = [
+      "-re",
+
+      "-fflags",
+      "+genpts",
+
+      "-i",
+      videoFile,
+
+      "-vf",
+      "scale=854:480,fps=30",
+
+      "-c:v",
+      "libx264",
+
+      "-preset",
+      "ultrafast",
+
+      "-tune",
+      "zerolatency",
+
+      "-c:a",
+      "aac",
+
+      "-ar",
+      "48000",
+
+      "-ac",
+      "2",
+
+      "-f",
+      "hls",
+
+      "-hls_time",
+      "4",
+
+      "-hls_list_size",
+      "10",
+
+      "-hls_flags",
+      "delete_segments+append_list+omit_endlist+independent_segments",
+
+      "-hls_playlist_type",
+      "event",
+
+      outputPath,
+    ];
+
+    const ffmpeg = spawn("ffmpeg", args, {
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+
+    this.processes.set(channelId, ffmpeg);
+
+    ffmpeg.stderr.on("data", (data) => {
+      console.log(`[FFMPEG ${channelId}]`, data.toString());
+    });
+
+    ffmpeg.on("close", (code) => {
+      console.log(`FFmpeg finished channel ${channelId}`, code);
+
+      this.processes.delete(channelId);
+    });
+
+    return ffmpeg;
   }
-
-
-  const fullPath = path.resolve(
-    process.cwd(),
-    "public",
-    "streams",
-    `channel-${channelId}`,
-  );
-
-
-  fs.mkdirSync(fullPath,{
-    recursive:true
-  });
-
-
-
-  const outputPath =
-    path.join(
-      fullPath,
-      "index.m3u8"
-    );
-
-
-  console.log(
-    "🎬 Playing:",
-    videoFile
-  );
-
-
-  const args = [
-
-    "-re",
-
-    "-fflags",
-    "+genpts",
-
-    "-i",
-    videoFile,
-
-
-    "-vf",
-    "scale=854:480,fps=30",
-
-
-    "-c:v",
-    "libx264",
-
-    "-preset",
-    "ultrafast",
-
-    "-tune",
-    "zerolatency",
-
-
-    "-c:a",
-    "aac",
-
-    "-ar",
-    "48000",
-
-    "-ac",
-    "2",
-
-
-    "-f",
-    "hls",
-
-    "-hls_time",
-    "4",
-
-    "-hls_list_size",
-    "10",
-
-    "-hls_flags",
-    "delete_segments+append_list+omit_endlist",
-
-
-    outputPath
-  ];
-
-
-
-  const ffmpeg = spawn(
-    "ffmpeg",
-    args,
-    {
-      stdio:[
-        "ignore",
-        "pipe",
-        "pipe"
-      ]
-    }
-  );
-
-
-  this.processes.set(
-    channelId,
-    ffmpeg
-  );
-
-
-
-  ffmpeg.stderr.on(
-    "data",
-    data=>{
-      console.log(
-        `[FFMPEG ${channelId}]`,
-        data.toString()
-      );
-    }
-  );
-
-
-
-  ffmpeg.on(
-    "close",
-    code=>{
-
-      console.log(
-        `FFmpeg finished channel ${channelId}`,
-        code
-      );
-
-
-      this.processes.delete(
-        channelId
-      );
-
-    }
-  );
-
-
-  return ffmpeg;
-
-}
 }

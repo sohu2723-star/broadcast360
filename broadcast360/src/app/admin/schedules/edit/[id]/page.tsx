@@ -30,18 +30,45 @@ export default async function EditSchedulePage({ params }: EditSchedulePageProps
     return notFound();
   }
 
-  // Format the data structure cleanly to match the form initialData properties
-  const formattedInitialData = {
-    id: schedule.id,
-    channelId: schedule.channelId,
-    playlistId: schedule.playlistId,
-    programId: schedule.playlist?.programId ?? 0, // Injected program dependency configuration
-    // / Checks if startTime exists, otherwise defaults to an empty string
-    startTime: schedule.startTime ? schedule.startTime.toISOString().slice(0, 16) : "", 
-    
-    // FIX: Checks if endTime exists, otherwise defaults to an empty string
-    endTime: schedule.endTime ? schedule.endTime.toISOString().slice(0, 16) : "",
-  };
+  function formatLocalDateTime(date: Date | null) {
+  if (!date) return "";
+
+  const year = date.getFullYear();
+
+  const month = String(
+    date.getMonth() + 1
+  ).padStart(2, "0");
+
+  const day = String(
+    date.getDate()
+  ).padStart(2, "0");
+
+  const hours = String(
+    date.getHours()
+  ).padStart(2, "0");
+
+  const minutes = String(
+    date.getMinutes()
+  ).padStart(2, "0");
+
+
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+const formattedInitialData = {
+  id: schedule.id,
+  channelId: schedule.channelId,
+  playlistId: schedule.playlistId,
+  programId: schedule.playlist?.programId ?? 0,
+
+  startTime: formatLocalDateTime(
+    schedule.startTime
+  ),
+
+  endTime: formatLocalDateTime(
+    schedule.endTime
+  ),
+};
 
   return (
     <div className="container mx-auto py-10 px-4">

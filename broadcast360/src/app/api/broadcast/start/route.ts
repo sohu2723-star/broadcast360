@@ -20,19 +20,16 @@ export async function POST(req: Request) {
       );
     }
 
-
     const schedule =
       await ScheduleRepository.findLiveSchedule(
         Number(channelId),
         new Date()
       );
 
-
     await broadcast.start(
       schedule,
       Number(channelId)
     );
-
 
     return NextResponse.json({
       message:"Broadcast started",
