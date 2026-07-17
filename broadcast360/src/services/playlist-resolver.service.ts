@@ -1,44 +1,59 @@
 import { PlaylistItemWithRelations } from "@/types/schedule.types";
 
 export class PlaylistResolverService {
+  resolve(item: PlaylistItemWithRelations): string | null {
+    let videoUrl: string | null = null;
 
-
-  resolve(
-    item: PlaylistItemWithRelations
-  ): string | null {
-
-
-    switch(item.type){
-
+    switch (item.type) {
       case "MOVIE":
-        return item.movie?.videoUrl ?? null;
+        videoUrl = item.movie?.videoUrl ?? null;
 
+        break;
 
       case "EPISODE":
-        return item.episode?.videoUrl ?? null;
+        videoUrl = item.episode?.videoUrl ?? null;
 
+        break;
 
       case "ADVERTISEMENT":
-        return item.advertisement?.videoUrl ?? null;
+        videoUrl = item.advertisement?.videoUrl ?? null;
 
+        break;
 
       case "ENTERTAINMENT":
-        return item.entertainment?.videoUrl ?? null;
+        videoUrl = item.entertainment?.videoUrl ?? null;
 
+        break;
 
       case "NEWS":
-        return item.news?.videoUrl ?? null;
+        videoUrl = item.news?.videoUrl ?? null;
 
+        break;
 
       case "STREAM":
-        return item.stream?.url ?? null;
+        videoUrl = item.stream?.url ?? null;
 
+        break;
 
       default:
-        return null;
-
+        videoUrl = null;
     }
 
-  }
+    if (!videoUrl) {
+      console.log("⚠ No video URL for item:", {
+        id: item.id,
+        type: item.type,
+      });
 
+      return null;
+    }
+
+    console.log("✅ Resolved:", {
+      id: item.id,
+      type: item.type,
+      url: videoUrl,
+    });
+
+    return videoUrl;
+  }
 }

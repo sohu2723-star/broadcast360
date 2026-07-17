@@ -155,51 +155,66 @@ export const ScheduleRepository = {
   });
 },
 
-  findLiveSchedule: async (
-  channelId: number,
-  now: Date
-) => {
-  return prisma.schedule.findFirst({
-    where: {
-      channelId,
+   findLiveSchedule: async (
+    channelId: number,
+    now: Date
+  ) => {
+    return prisma.schedule.findFirst({
+      where: {
+        channelId,
 
-      startTime: {
-        lte: now,
-      },
-
-      OR: [
-        {
-          endTime: null,
+        startTime: {
+          lte: now,
         },
-        {
-          endTime: {
-            gt: now,
+
+        OR: [
+          {
+            endTime: null,
           },
-        },
-      ],
-    },
-
-    include: {
-      playlist: {
-        include: {
-          items: {
-            orderBy: {
-              order: "asc",
-            },
-            include: {
-              movie: true,
-              episode: true,
-              advertisement: true,
-              entertainment: true,
-              news: true,
-              stream: true,
+          {
+            endTime: {
+              gt: now,
             },
           },
+        ],
+      },
+
+      include: {
+        playlist: {
+          include: {
+            items: {
+              orderBy: {
+                order: "asc",
+              },
+              include: {
+                movie: true,
+                episode: true,
+                advertisement: true,
+                entertainment: true,
+                news: true,
+                stream: true,
+              },
+            },
+          },
         },
       },
-    },
-  });
-},
+    });
+  },
 
 
-}
+  updateStatus: async (
+    id: number,
+    status: "SCHEDULED" | "LIVE" | "COMPLETED" | "CANCELLED"
+  ) => {
+    return prisma.schedule.update({
+      where: {
+        id,
+      },
+      data: {
+        status,
+      },
+    });
+  },
+
+
+};

@@ -6,7 +6,12 @@ function hasConflict(aStart: Date, aEnd: Date, bStart: Date, bEnd: Date) {
 }
 
 export const ScheduleService = {
-  getPaginated: async (page: number, limit: number, search?: string, date?: string) => {
+  getPaginated: async (
+    page: number,
+    limit: number,
+    search?: string,
+    date?: string,
+  ) => {
     const validatedPage = Math.max(1, page);
     const validatedLimit = Math.max(1, limit);
 
@@ -32,11 +37,21 @@ export const ScheduleService = {
     const end = new Date(dto.endTime);
 
     const schedules = await ScheduleRepository.findByChannel(dto.channelId);
-    const conflict = schedules.find((s) =>
-      hasConflict(start, end, new Date(s.startTime), new Date(s.endTime ?? s.startTime))
+
+    const conflict = schedules.some((s) =>
+      hasConflict(
+        start,
+        end,
+        new Date(s.startTime),
+        s.endTime ? new Date(s.endTime) : new Date(s.startTime),
+      ),
     );
 
-    if (conflict) throw new Error("Schedule time conflict detected.");
+    if (conflict) {
+      throw new Error(
+        "Schedule time conflict detected. Another schedule already exists during this time.",
+      );
+    }
 
     return ScheduleRepository.create({
       channelId: dto.channelId,
@@ -47,27 +62,46 @@ export const ScheduleService = {
   },
 
   update: async (id: number, dto: UpdateScheduleDTO) => {
-    const schedules = await ScheduleRepository.findByChannel(dto.channelId);
+    const existing = await ScheduleRepository.findById(id);
 
-    const start = dto.startTime ? new Date(dto.startTime) : null;
-    const end = dto.endTime ? new Date(dto.endTime) : null;
+    if (!existing) {
+      throw new Error("Schedule not found");
+    }
 
-    if (start && end) {
-      const conflict = schedules.find((s) => {
-        if (s.id === id) return false; // Fixed: Don't compare with itself
-        return hasConflict(start, end, new Date(s.startTime), new Date(s.endTime ?? s.startTime));
-      });
+    const start = dto.startTime
+      ? new Date(dto.startTime)
+      : new Date(existing.startTime);
 
-      if (conflict) throw new Error("Schedule update conflict detected.");
+    const end = dto.endTime
+      ? new Date(dto.endTime)
+      : existing.endTime
+        ? new Date(existing.endTime)
+        : null;
+
+    const schedules = await ScheduleRepository.findByChannel(
+      dto.channelId ?? existing.channelId,
+    );
+
+    const conflict = schedules.some((s) => {
+      if (s.id === id) return false;
+
+      return hasConflict(
+        start,
+        end!,
+        new Date(s.startTime),
+        new Date(s.endTime!),
+      );
+    });
+
+    if (conflict) {
+      throw new Error("Schedule update conflict detected.");
     }
 
     return ScheduleRepository.update(id, {
-      channelId: dto.channelId,
-      playlistId: dto.playlistId,
-      startTime: start ?? new Date(),
+      channelId: dto.channelId ?? existing.channelId,
+      playlistId: dto.playlistId ?? existing.playlistId,
+      startTime: start,
       endTime: end,
     });
   },
-
-  
 };
