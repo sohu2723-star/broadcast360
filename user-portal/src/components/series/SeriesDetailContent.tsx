@@ -22,50 +22,30 @@ export default function SeriesDetailContent({ series, relatedSeries }: Props) {
 
   return (
     <main className="min-h-screen bg-black text-white">
-      <div className="mx-auto max-w-7xl px-6 py-8">
-        <div className="grid grid-cols-12 gap-6">
-          <SeriesPlayer
-            episodes={series.episodes}
-            currentEpisode={currentEpisode}
-            currentPartIndex={currentPartIndex}
-            onEpisodeChange={setCurrentEpisode}
-            onPartChange={setCurrentPartIndex}
-          />
-
-          <SeriesSidebar
-            episodes={series.episodes}
-            currentEpisode={currentEpisode}
-            currentPartIndex={currentPartIndex}
-            onEpisodeChange={setCurrentEpisode}
-            onPartChange={setCurrentPartIndex}
-          />
-        </div>
-
-        <div className="mt-8">
+      <div className="mx-auto max-w-6xl px-4 py-8">
+        {/* Series Information */}
+        <section className="mb-10">
           <SeriesInfo series={series} />
-        </div>
+        </section>
 
-        {/* <OtherEpisodes
-          episodes={series.episodes}
-          currentEpisode={currentEpisode}
-          onSelect={(episode) => {
-            setCurrentEpisode(episode);
-            setCurrentPartIndex(0);
-            window.scrollTo({
-              top: 0,
-              behavior: "smooth",
-            });
-          }}
-        /> */}
+        {/* Other Episodes */}
+        <section className="mb-12">
+          <OtherEpisodes
+            seriesId={series.id}
+            episodes={series.episodes}
+            currentEpisode={currentEpisode}
+          />
+        </section>
 
-        <div className="mt-12">
+        {/* Related Series */}
+        <section>
           <RelatedSeries
             series={relatedSeries.map((item) => ({
               ...item,
               description: item.description ?? null,
             }))}
           />
-        </div>
+        </section>
       </div>
     </main>
   );

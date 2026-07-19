@@ -52,7 +52,7 @@ export default function Pagination({
               px-4
               py-2
               text-white
-              ${page === item ? "bg-red-600" : "bg-zinc-800"}
+              ${page === item ? "bg-blue-600" : "bg-zinc-800"}
             `}
         >
           {item}

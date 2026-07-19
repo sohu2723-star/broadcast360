@@ -34,8 +34,6 @@ export default function SeriesContent({
     .sort((a, b) => b.views - a.views)
     .slice(0, 5);
 
-  console.log("hotSeries:", hotSeries);
-
   function updateQuery(key: string, value: string) {
     const scrollY = window.scrollY;
 

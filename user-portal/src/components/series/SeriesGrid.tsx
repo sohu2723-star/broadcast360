@@ -58,7 +58,7 @@ export default function SeriesGrid({
 
           <div
             ref={scrollRef}
-            className="flex gap-5 overflow-x-auto scroll-smooth scrollbar-hide"
+            className="flex gap-5 overflow-x-auto scroll-smooth hide-scrollbar"
           >
             {series.map((item) => (
               <div key={item.id} className="min-w-[250px] flex-shrink-0">

@@ -41,7 +41,7 @@ export default function VideoPlayer({ episode, onVideoEnded }: Props) {
         Your browser does not support HTML5 video.
       </video>
 
-      <div className="flex items-center justify-between bg-zinc-900 px-5 py-3">
+      <div className="flex items-center justify-between  px-5 py-3">
         <div>
           <h2 className="text-lg font-semibold text-white">{episode.title}</h2>
 
