@@ -1,6 +1,4 @@
 import { redirect } from "next/navigation";
-export default function HomePage(){
-
-redirect("/live-tv");
-
+export default function HomePage() {
+  redirect("/live-tv");
 }

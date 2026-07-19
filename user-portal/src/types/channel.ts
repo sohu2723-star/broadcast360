@@ -1,5 +1,5 @@
 export interface Channel {
-  id: number; 
+  id: number;
   name: string;
   streamUrl: string;
   description?: string;

@@ -5,20 +5,20 @@ export async function GET() {
   try {
     const dbChannels = await prisma.channel.findMany({
       include: {
-        streams: true, 
+        streams: true,
       },
       orderBy: {
         name: "asc",
       },
     });
     const channels = dbChannels.map((channel) => {
-      // const primaryStream = channel.streams?.[0]; 
-      
+      // const primaryStream = channel.streams?.[0];
+
       return {
         id: channel.id.toString(),
         name: channel.name,
         description: channel.description || "",
-        // streamUrl: primaryStream ? (primaryStream as any).url : "", 
+        // streamUrl: primaryStream ? (primaryStream as any).url : "",
         streamUrl: `http://localhost:3000/streams/channel-${channel.id}/index.m3u8`,
       };
     });
@@ -35,10 +35,10 @@ export async function GET() {
     console.error("Prisma Fetch Error:", error);
     return NextResponse.json(
       { message: "Cannot fetch channels" },
-      { 
-        status: 500, 
-        headers: { "Access-Control-Allow-Origin": "*" } 
-      }
+      {
+        status: 500,
+        headers: { "Access-Control-Allow-Origin": "*" },
+      },
     );
   }
 }

@@ -1,3 +1,0 @@
-file 'C:/broadcast360/broadcast360/public/videos/movies/1783532278917-BBBpart1_fixed.mp4'
-file 'C:/broadcast360/broadcast360/public/videos/advertisements/1783532410120-snackAds_fixed.mp4'
-file 'C:/broadcast360/broadcast360/public/videos/movies/1783532329234-BBBpart2.1_fixed.mp4'

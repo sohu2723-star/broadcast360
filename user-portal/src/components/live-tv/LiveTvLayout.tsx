@@ -19,7 +19,7 @@ export default function LiveTvLayout() {
         setError(null);
         // Call Admin API
         const data = await channelService.getAllChannels();
-        
+
         setChannels(data);
         if (data.length > 0) setSelectedChannel(data[0]);
       } catch (err) {
@@ -34,12 +34,11 @@ export default function LiveTvLayout() {
 
   return (
     <div className="min-h-screen bg-[#05070c] text-white p-6">
-
       {/* Flexible Layout Grid */}
       <div className="flex flex-col lg:flex-row gap-6 items-stretch">
         {/* Left Side: Video Output Container */}
         <VideoPlayer channel={selectedChannel} />
-        
+
         {/* Right Side: Sidebar Controls */}
         <ChannelSidebar
           channels={channels}

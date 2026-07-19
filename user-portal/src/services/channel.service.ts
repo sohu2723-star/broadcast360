@@ -1,13 +1,13 @@
-import { ADMIN_API_URL, defaultHeaders } from "@/services/apiConfig"; 
-import { Channel } from "@/types"; 
+import { ADMIN_API_URL, defaultHeaders } from "@/services/apiConfig";
+import type { Channel } from "@/types";
 
 export const channelService = {
   async getAllChannels(): Promise<Channel[]> {
     try {
-      const res = await fetch(`${ADMIN_API_URL}/api/user/channel`, {
+      const res = await fetch(`${ADMIN_API_URL}/api/user-portal/channel`, {
         method: "GET",
         headers: defaultHeaders,
-        next: { revalidate: 60 } 
+        next: { revalidate: 60 },
       });
 
       if (!res.ok) throw new Error("Failed to fetch channels from admin");
@@ -20,10 +20,13 @@ export const channelService = {
 
   async getChannelById(id: string): Promise<Channel> {
     try {
-      const res = await fetch(`${ADMIN_API_URL}/api/user/channel/${id}`, {
-        method: "GET",
-        headers: defaultHeaders,
-      });
+      const res = await fetch(
+        `${ADMIN_API_URL}/api/user-portal/channel/${id}`,
+        {
+          method: "GET",
+          headers: defaultHeaders,
+        },
+      );
 
       if (!res.ok) throw new Error(`Failed to fetch channel ID: ${id}`);
       return await res.json();
@@ -31,5 +34,5 @@ export const channelService = {
       console.error(`Error in getChannelById (${id}):`, error);
       throw error;
     }
-  }
+  },
 };
