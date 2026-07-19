@@ -1,44 +1,88 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+
+import VideoPlayer from "./VideoPlayer";
+import NextEpisodeOverlay from "./NextEpisodeOverlay";
 
 import type { Episode } from "@/types/series-details";
 
-import VideoPlayer from "./VideoPlayer";
-import EpisodeList from "./EpisodeList";
-import NextEpisodeOverlay from "./NextEpisodeOverlay";
-
 interface Props {
   episodes: Episode[];
+
+  currentEpisode: Episode;
+
+  currentPartIndex: number;
+
+  onEpisodeChange: (episode: Episode) => void;
+
+  onPartChange: (index: number) => void;
 }
 
-export default function SeriesPlayer({ episodes }: Props) {
-  const [currentEpisode, setCurrentEpisode] = useState<Episode | null>(null);
-
+export default function SeriesPlayer({
+  episodes = [],
+  currentEpisode,
+  currentPartIndex,
+  onEpisodeChange,
+  onPartChange,
+}: Props) {
   const [showOverlay, setShowOverlay] = useState(false);
 
   const [countdown, setCountdown] = useState(5);
 
-  useEffect(() => {
-    if (episodes.length > 0) {
-      setCurrentEpisode(episodes[0]);
-    }
-  }, [episodes]);
+  if (!episodes || episodes.length === 0 || !currentEpisode) {
+    return null;
+  }
 
-  const currentIndex = useMemo(() => {
-    if (!currentEpisode) return -1;
+  const currentEpisodeIndex = episodes.findIndex(
+    (e) => e.episodeNo === currentEpisode.episodeNo,
+  );
 
-    return episodes.findIndex((episode) => episode.id === currentEpisode.id);
-  }, [episodes, currentEpisode]);
+  const currentPart = currentEpisode.parts[currentPartIndex];
+
+  const hasNextPart = currentPartIndex < currentEpisode.parts.length - 1;
 
   const nextEpisode =
-    currentIndex >= 0 ? episodes[currentIndex + 1] : undefined;
+    currentEpisodeIndex < episodes.length - 1
+      ? episodes[currentEpisodeIndex + 1]
+      : null;
+
+  function playNext() {
+    // Next Part
+    if (hasNextPart) {
+      onPartChange(currentPartIndex + 1);
+
+      setShowOverlay(false);
+
+      setCountdown(5);
+
+      return;
+    }
+
+    // Next Episode
+    if (nextEpisode) {
+      onEpisodeChange(nextEpisode);
+
+      onPartChange(0);
+
+      setShowOverlay(false);
+
+      setCountdown(5);
+    }
+  }
+
+  function cancelAutoPlay() {
+    setShowOverlay(false);
+
+    setCountdown(5);
+  }
 
   useEffect(() => {
-    if (!showOverlay || !nextEpisode) return;
+    if (!showOverlay) return;
 
     if (countdown === 0) {
-      playNextEpisode();
+      playNext();
+
       return;
     }
 
@@ -47,55 +91,41 @@ export default function SeriesPlayer({ episodes }: Props) {
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [showOverlay, countdown, nextEpisode]);
+  }, [showOverlay, countdown]);
 
-  function playNextEpisode() {
-    if (!nextEpisode) return;
-
-    setCurrentEpisode(nextEpisode);
-    setShowOverlay(false);
-    setCountdown(5);
-  }
-
-  function cancelAutoPlay() {
-    setShowOverlay(false);
-    setCountdown(5);
-  }
-
-  if (!currentEpisode) {
-    return null;
-  }
+  const overlayEpisode: Episode = hasNextPart
+    ? {
+        ...currentEpisode,
+        title: `Part ${currentPartIndex + 2}`,
+      }
+    : nextEpisode
+      ? {
+          ...nextEpisode,
+          title: `Episode ${nextEpisode.episodeNo}`,
+        }
+      : currentEpisode;
 
   return (
-    <section className="space-y-6">
+    <section className="col-span-8 space-y-6">
       <div className="relative">
         <VideoPlayer
-          episode={currentEpisode}
+          episode={currentPart}
           onVideoEnded={() => {
-            if (nextEpisode) {
+            if (hasNextPart || nextEpisode) {
               setShowOverlay(true);
             }
           }}
         />
 
-        {showOverlay && nextEpisode && (
+        {showOverlay && (
           <NextEpisodeOverlay
-            episode={nextEpisode}
+            episode={overlayEpisode}
             seconds={countdown}
-            onPlayNow={playNextEpisode}
+            onPlayNow={playNext}
             onCancel={cancelAutoPlay}
           />
         )}
       </div>
-
-      <EpisodeList
-        episodes={episodes}
-        currentEpisode={currentEpisode}
-        onSelect={(episode) => {
-          cancelAutoPlay();
-          setCurrentEpisode(episode);
-        }}
-      />
     </section>
   );
 }

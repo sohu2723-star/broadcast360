@@ -6,17 +6,13 @@ import SeriesCard from "./SeriesCard";
 
 interface Props {
   title?: string;
-
   series: Series[];
-
   horizontal?: boolean;
 }
 
 export default function SeriesGrid({
   title,
-
   series,
-
   horizontal = false,
 }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -24,7 +20,6 @@ export default function SeriesGrid({
   function scrollLeft() {
     scrollRef.current?.scrollBy({
       left: -350,
-
       behavior: "smooth",
     });
   }
@@ -32,7 +27,6 @@ export default function SeriesGrid({
   function scrollRight() {
     scrollRef.current?.scrollBy({
       left: 350,
-
       behavior: "smooth",
     });
   }
@@ -55,83 +49,33 @@ export default function SeriesGrid({
 
       {horizontal ? (
         <div className="relative">
-          {/* Left Button */}
-
           <button
             onClick={scrollLeft}
-            className="
-                absolute
-                left-0
-                top-1/2
-                z-10
-                -translate-y-1/2
-                rounded-full
-                bg-black/70
-                px-3
-                py-2
-                text-2xl
-                text-white
-              "
+            className="absolute left-0 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/70 px-3 py-2 text-2xl text-white"
           >
             ‹
           </button>
 
           <div
             ref={scrollRef}
-            className="
-                flex
-                gap-5
-                overflow-x-auto
-                scroll-smooth
-                scrollbar-hide
-              "
+            className="flex gap-5 overflow-x-auto scroll-smooth scrollbar-hide"
           >
             {series.map((item) => (
-              <div
-                key={item.id}
-                className="
-                      min-w-[280px]
-                      max-w-[280px]
-                    "
-              >
+              <div key={item.id} className="min-w-[250px] flex-shrink-0">
                 <SeriesCard series={item} />
               </div>
             ))}
           </div>
 
-          {/* Right Button */}
-
           <button
             onClick={scrollRight}
-            className="
-                absolute
-                right-0
-                top-1/2
-                z-10
-                -translate-y-1/2
-                rounded-full
-                bg-black/70
-                px-3
-                py-2
-                text-2xl
-                text-white
-              "
+            className="absolute right-0 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/70 px-3 py-2 text-2xl text-white"
           >
             ›
           </button>
         </div>
       ) : (
-        <div
-          className="
-            grid
-            grid-cols-1
-            gap-6
-            sm:grid-cols-2
-            md:grid-cols-3
-            lg:grid-cols-4
-            xl:grid-cols-5
-          "
-        >
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {series.map((item) => (
             <SeriesCard key={item.id} series={item} />
           ))}

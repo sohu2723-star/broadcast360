@@ -26,12 +26,12 @@ export default function NextEpisodeOverlay({
 
         <p className="mt-2 text-gray-300">{episode.title}</p>
 
-        <p className="mt-6 text-xl text-red-500">Playing in {seconds}s</p>
+        <p className="mt-6 text-xl text-blue-500">Playing in {seconds}s</p>
 
         <div className="mt-8 flex justify-center gap-4">
           <button
             onClick={onPlayNow}
-            className="rounded-lg bg-red-600 px-6 py-3 text-white hover:bg-red-700"
+            className="rounded-lg bg-blue-600 px-6 py-3 text-white hover:bg-blue-700"
           >
             Play Now
           </button>

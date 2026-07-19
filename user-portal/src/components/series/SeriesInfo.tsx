@@ -23,7 +23,7 @@ export default function SeriesInfo({ series }: Props) {
 
         {/* Information */}
 
-        <div className="flex flex-col justify-center">
+        <div className="flex flex-col ">
           <h1 className="mb-4 text-4xl font-bold text-white">{series.title}</h1>
 
           <div className="mb-6 flex flex-wrap gap-3">
@@ -47,18 +47,12 @@ export default function SeriesInfo({ series }: Props) {
           </div>
 
           <p className="leading-8 text-gray-300">
-            {series.description || "No description available."}
+            {series.description
+              ? series.description.length > 200
+                ? `${series.description.slice(0, 200)}...`
+                : series.description
+              : "No description available."}
           </p>
-
-          <div className="mt-8 rounded-lg bg-zinc-900 p-4">
-            <p className="text-gray-400">Latest Episode</p>
-
-            <h2 className="mt-2 text-2xl font-bold text-white">
-              Episode {series.latestEpisode.episodeNo}
-            </h2>
-
-            <p className="mt-2 text-gray-300">{series.latestEpisode.title}</p>
-          </div>
         </div>
       </div>
     </section>

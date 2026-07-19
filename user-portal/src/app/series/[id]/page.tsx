@@ -1,47 +1,54 @@
 import { notFound } from "next/navigation";
+import SeriesDetailContent from "@/components/series/SeriesDetailContent";
 
-import { SeriesService } from "@/services/series.service";
-
-import SeriesInfo from "@/components/series/SeriesInfo";
-import SeriesPlayer from "@/components/series/player/SeriesPlayer";
-import RelatedSeries from "@/components/series/RelatedSeries";
-
-interface Props {
-  params: Promise<{
-    id: string;
-  }>;
+interface PageProps {
+  params: Promise<{ id: string }>;
 }
 
-export default async function SeriesDetailPage({ params }: Props) {
+async function getSeriesDetails(id: string) {
+  const res = await fetch(
+    `http://localhost:3000/api/user-portal/series/${id}`,
+    {
+      cache: "no-store",
+    },
+  );
+  if (!res.ok) return null;
+  return res.json();
+}
+
+async function getRelatedSeries(id: string) {
+  const res = await fetch(
+    `http://localhost:3000/api/user-portal/series/${id}/related`,
+    {
+      cache: "no-store",
+    },
+  );
+
+  if (!res.ok) return [];
+
+  const data = await res.json();
+
+  return data.series;
+}
+
+export default async function SeriesDetailPage({ params }: PageProps) {
   const { id } = await params;
 
-  const seriesId = Number(id);
+  const seriesData = await getSeriesDetails(id);
+  const relatedSeries = await getRelatedSeries(id);
 
-  if (isNaN(seriesId)) {
+  if (!seriesData) {
     notFound();
   }
 
-  try {
-    const [series, relatedSeries] = await Promise.all([
-      SeriesService.getSeriesById(seriesId),
-
-      SeriesService.getRelatedSeries(seriesId),
-    ]);
-
-    return (
-      <main className="min-h-screen bg-black">
-        <div className="mx-auto max-w-7xl px-6 py-10">
-          <SeriesInfo series={series} />
-
-          <SeriesPlayer episodes={series.episodes} />
-
-          <RelatedSeries series={relatedSeries} />
-        </div>
-      </main>
-    );
-  } catch (error) {
-    console.error("Series Detail Page Error:", error);
-
-    notFound();
-  }
+  return (
+    <main className="min-h-screen bg-black text-white">
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
+        <SeriesDetailContent
+          series={seriesData}
+          relatedSeries={relatedSeries}
+        />
+      </div>
+    </main>
+  );
 }

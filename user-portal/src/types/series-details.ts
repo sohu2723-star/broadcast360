@@ -1,3 +1,15 @@
+export interface EpisodePart {
+  id: number;
+
+  title: string;
+
+  duration: number;
+
+  thumbnail: string | null;
+
+  videoUrl: string | null;
+}
+
 export interface Episode {
   id: number;
 
@@ -5,16 +17,18 @@ export interface Episode {
 
   episodeNo: number;
 
-  duration: number;
-
-  thumbnail: string | null;
-
-  videoUrl: string | null;
-
   channel: {
     id: number;
     name: string;
   };
+
+  schedule: {
+    id: number;
+    startTime: string;
+    endTime: string;
+  };
+
+  parts: EpisodePart[];
 }
 
 export interface SeriesDetail {

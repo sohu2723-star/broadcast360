@@ -13,13 +13,16 @@ export default function SeriesCard({ series }: Props) {
     <Link
       href={`/series/${series.id}`}
       className="
-      group
-      relative
-      h-[380px]
-      overflow-hidden
-      rounded-xl
-      bg-zinc-900
-    "
+  group
+  relative
+  block
+  h-[380px]
+  w-[250px]
+  flex-shrink-0
+  overflow-hidden
+  rounded-xl
+  bg-zinc-900
+"
     >
       {/* Full Image */}
 
@@ -61,35 +64,14 @@ export default function SeriesCard({ series }: Props) {
         text-white
       "
       >
-        <h3
-          className="
-          line-clamp-1
-          text-xl
-          font-bold
-        "
-        >
-          {series.title}
-        </h3>
+        <h3 className=" line-clamp-1 text-xl font-bold ">{series.title}</h3>
 
-        <p
-          className="
-          mt-2
-          line-clamp-2
-          text-sm
-          text-gray-300
-        "
-        >
+        {/* <p className="mt-2 line-clamp-2 text-sm text-gray-300">
           {series.description || "No description"}
-        </p>
+        </p> */}
 
-        <div
-          className="
-          mt-3
-          text-sm
-          text-red-400
-        "
-        >
-          Episode {series.latestEpisode.episodeNo}
+        <div className=" mt-3 text-sm text-red-400 ">
+          New Episode {series.latestEpisode.episodeNo}
         </div>
 
         <div

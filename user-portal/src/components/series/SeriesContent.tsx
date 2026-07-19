@@ -26,6 +26,15 @@ export default function SeriesContent({
   const router = useRouter();
 
   const [isPending, startTransition] = useTransition();
+  const hotSeries = [...series]
+    .map((item) => ({
+      ...item,
+      views: Math.floor(Math.random() * 10000),
+    }))
+    .sort((a, b) => b.views - a.views)
+    .slice(0, 5);
+
+  console.log("hotSeries:", hotSeries);
 
   function updateQuery(key: string, value: string) {
     const scrollY = window.scrollY;
@@ -69,13 +78,7 @@ export default function SeriesContent({
           onChange={(id) => updateQuery("channelId", id ? String(id) : "")}
         />
       </div>
-      <SeriesGrid
-        title="🔥 Hot Series"
-        series={[...series]
-          .sort((a, b) => b.latestEpisode.episodeNo - a.latestEpisode.episodeNo)
-          .slice(0, 10)}
-        horizontal
-      />
+      <SeriesGrid title="🔥 Hot Series" series={hotSeries} horizontal />
 
       <SeriesGrid title="All Series" series={series} />
 

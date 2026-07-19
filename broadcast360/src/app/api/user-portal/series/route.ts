@@ -10,33 +10,28 @@ const corsHeaders = {
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-
     const search = searchParams.get("search") || "";
-
     const channelId = searchParams.get("channelId");
-
     const type = searchParams.get("type");
-
     const page = Number(searchParams.get("page") || 1);
-
     const limit = Number(searchParams.get("limit") || 20);
-
     const skip = (page - 1) * limit;
-
     const now = new Date();
+    const availableTime = new Date(
+      now.getTime() + 6.5 * 60 * 60 * 1000 - 60 * 60 * 1000,
+    );
 
-    const availableTime = new Date(now.getTime() - 60 * 60 * 1000);
-
-    const oneMonthAgo = new Date();
-
+    const oneMonthAgo = new Date(now.getTime() + 6.5 * 60 * 60 * 1000);
     oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    console.log("NOW:", now);
+    console.log("AVAILABLE:", availableTime);
+    console.log("ONE MONTH AGO:", oneMonthAgo);
 
     const episodes = await prisma.episode.findMany({
       where: {
         series: {
           title: {
             contains: search,
-
             mode: "insensitive",
           },
         },
@@ -46,17 +41,15 @@ export async function GET(req: NextRequest) {
             playlist: {
               schedules: {
                 some: {
-                  endTime: {
-                    lte: availableTime,
-
-                    gte: oneMonthAgo,
-                  },
-
                   ...(channelId
                     ? {
                         channelId: Number(channelId),
                       }
                     : {}),
+                  endTime: {
+                    lte: availableTime,
+                    gte: oneMonthAgo,
+                  },
                 },
               },
             },
@@ -72,6 +65,18 @@ export async function GET(req: NextRequest) {
             playlist: {
               include: {
                 schedules: {
+                  where: {
+                    ...(channelId
+                      ? {
+                          channelId: Number(channelId),
+                        }
+                      : {}),
+                    endTime: {
+                      lte: availableTime,
+                      gte: oneMonthAgo,
+                    },
+                  },
+
                   include: {
                     channel: true,
                   },
@@ -93,7 +98,7 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    const map = new Map();
+    const seriesMap = new Map();
 
     episodes.forEach((episode) => {
       const series = episode.series;
@@ -102,8 +107,8 @@ export async function GET(req: NextRequest) {
 
       if (!schedule) return;
 
-      if (!map.has(series.id)) {
-        map.set(series.id, {
+      if (!seriesMap.has(series.id)) {
+        seriesMap.set(series.id, {
           id: series.id,
 
           title: series.title,
@@ -145,7 +150,7 @@ export async function GET(req: NextRequest) {
           },
         });
       } else {
-        const current = map.get(series.id);
+        const current = seriesMap.get(series.id);
 
         if (episode.episodeNo > current.latestEpisode.episodeNo) {
           current.latestEpisode = {
@@ -163,15 +168,15 @@ export async function GET(req: NextRequest) {
       }
     });
 
-    let result = Array.from(map.values());
+    let result = Array.from(seriesMap.values());
 
-    // Hot Series
-    // latest added episodes
+    // newest broadcast episode first
+    result.sort(
+      (a, b) => b.latestEpisode.episodeNo - a.latestEpisode.episodeNo,
+    );
 
     if (type === "hot") {
-      result = result
-        .sort((a, b) => b.latestEpisode.id - a.latestEpisode.id)
-        .slice(0, 10);
+      result = result.slice(0, 10);
     }
 
     const total = result.length;
@@ -195,7 +200,7 @@ export async function GET(req: NextRequest) {
       },
     );
   } catch (error) {
-    console.error("SERIES API ERROR", error);
+    console.error("SERIES LIST ERROR:", error);
 
     return NextResponse.json(
       {
@@ -209,6 +214,7 @@ export async function GET(req: NextRequest) {
     );
   }
 }
+
 export async function OPTIONS() {
   return new NextResponse(null, {
     status: 200,
