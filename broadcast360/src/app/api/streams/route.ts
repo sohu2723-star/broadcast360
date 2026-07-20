@@ -89,7 +89,7 @@ export async function POST(
     const stream = await service.create({
       channelId:Number(body.channelId),
       name:body.name,
-      url:body.url,
+      // url:body.url,
       protocol:body.protocol,
       description:body.description,
     });

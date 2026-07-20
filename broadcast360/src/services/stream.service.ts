@@ -1,6 +1,10 @@
+import { prisma } from "@/lib/prisma";
 import { StreamRepository } from "@/repositories/stream.repository";
 
-import { CreateStreamInput, UpdateStreamInput } from "@/types/stream.types";
+import {
+  CreateStreamInput,
+  UpdateStreamInput,
+} from "@/types/stream.types";
 
 import {
   createStreamSchema,
@@ -41,7 +45,26 @@ export class StreamService {
   async create(data: CreateStreamInput) {
     const validated = createStreamSchema.parse(data);
 
-    return StreamRepository.create(validated);
+    const channel = await prisma.channel.findUnique({
+      where: {
+        id: validated.channelId,
+      },
+    });
+
+    if (!channel) {
+      throw new Error("Channel not found");
+    }
+
+    if (!channel.streamKey) {
+      throw new Error("Channel stream key is missing");
+    }
+
+    const url = `rtmp://localhost:1935/${channel.streamKey}`;
+
+    return StreamRepository.create({
+      ...validated,
+      url,
+    });
   }
 
   async update(id: number, data: UpdateStreamInput) {
@@ -53,7 +76,33 @@ export class StreamService {
 
     const validated = updateStreamSchema.parse(data);
 
-    return StreamRepository.update(id, validated);
+    let url = existing.url;
+
+    if (
+      validated.channelId &&
+      validated.channelId !== existing.channelId
+    ) {
+      const channel = await prisma.channel.findUnique({
+        where: {
+          id: validated.channelId,
+        },
+      });
+
+      if (!channel) {
+        throw new Error("Channel not found");
+      }
+
+      if (!channel.streamKey) {
+        throw new Error("Channel stream key is missing");
+      }
+
+      url = `rtmp://localhost:1935/${channel.streamKey}`;
+    }
+
+    return StreamRepository.update(id, {
+      ...validated,
+      url,
+    });
   }
 
   async delete(id: number) {

@@ -155,51 +155,159 @@ export const ScheduleRepository = {
   });
 },
 
-   findLiveSchedule: async (
-    channelId: number,
-    now: Date
-  ) => {
-    return prisma.schedule.findFirst({
-      where: {
-        channelId,
+  findLiveSchedule: async (
+  channelId: number,
+  now: Date
+) => {
 
-        startTime: {
-          lte: now,
-        },
+  console.log("🔎 Checking schedule", {
+    channelId,
+    now: now.toISOString(),
+  });
 
-        OR: [
-          {
-            endTime: null,
-          },
-          {
-            endTime: {
-              gt: now,
-            },
-          },
+
+  const schedule = await prisma.schedule.findFirst({
+
+    where: {
+
+      channelId,
+
+
+      // only active schedules
+      status: {
+        in: [
+          "SCHEDULED",
+          "LIVE",
         ],
       },
 
-      include: {
-        playlist: {
-          include: {
-            items: {
-              orderBy: {
-                order: "asc",
-              },
-              include: {
-                movie: true,
-                episode: true,
-                advertisement: true,
-                entertainment: true,
-                news: true,
-                stream: true,
-              },
+
+      // schedule already started
+      startTime: {
+        lte: now,
+      },
+
+
+      // schedule not finished
+      OR: [
+        {
+          endTime: null,
+        },
+        {
+          endTime: {
+            gt: now,
+          },
+        },
+      ],
+    },
+
+
+    orderBy: {
+      startTime: "desc",
+    },
+
+
+    include: {
+
+      playlist: {
+
+        include: {
+
+          items: {
+
+            orderBy: {
+              order: "asc",
+            },
+
+
+            include: {
+
+              movie: true,
+
+              episode: true,
+
+              advertisement: true,
+
+              entertainment: true,
+
+              news: true,
+
+              stream: true,
+
+            },
+
+          },
+
+        },
+
+      },
+
+    },
+
+  });
+
+
+
+  console.log(
+    "📅 Schedule result:",
+    schedule
+      ? {
+          id: schedule.id,
+          status: schedule.status,
+          startTime: schedule.startTime,
+          endTime: schedule.endTime,
+          playlist: schedule.playlist?.name,
+        }
+      : null
+  );
+
+
+  return schedule;
+
+},
+
+findNextSchedule: async (
+  channelId: number,
+  now: Date,
+) => {
+  return prisma.schedule.findFirst({
+    where: {
+      channelId,
+
+      status: {
+        in: ["SCHEDULED", "LIVE"],
+      },
+
+      startTime: {
+        gt: now,
+      },
+    },
+
+    orderBy: {
+      startTime: "asc",
+    },
+
+    include: {
+      playlist: {
+        include: {
+          items: {
+            orderBy: {
+              order: "asc",
+            },
+            include: {
+              movie: true,
+              episode: true,
+              advertisement: true,
+              entertainment: true,
+              news: true,
+              stream: true,
             },
           },
         },
       },
-    });
-  },
+    },
+  });
+},
 
 
   updateStatus: async (

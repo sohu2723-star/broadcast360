@@ -14,11 +14,11 @@ export const createStreamSchema = z.object({
     })
     .min(2, "Stream name must be at least 2 characters"),
 
-  url: z
-    .string({
-      message: "Stream URL is required",
-    })
-    .min(5, "Invalid stream URL"),
+  // url: z
+  //   .string({
+  //     message: "Stream URL is required",
+  //   })
+  //   .min(5, "Invalid stream URL"),
 
   protocol: z.enum(["RTSP", "RTMP", "HLS", "WEBRTC", "SRT"]),
 
@@ -30,7 +30,7 @@ export const updateStreamSchema = z.object({
 
   channelId:z.number().optional(),
 
-  url: z.string().min(5).optional(),
+  // url: z.string().min(5).optional(),
 
   protocol: z.enum(["RTSP", "RTMP", "HLS", "WEBRTC", "SRT"]).optional(),
 

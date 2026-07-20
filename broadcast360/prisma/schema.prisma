@@ -32,7 +32,7 @@ model Channel {
   logo              String?
   country           String?
   streams           Stream[]
-  streamKey         String?            @unique
+  streamKey         String           @unique
   news              News[]
   schedules         Schedule[]
   recordings        Recording[]

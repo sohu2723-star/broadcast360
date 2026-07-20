@@ -5,8 +5,6 @@ export interface CreateStreamInput {
 
   name: string;
 
-  url: string;
-
   protocol: StreamProtocol;
 
   description?: string | null;
@@ -17,8 +15,6 @@ export interface UpdateStreamInput {
 
   name?: string;
 
-  url?: string;
-
   protocol?: StreamProtocol;
 
   status?: StreamStatus;
@@ -28,12 +24,19 @@ export interface UpdateStreamInput {
 
 export interface Stream {
   id: number;
+
   channelId: number;
+
   name: string;
+
   url: string;
+
   protocol: "RTSP" | "RTMP" | "HLS" | "WEBRTC" | "SRT";
+
   status: "ONLINE" | "OFFLINE" | "ERROR";
+
   description?: string | null;
+
   createdAt: string;
 
   channel: {

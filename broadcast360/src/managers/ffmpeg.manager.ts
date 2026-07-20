@@ -1,7 +1,5 @@
 import { spawn, ChildProcessByStdio } from "child_process";
-
-import { Readable, Writable } from "stream";
-import path from "path";
+import { Readable } from "stream";
 import fs from "fs";
 
 export class FFmpegManager {
@@ -11,11 +9,21 @@ export class FFmpegManager {
   >();
 
   /**
-   * PLAY SINGLE VIDEO -> HLS
+   * ====================================================
+   * MOVIE / EPISODE / ADVERTISEMENT
+   *
+   * File
+   *   ↓
+   * FFmpeg
+   *   ↓
+   * RTMP
+   *   ↓
+   * MediaMTX
+   * ====================================================
    */
-  playSingle(channelId: number, videoFile: string, outputDir: string) {
+  playMovie(channelId: number, videoFile: string, streamKey: string) {
     if (this.processes.has(channelId)) {
-      console.log("⚠ FFmpeg already running:", channelId);
+      console.log("⚠ Broadcast already running");
 
       return null;
     }
@@ -26,31 +34,16 @@ export class FFmpegManager {
       return null;
     }
 
-    const streamDir = path.resolve(
-      process.cwd(),
-      "public",
-      "streams",
-      `channel-${channelId}`,
-    );
+    const output = `rtmp://127.0.0.1:1935/live/${streamKey}`;
 
-    fs.mkdirSync(streamDir, {
-      recursive: true,
-    });
-
-    const output = path.join(streamDir, "index.m3u8");
-
-    console.log("🎬 INPUT:", videoFile);
-
-    console.log("📺 OUTPUT:", output);
+    console.log("🎬 Movie:", videoFile);
+    console.log("📡 Output:", output);
 
     const args = [
       "-re",
 
       "-i",
       videoFile,
-
-      "-vf",
-      "scale=854:480,fps=30",
 
       "-c:v",
       "libx264",
@@ -61,6 +54,9 @@ export class FFmpegManager {
       "-tune",
       "zerolatency",
 
+      "-pix_fmt",
+      "yuv420p",
+
       "-c:a",
       "aac",
 
@@ -70,24 +66,14 @@ export class FFmpegManager {
       "-ac",
       "2",
 
+      "-b:a",
+      "128k",
+
       "-f",
-      "hls",
-
-      "-hls_time",
-      "4",
-
-      "-hls_list_size",
-      "10",
-
-      // IMPORTANT
-      // allow playlist refresh
-      "-hls_flags",
-      "delete_segments+append_list+independent_segments",
+      "flv",
 
       output,
     ];
-
-    console.log("🚀 Starting FFmpeg");
 
     const ffmpeg = spawn("ffmpeg", args, {
       stdio: ["ignore", "pipe", "pipe"],
@@ -96,17 +82,25 @@ export class FFmpegManager {
     this.processes.set(channelId, ffmpeg);
 
     ffmpeg.stderr.on("data", (data) => {
-      console.log(`[FFMPEG ${channelId}]`, data.toString());
+      console.log(`[MOVIE ${channelId}]`, data.toString());
     });
 
-    ffmpeg.on("error", (error) => {
-      console.log("❌ FFmpeg error", error);
+    ffmpeg.on("error", (err) => {
+      console.log("❌ Movie FFmpeg Error", err);
 
       this.processes.delete(channelId);
     });
 
     ffmpeg.on("close", (code) => {
-      console.log(`FFmpeg closed ${channelId}:`, code);
+      const current = this.processes.get(channelId);
+
+      // ignore old ffmpeg process
+      if (current !== ffmpeg) {
+        console.log("old ffmpeg ignored", channelId);
+        return;
+      }
+
+      console.log(`🛑 Movie stopped (${channelId})`, code);
 
       this.processes.delete(channelId);
     });
@@ -114,12 +108,92 @@ export class FFmpegManager {
     return ffmpeg;
   }
 
+  /**
+   * ====================================================
+   * LIVE CAMERA
+   *
+   * RTSP
+   *   ↓
+   * FFmpeg
+   *   ↓
+   * RTMP
+   *   ↓
+   * MediaMTX
+   * ====================================================
+   */
+  startLive(channelId: number, rtspUrl: string, streamKey: string) {
+    if (this.processes.has(channelId)) {
+      console.log("⚠ Live already running");
+
+      return null;
+    }
+
+    const output = `rtmp://127.0.0.1:1935/live/${streamKey}`;
+
+    console.log("🎥 RTSP:", rtspUrl);
+    console.log("📡 Output:", output);
+
+    const args = [
+      "-rtsp_transport",
+      "tcp",
+
+      "-i",
+      rtspUrl,
+
+      "-c:v",
+      "copy",
+
+      "-c:a",
+      "aac",
+
+      "-f",
+      "flv",
+
+      output,
+    ];
+
+    const ffmpeg = spawn("ffmpeg", args, {
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+
+    this.processes.set(channelId, ffmpeg);
+
+    ffmpeg.stderr.on("data", (data) => {
+      console.log(`[LIVE ${channelId}]`, data.toString());
+    });
+
+    ffmpeg.on("error", (err) => {
+      console.log("❌ Live FFmpeg Error", err);
+
+      this.processes.delete(channelId);
+    });
+
+    ffmpeg.on("close", (code) => {
+      const current = this.processes.get(channelId);
+
+      // ignore old ffmpeg process
+      if (current !== ffmpeg) {
+        console.log("old ffmpeg ignored", channelId);
+        return;
+      }
+
+      console.log(`🛑 Movie stopped (${channelId})`, code);
+
+      this.processes.delete(channelId);
+    });
+
+    return ffmpeg;
+  }
+
+  /**
+   * ====================================================
+   * STOP CURRENT BROADCAST
+   * ====================================================
+   */
   stop(channelId: number) {
     const ffmpeg = this.processes.get(channelId);
 
     if (!ffmpeg) {
-      console.log("⚠ No FFmpeg process");
-
       return;
     }
 
@@ -127,10 +201,31 @@ export class FFmpegManager {
 
     this.processes.delete(channelId);
 
-    console.log("🛑 FFmpeg stopped", channelId);
+    console.log("🛑 Broadcast stopped:", channelId);
   }
 
+  /**
+   * ====================================================
+   * CHECK RUNNING
+   * ====================================================
+   */
   isRunning(channelId: number) {
     return this.processes.has(channelId);
+  }
+
+  async stopAndWait(channelId: number) {
+    const ffmpeg = this.processes.get(channelId);
+
+    if (!ffmpeg) {
+      return;
+    }
+
+    console.log("Stopping current ffmpeg", channelId);
+
+    ffmpeg.kill("SIGINT");
+
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    this.processes.delete(channelId);
   }
 }

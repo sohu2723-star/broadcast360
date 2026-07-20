@@ -11,7 +11,6 @@ type StreamProtocol = "RTSP" | "RTMP" | "HLS" | "WEBRTC";
 
 type StreamFormData = {
   name: string;
-  url: string;
   protocol: StreamProtocol;
   channelId: number;
   description?: string;
@@ -43,8 +42,6 @@ export default function StreamForm({
   const [form, setForm] = useState<StreamFormData>({
     name: initialData?.name ?? "",
 
-    url: initialData?.url ?? "",
-
     protocol: initialData?.protocol ?? "RTSP",
 
     channelId: initialData?.channelId ?? 0,
@@ -55,12 +52,10 @@ export default function StreamForm({
   const [errors, setErrors] = useState<{
     name?: string;
 
-    url?: string;
-
     channelId?: string;
   }>({});
 
-  function update(key: keyof StreamFormData, value: any) {
+  function update(key: keyof StreamFormData, value: string | number | StreamProtocol) {
     setForm((prev) => ({
       ...prev,
 
@@ -81,7 +76,6 @@ export default function StreamForm({
 
     const newErrors: {
       name?: string;
-      url?: string;
       channelId?: string;
     } = {};
 
@@ -89,9 +83,6 @@ export default function StreamForm({
       newErrors.name = "Stream name is required";
     }
 
-    if (!form.url.trim()) {
-      newErrors.url = "Stream URL is required";
-    }
 
     if (form.channelId === 0) {
       newErrors.channelId = "Please select a channel";
@@ -156,51 +147,6 @@ mt-2
 "
           >
             {errors.name}
-          </p>
-        )}
-      </div>
-
-      {/* URL */}
-
-      <div>
-        <label
-          className="
-text-gray-300
-block
-mb-2
-"
-        >
-          Stream URL
-        </label>
-
-        <input
-          value={form.url}
-          onChange={(e) => update("url", e.target.value)}
-          className={`
-w-full
-bg-[#010312]
-border
-${errors.url ? "border-red-500" : "border-gray-700"}
-rounded-lg
-px-4
-py-3
-text-white
-outline-none
-`}
-          placeholder="
-rtsp://camera-ip/live
-"
-        />
-
-        {errors.url && (
-          <p
-            className="
-text-red-400
-text-sm
-mt-2
-"
-          >
-            {errors.url}
           </p>
         )}
       </div>

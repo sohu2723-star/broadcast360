@@ -153,3 +153,5 @@ export const StreamRepository = {
     });
   },
 };
+
+// rtmp://192.168.1.100:1935/channel-1

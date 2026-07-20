@@ -6,109 +6,173 @@ export class SchedulerManager {
 
   private broadcast = new BroadcastService();
 
-  // current running schedule
-  private currentSchedule = new Map<number, number>();
+  private currentSchedule = new Map<number, number | null>();
 
-  // fallback state
-  private usingFallback = new Map<number, boolean>();
+  private fallback = new Map<number, boolean>();
+
+  private nextSchedule = new Map<number, number | null>();
 
   start(channelId: number) {
     if (this.timers.has(channelId)) {
-      console.log(`⚠ Scheduler already running ${channelId}`);
-
       return;
     }
 
-    console.log(`🕒 Scheduler started channel ${channelId}`);
+    console.log("🕒 Scheduler started", channelId);
 
     const timer = setInterval(async () => {
-      try {
-        console.log("🕒 Scheduler tick", new Date().toLocaleTimeString());
+      const now = new Date();
 
-        const now = new Date();
+      console.log(
+        "⏰ Scheduler checking",
+        channelId,
+        now.toISOString()
+      );
 
-        const schedule = await ScheduleRepository.findLiveSchedule(
+      //----------------------------------------
+      // Current schedule
+      //----------------------------------------
+
+      const schedule =
+        await ScheduleRepository.findLiveSchedule(
           channelId,
-          now,
+          now
         );
 
-        /*
-        ============================
-        FALLBACK PLAYLIST
-        ============================
-        */
+      console.log(
+        "📅 Found schedule:",
+        schedule?.id ?? null
+      );
 
-        if (!schedule) {
-          const fallback = this.usingFallback.get(channelId);
+      //----------------------------------------
+      // Current schedule running
+      //----------------------------------------
 
-          if (fallback) {
-            return;
+      if (schedule) {
+        const current =
+          this.currentSchedule.get(channelId);
+
+        if (current !== schedule.id) {
+          console.log(
+            "📺 SWITCH SCHEDULE",
+            schedule.id
+          );
+
+          this.currentSchedule.set(
+            channelId,
+            schedule.id
+          );
+
+          this.fallback.set(channelId, false);
+
+          await this.broadcast.switchBroadcast(
+            schedule,
+            channelId
+          );
+        }
+
+        //----------------------------------------
+        // Preload next schedule
+        //----------------------------------------
+
+        if (schedule.endTime) {
+          const remain =
+            schedule.endTime.getTime() -
+            now.getTime();
+
+          if (remain <= 30000) {
+            const next =
+              await ScheduleRepository.findNextSchedule(
+                channelId,
+                schedule.endTime
+              );
+
+            if (next) {
+              const cached =
+                this.nextSchedule.get(channelId);
+
+              if (cached !== next.id) {
+                console.log(
+                  "📦 Preloading next schedule",
+                  next.id
+                );
+
+                this.nextSchedule.set(
+                  channelId,
+                  next.id
+                );
+
+                await this.broadcast.preloadSchedule(
+                  next,
+                  channelId
+                );
+              }
+            }
           }
-
-          console.log("🔁 No schedule -> fallback");
-
-          this.currentSchedule.delete(channelId);
-
-          this.usingFallback.set(channelId, true);
-
-          if (this.broadcast.isRunning(channelId)) {
-            await this.broadcast.switchBroadcast(null, channelId);
-          } else {
-            await this.broadcast.start(null, channelId);
-          }
-
-          return;
         }
 
-        /*
-        ============================
-        SCHEDULE PLAYLIST
-        ============================
-        */
-
-        const current = this.currentSchedule.get(channelId);
-
-        const same = current === schedule.id;
-
-        const alreadySchedule = this.usingFallback.get(channelId) === false;
-
-        if (same && alreadySchedule && this.broadcast.isRunning(channelId)) {
-          return;
-        }
-
-        console.log(
-          "📺 Active schedule:",
-          schedule.id,
-          schedule.playlist?.name,
-        );
-
-        this.currentSchedule.set(channelId, schedule.id);
-
-        this.usingFallback.set(channelId, false);
-
-        /*
-        IMPORTANT PART
-
-        First start:
-        FFmpeg not running
-        -> start()
-
-        Already playing:
-        -> switch()
-        */
-
-        if (!this.broadcast.isRunning(channelId)) {
-          console.log("▶ Starting new broadcast");
-
-          await this.broadcast.start(schedule, channelId);
-        } else {
-          console.log("🔄 Switching playlist");
-
-          await this.broadcast.switchBroadcast(schedule, channelId);
-        }
-      } catch (error) {
-        console.error("Scheduler error:", error);
+        return;
       }
+
+      //----------------------------------------
+      // No current schedule
+      //----------------------------------------
+
+      const next =
+        await ScheduleRepository.findNextSchedule(
+          channelId,
+          now
+        );
+
+      //----------------------------------------
+      // Start next schedule immediately
+      //----------------------------------------
+
+      if (
+        next &&
+        next.startTime <= now
+      ) {
+        console.log(
+          "▶ Starting next schedule",
+          next.id
+        );
+
+        this.currentSchedule.set(
+          channelId,
+          next.id
+        );
+
+        this.nextSchedule.delete(channelId);
+
+        this.fallback.set(channelId, false);
+
+        await this.broadcast.switchBroadcast(
+          next,
+          channelId
+        );
+
+        return;
+      }
+
+      //----------------------------------------
+      // Fallback
+      //----------------------------------------
+
+      if (this.fallback.get(channelId)) {
+        return;
+      }
+
+      console.log("🔁 SWITCH FALLBACK");
+
+      this.currentSchedule.set(channelId, null);
+
+      this.nextSchedule.delete(channelId);
+
+      this.fallback.set(channelId, true);
+
+      await this.broadcast.switchBroadcast(
+        null,
+        channelId
+      );
     }, 5000);
 
     this.timers.set(channelId, timer);
@@ -117,19 +181,17 @@ export class SchedulerManager {
   stop(channelId: number) {
     const timer = this.timers.get(channelId);
 
-    if (!timer) {
-      return;
+    if (timer) {
+      clearInterval(timer);
     }
-
-    clearInterval(timer);
 
     this.timers.delete(channelId);
 
     this.currentSchedule.delete(channelId);
 
-    this.usingFallback.delete(channelId);
+    this.nextSchedule.delete(channelId);
 
-    console.log(`🛑 Scheduler stopped ${channelId}`);
+    this.fallback.delete(channelId);
   }
 
   isRunning(channelId: number) {

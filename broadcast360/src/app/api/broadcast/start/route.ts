@@ -1,10 +1,18 @@
 import { NextResponse } from "next/server";
+
 import { ScheduleRepository } from "@/repositories/schedule.repository";
+
 import { BroadcastService } from "@/services/broadcast.service";
+
 import { SchedulerManager } from "@/managers/scheduler.manager";
 
-const broadcast = new BroadcastService();
-const scheduler = new SchedulerManager();
+const broadcast = globalThis.broadcastService ?? new BroadcastService();
+
+const scheduler = globalThis.schedulerManager ?? new SchedulerManager();
+
+globalThis.broadcastService = broadcast;
+
+globalThis.schedulerManager = scheduler;
 
 export async function POST(req: Request) {
   try {
@@ -29,7 +37,7 @@ export async function POST(req: Request) {
     );
 
     /*
-      Start scheduler
+      Start scheduler loop
     */
 
     if (!scheduler.isRunning(channelId)) {
@@ -37,7 +45,7 @@ export async function POST(req: Request) {
     }
 
     /*
-      Start first broadcast
+      Start broadcast first time
     */
 
     if (!broadcast.isRunning(channelId)) {
@@ -45,7 +53,7 @@ export async function POST(req: Request) {
 
       await broadcast.start(schedule, channelId);
     } else {
-      console.log("⚠ FFmpeg already running");
+      console.log("⚠ Broadcast already running");
     }
 
     return NextResponse.json({
@@ -55,8 +63,8 @@ export async function POST(req: Request) {
 
       channelId,
     });
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
+    console.error(error);
 
     return NextResponse.json(
       {
