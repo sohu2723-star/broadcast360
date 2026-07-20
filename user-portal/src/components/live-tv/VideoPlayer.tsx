@@ -1,26 +1,121 @@
-export default function VideoPlayer() {
+"use client";
+
+import { useEffect, useRef } from "react";
+import Hls from "hls.js";
+import { Channel } from "@/types";
+
+interface Props {
+  channel: Channel | null;
+}
+
+export default function VideoPlayer({
+  channel,
+}: Props) {
+
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+
+  useEffect(() => {
+
+    if (!channel?.playbackUrl) return;
+
+    const video = videoRef.current;
+
+    if (!video) return;
+
+
+    const streamUrl = channel.playbackUrl;
+
+
+    if (Hls.isSupported()) {
+
+      const hls = new Hls({
+
+        enableWorker: true,
+
+        lowLatencyMode: true,
+
+      });
+
+
+      hls.loadSource(streamUrl);
+
+      hls.attachMedia(video);
+
+
+      hls.on(
+        Hls.Events.MANIFEST_PARSED,
+        () => {
+
+          video.play()
+            .catch(() => {});
+
+        }
+      );
+
+
+      hls.on(
+        Hls.Events.ERROR,
+        (_, data) => {
+
+          console.error(
+            "HLS Error:",
+            data
+          );
+
+        }
+      );
+
+
+      return () => {
+
+        hls.destroy();
+
+      };
+
+    }
+
+
+    // Safari native HLS
+
+    if (
+      video.canPlayType(
+        "application/vnd.apple.mpegurl"
+      )
+    ) {
+
+      video.src = streamUrl;
+
+      video.play()
+        .catch(() => {});
+
+    }
+
+
+  }, [channel]);
+
+
   return (
-    <div className="bg-[#0B1026] rounded-xl p-4 h-[420px] flex flex-col justify-between">
+    <div className="flex-1 bg-black rounded-xl overflow-hidden">
 
-      {/* Video area */}
-      <div className="flex-1 bg-black rounded-lg flex items-center justify-center text-gray-400">
-        🎬 Live Video Player
-      </div>
+      {channel ? (
 
-      {/* Info */}
-      <div className="mt-3 flex items-center justify-between">
+        <video
+          ref={videoRef}
+          controls
+          autoPlay
+          muted
+          playsInline
+          className="w-full h-full object-contain"
+        />
 
-        <div>
-          <h2 className="font-bold">CNN News</h2>
-          <p className="text-sm text-gray-400">Breaking News Live</p>
+      ) : (
+
+        <div className="flex items-center justify-center h-full text-gray-400">
+          Select a channel
         </div>
 
-        <div className="flex items-center gap-2 text-red-500 font-bold">
-          <span className="w-2.5 h-2.5 bg-[#1CFE10] rounded-full"></span>
-          LIVE
-        </div>
-
-      </div>
+      )}
 
     </div>
   );

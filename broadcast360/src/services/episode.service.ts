@@ -21,6 +21,10 @@ type EpisodeUpdateData = {
   title?: string;
   episodeNo?: number;
   duration?: number;
+
+  videoFile?: File | null;
+  thumbnailFile?: File | null;
+
   videoUrl?: string | null;
   thumbnailUrl?: string | null;
 };
@@ -28,7 +32,8 @@ type EpisodeUpdateData = {
 type EpisodeCreateInput = {
   title: string;
   episodeNo: number;
-  formData: FormData;
+  videoFile: File | null;
+  thumbnailFile: File | null;
 };
 
 // ========================
@@ -38,33 +43,81 @@ export function getEpisodeById(id: number) {
   return repoGetEpisodeById(id);
 }
 
-// ========================
-// UPDATE EPISODE
-// ========================
-export async function updateEpisode(id: number, data: EpisodeUpdateData) {
+
+export async function updateEpisode(
+  id: number,
+  data: EpisodeUpdateData
+) {
   const current = await repoGetEpisodeById(id);
 
   if (!current) {
     throw new Error("Episode not found");
   }
+    const existingEpisodes = await getEpisodesBySeriesId(current.seriesId);
 
-  const allEpisodes = await getEpisodesBySeriesId(current.seriesId);
-
-  const newEpisodeNo = Number(data.episodeNo);
-
-  const duplicate = allEpisodes.find(
+  const duplicate = existingEpisodes.find(
     (ep) =>
-      Number(ep.episodeNo) === newEpisodeNo &&
+      Number(ep.episodeNo) === Number(data.episodeNo) &&
       ep.id !== id
   );
-
-  if (duplicate) {
-    throw new Error("Episode number already exists in this series");
-  }
-
-  return repoUpdateEpisode(id, data);
+if (duplicate) {
+  throw new Error("Episode number already exists in this series");
 }
 
+
+  const fileId = Date.now();
+
+  let videoUrl = current.videoUrl;
+  let thumbnailUrl = current.thumbnailUrl;
+
+  // ================= VIDEO UPLOAD =================
+  if (data.videoFile instanceof File) {
+    const videoName = `${fileId}-${data.videoFile.name.replace(/\s+/g, "-")}`;
+
+    const videoPath = path.join(
+      process.cwd(),
+      "public/uploads/episodes/videos",
+      videoName
+    );
+
+    await fs.mkdir(path.dirname(videoPath), { recursive: true });
+
+    await fs.writeFile(
+      videoPath,
+      Buffer.from(await data.videoFile.arrayBuffer())
+    );
+
+    videoUrl = `/uploads/episodes/videos/${videoName}`;
+  }
+
+  // ================= THUMBNAIL UPLOAD =================
+  if (data.thumbnailFile instanceof File) {
+    const thumbName = `${fileId}-${data.thumbnailFile.name.replace(/\s+/g, "-")}`;
+
+    const thumbPath = path.join(
+      process.cwd(),
+      "public/uploads/episodes/thumbnails",
+      thumbName
+    );
+
+    await fs.mkdir(path.dirname(thumbPath), { recursive: true });
+
+    await fs.writeFile(
+      thumbPath,
+      Buffer.from(await data.thumbnailFile.arrayBuffer())
+    );
+
+    thumbnailUrl = `/uploads/episodes/thumbnails/${thumbName}`;
+  }
+
+  return repoUpdateEpisode(id, {
+    title: data.title ?? current.title,
+    episodeNo: data.episodeNo ?? current.episodeNo,
+    duration: data.duration ?? current.duration,
+    videoUrl,
+    thumbnailUrl,
+  });
+}
 // ========================
 // DELETE EPISODE
 // ========================
@@ -82,15 +135,14 @@ export async function fetchEpisodesBySeriesId(seriesId: number) {
 // ========================
 // ADD EPISODE (UPLOAD + FFmpeg)
 // ========================
-export async function addEpisode(seriesId: number, data: EpisodeCreateInput) {
+export async function addEpisode(
+  seriesId: number,
+  data: EpisodeCreateInput
+) {
   try {
-    const title = data.title?.trim();
-    const episodeNo = Number(data.episodeNo);
-    const formData = data.formData;
+    const { title, episodeNo, videoFile, thumbnailFile } = data;
 
-    const video = formData.get("video") as File | null;
-
-    if (!title || isNaN(episodeNo) || isNaN(seriesId) || !video) {
+    if (!title || isNaN(episodeNo) || !videoFile) {
       throw new Error("Missing required fields");
     }
 
@@ -104,14 +156,12 @@ export async function addEpisode(seriesId: number, data: EpisodeCreateInput) {
       throw new Error("Episode number already exists in this series");
     }
 
-    // ========================
-    // 📍 UPLOAD PATH
-    // ========================
     const fileId = Date.now();
 
-    const filename = `${fileId}-${video.name.replace(/\s+/g, "-")}`;
+    // ================= VIDEO =================
+    const videoFilename = `${fileId}-${videoFile.name.replace(/\s+/g, "-")}`;
 
-    const uploadDir = path.join(
+    const videoDir = path.join(
       process.cwd(),
       "public",
       "uploads",
@@ -119,29 +169,24 @@ export async function addEpisode(seriesId: number, data: EpisodeCreateInput) {
       "videos"
     );
 
-    const uploadPath = path.join(uploadDir, filename);
+    await fs.mkdir(videoDir, { recursive: true });
 
-    await fs.mkdir(uploadDir, { recursive: true });
+    const videoPath = path.join(videoDir, videoFilename);
 
-    const bytes = await video.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    await fs.writeFile(
+      videoPath,
+      Buffer.from(await videoFile.arrayBuffer())
+    );
 
-    await fs.writeFile(uploadPath, buffer);
-
-    // ========================
-    // 📍 FFmpeg PROCESSING
-    // ========================
+    // ================= DURATION =================
     let duration = 0;
-
     try {
-      duration = await getVideoDuration(uploadPath);
+      duration = await getVideoDuration(videoPath);
     } catch (err) {
       console.error("Duration error:", err);
     }
 
-    // ========================
-    // 📍 THUMBNAIL PATH
-    // ========================
+    // ================= THUMBNAIL =================
     const thumbnailDir = path.join(
       process.cwd(),
       "public",
@@ -150,27 +195,43 @@ export async function addEpisode(seriesId: number, data: EpisodeCreateInput) {
       "thumbnails"
     );
 
-    const thumbnailName = `${fileId}-thumb.jpg`;
-    const thumbnailPath = path.join(thumbnailDir, thumbnailName);
-
     await fs.mkdir(thumbnailDir, { recursive: true });
 
-    try {
-      await generateThumbnail(uploadPath, thumbnailPath);
-    } catch (err) {
-      console.error("Thumbnail error:", err);
+    let thumbnailUrl: string;
+
+    if (thumbnailFile instanceof File) {
+      const thumbName = `${fileId}-${thumbnailFile.name.replace(/\s+/g, "-")}`;
+
+      const thumbPath = path.join(thumbnailDir, thumbName);
+
+      await fs.writeFile(
+        thumbPath,
+        Buffer.from(await thumbnailFile.arrayBuffer())
+      );
+
+      thumbnailUrl = `/uploads/episodes/thumbnails/${thumbName}`;
+    } else {
+      const thumbName = `${fileId}-thumb.jpg`;
+
+      const thumbPath = path.join(thumbnailDir, thumbName);
+
+      try {
+        await generateThumbnail(videoPath, thumbPath);
+      } catch (err) {
+        console.error("Thumbnail error:", err);
+      }
+
+      thumbnailUrl = `/uploads/episodes/thumbnails/${thumbName}`;
     }
 
-    // ========================
-    // SAVE DB
-    // ========================
+    // ================= SAVE DB =================
     return createEpisode({
       seriesId,
       title,
       episodeNo,
       duration,
-      videoUrl: `/uploads/episodes/videos/${filename}`,
-      thumbnailUrl: `/uploads/episodes/thumbnails/${thumbnailName}`,
+      videoUrl: `/uploads/episodes/videos/${videoFilename}`,
+      thumbnailUrl,
     });
   } catch (error) {
     console.error("addEpisode error:", error);

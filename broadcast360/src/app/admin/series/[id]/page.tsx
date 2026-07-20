@@ -27,6 +27,17 @@ type Series = {
 };
 
 export default function SeriesDetailPage() {
+
+  const formatDuration = (seconds: number) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+
+    return [hrs, mins, secs]
+      .map((v) => String(v).padStart(2, "0"))
+      .join(":");
+  };
+
   const params = useParams();
   const id = params?.id ? String(params.id) : null;
 
@@ -41,50 +52,50 @@ export default function SeriesDetailPage() {
   const limit = 5;
 
   const loadSeries = async (pageNum: number) => {
-  setLoading(true);
+    setLoading(true);
 
-  try {
-    const res = await fetch(
-      `/api/series/${id}?page=${pageNum}&limit=${limit}`
-    );
-
-    const result = await res.json();
-
-    setSeries(result.data || null);
-    setTotalPages(result.totalPages || 1);
-    setTotalEpisodes(result.total || 0);
-  } finally {
-    setLoading(false);
-  }
-};
-    useEffect(() => {
-      if (!id) return;
-
-      loadSeries(page);
-    }, [page]);
-
-    const handleDelete = async (episodeId: number) => {
-      if (!id) return;
-
-      const confirmed = window.confirm(
-        "Are you sure you want to delete this episode?"
+    try {
+      const res = await fetch(
+        `/api/series/${id}?page=${pageNum}&limit=${limit}`
       );
-      if (!confirmed) return;
 
-      try {
-        const res = await fetch(`/api/episodes/${episodeId}`, {
-          method: "DELETE",
-        });
+      const result = await res.json();
 
-        if (!res.ok) throw new Error("Delete failed");
+      setSeries(result.data || null);
+      setTotalPages(result.totalPages || 1);
+      setTotalEpisodes(result.total || 0);
+    } finally {
+      setLoading(false);
+    }
+  };
+  useEffect(() => {
+    if (!id) return;
 
-        // IMPORTANT: reload AFTER delete (safe)
-        await loadSeries(page);
-      } catch (error) {
-        console.error(error);
-        alert("Delete failed");
-      }
-    };
+    loadSeries(page);
+  }, [page]);
+
+  const handleDelete = async (episodeId: number) => {
+    if (!id) return;
+
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this episode?"
+    );
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(`/api/episodes/${episodeId}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) throw new Error("Delete failed");
+
+      // IMPORTANT: reload AFTER delete (safe)
+      await loadSeries(page);
+    } catch (error) {
+      console.error(error);
+      alert("Delete failed");
+    }
+  };
 
   if (!id) return <div className="text-white p-6">Invalid series id</div>;
   if (loading) return <div className="text-white p-6">Loading...</div>;
@@ -101,9 +112,9 @@ export default function SeriesDetailPage() {
           {/* Widescreen Thumbnail */}
           <div className="w-112.5 h-87.5 shrink-0 bg-gray-800 rounded-xl overflow-hidden border border-white/10 shadow-lg">
             {series?.thumbnail ? (
-              <Image src={series.thumbnail} alt={series.title} 
-              width={450} height={350}
-              className="w-full h-full object-cover" />
+              <Image src={series.thumbnail} alt={series.title}
+                width={450} height={350}
+                className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-500">No Image</div>
             )}
@@ -168,9 +179,18 @@ export default function SeriesDetailPage() {
       </div>
 
       {/* EPISODES */}
-      <h2 className="text-2xl font-semibold mb-4">Episodes</h2>
+      <div className="flex justify-between items-center mt-8 mb-4">
+  <h2 className="text-2xl font-semibold">Episodes</h2>
 
-      <div className="bg-[#0B1026] rounded-xl overflow-hidden border border-white/10">
+  <Link
+    href={`/admin/series/${series.id}/episodes/create`}
+    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+  >
+    + Add Episode
+  </Link>
+</div>
+
+<div className="bg-[#0B1026] rounded-xl overflow-hidden border border-white/10">
         <table className="w-full">
           <thead>
             <tr className="border-b border-white/10">
@@ -221,7 +241,9 @@ export default function SeriesDetailPage() {
                 </td>
 
                 {/* Duration */}
-                <td className="p-4">{ep.duration}s</td>
+                <td className="p-4">
+                  {formatDuration(ep.duration)}
+                </td>
 
                 {/* Release Year (FROM SERIES) */}
                 <td className="p-4 text-gray-300">

@@ -69,8 +69,19 @@ export async function PUT(
     const formData = await req.formData();
 
     const title = formData.get("title")?.toString()?.trim();
-    const episodeNo = Number(formData.get("episodeNo"));
-    const videoFile = formData.get("videoFile") as File | null;
+    const episodeNoRaw = formData.get("episodeNo");
+    const episodeNo =
+      episodeNoRaw !== null ? Number(episodeNoRaw) : NaN;
+
+    const videoFileRaw = formData.get("video");
+    const thumbnailFileRaw = formData.get("thumbnail");
+
+    const videoFile =
+      videoFileRaw instanceof File ? videoFileRaw : null;
+
+    const thumbnailFile =
+      thumbnailFileRaw instanceof File ? thumbnailFileRaw : null;
+
 
     if (!title || isNaN(episodeNo)) {
       return NextResponse.json(
@@ -84,6 +95,8 @@ export async function PUT(
       title: string;
       episodeNo: number;
       videoFile?: File; // Change this to 'videoUrl?: string' if your service layer expects a string path instead
+     thumbnailFile?: File;
+
     }
 
     const updatePayload: UpdateEpisodePayload = {
@@ -94,6 +107,10 @@ export async function PUT(
     if (videoFile && videoFile.size > 0 && videoFile.name !== "undefined") {
       updatePayload.videoFile = videoFile;
     }
+if (thumbnailFile && thumbnailFile.size > 0 && thumbnailFile.name !== "undefined") {
+  updatePayload.thumbnailFile = thumbnailFile;
+}
+
 
     const episode = await updateEpisode(id, updatePayload);
 

@@ -82,9 +82,10 @@ async function main() {
       await prisma.stream.create({
         data: {
           channelId: channels[i - 1].id,
+          name: `Stream ${i}`, // Added "name" because it's required (String) in your schema!
           url: `rtmp://ingest.server.com/live/stream_${i}`,
-          protocol: 'RTMP',
-          status: i % 2 === 0 ? 'active' : 'offline',
+          protocol: 'RTMP', // Matches the exact uppercase Enum
+          status: i % 2 === 0 ? 'ONLINE' : 'OFFLINE', // Matches your exact Enum values
         },
       })
     );
@@ -214,13 +215,13 @@ async function main() {
 
   // 12. PLAYLIST ITEMS
   const itemTypes = [
-    PlaylistItemType.MOVIE, 
-    PlaylistItemType.EPISODE, 
-    PlaylistItemType.ADVERTISEMENT, 
-    PlaylistItemType.NEWS, 
+    PlaylistItemType.MOVIE,
+    PlaylistItemType.EPISODE,
+    PlaylistItemType.ADVERTISEMENT,
+    PlaylistItemType.NEWS,
     PlaylistItemType.STREAM
   ];
-  
+
   for (let i = 1; i <= 10; i++) {
     const itemType = itemTypes[(i - 1) % itemTypes.length];
     await prisma.playlistItem.create({
@@ -248,7 +249,7 @@ async function main() {
   for (let i = 1; i <= 10; i++) {
     const start = new Date(baseTime.getTime() + (i - 1) * 3 * 60 * 60 * 1000);
     const end = new Date(start.getTime() + 3 * 60 * 60 * 1000);
-    
+
     schedules.push(
       await prisma.schedule.create({
         data: {
@@ -290,10 +291,10 @@ async function main() {
       },
     });
   }
-  
+
   console.log('💾 Seeded 10 Recordings');
 
-    // 8. Entertainment
+  // 8. Entertainment
   const entertainments = [];
   for (let i = 1; i <= 10; i++) {
     entertainments.push(

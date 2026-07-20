@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import crypto from "crypto";
 
 type CreateChannelInput = {
   name: string;
@@ -7,13 +8,16 @@ type CreateChannelInput = {
   country?: string;
 };
 
-
 type UpdateChannelInput = {
   name?: string;
   description?: string;
   logo?: string;
   country?: string;
 };
+
+function generateStreamKey() {
+  return crypto.randomBytes(16).toString("hex");
+}
 
 export function getAllChannels() {
   return prisma.channel.findMany();
@@ -29,7 +33,6 @@ export async function getPaginatedChannels({
   limit: number;
   search?: string;
 }) {
-
   const skip = (page - 1) * limit;
 
   const whereClause = search
@@ -51,12 +54,18 @@ export async function getPaginatedChannels({
       }
     : {};
 
-
   const [data, total] = await prisma.$transaction([
     prisma.channel.findMany({
       where: whereClause,
+
+      include: {
+        streams: true,
+      },
+
       skip,
+
       take: limit,
+
       orderBy: {
         id: "desc",
       },
@@ -67,47 +76,84 @@ export async function getPaginatedChannels({
     }),
   ]);
 
-
-  return { data, total };
+  return {
+    data,
+    total,
+  };
 }
 
-export function getChannelById(id:number){
-
+export function getChannelById(id: number) {
   return prisma.channel.findUnique({
-    where:{id},
-    include:{
-      streams:true,
-      programs:true,
-      news:true,
-      recordings:true
-    }
+    where: {
+      id,
+    },
+
+    include: {
+      streams: true,
+
+      programs: true,
+
+      news: true,
+
+      recordings: true,
+    },
   });
 }
 
-
+// CREATE CHANNEL
+// generate stream key automatically
 export function createChannel(data: CreateChannelInput) {
   return prisma.channel.create({
-    data
-  });
+    data: {
+      ...data,
 
+      streamKey: generateStreamKey(),
+    },
+  });
 }
 
-
-export function updateChannel(
-  id:number,
-  data:UpdateChannelInput
-){
-
+export function updateChannel(id: number, data: UpdateChannelInput) {
   return prisma.channel.update({
-    where:{id},
-    data
-  });
+    where: {
+      id,
+    },
 
+    data,
+  });
+}
+
+// ================================
+// LIVE STREAM HELPERS
+// ================================
+
+// Get active stream of channel
+export function getChannelStream(channelId: number) {
+  return prisma.stream.findFirst({
+    where: {
+      channelId,
+    },
+
+    include: {
+      channel: true,
+    },
+  });
+}
+
+// Validate OBS / Larix stream key
+export async function findChannelByStreamKey(streamKey: string) {
+  return prisma.channel.findUnique({
+    where: {
+      streamKey,
+    },
+
+    include: {
+      streams: true,
+    },
+  });
 }
 
 export async function deleteChannel(id: number) {
   return prisma.$transaction([
-
     prisma.stream.deleteMany({
       where: {
         channelId: id,
@@ -124,14 +170,12 @@ export async function deleteChannel(id: number) {
       },
     }),
 
-    // DELETE SCHEDULES FIRST
     prisma.schedule.deleteMany({
       where: {
         channelId: id,
       },
     }),
 
-    // THEN PLAYLISTS
     prisma.playlist.deleteMany({
       where: {
         program: {
@@ -140,7 +184,6 @@ export async function deleteChannel(id: number) {
       },
     }),
 
-    // THEN PROGRAMS
     prisma.program.deleteMany({
       where: {
         channelId: id,
@@ -171,4 +214,56 @@ export async function deleteChannel(id: number) {
       },
     }),
   ]);
+}
+
+export async function getDefaultPlaylist(channelId: number) {
+  return prisma.channel.findUnique({
+    where: {
+      id: channelId,
+    },
+
+    include: {
+      defaultPlaylist: {
+        include: {
+          items: {
+            orderBy: {
+              order: "asc",
+            },
+
+            include: {
+              movie: true,
+
+              episode: true,
+
+              advertisement: true,
+
+              entertainment: true,
+
+              news: true,
+
+              stream: true,
+            },
+          },
+        },
+      },
+    },
+  });
+}
+
+// ================================
+// BROADCAST HELPERS
+// ================================
+
+export function getChannelBroadcastInfo(channelId: number) {
+  return prisma.channel.findUnique({
+    where: {
+      id: channelId,
+    },
+
+    select: {
+      id: true,
+      name: true,
+      streamKey: true,
+    },
+  });
 }
