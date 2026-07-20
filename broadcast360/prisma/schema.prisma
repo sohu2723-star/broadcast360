@@ -81,20 +81,6 @@ model Stream {
   playlistItems PlaylistItem[]
 }
 
-enum StreamProtocol {
-  RTSP
-  RTMP
-  HLS
-  WEBRTC
-  SRT
-}
-
-enum StreamStatus {
-  ONLINE
-  OFFLINE
-  ERROR
-}
-
 // =====================
 // SERIES
 // =====================
