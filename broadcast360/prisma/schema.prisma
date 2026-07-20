@@ -60,6 +60,8 @@ model Movie {
   releaseYear   Int?
   createdAt     DateTime       @default(now())
   playlistItems PlaylistItem[]
+
+  @@unique ([title, releaseYear])
 }
 
 // ============================
@@ -77,20 +79,6 @@ model Stream {
 
   channel Channel @relation(fields: [channelId], references: [id])
   playlistItems PlaylistItem[]
-}
-
-enum StreamProtocol {
-  RTSP
-  RTMP
-  HLS
-  WEBRTC
-  SRT
-}
-
-enum StreamStatus {
-  ONLINE
-  OFFLINE
-  ERROR
 }
 
 // =====================
@@ -124,7 +112,7 @@ model Episode {
   createdAt     DateTime       @default(now())
   playlistItems PlaylistItem[]
 
-  @@unique([seriesId, episodeNo])
+    @@unique([seriesId, episodeNo])
 }
 
 // =====================
@@ -243,10 +231,14 @@ model PlaylistItem {
   movie         Movie?         @relation(fields: [movieId], references: [id])
   episode       Episode?       @relation(fields: [episodeId], references: [id])
   advertisement Advertisement? @relation(fields: [advertisementId], references: [id])
-  news          News?          @relation(fields: [newsId], references: [id])
-  stream        Stream?        @relation(fields: [streamId], references: [id])
-  entertainment Entertainment? @relation(fields: [entertainmentId], references: [id])
-  createdAt     DateTime       @default(now())
+
+  news News? @relation(fields: [newsId], references: [id])
+
+  stream Stream? @relation(fields: [streamId], references: [id])
+
+  entertainment Entertainment? @relation(fields:[entertainmentId], references:[id])
+
+  createdAt DateTime @default(now())
 
   @@unique([playlistId, order])
 }
