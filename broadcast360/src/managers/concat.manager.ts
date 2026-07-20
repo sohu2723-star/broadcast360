@@ -5,18 +5,21 @@ import path from "path";
 export class ConcatManager {
 
   create(
-    channelId: number,
-    items: any[]
-  ) {
+    channelId:number,
+    items:any[],
+    loop:boolean = false
+  ){
 
     const folder = path.join(
       process.cwd(),
       "temp"
     );
 
-    fs.mkdirSync(folder, {
-      recursive: true,
+
+    fs.mkdirSync(folder,{
+      recursive:true
     });
+
 
 
     const filePath = path.join(
@@ -25,21 +28,67 @@ export class ConcatManager {
     );
 
 
-    const resolver = new PlaylistResolverService();
+    const resolver =
+      new PlaylistResolverService();
 
-const paths = resolver.resolve(items);
 
-const content = paths
-  .map((videoUrl) => {
-    const fullPath = path.join(
-      process.cwd(),
-      "public",
-      videoUrl
-    );
 
-    return `file '${fullPath.replace(/\\/g, "/")}'`;
-  })
-  .join("\n");
+    const paths =
+      resolver.resolve(items);
+
+
+
+    let finalPaths = paths;
+
+
+    /*
+      fallback playlist
+
+      movie1
+      movie2
+      movie3
+
+      becomes
+
+      movie1
+      movie2
+      movie3
+      movie1
+      movie2
+      movie3
+    */
+
+    if(loop){
+
+      finalPaths = [
+        ...paths,
+        ...paths,
+        ...paths,
+        ...paths,
+        ...paths,
+      ];
+
+    }
+
+
+
+    const content =
+      finalPaths
+      .map(videoUrl=>{
+
+        const fullPath =
+          path.join(
+            process.cwd(),
+            "public",
+            videoUrl
+          );
+
+
+        return `file '${fullPath.replace(/\\/g,"/")}'`;
+
+      })
+      .join("\n");
+
 
 
     fs.writeFileSync(
@@ -49,12 +98,13 @@ const content = paths
 
 
     console.log(
-      "📄 Concat file:",
+      "📄 Concat created:",
       filePath
     );
 
 
     return filePath;
+
   }
 
 }

@@ -1,2 +1,2 @@
-file 'C:/broadcast360/broadcast360/public/videos/advertisements/1783532410120-snackAds_fixed.mp4'
-file 'C:/broadcast360/broadcast360/public/videos/movies/1783532023424-daidai_fixed.mp4'
+file 'C:/broadcast360/broadcast360/public/videos/movies/1783611699138-rememberMeCoco2_fixed.mp4'
+file 'C:/broadcast360/broadcast360/public/videos/movies/1783611581634-rememberMeCoco_fixed.mp4'

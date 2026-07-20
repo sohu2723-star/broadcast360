@@ -6,6 +6,7 @@ import MovieSelector from "./MovieSelector";
 import EpisodeSelector from "./EpisodeSelector";
 import AdSelector from "./AdSelector";
 import SeriesSelector from "./SeriesSelector";
+import StreamSelector from "./StreamSelector";
 
 
 interface Props {
@@ -103,6 +104,14 @@ onSelect={onSelect}
 />
 
 );
+
+case "STREAM":
+  return (
+    <StreamSelector
+      value={value}
+      onSelect={onSelect}
+    />
+  );
 
 
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ScheduleService } from "@/services/schedule.service";
+import { prisma } from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -21,12 +22,87 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const schedule = await ScheduleService.create(body);
-    return NextResponse.json(schedule, { status: 201 });
-  } catch (error) {
+
+    const {
+      channelId,
+      playlistId,
+      startTime,
+      endTime,
+    } = body;
+
+
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+
+
+    // Basic validation
+    if (end <= start) {
+      return NextResponse.json(
+        { message: "End time must be after start time" },
+        { status: 400 }
+      );
+    }
+
+
+    // Check existing schedules
+    const existingSchedules = await prisma.schedule.findMany({
+      where: {
+        channelId: Number(channelId),
+      },
+    });
+
+
+    const conflict = existingSchedules.some((schedule) => {
+      const existingStart = new Date(schedule.startTime);
+      const existingEnd = schedule.endTime
+        ? new Date(schedule.endTime)
+        : existingStart;
+
+
+      return (
+        start < existingEnd &&
+        end > existingStart
+      );
+    });
+
+
+    if (conflict) {
+      return NextResponse.json(
+        {
+          message:
+            "Schedule conflict: another playlist is already scheduled during this time.",
+        },
+        { status: 409 }
+      );
+    }
+
+
+    const schedule = await prisma.schedule.create({
+      data: {
+        channelId: Number(channelId),
+        playlistId: Number(playlistId),
+        startTime: start,
+        endTime: end,
+      },
+    });
+
+
     return NextResponse.json(
-      { message: error instanceof Error ? error.message : "Create failed" },
-      { status: 400 }
+      {
+        success: true,
+        data: schedule,
+      },
+      { status: 201 }
+    );
+
+  } catch (error) {
+    console.error("POST /api/schedules error:", error);
+
+    return NextResponse.json(
+      {
+        message: "Failed to create schedule",
+      },
+      { status: 500 }
     );
   }
 }

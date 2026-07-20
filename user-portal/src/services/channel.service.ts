@@ -4,7 +4,7 @@ import { Channel } from "@/types";
 export const channelService = {
   async getAllChannels(): Promise<Channel[]> {
     try {
-      const res = await fetch(`${ADMIN_API_URL}/api/user/channel`, {
+      const res = await fetch(`${ADMIN_API_URL}/api/user-portal/channel`, {
         method: "GET",
         headers: defaultHeaders,
         next: { revalidate: 60 } 
@@ -20,7 +20,7 @@ export const channelService = {
 
   async getChannelById(id: string): Promise<Channel> {
     try {
-      const res = await fetch(`${ADMIN_API_URL}/api/user/channel/${id}`, {
+      const res = await fetch(`${ADMIN_API_URL}/api/user-portal/channel/${id}`, {
         method: "GET",
         headers: defaultHeaders,
       });

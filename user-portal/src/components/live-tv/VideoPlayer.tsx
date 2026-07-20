@@ -8,46 +8,86 @@ interface Props {
   channel: Channel | null;
 }
 
-export default function VideoPlayer({ channel }: Props) {
+export default function VideoPlayer({
+  channel,
+}: Props) {
 
   const videoRef = useRef<HTMLVideoElement>(null);
 
 
   useEffect(() => {
 
-    if (!channel?.streamUrl) return;
+    if (!channel?.playbackUrl) return;
 
     const video = videoRef.current;
 
     if (!video) return;
 
 
+    const streamUrl = channel.playbackUrl;
+
+
     if (Hls.isSupported()) {
 
-      const hls = new Hls();
+      const hls = new Hls({
 
-      hls.loadSource(channel.streamUrl);
+        enableWorker: true,
+
+        lowLatencyMode: true,
+
+      });
+
+
+      hls.loadSource(streamUrl);
 
       hls.attachMedia(video);
 
 
       hls.on(
+        Hls.Events.MANIFEST_PARSED,
+        () => {
+
+          video.play()
+            .catch(() => {});
+
+        }
+      );
+
+
+      hls.on(
         Hls.Events.ERROR,
         (_, data) => {
-          console.log("HLS ERROR", data);
+
+          console.error(
+            "HLS Error:",
+            data
+          );
+
         }
       );
 
 
       return () => {
+
         hls.destroy();
+
       };
 
     }
 
-    else if(video.canPlayType("application/vnd.apple.mpegurl")) {
 
-      video.src = channel.streamUrl;
+    // Safari native HLS
+
+    if (
+      video.canPlayType(
+        "application/vnd.apple.mpegurl"
+      )
+    ) {
+
+      video.src = streamUrl;
+
+      video.play()
+        .catch(() => {});
 
     }
 
@@ -55,30 +95,27 @@ export default function VideoPlayer({ channel }: Props) {
   }, [channel]);
 
 
-
   return (
     <div className="flex-1 bg-black rounded-xl overflow-hidden">
 
-      {
-        channel ? (
+      {channel ? (
 
-          <video
-            ref={videoRef}
-            controls
-            autoPlay
-            muted
-            playsInline
-            className="w-full h-full object-contain"
-          />
+        <video
+          ref={videoRef}
+          controls
+          autoPlay
+          muted
+          playsInline
+          className="w-full h-full object-contain"
+        />
 
-        ) : (
+      ) : (
 
-          <div className="flex h-full items-center justify-center text-gray-400">
-            Select channel
-          </div>
+        <div className="flex items-center justify-center h-full text-gray-400">
+          Select a channel
+        </div>
 
-        )
-      }
+      )}
 
     </div>
   );

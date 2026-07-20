@@ -1,0 +1,10 @@
+import crypto from "crypto";
+
+
+export function generateStreamKey() {
+
+  return crypto
+    .randomBytes(16)
+    .toString("hex");
+
+}

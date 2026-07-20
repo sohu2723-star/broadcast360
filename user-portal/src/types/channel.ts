@@ -1,8 +1,9 @@
 export interface Channel {
-  id: number; 
+  id: number;
   name: string;
-  streamUrl: string;
   description?: string;
-  createdAt?: string;
-  updatedAt?: string;
+  logo?: string;
+  country?: string;
+
+  playbackUrl: string | null;
 }

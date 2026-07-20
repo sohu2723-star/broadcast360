@@ -1,52 +1,59 @@
 import { PlaylistItemWithRelations } from "@/types/schedule.types";
 
 export class PlaylistResolverService {
+  resolve(item: PlaylistItemWithRelations): string | null {
+    let videoUrl: string | null = null;
 
-  resolve(items: PlaylistItemWithRelations[]) {
+    switch (item.type) {
+      case "MOVIE":
+        videoUrl = item.movie?.videoUrl ?? null;
 
-    return items.map((item) => {
+        break;
 
-      let videoUrl: string | null = null;
+      case "EPISODE":
+        videoUrl = item.episode?.videoUrl ?? null;
 
-      switch (item.type) {
+        break;
 
-        case "MOVIE":
-          videoUrl = item.movie?.videoUrl ?? null;
-          break;
+      case "ADVERTISEMENT":
+        videoUrl = item.advertisement?.videoUrl ?? null;
 
-        case "ADVERTISEMENT":
-          videoUrl = item.advertisement?.videoUrl ?? null;
-          break;
+        break;
 
-        case "EPISODE":
-          videoUrl = item.episode?.videoUrl ?? null;
-          break;
+      case "ENTERTAINMENT":
+        videoUrl = item.entertainment?.videoUrl ?? null;
 
-        case "NEWS":
-          videoUrl = item.news?.videoUrl ?? null;
-          break;
+        break;
 
-        case "ENTERTAINMENT":
-          videoUrl = item.entertainment?.videoUrl ?? null;
-          break;
+      case "NEWS":
+        videoUrl = item.news?.videoUrl ?? null;
 
-        case "STREAM":
-          videoUrl = item.stream?.url ?? null;
-          break;
-      }
+        break;
 
+      case "STREAM":
+        videoUrl = item.stream?.url ?? null;
 
-      if (!videoUrl) {
-        throw new Error(
-          `Missing video URL for playlist item type: ${item.type}`
-        );
-      }
+        break;
 
+      default:
+        videoUrl = null;
+    }
 
-      return videoUrl;
+    if (!videoUrl) {
+      console.log("⚠ No video URL for item:", {
+        id: item.id,
+        type: item.type,
+      });
 
+      return null;
+    }
+
+    console.log("✅ Resolved:", {
+      id: item.id,
+      type: item.type,
+      url: videoUrl,
     });
 
+    return videoUrl;
   }
-
 }
