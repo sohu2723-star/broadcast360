@@ -236,7 +236,7 @@ export default function EntertainmentListPage() {
             setPage(1);
           }}
 
-          placeholder="Search entertainment..."
+          placeholder="Search title, category..."
 
           className="w-96 rounded-xl border border-white/10 bg-[#0B1026] px-4 py-3 text-white outline-none"
         />
