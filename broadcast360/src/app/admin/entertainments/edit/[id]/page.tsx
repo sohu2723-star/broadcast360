@@ -397,46 +397,36 @@ initialData={{
             );
         
             formData.append(
-              "releaseYear",
-              String(
-                form.releaseYear
-              )
-            );
+  "releaseYear",
+  String(
+    form.releaseYear
+  )
+);
 
+formData.append(
+  "duration",
+  String(
+    form.duration
+  )
+);
 
+if(form.video){
 
-         
+  formData.append(
+    "video",
+    form.video
+  );
 
+}
 
+if(form.thumbnail){
 
+  formData.append(
+    "thumbnail",
+    form.thumbnail
+  );
 
-
-
-            if(form.video){
-
-
-              formData.append(
-                "video",
-                form.video
-              );
-
-
-            }
-
-
-
-
-
-            if(form.thumbnail){
-
-
-              formData.append(
-                "thumbnail",
-                form.thumbnail
-              );
-
-
-            }
+}
           
             const res =
               await fetch(
