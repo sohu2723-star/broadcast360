@@ -1,304 +1,286 @@
-import { SessionManager } from "@/managers/session.manager";
-import { FFmpegManager } from "@/managers/ffmpeg.manager";
-import { getDefaultPlaylist } from "@/repositories/channel.repository";
-import { ScheduleWithRelations } from "@/types/schedule.types";
-import { PlaylistItemWithRelations } from "@/types/playlist";
-import { BroadcastStateManager } from "@/managers/broadcast-state.manager";
-import { ConcatManager } from "@/managers/concat.manager";
+import {
+  getDefaultPlaylist,
+  getChannelBroadcastInfo,
+} from "@/repositories/channel.repository";
 
+import { ScheduleWithRelations } from "@/types/schedule.types";
+
+import { PlaylistResolverService } from "@/services/playlist-resolver.service";
+
+import { PlayoutQueueManager } from "@/managers/playout-queue.manager";
+
+import { SwitchManager } from "@/managers/switch-manager";
+
+import { ScheduleCatchupService } from "@/services/schedule-catchup.service";
+
+import { ScheduleRepository } from "@/repositories/schedule.repository";
+
+import path from "path";
 
 export class BroadcastService {
+  private switcher = new SwitchManager();
 
-  private session = new SessionManager();
-
-  private ffmpeg = new FFmpegManager();
-
-  private state = new BroadcastStateManager();
-
-  private concat = new ConcatManager();
-
-
-  // keep current playlist items per channel
-  private currentItems =
-    new Map<number, PlaylistItemWithRelations>();
-
-
+  private playout = new PlayoutQueueManager();
 
   /**
-   * START BROADCAST
+   * Next schedule prepared
    */
-  async start(
-    schedule: ScheduleWithRelations | null,
-    channelId: number
-  ): Promise<void> {
+  private preloadCache = new Map<number, ScheduleWithRelations>();
 
+  private resolver = new PlaylistResolverService();
 
-    console.log(
-      "DEBUG channelId:",
-      channelId
-    );
+  private catchup = new ScheduleCatchupService();
 
+  private startOffsets = new Map<number, number>();
 
-    // prevent duplicate stream
-    if (this.session.isLive(channelId)) {
+  private queueMode = new Map<number, "SCHEDULE" | "FALLBACK">();
 
-      console.log(
-        "⚠ Channel already live"
-      );
+  async start(schedule: ScheduleWithRelations | null, channelId: number) {
+    const channel = await getChannelBroadcastInfo(channelId);
+
+    if (!channel?.streamKey) {
+      console.log("❌ Stream key missing");
 
       return;
     }
 
+    const playlist = await this.getPlaylist(schedule, channelId);
 
-
-    let playlist;
-
-
-
-    // ==========================
-    // 1. Scheduled playlist
-    // ==========================
-
-    if (schedule?.playlist) {
-
-
-      playlist = schedule.playlist;
-
-
-      console.log(
-        "📺 Using scheduled playlist:",
-        playlist.name
-      );
-
-
+    if (!playlist) {
+      return;
     }
 
+    const items = playlist.items ?? [];
 
-    // ==========================
-    // 2. Default playlist
-    // ==========================
+    const mode = schedule ? "SCHEDULE" : "FALLBACK";
 
-    else {
+    this.queueMode.set(channelId, mode);
 
+    this.playout.load(channelId, items, mode);
 
-      const channel =
-        await getDefaultPlaylist(channelId);
+    await this.playNext(channelId, channel.streamKey);
 
+    if (schedule) {
+      await ScheduleRepository.updateStatus(schedule.id, "LIVE");
+    }
 
-      playlist =
-        channel?.defaultPlaylist;
+    console.log("▶ Broadcast started", channelId);
+  }
 
+  private async getPlaylist(
+    schedule: ScheduleWithRelations | null,
+    channelId: number,
+  ) {
+    if (schedule?.playlist) {
+      console.log("📺 Schedule playlist", schedule.playlist.name);
 
+      return schedule.playlist;
+    }
 
-      if (!playlist) {
+    const fallback = await getDefaultPlaylist(channelId);
 
-        console.log(
-          "⚠ No default playlist"
-        );
+    if (!fallback?.defaultPlaylist) {
+      console.log("⚠ No fallback playlist");
+
+      return null;
+    }
+
+    console.log("🔁 Fallback playlist", fallback.defaultPlaylist.name);
+
+    return fallback.defaultPlaylist;
+  }
+
+  private async playNext(channelId: number, streamKey: string): Promise<void> {
+    const item = this.playout.next(channelId);
+
+    if (!item) {
+      const mode = this.queueMode.get(channelId);
+
+      console.log("⚠ Queue finished", mode);
+
+      return;
+    }
+
+    console.log("▶ Playing", item.type);
+
+    //-------------------------
+    // LIVE STREAM
+    //-------------------------
+
+    if (item.type === "STREAM") {
+      if (!item.stream) {
+        return this.playNext(channelId, streamKey);
+      }
+
+      await this.switcher.startLIVE(channelId, item.stream);
+
+      this.monitorLive(channelId, streamKey);
+
+      return;
+    }
+
+    //-------------------------
+    // VOD
+    //-------------------------
+
+    const video = this.resolver.resolve(item);
+
+    if (!video) {
+      return this.playNext(channelId, streamKey);
+    }
+
+    const fullPath = path.join(process.cwd(), "public", video);
+
+    // get catchup offset ONLY once
+
+    const offset = this.startOffsets.get(channelId) ?? 0;
+
+    // remove after first video
+
+    this.startOffsets.delete(channelId);
+
+    const ffmpeg = await this.switcher.startVOD(
+      channelId,
+      fullPath,
+      streamKey,
+      offset,
+    );
+
+    if (!ffmpeg) {
+      return;
+    }
+
+    ffmpeg.once("close", async (code) => {
+      console.log("🎬 VOD finished", code);
+
+      if (code === 0) {
+        await this.playNext(channelId, streamKey);
+      }
+    });
+  }
+
+  //---------------------------------
+  // PRELOAD ONLY
+  //---------------------------------
+
+  async preloadSchedule(schedule: ScheduleWithRelations, channelId: number) {
+    console.log("📦 Preload schedule", schedule.id);
+
+    this.preloadCache.set(channelId, schedule);
+  }
+
+  getPreloadedSchedule(channelId: number) {
+    return this.preloadCache.get(channelId);
+  }
+
+  clearPreloadedSchedule(channelId: number) {
+    this.preloadCache.delete(channelId);
+  }
+
+  //---------------------------------
+  // SWITCH QUEUE
+  //---------------------------------
+
+  async switchBroadcast(
+    schedule: ScheduleWithRelations | null,
+    channelId: number,
+  ) {
+    let playlist;
+
+    if (schedule?.playlist) {
+      playlist = schedule.playlist;
+    } else {
+      const fallback = await getDefaultPlaylist(channelId);
+      playlist = fallback?.defaultPlaylist;
+    }
+
+    if (!playlist) {
+      console.log("❌ No playlist");
+      return;
+    }
+
+    const items = playlist.items ?? [];
+
+    const mode = schedule ? "SCHEDULE" : "FALLBACK";
+
+    console.log("🔄 Switching broadcast", mode);
+
+    this.queueMode.set(channelId, mode);
+
+    // stop current ffmpeg
+    await this.switcher.stop(channelId);
+
+    // replace queue
+    let startIndex = 0;
+    let offset = 0;
+
+    if (schedule) {
+      const catchup = this.catchup.calculate(schedule, new Date());
+
+      startIndex = catchup.itemIndex;
+
+      offset = catchup.offset;
+
+      this.startOffsets.set(channelId, offset);
+
+      console.log("📺 Catchup", {
+        startIndex,
+        offset,
+      });
+    }
+
+    this.playout.load(channelId, items, mode, startIndex);
+
+    const channel = await getChannelBroadcastInfo(channelId);
+
+    if (!channel?.streamKey) {
+      return;
+    }
+
+    // start first schedule item
+    await this.playNext(channelId, channel.streamKey);
+
+    console.log("✅ Broadcast switched");
+  }
+
+  private monitorLive(channelId: number, streamKey: string) {
+    const timer = setInterval(async () => {
+      const mode = this.switcher.getMode(channelId);
+
+      if (mode !== "LIVE") {
+        clearInterval(timer);
 
         return;
       }
 
+      const alive = await this.switcher.hasLivePublisher(channelId);
 
+      if (!alive) {
+        console.log("🔴 LIVE ENDED");
 
-      console.log(
-        "📺 Using default playlist:",
-        playlist.name
-      );
+        clearInterval(timer);
 
-    }
+        await this.switcher.stop(channelId);
 
+        // scheduler will decide next
+        console.log("▶ Continue playlist after LIVE");
 
-
-
-    const items =
-      playlist.items;
-
-
-
-    console.log(
-      "Playlist items:",
-      items.length
-    );
-
-
-
-    if (!items || items.length === 0) {
-
-      console.log(
-        "⚠ Playlist has no items"
-      );
-
-      return;
-    }
-
-
-
-
-    // save first item state
-    this.currentItems.set(
-      channelId,
-      items[0]
-    );
-
-
-
-    this.state.start(
-      channelId,
-      items[0]
-    );
-
-
-
-
-    // start session
-
-    this.session.start(
-      channelId
-    );
-
-
-
-
-
-    // create concat file
-
-    const concatFile =
-      this.concat.create(
-        channelId,
-        items
-      );
-
-
-
-
-
-    const outputDir =
-      `./public/streams/channel-${channelId}`;
-
-
-
-
-
-    console.log(
-      "🚀 Starting continuous FFmpeg pipeline"
-    );
-
-
-
-
-
-    const ffmpeg =
-      this.ffmpeg.start(
-        channelId,
-        concatFile,
-        outputDir
-      );
-
-
-
-
-
-    if (!ffmpeg) {
-
-      console.log(
-        "❌ FFmpeg failed"
-      );
-
-
-      this.session.stop(channelId);
-
-
-      return;
-    }
-
-
-
-
-
-    ffmpeg.on(
-      "close",
-      (code) => {
-
-
-        console.log(
-          `❌ FFmpeg stopped channel ${channelId} code ${code}`
-        );
-
-
-
-        this.session.stop(
-          channelId
-        );
-
-
-
-        this.currentItems.delete(
-          channelId
-        );
-
+        await this.playNext(channelId, streamKey);
       }
-    );
-
-
-
-    console.log(
-      `▶ Channel ${channelId} broadcast started`
-    );
-
+    }, 3000);
   }
 
+  async stop(channelId: number) {
+    await this.switcher.stop(channelId);
 
+    this.playout.clear(channelId);
 
+    this.clearPreloadedSchedule(channelId);
 
-  /**
-   * STOP BROADCAST
-   */
-  stop(
-    channelId:number
-  ):void {
-
-
-    this.ffmpeg.stop(
-      channelId
-    );
-
-
-    this.session.stop(
-      channelId
-    );
-
-
-
-    this.currentItems.delete(
-      channelId
-    );
-
-
-
-    console.log(
-      `🛑 Broadcast stopped channel ${channelId}`
-    );
-
+    console.log("🛑 stopped", channelId);
   }
 
-
-
-
-
-  /**
-   * CURRENT PLAYING ITEM
-   */
-  getCurrentItem(
-    channelId:number
-  ) {
-
-
-    return this.currentItems.get(
-      channelId
-    );
-
+  isRunning(channelId: number) {
+    return this.switcher.getMode(channelId) !== "STOPPED";
   }
-
-
 }

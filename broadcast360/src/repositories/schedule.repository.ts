@@ -159,14 +159,36 @@ export const ScheduleRepository = {
   channelId: number,
   now: Date
 ) => {
-  return prisma.schedule.findFirst({
+
+  console.log("🔎 Checking schedule", {
+    channelId,
+    now: now.toISOString(),
+  });
+
+
+  const schedule = await prisma.schedule.findFirst({
+
     where: {
+
       channelId,
 
+
+      // only active schedules
+      status: {
+        in: [
+          "SCHEDULED",
+          "LIVE",
+        ],
+      },
+
+
+      // schedule already started
       startTime: {
         lte: now,
       },
 
+
+      // schedule not finished
       OR: [
         {
           endTime: null,
@@ -177,6 +199,92 @@ export const ScheduleRepository = {
           },
         },
       ],
+    },
+
+
+    orderBy: {
+      startTime: "desc",
+    },
+
+
+    include: {
+
+      playlist: {
+
+        include: {
+
+          items: {
+
+            orderBy: {
+              order: "asc",
+            },
+
+
+            include: {
+
+              movie: true,
+
+              episode: true,
+
+              advertisement: true,
+
+              entertainment: true,
+
+              news: true,
+
+              stream: true,
+
+            },
+
+          },
+
+        },
+
+      },
+
+    },
+
+  });
+
+
+
+  console.log(
+    "📅 Schedule result:",
+    schedule
+      ? {
+          id: schedule.id,
+          status: schedule.status,
+          startTime: schedule.startTime,
+          endTime: schedule.endTime,
+          playlist: schedule.playlist?.name,
+        }
+      : null
+  );
+
+
+  return schedule;
+
+},
+
+findNextSchedule: async (
+  channelId: number,
+  now: Date,
+) => {
+  return prisma.schedule.findFirst({
+    where: {
+      channelId,
+
+      status: {
+        in: ["SCHEDULED", "LIVE"],
+      },
+
+      startTime: {
+        gt: now,
+      },
+    },
+
+    orderBy: {
+      startTime: "asc",
     },
 
     include: {
@@ -202,4 +310,19 @@ export const ScheduleRepository = {
 },
 
 
-}
+  updateStatus: async (
+    id: number,
+    status: "SCHEDULED" | "LIVE" | "COMPLETED" | "CANCELLED"
+  ) => {
+    return prisma.schedule.update({
+      where: {
+        id,
+      },
+      data: {
+        status,
+      },
+    });
+  },
+
+
+};

@@ -32,7 +32,7 @@ model Channel {
   logo              String?
   country           String?
   streams           Stream[]
-  streamKey         String?            @unique
+  streamKey         String           @unique
   news              News[]
   schedules         Schedule[]
   recordings        Recording[]
@@ -43,21 +43,6 @@ model Channel {
   // 24/7 fallback playlist
   defaultPlaylistId Int?
   defaultPlaylist   Playlist?          @relation("ChannelDefaultPlaylist", fields: [defaultPlaylistId], references: [id])
-}
-
-// =====================
-// STREAM INPUT
-// =====================
-
-model Stream {
-  id            Int            @id @default(autoincrement())
-  channelId     Int
-  url           String
-  protocol      String
-  status        String         @default("offline")
-  channel       Channel        @relation(fields: [channelId], references: [id])
-  createdAt     DateTime       @default(now())
-  playlistItems PlaylistItem[]
 }
 
 // =====================
@@ -74,6 +59,25 @@ model Movie {
   duration      Int
   releaseYear   Int?
   createdAt     DateTime       @default(now())
+  playlistItems PlaylistItem[]
+
+  @@unique ([title, releaseYear])
+}
+
+// ============================
+// Stream INPUT
+// ============================
+model Stream {
+  id          Int            @id @default(autoincrement())
+  channelId   Int
+  name        String
+  url         String
+  protocol    StreamProtocol
+  status      StreamStatus   @default(OFFLINE)
+  description String?
+  createdAt   DateTime       @default(now())
+
+  channel Channel @relation(fields: [channelId], references: [id])
   playlistItems PlaylistItem[]
 }
 
@@ -108,7 +112,7 @@ model Episode {
   createdAt     DateTime       @default(now())
   playlistItems PlaylistItem[]
 
-  @@unique([seriesId, episodeNo])
+    @@unique([seriesId, episodeNo])
 }
 
 // =====================
@@ -227,10 +231,14 @@ model PlaylistItem {
   movie         Movie?         @relation(fields: [movieId], references: [id])
   episode       Episode?       @relation(fields: [episodeId], references: [id])
   advertisement Advertisement? @relation(fields: [advertisementId], references: [id])
-  news          News?          @relation(fields: [newsId], references: [id])
-  stream        Stream?        @relation(fields: [streamId], references: [id])
-  entertainment Entertainment? @relation(fields: [entertainmentId], references: [id])
-  createdAt     DateTime       @default(now())
+
+  news News? @relation(fields: [newsId], references: [id])
+
+  stream Stream? @relation(fields: [streamId], references: [id])
+
+  entertainment Entertainment? @relation(fields:[entertainmentId], references:[id])
+
+  createdAt DateTime @default(now())
 
   @@unique([playlistId, order])
 }
@@ -252,24 +260,42 @@ model Schedule {
 
   channel   Channel        @relation(fields: [channelId], references: [id])
   playlist  Playlist       @relation(fields: [playlistId], references: [id])
-  createdAt DateTime       @default(now())
+
+  sessions  BroadcastSession[]
+
+  createdAt DateTime @default(now())
 }
 
 enum BroadcastStatus {
+  STARTING
   LIVE
-  STOPPED
   SWITCHING
+  STOPPING
+  STOPPED
+  ERROR
 }
 
-model BroadcastSession {
-  id        Int             @id @default(autoincrement())
-  channelId Int
-  scheduleId Int?
-  status    BroadcastStatus @default(STOPPED)
-  startedAt DateTime?
 
-  channel   Channel         @relation(fields: [channelId], references: [id])
-  createdAt DateTime        @default(now())
+model BroadcastSession {
+  id          Int             @id @default(autoincrement())
+
+  channelId   Int
+  scheduleId  Int?
+
+  status      BroadcastStatus @default(STOPPED)
+
+  startedAt   DateTime?
+  stoppedAt   DateTime?
+
+  currentItemId Int?
+
+  errorMessage String?
+
+  channel     Channel         @relation(fields: [channelId], references: [id])
+  schedule    Schedule?       @relation(fields: [scheduleId], references: [id])
+
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
 }
 
 model Recording {
@@ -284,3 +310,4 @@ model Recording {
   channel   Channel  @relation(fields: [channelId], references: [id])
   createdAt DateTime @default(now())
 }
+

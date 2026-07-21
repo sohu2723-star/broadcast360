@@ -1,53 +1,78 @@
 import { NextResponse } from "next/server";
-import { ScheduleRepository } from "@/repositories/schedule.repository";
-import { BroadcastService } from "@/services/broadcast.service";
-import { ScheduleWithRelations } from "@/types/schedule.types";
 
-const broadcast = new BroadcastService();
+import { ScheduleRepository } from "@/repositories/schedule.repository";
+
+import { BroadcastService } from "@/services/broadcast.service";
+
+import { SchedulerManager } from "@/managers/scheduler.manager";
+
+const broadcast = globalThis.broadcastService ?? new BroadcastService();
+
+const scheduler = globalThis.schedulerManager ?? new SchedulerManager();
+
+globalThis.broadcastService = broadcast;
+
+globalThis.schedulerManager = scheduler;
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { scheduleId } = body;
 
-    if (!scheduleId) {
+    const channelId = Number(body.channelId);
+
+    if (!channelId) {
       return NextResponse.json(
-        { error: "scheduleId required" },
-        { status: 400 }
+        {
+          error: "channelId required",
+        },
+        {
+          status: 400,
+        },
       );
     }
 
-    // 1. load schedule with playlist + items
-    const schedule = await ScheduleRepository.findById(scheduleId);
+    const schedule = await ScheduleRepository.findLiveSchedule(
+      channelId,
+      new Date(),
+    );
 
-    if (!schedule) {
-      return NextResponse.json(
-        { error: "Schedule not found" },
-        { status: 404 }
-      );
+    /*
+      Start scheduler loop
+    */
+
+    if (!scheduler.isRunning(channelId)) {
+      scheduler.start(channelId);
     }
 
-    // 2. start broadcast manually
-    if (!schedule) {
-  return Response.json(
-    { error: "No schedule found" },
-    { status: 404 }
-  );
-}
+    /*
+      Start broadcast first time
+    */
 
-await broadcast.start(
-  schedule,
-  schedule.channelId
-);
+    if (!broadcast.isRunning(channelId)) {
+      console.log("▶ Initial broadcast start");
+
+      await broadcast.start(schedule, channelId);
+    } else {
+      console.log("⚠ Broadcast already running");
+    }
 
     return NextResponse.json({
+      success: true,
+
       message: "Broadcast started",
-      scheduleId,
+
+      channelId,
     });
-  } catch (err: unknown) {
+  } catch (error) {
+    console.error(error);
+
     return NextResponse.json(
-      { error: err || "Internal error" },
-      { status: 500 }
+      {
+        error: "Internal error",
+      },
+      {
+        status: 500,
+      },
     );
   }
 }

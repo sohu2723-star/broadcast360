@@ -23,7 +23,7 @@ export default function ChannelSidebar({
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredChannels = channels.filter((channel) =>
-    channel.name.toLowerCase().includes(searchQuery.toLowerCase())
+    channel.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
@@ -46,7 +46,7 @@ export default function ChannelSidebar({
 
         {!loading && !error && filteredChannels.length === 0 && (
           <div className="text-center text-gray-500 py-10 text-xs">
-           No channels found for "{searchQuery}" 
+            No channels found for "{searchQuery}"
           </div>
         )}
 

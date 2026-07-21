@@ -166,6 +166,7 @@ video?: File;
 ) {
 
  
+console.log("EDIT DATA:", data);
   const existingEntertainment =
     await prisma.entertainment.findFirst({
       where: {
@@ -265,10 +266,11 @@ const updateData = {
   description: data.description,
   category: data.category,
   releaseYear: data.releaseYear,
-
-  ...(videoDuration !== undefined && {
-    duration: videoDuration,
-  }),
+  duration:
+  videoDuration ??
+  (Number.isNaN(data.duration)
+    ? 0
+    : data.duration),
 
   ...(thumbnailUrl && {
     thumbnail: thumbnailUrl,

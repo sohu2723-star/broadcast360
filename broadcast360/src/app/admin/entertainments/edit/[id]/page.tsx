@@ -5,202 +5,531 @@ import { useParams, useRouter } from "next/navigation";
 
 import EntertainmentForm from "@/components/admin/entertainments/entertainmentForm";
 
-import type { Entertainment } from "@/types/entertainment";
+
+
+import type {
+  Entertainment,
+} from "@/types/entertainment";
+
 
 export default function EditEntertainmentPage() {
+
+
   const params = useParams();
 
   const router = useRouter();
 
   const id = Number(params.id);
 
-  const [entertainment, setEntertainment] = useState<Entertainment | null>(
-    null,
-  );
 
-  const [loading, setLoading] = useState(true);
+  const [
+    entertainment,
+    setEntertainment
+  ] = useState<Entertainment | null>(null);
 
-  const [titleError, setTitleError] = useState("");
 
-  const [message, setMessage] = useState("");
+  const [
+    loading,
+    setLoading
+  ] = useState(true);
 
-  const [messageType, setMessageType] = useState<"success" | "error" | "">("");
+  const [
+  titleError,
+  setTitleError
+] = useState("");
+
+const [
+  message,
+  setMessage
+] = useState("");
+
+const [
+  messageType,
+  setMessageType
+] = useState<"success" | "error" | "">("");
+
 
   useEffect(() => {
+
+
     async function loadEntertainment() {
+
+
       try {
-        const res = await fetch(`/api/entertainments/${id}`);
+
+
+        const res = await fetch(
+          `/api/entertainments/${id}`
+        );
+
 
         if (!res.ok) {
-          throw new Error("Failed to fetch entertainment");
+
+          throw new Error(
+            "Failed to fetch entertainment"
+          );
+
         }
 
-        const data: Entertainment = await res.json();
+
+        const data: Entertainment =
+          await res.json();
+
 
         setEntertainment(data);
+
+
+
       } catch (error) {
+
+
         console.log(error);
+
+
       } finally {
+
+
         setLoading(false);
+
+
       }
+
+
     }
 
-    if (id) {
+
+
+    if(id){
+
       loadEntertainment();
+
     }
-  }, [id]);
 
-  if (loading) {
-    return <p className="p-10 text-gray-400">Loading...</p>;
+
+  },[id]);
+
+
+
+
+
+  if(loading){
+
+    return (
+
+      <p className="p-10 text-gray-400">
+        Loading...
+      </p>
+
+    );
+
   }
 
-  if (!entertainment) {
-    return <p className="p-10 text-red-400">Entertainment not found</p>;
+
+
+
+
+  if(!entertainment){
+
+
+    return (
+
+      <p className="p-10 text-red-400">
+        Entertainment not found
+      </p>
+
+    );
+
+
   }
+
+
+
+
 
   return (
-    <div className="space-y-6 p-6 text-white">
-      {message && (
-        <div
-          className={`fixed top-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-xl border px-5 py-4 shadow-xl ${
-            messageType === "success"
-              ? "border-green-500/30 bg-green-900/20 text-green-400"
-              : "border-red-500/30 bg-red-900/20 text-red-400"
-          } `}
-        >
-          <div
-            className={`flex h-8 w-8 items-center justify-center rounded-full font-bold ${
-              messageType === "success" ? "bg-green-500/20" : "bg-red-500/20"
-            } `}
-          >
-            {messageType === "success" ? "✓" : "!"}
-          </div>
 
-          <p className="text-sm font-medium">{message}</p>
-        </div>
-      )}
+    <div className="
+      p-6
+      text-white
+      space-y-6
+    ">
+      {message && (
+
+  <div
+   className={`
+      fixed
+      top-6
+      left-1/2
+      -translate-x-1/2
+      z-50
+      flex
+      items-center
+      gap-3
+      rounded-xl
+      border
+      px-5
+      py-4
+      shadow-xl
+
+      ${
+        messageType === "success"
+        ? "bg-green-900/20 border-green-500/30 text-green-400"
+        : "bg-red-900/20 border-red-500/30 text-red-400"
+      }
+    `}
+  >
+
+    <div
+      className={`
+        flex
+        h-8
+        w-8
+        items-center
+        justify-center
+        rounded-full
+        font-bold
+
+        ${
+          messageType === "success"
+          ? "bg-green-500/20"
+          : "bg-red-500/20"
+        }
+      `}
+    >
+
+      {
+        messageType === "success"
+        ? "✓"
+        : "!"
+      }
+
+    </div>
+
+
+    <p className="text-sm font-medium">
+      {message}
+    </p>
+
+
+  </div>
+
+)}
+
+
 
       {/* HEADER */}
 
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Edit Entertainment</h1>
+      <div className="
+        flex
+        justify-between
+        items-center
+      ">
+
+
+        <h1 className="
+          text-2xl
+          font-bold
+        ">
+          Edit Entertainment
+        </h1>
+
+
 
         <button
-          onClick={() => router.push("/admin/entertainments")}
 
-          className="rounded-lg bg-white/10 px-4 py-2 hover:bg-white/20"
+          onClick={() =>
+            router.push(
+              "/admin/entertainments"
+            )
+          }
+
+          className="
+            px-4
+            py-2
+            bg-white/10
+            rounded-lg
+            hover:bg-white/20
+          "
+
         >
+
           Back
+
         </button>
+
+
       </div>
+
+
+
+
+
 
       {/* FORM */}
 
-      <div className="grid grid-cols-1 gap-6">
+      <div className="
+        grid
+        grid-cols-1
+        gap-6
+      ">
+
+
+
         <EntertainmentForm
-          entertainmentId={entertainment.id}
+
+
+
+          entertainmentId={
+            entertainment.id
+          }
           titleError={titleError}
 
-          clearTitleError={() => setTitleError("")}
+clearTitleError={() =>
+  setTitleError("")
+}
 
-          initialData={{
-            title: entertainment.title,
 
-            description: entertainment.description ?? "",
 
-            category: entertainment.category ?? "",
+initialData={{
+  title: entertainment.title,
 
-            releaseYear: entertainment.releaseYear ?? 0,
+  description: entertainment.description ?? "",
 
-            duration: entertainment.duration ?? 0,
+  category: entertainment.category ?? "",
 
-            video: null,
+  releaseYear: entertainment.releaseYear ?? 0,
 
-            thumbnail: null,
-          }}
+  duration: entertainment.duration ?? 0,
 
-          initialThumbnail={entertainment.thumbnail ?? ""}
+  video: null,
 
-          initialVideo={entertainment.videoUrl ?? ""}
+  thumbnail: null,
+}}
 
-          onSubmit={async (form) => {
+
+
+
+
+          initialThumbnail={
+
+            entertainment.thumbnail ?? ""
+
+          }
+
+
+
+
+          initialVideo={
+
+            entertainment.videoUrl ?? ""
+
+          }
+
+
+
+
+
+          onSubmit={async(form)=>{
+
+            
+
             const noChanges =
-              form.title === entertainment.title &&
-              form.description === (entertainment.description ?? "") &&
-              form.category === (entertainment.category ?? "") &&
-              form.releaseYear === (entertainment.releaseYear ?? 0) &&
-              form.duration === (entertainment.duration ?? 0) &&
-              !form.video &&
-              !form.thumbnail;
+    form.title === entertainment.title &&
+    form.description === (entertainment.description ?? "") &&
+    form.category === (entertainment.category ?? "") &&
+    form.releaseYear === (entertainment.releaseYear ?? 0) &&
+    form.duration === (entertainment.duration ?? 0) &&
+    !form.video &&
+    !form.thumbnail;
 
-            if (noChanges) {
-              setMessage("No changes. Update successful.");
 
-              setMessageType("success");
+  if(noChanges){
 
-              setTimeout(() => {
-                router.push("/admin/entertainments");
+    setMessage(
+      "No changes. Update successful."
+    );
 
-                router.refresh();
-              }, 1500);
+    setMessageType(
+      "success"
+    );
 
-              return;
-            }
 
-            const formData = new FormData();
+    setTimeout(() => {
 
-            formData.append("title", form.title);
+      router.push(
+        "/admin/entertainments"
+      );
 
-            formData.append("description", form.description);
+      router.refresh();
 
-            formData.append("category", form.category);
+    },1500);
 
-            formData.append("releaseYear", String(form.releaseYear));
 
-            if (form.video) {
-              formData.append("video", form.video);
-            }
+    return;
 
-            if (form.thumbnail) {
-              formData.append("thumbnail", form.thumbnail);
-            }
+  }
 
-            const res = await fetch(
-              `/api/entertainments/${entertainment.id}`,
+            const formData =
+              new FormData();
 
-              {
-                method: "PUT",
+            
+           
 
-                body: formData,
-              },
+
+
+            formData.append(
+              "title",
+              form.title
             );
 
-            if (res.ok) {
-              setMessage("Entertainment updated successfully");
 
-              setMessageType("success");
 
-              setTimeout(() => {
-                router.push("/admin/entertainments");
+            formData.append(
+              "description",
+              form.description
+            );
 
-                router.refresh();
-              }, 1500);
-            } else {
-              const error = await res.json();
 
-              if (error.message === "Entertainment title already exists") {
-                setTitleError(error.message);
 
-                return;
-              }
+            formData.append(
+              "category",
+              form.category
+            );
+        
+            formData.append(
+              "releaseYear",
+              String(
+                form.releaseYear
+              )
+            );
 
-              setMessage("Failed to update entertainment");
 
-              setMessageType("error");
+
+         
+
+
+
+
+
+
+            if(form.video){
+
+
+              formData.append(
+                "video",
+                form.video
+              );
+
+
             }
-          }}
-        />
-      </div>
-    </div>
+
+
+
+
+
+            if(form.thumbnail){
+
+
+              formData.append(
+                "thumbnail",
+                form.thumbnail
+              );
+
+
+            }
+          
+            const res =
+              await fetch(
+
+                `/api/entertainments/${entertainment.id}`,
+
+                {
+
+                  method:"PUT",
+
+                  body:formData,
+
+                }
+
+              );
+
+              
+            
+
+
+
+
+
+if(res.ok){
+
+  setMessage(
+    "Entertainment updated successfully"
   );
+
+  setMessageType(
+    "success"
+  );
+
+
+  setTimeout(() => {
+
+    router.push(
+      "/admin/entertainments"
+    );
+
+    router.refresh();
+
+  },1500);
+
+
+} else {
+
+
+  const error =
+    await res.json();
+
+
+  if(
+    error.message ===
+    "Entertainment title already exists"
+  ){
+
+    setTitleError(
+      error.message
+    );
+
+    return;
+
+  }
+
+
+  setMessage(
+    "Failed to update entertainment"
+  );
+
+  setMessageType(
+    "error"
+  );
+
 }
+
+
+
+          }}
+
+
+
+        />
+
+
+
+      </div>
+
+
+
+    </div>
+
+  );
+
+}
+
