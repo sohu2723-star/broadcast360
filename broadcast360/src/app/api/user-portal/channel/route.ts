@@ -10,6 +10,9 @@ const corsHeaders = {
 export async function GET() {
   try {
     const dbChannels = await prisma.channel.findMany({
+      include: {
+        streams: true,
+      },
       orderBy: {
         name: "asc",
       },
@@ -22,19 +25,21 @@ export async function GET() {
       logo: channel.logo,
       country: channel.country,
 
+      // If you later store stream URLs in DB, you can use:
+      // const primaryStream = channel.streams?.[0];
+      // streamUrl: primaryStream?.url ?? ""
+
       playbackUrl: channel.streamKey
         ? `http://localhost:8888/live/${channel.streamKey}/index.m3u8`
-        : null,
+        : `http://localhost:3000/streams/channel-${channel.id}/index.m3u8`,
     }));
 
     return NextResponse.json(channels, {
       status: 200,
       headers: corsHeaders,
     });
-
   } catch (error) {
-
-    console.error(error);
+    console.error("Prisma Fetch Error:", error);
 
     return NextResponse.json(
       {
@@ -47,7 +52,6 @@ export async function GET() {
     );
   }
 }
-
 
 export async function OPTIONS() {
   return new NextResponse(null, {
