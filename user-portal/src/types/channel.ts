@@ -6,4 +6,7 @@ export interface Channel {
   country?: string;
 
   playbackUrl: string | null;
+  createdAt?: string;
+  updatedAt?: string;
 }
+

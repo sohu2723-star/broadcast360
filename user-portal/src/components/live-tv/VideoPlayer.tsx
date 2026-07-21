@@ -8,21 +8,29 @@ interface Props {
   channel: Channel | null;
 }
 
+<<<<<<< HEAD
 export default function VideoPlayer({
   channel,
 }: Props) {
 
+=======
+export default function VideoPlayer({ channel }: Props) {
+>>>>>>> 65be927f78b00ce5f8ca8b3ccec3766efc5c3f2a
   const videoRef = useRef<HTMLVideoElement>(null);
 
-
   useEffect(() => {
+<<<<<<< HEAD
 
     if (!channel?.playbackUrl) return;
+=======
+    if (!channel?.streamUrl) return;
+>>>>>>> 65be927f78b00ce5f8ca8b3ccec3766efc5c3f2a
 
     const video = videoRef.current;
 
     if (!video) return;
 
+<<<<<<< HEAD
 
     const streamUrl = channel.playbackUrl;
 
@@ -30,6 +38,10 @@ export default function VideoPlayer({
     if (Hls.isSupported()) {
 
       const hls = new Hls({
+=======
+    if (Hls.isSupported()) {
+      const hls = new Hls();
+>>>>>>> 65be927f78b00ce5f8ca8b3ccec3766efc5c3f2a
 
         enableWorker: true,
 
@@ -42,6 +54,7 @@ export default function VideoPlayer({
 
       hls.attachMedia(video);
 
+<<<<<<< HEAD
 
       hls.on(
         Hls.Events.MANIFEST_PARSED,
@@ -66,12 +79,18 @@ export default function VideoPlayer({
         }
       );
 
+=======
+      hls.on(Hls.Events.ERROR, (_, data) => {
+        console.log("HLS ERROR", data);
+      });
+>>>>>>> 65be927f78b00ce5f8ca8b3ccec3766efc5c3f2a
 
       return () => {
 
         hls.destroy();
 
       };
+<<<<<<< HEAD
 
     }
 
@@ -89,17 +108,25 @@ export default function VideoPlayer({
       video.play()
         .catch(() => {});
 
+=======
+    } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+      video.src = channel.streamUrl;
+>>>>>>> 65be927f78b00ce5f8ca8b3ccec3766efc5c3f2a
     }
-
-
   }, [channel]);
 
+<<<<<<< HEAD
 
   return (
     <div className="flex-1 bg-black rounded-xl overflow-hidden">
 
       {channel ? (
 
+=======
+  return (
+    <div className="flex-1 bg-black rounded-xl overflow-hidden">
+      {channel ? (
+>>>>>>> 65be927f78b00ce5f8ca8b3ccec3766efc5c3f2a
         <video
           ref={videoRef}
           controls
@@ -108,6 +135,7 @@ export default function VideoPlayer({
           playsInline
           className="w-full h-full object-contain"
         />
+<<<<<<< HEAD
 
       ) : (
 
@@ -117,6 +145,13 @@ export default function VideoPlayer({
 
       )}
 
+=======
+      ) : (
+        <div className="flex h-full items-center justify-center text-gray-400">
+          Select channel
+        </div>
+      )}
+>>>>>>> 65be927f78b00ce5f8ca8b3ccec3766efc5c3f2a
     </div>
   );
 }
