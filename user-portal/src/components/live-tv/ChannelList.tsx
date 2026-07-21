@@ -8,7 +8,11 @@ interface ChannelListProps {
   onSelect: (channel: Channel) => void;
 }
 
-export default function ChannelList({ channels, selectedChannel, onSelect }: ChannelListProps) {
+export default function ChannelList({
+  channels,
+  selectedChannel,
+  onSelect,
+}: ChannelListProps) {
   return (
     <div className="space-y-2">
       {channels.map((channel) => {
@@ -25,7 +29,9 @@ export default function ChannelList({ channels, selectedChannel, onSelect }: Cha
           >
             <div className="flex items-center justify-between">
               <span>{channel.name}</span>
-              {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>}
+              {isSelected && (
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+              )}
             </div>
           </button>
         );
