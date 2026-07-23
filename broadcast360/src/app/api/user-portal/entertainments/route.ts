@@ -7,10 +7,20 @@ export async function GET() {
   try {
 
 
-    const now = new Date();
+    // Get database time
+    const dbNowResult = await prisma.$queryRaw<
+      { db_now: Date }[]
+    >`
+
+      SELECT NOW() as db_now
+
+    `;
 
 
-    const oneMonthAgo = new Date();
+    const now = dbNowResult[0].db_now;
+
+
+    const oneMonthAgo = new Date(now);
 
     oneMonthAgo.setMonth(
       oneMonthAgo.getMonth() - 1
@@ -18,182 +28,250 @@ export async function GET() {
 
 
 
-    const schedules = await prisma.schedule.findMany({
-
-      where: {
-
-        endTime: {
-
-          lte: now,
-
-          gte: oneMonthAgo,
-
-        },
-
-      },
+    console.log("DATABASE NOW:", now);
+    console.log("ONE MONTH AGO:", oneMonthAgo);
 
 
-      include: {
 
-        channel: true,
+    const schedules =
+      await prisma.schedule.findMany({
 
+        where: {
 
-        playlist: {
+          endTime: {
 
-          include: {
+            lt: now,
 
-            items: {
-
-              where: {
-
-                type: "ENTERTAINMENT",
-
-              },
-
-
-              include: {
-
-                entertainment: true,
-
-              },
-
-
-              orderBy: {
-
-                order: "asc",
-
-              },
-
-            },
+            gte: oneMonthAgo,
 
           },
 
         },
 
-      },
+
+        include: {
 
 
-      orderBy: {
-
-        endTime:"desc",
-
-      },
-
-    });
+          channel: true,
 
 
+          playlist: {
+
+
+            include: {
+
+
+              items: {
+
+
+                where: {
+
+
+                  type: "ENTERTAINMENT",
+
+
+                },
+
+
+                include: {
+
+
+                  entertainment: true,
+
+
+                },
+
+
+                orderBy: {
+
+
+                  order: "asc",
+
+
+                },
+
+
+              },
+
+
+            },
+
+
+          },
+
+
+        },
+
+
+        orderBy: {
+
+
+          endTime: "desc",
+
+
+        },
+
+
+      });
 
 
 
-    const entertainments =
-      schedules.flatMap((schedule)=>
+    console.log(
+      "SCHEDULE COUNT:",
+      schedules.length
+    );
+
+
+
+
+
+    const entertainments = schedules.flatMap(
+
+      (schedule) =>
+
 
         schedule.playlist.items
 
         .filter(
-          (item)=>item.entertainment !== null
+
+          (item) =>
+
+            item.entertainment !== null
+
         )
 
 
-        .map((item)=>({
+        .map(
+
+          (item) => {
 
 
-          id:item.entertainment!.id,
-
-
-          entertainmentKey:
-          `${item.entertainment!.id}-${schedule.channel.id}-${schedule.id}`,
-
-
-          title:
-          item.entertainment!.title,
-
-
-          description:
-          item.entertainment!.description,
-
-
-          category:
-          item.entertainment!.category,
+            const entertainment =
+              item.entertainment!;
 
 
 
-          thumbnail:
-          item.entertainment!.thumbnail
-          ? `http://localhost:3000${item.entertainment!.thumbnail}`
-          : null,
+            return {
+
+
+              id:
+              entertainment.id,
+
+
+              entertainmentKey:
+              `${entertainment.id}-${schedule.channel.id}-${schedule.id}`,
 
 
 
-          videoUrl:
-          item.entertainment!.videoUrl
-          ? item.entertainment!.videoUrl.startsWith("http")
-            ? item.entertainment!.videoUrl
-            : `http://localhost:3000${item.entertainment!.videoUrl}`
-          : null,
+              title:
+              entertainment.title,
 
 
 
-          duration:
-          item.entertainment!.duration,
-
-
-          releaseYear:
-          item.entertainment!.releaseYear,
+              description:
+              entertainment.description,
 
 
 
-          channelId:
-          schedule.channel.id,
+              category:
+              entertainment.category,
 
 
-          channelName:
-          schedule.channel.name,
+
+              thumbnail:
+              entertainment.thumbnail
+
+              ? `http://localhost:3000${entertainment.thumbnail}`
+
+              : null,
 
 
-          scheduleId:
-          schedule.id,
+
+              videoUrl:
+              entertainment.videoUrl
+
+              ? entertainment.videoUrl.startsWith("http")
+
+                ? entertainment.videoUrl
+
+                : `http://localhost:3000${entertainment.videoUrl}`
+
+              : null,
 
 
-          scheduleStart:
-          schedule.startTime,
+
+              duration:
+              entertainment.duration,
 
 
-          scheduleEnd:
-          schedule.endTime,
+
+              releaseYear:
+              entertainment.releaseYear,
 
 
-        }))
 
-      );
+              channelId:
+              schedule.channel.id,
 
+
+
+              channelName:
+              schedule.channel.name,
+
+
+
+              playlistId:
+              schedule.playlist.id,
+
+
+
+              scheduleId:
+              schedule.id,
+
+
+
+              scheduleStart:
+              schedule.startTime,
+
+
+
+              scheduleEnd:
+              schedule.endTime,
+
+
+            };
+
+
+          }
+
+
+        )
+
+
+    );
+
+
+
+
+    console.log(
+      "ENTERTAINMENT COUNT:",
+      entertainments.length
+    );
 
 
 
     return NextResponse.json(
 
       {
+
         entertainments,
+
       },
 
 
       {
 
-        status:200,
-
-
-        headers:{
-
-          "Access-Control-Allow-Origin":
-          "http://localhost:3001",
-
-          "Access-Control-Allow-Methods":
-          "GET, OPTIONS",
-
-          "Access-Control-Allow-Headers":
-          "Content-Type",
-
-        },
+        status: 200,
 
       }
 
@@ -201,7 +279,7 @@ export async function GET() {
 
 
 
-  } catch(error){
+  } catch(error) {
 
 
     console.error(
@@ -214,13 +292,17 @@ export async function GET() {
     return NextResponse.json(
 
       {
+
         message:
         "Failed to fetch entertainments",
+
       },
 
 
       {
-        status:500,
+
+        status: 500,
+
       }
 
     );
