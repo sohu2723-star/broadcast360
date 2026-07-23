@@ -3,7 +3,13 @@ import { spawn, ChildProcess } from "child_process";
 export class PlayoutManager {
   private processes = new Map<number, ChildProcess>();
 
-  async start(channelId: number, concatFile: string, streamKey: string,  offset:number = 0,  loop:boolean = false) {
+  async start(
+    channelId: number,
+    concatFile: string,
+    streamKey: string,
+    offset: number = 0,
+    loop: boolean = false,
+  ) {
     await this.stop(channelId);
 
     const output = `rtmp://127.0.0.1:1935/live/${streamKey}`;
@@ -11,8 +17,9 @@ export class PlayoutManager {
     const args = [
       "-re",
 
-      "-stream_loop",
-      "-1",
+      ...(offset > 0 ? ["-ss", String(offset)] : []),
+
+      ...(loop ? ["-stream_loop", "-1"] : []),
 
       "-f",
       "concat",
@@ -33,7 +40,7 @@ export class PlayoutManager {
       "yuv420p",
 
       "-g",
-      "60",
+      "30",
 
       "-keyint_min",
       "60",
@@ -52,6 +59,9 @@ export class PlayoutManager {
 
       "-f",
       "flv",
+
+      "-tune",
+"zerolatency",
 
       output,
     ];

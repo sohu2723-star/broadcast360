@@ -1,3 +1,5 @@
+// doesnt need anymore file 
+
 import { spawn, ChildProcess } from "child_process";
 
 export class PlayoutFFmpegManager {
@@ -18,45 +20,50 @@ export class PlayoutFFmpegManager {
     const output = `rtmp://127.0.0.1:1935/live/${streamKey}`;
 
     const args = [
-      "-re",
+  "-re",
 
-      "-f",
-      "concat",
+  ...(offset > 0
+    ? [
+        "-ss",
+        String(offset),
+      ]
+    : []),
 
-      "-safe",
-      "0",
+  "-f",
+  "concat",
 
-      "-i",
-      concatFile,
+  "-safe",
+  "0",
 
-      ...(offset > 0 ? ["-ss", String(offset)] : []),
+  "-i",
+  concatFile,
 
-      "-c:v",
-      "libx264",
+  "-c:v",
+  "libx264",
 
-      "-preset",
-      "veryfast",
+  "-preset",
+  "veryfast",
 
-      "-pix_fmt",
-      "yuv420p",
+  "-pix_fmt",
+  "yuv420p",
 
-      "-r",
-      "30",
+  "-r",
+  "30",
 
-      "-g",
-      "60",
+  "-g",
+  "60",
 
-      "-c:a",
-      "aac",
+  "-c:a",
+  "aac",
 
-      "-b:a",
-      "128k",
+  "-b:a",
+  "128k",
 
-      "-f",
-      "flv",
+  "-f",
+  "flv",
 
-      output,
-    ];
+  output,
+];
 
     console.log("🚀 START PLAYOUT", args.join(" "));
 

@@ -253,58 +253,74 @@ export class BroadcastService {
   */
 
   async switchBroadcast(
-    schedule: ScheduleWithRelations | null,
-    channelId: number,
-  ) {
-    /*
-       LIVE protection
-    */
+  schedule: ScheduleWithRelations | null,
+  channelId: number,
+) {
 
-    if (this.switcher.isLIVE(channelId)) {
-      console.log("🔴 LIVE active");
+  if (this.switcher.isLIVE(channelId)) {
+    console.log("🔴 LIVE active");
+    return;
+  }
 
-      return;
-    }
+  console.log("🔄 SWITCH START", {
+    channelId,
+    scheduleId: schedule?.id ?? "fallback",
+  });
 
-    const playlist = await this.getPlaylist(schedule, channelId);
 
-    if (!playlist) {
-      return;
-    }
+  const playlist = await this.getPlaylist(schedule, channelId);
 
-    // await this.switcher.stopVOD(channelId);
-    await this.playoutFFmpeg.stop(channelId);
+  if (!playlist) {
+    return;
+  }
 
-    let startIndex = 0;
 
-    if (schedule) {
-      const result = this.catchup.calculate(schedule, new Date());
+  let startIndex = 0;
 
-      startIndex = result.itemIndex;
-
-      this.startOffsets.set(channelId, result.offset);
-    }
-
-    this.playout.replace(
-      channelId,
-      playlist.items ?? [],
-      schedule ? "SCHEDULE" : "FALLBACK",
-      startIndex,
+  if (schedule) {
+    const result = this.catchup.calculate(
+      schedule,
+      new Date()
     );
 
-    const channel = await getChannelBroadcastInfo(channelId);
+    startIndex = result.itemIndex;
 
-    if (channel?.streamKey) {
-      await this.startPlaylistPlayout(
-        channelId,
-        channel.streamKey,
-        playlist.items ?? [],
-        this.startOffsets.get(channelId) ?? 0,
-        schedule ? "SCHEDULE" : "FALLBACK",
-      );
-      this.startOffsets.delete(channelId);
-    }
+    this.startOffsets.set(
+      channelId,
+      result.offset
+    );
   }
+
+
+  this.playout.replace(
+    channelId,
+    playlist.items ?? [],
+    schedule ? "SCHEDULE" : "FALLBACK",
+    startIndex,
+  );
+
+
+  const channel = await getChannelBroadcastInfo(channelId);
+
+
+  if (channel?.streamKey) {
+
+    console.log("🚀 START NEW PLAYOUT");
+
+    await this.startPlaylistPlayout(
+      channelId,
+      channel.streamKey,
+      playlist.items ?? [],
+      this.startOffsets.get(channelId) ?? 0,
+      schedule ? "SCHEDULE" : "FALLBACK",
+    );
+
+
+    console.log("✅ SWITCH COMPLETE");
+
+    this.startOffsets.delete(channelId);
+  }
+}
 
   private async startPlaylistPlayout(
     channelId: number,
