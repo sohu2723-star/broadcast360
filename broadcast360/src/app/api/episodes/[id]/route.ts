@@ -2,18 +2,15 @@ import { prisma } from "@/lib/prisma";
 
 export async function DELETE(
   req: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const { id } = await params; 
+    const { id } = await params;
 
     const episodeId = Number(id);
 
     if (isNaN(episodeId)) {
-      return Response.json(
-        { message: "Invalid episode id" },
-        { status: 400 }
-      );
+      return Response.json({ message: "Invalid episode id" }, { status: 400 });
     }
 
     const episode = await prisma.episode.findUnique({
@@ -21,10 +18,7 @@ export async function DELETE(
     });
 
     if (!episode) {
-      return Response.json(
-        { message: "Episode not found" },
-        { status: 404 }
-      );
+      return Response.json({ message: "Episode not found" }, { status: 404 });
     }
 
     await prisma.episode.delete({
@@ -40,7 +34,7 @@ export async function DELETE(
 
     return Response.json(
       { message: "Failed to delete episode" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

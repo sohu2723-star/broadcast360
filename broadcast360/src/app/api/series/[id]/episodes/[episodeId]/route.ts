@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import {
-  getEpisodeById,
-  updateEpisode,
-} from "@/services/episode.service";
+import { getEpisodeById, updateEpisode } from "@/services/episode.service";
 
 // ========================
 // GET EPISODE
 // ========================
 export async function GET(
   req: NextRequest,
-  { params }: { params: Promise<{ episodeId: string }> }
+  { params }: { params: Promise<{ episodeId: string }> },
 ) {
   try {
     const { episodeId } = await params;
@@ -20,7 +17,7 @@ export async function GET(
     if (isNaN(id)) {
       return NextResponse.json(
         { message: "Invalid episodeId" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -29,7 +26,7 @@ export async function GET(
     if (!episode) {
       return NextResponse.json(
         { message: "Episode not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -39,7 +36,7 @@ export async function GET(
 
     return NextResponse.json(
       { message: "Failed to fetch episode" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -52,7 +49,7 @@ export async function GET(
 // ========================
 export async function PUT(
   req: NextRequest,
-  { params }: { params: Promise<{ episodeId: string }> }
+  { params }: { params: Promise<{ episodeId: string }> },
 ) {
   try {
     const { episodeId } = await params;
@@ -62,7 +59,7 @@ export async function PUT(
     if (isNaN(id)) {
       return NextResponse.json(
         { message: "Invalid episodeId" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -70,23 +67,20 @@ export async function PUT(
 
     const title = formData.get("title")?.toString()?.trim();
     const episodeNoRaw = formData.get("episodeNo");
-    const episodeNo =
-      episodeNoRaw !== null ? Number(episodeNoRaw) : NaN;
+    const episodeNo = episodeNoRaw !== null ? Number(episodeNoRaw) : NaN;
 
     const videoFileRaw = formData.get("video");
     const thumbnailFileRaw = formData.get("thumbnail");
 
-    const videoFile =
-      videoFileRaw instanceof File ? videoFileRaw : null;
+    const videoFile = videoFileRaw instanceof File ? videoFileRaw : null;
 
     const thumbnailFile =
       thumbnailFileRaw instanceof File ? thumbnailFileRaw : null;
 
-
     if (!title || isNaN(episodeNo)) {
       return NextResponse.json(
         { message: "Missing required fields" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -95,8 +89,7 @@ export async function PUT(
       title: string;
       episodeNo: number;
       videoFile?: File; // Change this to 'videoUrl?: string' if your service layer expects a string path instead
-     thumbnailFile?: File;
-
+      thumbnailFile?: File;
     }
 
     const updatePayload: UpdateEpisodePayload = {
@@ -107,10 +100,13 @@ export async function PUT(
     if (videoFile && videoFile.size > 0 && videoFile.name !== "undefined") {
       updatePayload.videoFile = videoFile;
     }
-if (thumbnailFile && thumbnailFile.size > 0 && thumbnailFile.name !== "undefined") {
-  updatePayload.thumbnailFile = thumbnailFile;
-}
-
+    if (
+      thumbnailFile &&
+      thumbnailFile.size > 0 &&
+      thumbnailFile.name !== "undefined"
+    ) {
+      updatePayload.thumbnailFile = thumbnailFile;
+    }
 
     const episode = await updateEpisode(id, updatePayload);
 
@@ -119,14 +115,10 @@ if (thumbnailFile && thumbnailFile.size > 0 && thumbnailFile.name !== "undefined
       data: episode,
     });
   } catch (error: unknown) {
-    const message =
-      error instanceof Error ? error.message : "Update failed";
+    const message = error instanceof Error ? error.message : "Update failed";
 
     console.error(error);
 
-    return NextResponse.json(
-      { message },
-      { status: 400 }
-    );
+    return NextResponse.json({ message }, { status: 400 });
   }
 }

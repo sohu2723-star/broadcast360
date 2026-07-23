@@ -7,7 +7,7 @@ export async function GET(
     params,
   }: {
     params: Promise<{ programId: string }>;
-  }
+  },
 ) {
   try {
     const { programId } = await params;
@@ -17,7 +17,7 @@ export async function GET(
     if (isNaN(id)) {
       return NextResponse.json(
         { message: "Invalid programId" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -25,17 +25,18 @@ export async function GET(
     const page = Number(searchParams.get("page") ?? 1);
     const limit = 3;
 
-    const data = await PlaylistService.getProgramPlaylists(
-      id,
-      page,
-      limit
-    );
-
+    const data = await PlaylistService.getProgramPlaylists(id, page, limit);
+    //console.log("PLAYLIST API DATA:", data);
     return NextResponse.json({ data });
   } catch (error) {
+    // console.error("GET PLAYLIST ERROR:", error);
+
     return NextResponse.json(
-      { message: "Failed to load playlists" },
-      { status: 500 }
+      {
+        message: "Failed to load playlists",
+        error: String(error),
+      },
+      { status: 500 },
     );
   }
 }
@@ -46,7 +47,7 @@ export async function POST(
     params,
   }: {
     params: Promise<{ programId: string }>;
-  }
+  },
 ) {
   try {
     const { programId } = await params;
@@ -55,7 +56,7 @@ export async function POST(
     if (isNaN(id)) {
       return NextResponse.json(
         { message: "Invalid programId" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -64,7 +65,7 @@ export async function POST(
     if (!body.name) {
       return NextResponse.json(
         { message: "Playlist name is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -72,16 +73,13 @@ export async function POST(
       name: body.name,
     });
 
-    return NextResponse.json(
-      { data: playlist },
-      { status: 201 }
-    );
+    return NextResponse.json({ data: playlist }, { status: 201 });
   } catch (error) {
     console.error(error);
 
     return NextResponse.json(
       { message: "Failed to create playlist" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

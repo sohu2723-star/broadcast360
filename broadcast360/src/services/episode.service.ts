@@ -9,14 +9,8 @@ import {
   deleteEpisode as repoDeleteEpisode,
 } from "@/repositories/episode.repository";
 
-import {
-  getVideoDuration,
-  generateThumbnail,
-} from "@/lib/media/ffmpeg";
+import { getVideoDuration, generateThumbnail } from "@/lib/media/ffmpeg";
 
-// ========================
-// TYPES
-// ========================
 type EpisodeUpdateData = {
   title?: string;
   episodeNo?: number;
@@ -43,27 +37,20 @@ export function getEpisodeById(id: number) {
   return repoGetEpisodeById(id);
 }
 
-
-export async function updateEpisode(
-  id: number,
-  data: EpisodeUpdateData
-) {
+export async function updateEpisode(id: number, data: EpisodeUpdateData) {
   const current = await repoGetEpisodeById(id);
 
   if (!current) {
     throw new Error("Episode not found");
   }
-    const existingEpisodes = await getEpisodesBySeriesId(current.seriesId);
+  // const existingEpisodes = await getEpisodesBySeriesId(current.seriesId);
 
-  const duplicate = existingEpisodes.find(
-    (ep) =>
-      Number(ep.episodeNo) === Number(data.episodeNo) &&
-      ep.id !== id
-  );
-if (duplicate) {
-  throw new Error("Episode number already exists in this series");
-}
-
+  // const duplicate = existingEpisodes.find(
+  //   (ep) => Number(ep.episodeNo) === Number(data.episodeNo) && ep.id !== id,
+  // );
+  // if (duplicate) {
+  //   throw new Error("Episode number already exists in this series");
+  // }
 
   const fileId = Date.now();
 
@@ -77,14 +64,14 @@ if (duplicate) {
     const videoPath = path.join(
       process.cwd(),
       "public/uploads/episodes/videos",
-      videoName
+      videoName,
     );
 
     await fs.mkdir(path.dirname(videoPath), { recursive: true });
 
     await fs.writeFile(
       videoPath,
-      Buffer.from(await data.videoFile.arrayBuffer())
+      Buffer.from(await data.videoFile.arrayBuffer()),
     );
 
     videoUrl = `/uploads/episodes/videos/${videoName}`;
@@ -97,14 +84,14 @@ if (duplicate) {
     const thumbPath = path.join(
       process.cwd(),
       "public/uploads/episodes/thumbnails",
-      thumbName
+      thumbName,
     );
 
     await fs.mkdir(path.dirname(thumbPath), { recursive: true });
 
     await fs.writeFile(
       thumbPath,
-      Buffer.from(await data.thumbnailFile.arrayBuffer())
+      Buffer.from(await data.thumbnailFile.arrayBuffer()),
     );
 
     thumbnailUrl = `/uploads/episodes/thumbnails/${thumbName}`;
@@ -135,10 +122,7 @@ export async function fetchEpisodesBySeriesId(seriesId: number) {
 // ========================
 // ADD EPISODE (UPLOAD + FFmpeg)
 // ========================
-export async function addEpisode(
-  seriesId: number,
-  data: EpisodeCreateInput
-) {
+export async function addEpisode(seriesId: number, data: EpisodeCreateInput) {
   try {
     const { title, episodeNo, videoFile, thumbnailFile } = data;
 
@@ -146,15 +130,15 @@ export async function addEpisode(
       throw new Error("Missing required fields");
     }
 
-    const existingEpisodes = await getEpisodesBySeriesId(seriesId);
+    // const existingEpisodes = await getEpisodesBySeriesId(seriesId);
 
-    const duplicate = existingEpisodes.find(
-      (ep) => Number(ep.episodeNo) === episodeNo
-    );
+    // const duplicate = existingEpisodes.find(
+    //   (ep) => Number(ep.episodeNo) === episodeNo,
+    // );
 
-    if (duplicate) {
-      throw new Error("Episode number already exists in this series");
-    }
+    // if (duplicate) {
+    //   throw new Error("Episode number already exists in this series");
+    // }
 
     const fileId = Date.now();
 
@@ -166,17 +150,14 @@ export async function addEpisode(
       "public",
       "uploads",
       "episodes",
-      "videos"
+      "videos",
     );
 
     await fs.mkdir(videoDir, { recursive: true });
 
     const videoPath = path.join(videoDir, videoFilename);
 
-    await fs.writeFile(
-      videoPath,
-      Buffer.from(await videoFile.arrayBuffer())
-    );
+    await fs.writeFile(videoPath, Buffer.from(await videoFile.arrayBuffer()));
 
     // ================= DURATION =================
     let duration = 0;
@@ -192,7 +173,7 @@ export async function addEpisode(
       "public",
       "uploads",
       "episodes",
-      "thumbnails"
+      "thumbnails",
     );
 
     await fs.mkdir(thumbnailDir, { recursive: true });
@@ -206,7 +187,7 @@ export async function addEpisode(
 
       await fs.writeFile(
         thumbPath,
-        Buffer.from(await thumbnailFile.arrayBuffer())
+        Buffer.from(await thumbnailFile.arrayBuffer()),
       );
 
       thumbnailUrl = `/uploads/episodes/thumbnails/${thumbName}`;
@@ -234,7 +215,7 @@ export async function addEpisode(
       thumbnailUrl,
     });
   } catch (error) {
-    console.error("addEpisode error:", error);
+    // console.error("addEpisode error:", error);
     throw error;
   }
 }

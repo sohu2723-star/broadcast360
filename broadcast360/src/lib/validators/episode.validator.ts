@@ -19,9 +19,9 @@ export const createEpisodeSchema = baseEpisodeSchema.extend({
   videoFile: z.instanceof(File, {
     message: "Video file is required",
   }),
-thumbnailFile: z.instanceof(File, {
+  thumbnailFile: z.instanceof(File, {
     message: "Thumbnail image is required",
-  })
+  }),
 });
 
 // =======================
@@ -37,9 +37,9 @@ export const editEpisodeSchema = baseEpisodeSchema.extend({
         if (!file) return true; // allow empty in edit
         return file instanceof File;
       },
-      { message: "Invalid video file" }
+      { message: "Invalid video file" },
     ),
-    thumbnailFile: z
+  thumbnailFile: z
     .any()
     .optional()
     .nullable()
@@ -50,7 +50,7 @@ export const editEpisodeSchema = baseEpisodeSchema.extend({
       },
       {
         message: "Invalid thumbnail image",
-      }
+      },
     ),
 });
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-
+import { ScheduleStatus } from "@/generated/prisma";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "http://localhost:3001",
   "Access-Control-Allow-Methods": "GET, OPTIONS",
@@ -10,22 +10,29 @@ const corsHeaders = {
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
+
     const search = searchParams.get("search") || "";
     const channelId = searchParams.get("channelId");
     const type = searchParams.get("type");
+
     const page = Number(searchParams.get("page") || 1);
     const limit = Number(searchParams.get("limit") || 20);
-    const skip = (page - 1) * limit;
-    const now = new Date();
-    const availableTime = new Date(
-      now.getTime() + 6.5 * 60 * 60 * 1000 - 60 * 60 * 1000,
-    );
 
-    const oneMonthAgo = new Date(now.getTime() + 6.5 * 60 * 60 * 1000);
+    const skip = (page - 1) * limit;
+
+    /**
+     * Episode becomes available:
+     * schedule endTime + 1 hour
+     */
+    //const availableTime = new Date(Date.now() - 60 * 60 * 1000);
+    const availableTime = new Date(Date.now() - 1 * 60 * 1000);
+
+    /**
+     * Remove content older than one month
+     */
+    const oneMonthAgo = new Date();
     oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-    console.log("NOW:", now);
-    console.log("AVAILABLE:", availableTime);
-    console.log("ONE MONTH AGO:", oneMonthAgo);
+    //const oneMonthAgo = new Date(Date.now() - 5 * 60 * 1000);
 
     const episodes = await prisma.episode.findMany({
       where: {
@@ -41,11 +48,14 @@ export async function GET(req: NextRequest) {
             playlist: {
               schedules: {
                 some: {
+                  status: ScheduleStatus.COMPLETED,
+
                   ...(channelId
                     ? {
                         channelId: Number(channelId),
                       }
                     : {}),
+
                   endTime: {
                     lte: availableTime,
                     gte: oneMonthAgo,
@@ -66,11 +76,14 @@ export async function GET(req: NextRequest) {
               include: {
                 schedules: {
                   where: {
+                    status: ScheduleStatus.COMPLETED,
+
                     ...(channelId
                       ? {
                           channelId: Number(channelId),
                         }
                       : {}),
+
                     endTime: {
                       lte: availableTime,
                       gte: oneMonthAgo,
@@ -94,20 +107,39 @@ export async function GET(req: NextRequest) {
       },
 
       orderBy: {
-        createdAt: "desc",
+        episodeNo: "desc",
       },
     });
 
-    const seriesMap = new Map();
+    /*
+      Convert Episode[] into Series[]
+    */
 
-    episodes.forEach((episode) => {
+    const seriesMap = new Map<number, any>();
+
+    for (const episode of episodes) {
+      const schedule = episode.playlistItems
+        .flatMap((item) => item.playlist.schedules)
+        .sort(
+          (a, b) =>
+            new Date(b.endTime!).getTime() - new Date(a.endTime!).getTime(),
+        )[0];
+
+      if (!schedule) continue;
+
       const series = episode.series;
 
-      const schedule = episode.playlistItems[0]?.playlist.schedules[0];
+      const current = seriesMap.get(series.id);
 
-      if (!schedule) return;
+      const episodeData = {
+        id: episode.id,
+        title: episode.title,
+        episodeNo: episode.episodeNo,
+        duration: episode.duration,
+        videoUrl: episode.videoUrl,
+      };
 
-      if (!seriesMap.has(series.id)) {
+      if (!current || episode.episodeNo > current.latestEpisode.episodeNo) {
         seriesMap.set(series.id, {
           id: series.id,
 
@@ -123,57 +155,33 @@ export async function GET(req: NextRequest) {
             ? `http://localhost:3000${series.thumbnail}`
             : null,
 
-          latestEpisode: {
-            id: episode.id,
-
-            title: episode.title,
-
-            episodeNo: episode.episodeNo,
-
-            duration: episode.duration,
-
-            videoUrl: episode.videoUrl,
-          },
+          latestEpisode: episodeData,
 
           channel: {
             id: schedule.channel.id,
-
             name: schedule.channel.name,
           },
 
           schedule: {
             id: schedule.id,
-
             startTime: schedule.startTime,
-
             endTime: schedule.endTime,
           },
         });
-      } else {
-        const current = seriesMap.get(series.id);
-
-        if (episode.episodeNo > current.latestEpisode.episodeNo) {
-          current.latestEpisode = {
-            id: episode.id,
-
-            title: episode.title,
-
-            episodeNo: episode.episodeNo,
-
-            duration: episode.duration,
-
-            videoUrl: episode.videoUrl,
-          };
-        }
       }
-    });
+    }
 
     let result = Array.from(seriesMap.values());
 
-    // newest broadcast episode first
     result.sort(
-      (a, b) => b.latestEpisode.episodeNo - a.latestEpisode.episodeNo,
+      (a, b) =>
+        new Date(b.schedule.endTime).getTime() -
+        new Date(a.schedule.endTime).getTime(),
     );
+
+    /*
+      Hot series
+    */
 
     if (type === "hot") {
       result = result.slice(0, 10);
@@ -186,7 +194,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(
       {
         success: true,
+
         series: data,
+
         pagination: {
           page,
           limit,
@@ -194,6 +204,7 @@ export async function GET(req: NextRequest) {
           totalPages: Math.ceil(total / limit),
         },
       },
+
       {
         status: 200,
         headers: corsHeaders,
@@ -207,6 +218,7 @@ export async function GET(req: NextRequest) {
         success: false,
         message: "Failed to fetch series",
       },
+
       {
         status: 500,
         headers: corsHeaders,
@@ -218,6 +230,7 @@ export async function GET(req: NextRequest) {
 export async function OPTIONS() {
   return new NextResponse(null, {
     status: 200,
+
     headers: corsHeaders,
   });
 }

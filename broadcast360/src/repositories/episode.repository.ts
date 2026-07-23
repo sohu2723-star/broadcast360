@@ -16,7 +16,6 @@ export function getEpisodesBySeriesId(seriesId: number) {
 // GET SINGLE EPISODE
 // ========================
 export async function getEpisodeById(id: number) {
-
   return prisma.episode.findUnique({
     where: { id },
   });
@@ -49,7 +48,7 @@ export function updateEpisode(
     duration?: number;
     videoUrl?: string | null;
     thumbnailUrl?: string | null;
-  }
+  },
 ) {
   return prisma.episode.update({
     where: { id },

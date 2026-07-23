@@ -17,21 +17,8 @@ export default async function CreatePlaylistItemPage({ params }: Props) {
   }
 
   return (
-    <div
-      className="
-      p-6
-      "
-    >
-      <h1
-        className="
-        text-2xl
-        text-white
-        font-bold
-        mb-6
-        "
-      >
-        Add Playlist Item
-      </h1>
+    <div className="p-6">
+      <h1 className="mb-6 text-2xl font-bold text-white">Add Playlist Item</h1>
 
       <PlaylistItemForm
         programId={Number(programId)}

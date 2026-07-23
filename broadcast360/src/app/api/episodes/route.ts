@@ -1,17 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-
 // GET episodes by seriesId
 export async function GET(req: NextRequest) {
   try {
-
     const { searchParams } = new URL(req.url);
 
-    const seriesId = Number(
-      searchParams.get("seriesId")
-    );
-
+    const seriesId = Number(searchParams.get("seriesId"));
 
     if (!seriesId) {
       return NextResponse.json(
@@ -21,20 +16,16 @@ export async function GET(req: NextRequest) {
         },
         {
           status: 400,
-        }
+        },
       );
     }
 
-
     const episodes = await prisma.episode.findMany({
-
       where: {
         seriesId,
       },
 
-      orderBy: {
-        episodeNo: "asc",
-      },
+      orderBy: [{ createdAt: "desc" }, { title: "asc" }],
 
       select: {
         id: true,
@@ -42,42 +33,27 @@ export async function GET(req: NextRequest) {
         episodeNo: true,
         duration: true,
         videoUrl: true,
+        createdAt: true,
       },
-
     });
 
-
-
     return NextResponse.json({
-
       success: true,
 
       data: episodes,
-
     });
-
-
-
-  } catch(error) {
-
-    console.error(
-      "GET episodes error:",
-      error
-    );
-
+  } catch (error) {
+    console.error("GET episodes error:", error);
 
     return NextResponse.json(
-
       {
-        success:false,
-        message:"Failed to fetch episodes"
+        success: false,
+        message: "Failed to fetch episodes",
       },
 
       {
-        status:500
-      }
-
+        status: 500,
+      },
     );
-
   }
 }
