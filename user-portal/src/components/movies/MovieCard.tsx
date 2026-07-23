@@ -32,7 +32,7 @@ function formatDuration(seconds: number) {
 export default function MovieCard({ movie }: Props) {
   return (
     <Link
-      href={`/movies/${movie.movieKey}`}
+      href={`/movies/${encodeURIComponent(movie.movieKey)}`}
       className="group relative block h-[380px] w-[250px] flex-shrink-0 overflow-hidden rounded-xl bg-zinc-900"
     >
       <Image
