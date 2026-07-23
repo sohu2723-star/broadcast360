@@ -1,207 +1,287 @@
-import { ChildProcess } from "child_process";
+import { spawn, ChildProcess } from "child_process";
 
-import { VODPipelineManager } from "./vod-pipeline.manager";
-import { LivePipelineManager } from "./live-pipeline.manager";
-
-import { Stream } from "@/generated/prisma/client";
-
-type BroadcastMode = "VOD" | "LIVE" | "STOPPED";
+type StreamMode = "VOD" | "LIVE" | "STOPPED";
 
 export class SwitchManager {
-  private vod = new VODPipelineManager();
-
-  private live = new LivePipelineManager();
-
-  private modes = new Map<number, BroadcastMode>();
-
   private processes = new Map<number, ChildProcess>();
 
-  /**
-   * ==========================
-   * START VOD
-   * ==========================
-   */
-  /**
- * ==========================
- * START VOD
- * ==========================
- */
-async startVOD(
-  channelId: number,
-  videoFile: string,
-  streamKey: string,
-  startOffset: number = 0
-) {
-  const current = this.getMode(channelId);
+  private modes = new Map<number, StreamMode>();
 
-  if (current === "LIVE") {
-    console.log("🔄 LIVE -> VOD");
+  private liveSources = new Map<number, string>();
 
-    await this.stopLIVE(channelId);
-  }
+  private switching = new Map<number, boolean>();
 
+  /*
+  ==============================
+        MODE
+  ==============================
+  */
 
-  const ffmpeg =
-    this.vod.start(
-      channelId,
-      videoFile,
-      streamKey,
-      startOffset
-    );
-
-
-  if (!ffmpeg) {
-    console.log("❌ VOD failed");
-
-    return null;
-  }
-
-
-  this.processes.set(
-    channelId,
-    ffmpeg
-  );
-
-
-  this.modes.set(
-    channelId,
-    "VOD"
-  );
-
-
-  ffmpeg.once(
-    "close",
-    (code)=>{
-
-      const current =
-        this.processes.get(channelId);
-
-
-      if(current !== ffmpeg){
-
-        console.log(
-          "⚠ Old VOD ignored"
-        );
-
-        return;
-      }
-
-
-      console.log(
-        "🎬 VOD finished",
-        channelId,
-        code
-      );
-
-
-      this.processes.delete(channelId);
-
-
-      if(
-        this.modes.get(channelId)==="VOD"
-      ){
-
-        this.modes.set(
-          channelId,
-          "STOPPED"
-        );
-
-      }
-
-    }
-  );
-
-
-  return ffmpeg;
-}
-
-  /**
-   * ==========================
-   * START LIVE
-   * ==========================
-   */
-  async startLIVE(channelId: number, stream: Stream) {
-    const current = this.getMode(channelId);
-
-    if (current === "VOD") {
-      console.log("🔄 VOD -> LIVE");
-
-      await this.stopVOD(channelId);
-    }
-
-    const started = await this.live.start(channelId, stream);
-
-    if (!started) {
-      console.log("❌ LIVE failed");
-
-      return false;
-    }
-
-    this.modes.set(channelId, "LIVE");
-
-    console.log("🔴 LIVE started", channelId);
-
-    return true;
-  }
-
-  /**
-   * ==========================
-   * STOP VOD ONLY
-   * ==========================
-   */
-  private async stopVOD(channelId: number) {
-    const process = this.processes.get(channelId);
-
-    if (process) {
-      console.log("🛑 Stop VOD", channelId);
-
-      process.kill("SIGINT");
-
-      this.processes.delete(channelId);
-    }
-
-    this.vod.stop(channelId);
-  }
-
-  /**
-   * ==========================
-   * STOP LIVE ONLY
-   * ==========================
-   */
-  private async stopLIVE(channelId: number) {
-    console.log("🛑 Stop LIVE", channelId);
-
-    await this.live.stop(channelId);
-  }
-
-  /**
-   * ==========================
-   * STOP EVERYTHING
-   * ==========================
-   */
-  async stop(channelId: number) {
-    console.log("🛑 Stop broadcast", channelId);
-
-    await this.stopVOD(channelId);
-
-    await this.stopLIVE(channelId);
-
-    this.modes.delete(channelId);
-  }
-
-  getMode(channelId: number) {
+  getMode(channelId: number): StreamMode {
     return this.modes.get(channelId) ?? "STOPPED";
   }
 
-  getLiveStream(channelId: number) {
-    return this.live.getStream(channelId);
+  isLIVE(channelId: number) {
+    return this.getMode(channelId) === "LIVE";
   }
+
+  isVOD(channelId: number) {
+    return this.getMode(channelId) === "VOD";
+  }
+
+  /*
+  ==============================
+        LOCK
+  ==============================
+  */
+
+  private async lock(channelId: number) {
+    while (this.switching.get(channelId)) {
+      await new Promise((r) => setTimeout(r, 200));
+    }
+
+    this.switching.set(channelId, true);
+  }
+
+  private unlock(channelId: number) {
+    this.switching.delete(channelId);
+  }
+
+  /*
+  ==============================
+        START VOD
+  ==============================
+  */
+
+  async startVOD(
+    channelId: number,
+    filePath: string,
+    streamKey: string,
+    offset: number = 0,
+  ) {
+    await this.lock(channelId);
+
+    try {
+      await this.stopVOD(channelId);
+
+      const rtmp = `rtmp://127.0.0.1:1935/live/${streamKey}`;
+
+      const args = [
+        "-re",
+
+        ...(offset > 0 ? ["-ss", String(offset)] : []),
+
+        "-i",
+        filePath,
+
+        "-c:v",
+        "libx264",
+
+        "-preset",
+        "veryfast",
+
+        "-pix_fmt",
+        "yuv420p",
+
+        "-r",
+        "30",
+
+        "-g",
+        "60",
+
+        "-keyint_min",
+        "60",
+
+        "-sc_threshold",
+        "0",
+
+        "-c:a",
+        "aac",
+
+        "-ar",
+        "48000",
+
+        "-ac",
+        "2",
+
+        "-b:a",
+        "128k",
+
+        "-f",
+        "flv",
+
+        rtmp,
+      ];
+
+      console.log("🚀 VOD START", args.join(" "));
+
+      const ffmpeg = spawn("ffmpeg", args, {
+        windowsHide: true,
+      });
+
+      this.processes.set(channelId, ffmpeg);
+
+      this.modes.set(channelId, "VOD");
+
+      ffmpeg.stderr.on("data", (data) => {
+        console.log(`[VOD-${channelId}]`, data.toString());
+      });
+
+      ffmpeg.on("close", (code) => {
+        console.log("🎬 VOD END", {
+          channelId,
+          code,
+        });
+
+        if (this.processes.get(channelId) === ffmpeg) {
+          this.processes.delete(channelId);
+
+          this.modes.set(channelId, "STOPPED");
+        }
+      });
+
+      return ffmpeg;
+    } finally {
+      this.unlock(channelId);
+    }
+  }
+
+  /*
+  ==============================
+        STOP VOD
+  ==============================
+  */
+
+  async stopVOD(channelId: number) {
+    const process = this.processes.get(channelId);
+
+    if (!process) {
+      return;
+    }
+
+    console.log("🛑 STOP VOD", channelId);
+
+    return new Promise<void>((resolve) => {
+      let done = false;
+
+      const finish = () => {
+        if (done) return;
+
+        done = true;
+
+        this.processes.delete(channelId);
+
+        if (this.getMode(channelId) === "VOD") {
+          this.modes.set(channelId, "STOPPED");
+        }
+
+        resolve();
+      };
+
+      process.once("close", finish);
+
+      try {
+        process.kill("SIGTERM");
+      } catch {
+        finish();
+      }
+
+      setTimeout(() => {
+        if (!done) {
+          console.log("⚠ Force kill ffmpeg");
+
+          try {
+            process.kill("SIGKILL");
+          } catch {}
+        }
+      }, 3000);
+    });
+  }
+
+  /*
+  ==============================
+        LIVE
+  ==============================
+  */
+
+  async startLIVE(channelId: number, source: string) {
+    await this.lock(channelId);
+
+    try {
+      await this.stopVOD(channelId);
+
+      console.log("🔴 LIVE START", {
+        channelId,
+        source,
+      });
+
+      this.liveSources.set(channelId, source);
+
+      this.modes.set(channelId, "LIVE");
+
+      return true;
+    } finally {
+      this.unlock(channelId);
+    }
+  }
+
+  async stopLIVEOnly(channelId: number) {
+    console.log("🔴 LIVE STOP", channelId);
+
+    this.liveSources.delete(channelId);
+
+    this.modes.set(channelId, "STOPPED");
+  }
+
+  /*
+  ==============================
+        LIVE CHECK
+  ==============================
+  */
 
   async hasLivePublisher(channelId: number) {
-    return this.live.hasPublisher(channelId);
+    const source = this.liveSources.get(channelId);
+
+    if (!source) {
+      return false;
+    }
+
+    try {
+      const path = source.split("/").pop();
+
+      const response = await fetch(
+        `http://127.0.0.1:9997/v3/paths/get/live/${path}`,
+      );
+
+      if (!response.ok) {
+        return false;
+      }
+
+      const data = await response.json();
+
+      return Boolean(data?.source);
+    } catch (error) {
+      console.log("MediaMTX check error", error);
+
+      return false;
+    }
   }
 
-  isRunning(channelId: number) {
-    return this.getMode(channelId) !== "STOPPED";
+  /*
+  ==============================
+        STOP ALL
+  ==============================
+  */
+
+  async stop(channelId: number) {
+    await this.lock(channelId);
+
+    try {
+      await this.stopVOD(channelId);
+
+      await this.stopLIVEOnly(channelId);
+    } finally {
+      this.unlock(channelId);
+    }
   }
 }
