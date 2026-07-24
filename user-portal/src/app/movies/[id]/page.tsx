@@ -1,55 +1,46 @@
 import { notFound } from "next/navigation";
 
-import PlaybackLayout from "@/components/movie-playback/PlaybackLayout";
-import { getMovies } from "@/services/movie.service";
+import { getMovieDetail } from "@/services/movie.service";
 
-import type { Movie } from "@/types/movie";
+import MovieDetail from "@/components/movie-detail/MovieDetail";
 
 
 interface PageProps {
   params: Promise<{
-    id: string;
+    id:string;
   }>;
 }
 
 
-export default async function MoviePlaybackPage({
-  params,
-}: PageProps) {
-
-  const { id } = await params;
+export default async function MovieDetailPage({
+  params
+}:PageProps){
 
 
-  const movies: Movie[] = await getMovies();
+  const {id}=await params;
 
 
-
-  // Find exact movie by movieKey
-  const movie = movies.find(
-    (item) => item.movieKey === id
-  );
+  const data = await getMovieDetail(id);
 
 
 
-  if (!movie) {
+  if(!data.movie){
     notFound();
   }
 
 
 
-  // Same channel related movies
-  const relatedMovies = movies.filter(
-    (item) =>
-      item.movieKey !== movie.movieKey &&
-      item.channelId === movie.channelId
-  );
-
-
-
   return (
-    <PlaybackLayout
-      movie={movie}
-      relatedMovies={relatedMovies}
+
+    <MovieDetail
+
+      movie={data.movie}
+
+      playlist={data.playlist}
+
+      relatedMovies={data.relatedMovies}
+
     />
+
   );
 }

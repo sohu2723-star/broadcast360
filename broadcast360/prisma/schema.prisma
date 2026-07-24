@@ -80,7 +80,18 @@ model Stream {
   channel       Channel        @relation(fields: [channelId], references: [id])
   playlistItems PlaylistItem[]
 }
+enum StreamProtocol {
+  RTMP
+  RTSP
+  HLS
+  WEBRTC
+  SRT
+}
 
+enum StreamStatus {
+  ONLINE
+  OFFLINE
+}
 // =====================
 // SERIES
 // =====================

@@ -1,15 +1,19 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+
 import type { Movie } from "@/types/movie";
 
 export default function VideoPlayer({ movie }: { movie: Movie }) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    if (!videoRef.current || !movie.videoUrl) return;
+    if (!videoRef.current) return;
+
+    if (!movie.videoUrl) return;
 
     videoRef.current.src = movie.videoUrl;
+
     videoRef.current.load();
   }, [movie.videoUrl]);
 
@@ -24,11 +28,17 @@ export default function VideoPlayer({ movie }: { movie: Movie }) {
   return (
     <video
       ref={videoRef}
+
       controls
+
       playsInline
+
       preload="metadata"
+
       controlsList="nodownload"
+
       disablePictureInPicture
+
       className="aspect-video w-full rounded-xl bg-black object-contain"
     />
   );

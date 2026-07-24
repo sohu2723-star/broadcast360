@@ -3,25 +3,38 @@ import api from "@/lib/api";
 import type { Movie } from "@/types/movie";
 
 export async function getMovies(): Promise<Movie[]> {
+  const response = await api.get("/api/user-portal/movies");
+
+  return response.data.movies ?? [];
+}
+
+export async function getMovieDetail(id: string) {
+  const response = await api.get(`/api/user-portal/movies/${id}`);
+
+  return response.data;
+}
+
+export async function getMovieByPlaylistItem(
+  id: number,
+): Promise<Movie | null> {
   try {
-    const response = await api.get("/api/user-portal/movies");
+    const res = await api.get(`/api/user-portal/movies/watch/${id}`);
 
-    return response.data.movies ?? [];
+    return res.data.movie;
   } catch (error) {
-    console.error("Failed to fetch movies:", error);
+    console.error(error);
 
-    return [];
+    return null;
   }
 }
 
-export async function getMovieById(id: string): Promise<Movie> {
-  try {
-    const response = await api.get(`/api/user-portal/movies/${id}`);
+export async function getWatchMovie(id:string){
 
-    return response.data.movie;
-  } catch (error) {
-    console.error("Failed to fetch movie:", error);
+  const response = await api.get(
+    `/api/user-portal/movies/watch/${id}`
+  );
 
-    throw error;
-  }
+
+  return response.data;
+
 }
