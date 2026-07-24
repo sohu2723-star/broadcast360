@@ -1,53 +1,27 @@
 import { NextResponse } from "next/server";
 
-import { SchedulerManager } from "@/managers/scheduler.manager";
-import { BroadcastService } from "@/services/broadcast.service";
+import { broadcast } from "@/services/broadcast-container";
+import { ScheduleRepository } from "@/repositories/schedule.repository";
 
-/*
-================================
- SINGLETON ENGINE
-================================
-*/
-
-const broadcast = globalThis.broadcastService ?? new BroadcastService();
-
-const scheduler =
-  globalThis.schedulerManager ?? new SchedulerManager(broadcast);
-
-globalThis.broadcastService = broadcast;
-
-globalThis.schedulerManager = scheduler;
-
-/*
-================================
- PREVENT DOUBLE START
-================================
-*/
-
-const startingChannels = globalThis.startingBroadcasts ?? new Set<number>();
-
-globalThis.startingBroadcasts = startingChannels;
-
-/*
-================================
- POST
-================================
-*/
-
-export async function POST(req: Request) {
-  let channelId: number | null = null;
-
+export async function POST(request: Request) {
   try {
-    const body = await req.json();
+    const body = await request.json();
 
-    channelId = Number(body.channelId);
+    /*
+    ==========================
+       GET CHANNEL ID
+    ==========================
+    */
 
-    if (!channelId || Number.isNaN(channelId)) {
+    const { channelId: rawChannelId } = body;
+
+    const channelId = Number(rawChannelId);
+
+    if (!channelId) {
       return NextResponse.json(
         {
           error: "channelId required",
         },
-
         {
           status: 400,
         },
@@ -55,70 +29,55 @@ export async function POST(req: Request) {
     }
 
     /*
-================================
- DUPLICATE PROTECTION
-================================
-*/
+    ==========================
+       CHECK CURRENT SCHEDULE
+       BY CURRENT TIME
+    ==========================
+    */
 
-    if (startingChannels.has(channelId)) {
-      return NextResponse.json(
-        {
-          error: "Broadcast is already starting",
-        },
+    const now = new Date();
 
-        {
-          status: 409,
-        },
-      );
-    }
+    const schedule = await ScheduleRepository.findLiveSchedule(channelId, now);
 
-    startingChannels.add(channelId);
-
-    console.log("🚀 START BROADCAST", channelId);
+    console.log("🔎 CURRENT SCHEDULE CHECK", {
+      channelId,
+      scheduleId: schedule?.id ?? null,
+      time: now,
+    });
 
     /*
-================================
- START SCHEDULER
-================================
+    ==========================
+       START BROADCAST
+    ==========================
+    */
 
-Scheduler will:
-- find current schedule
-- load playlist
-- start broadcast
-- fallback if empty
+    await broadcast.start(schedule, channelId);
 
-*/
-
-    if (!scheduler.isRunning(channelId)) {
-      scheduler.start(channelId);
-
-      console.log("⏰ Scheduler started", channelId);
-    } else {
-      console.log("⚠ Scheduler already running", channelId);
-    }
+    /*
+    ==========================
+       RESPONSE
+    ==========================
+    */
 
     return NextResponse.json({
       success: true,
 
       channelId,
 
-      message: "Broadcast scheduler started",
+      schedule: schedule?.id ?? null,
+
+      mode: schedule ? "SCHEDULE" : "FALLBACK",
     });
   } catch (error) {
-    console.error("❌ Start broadcast error", error);
+    console.error("❌ Broadcast start failed", error);
 
     return NextResponse.json(
       {
-        error: "Internal server error",
+        error: "Broadcast start failed",
       },
-
       {
         status: 500,
       },
     );
-  } finally {
-    if (channelId) {
-      startingChannels.delete(channelId);
-    }
   }
 }

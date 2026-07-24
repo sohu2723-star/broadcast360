@@ -4,61 +4,65 @@ import {
 } from "@/repositories/channel.repository";
 
 import { ScheduleWithRelations } from "@/types/schedule.types";
-
-import { PlaylistItemWithRelations } from "@/types/playlist";
+import { ResolvedPlaylistItem } from "@/types/playlist";
 
 import { PlaylistResolverService } from "@/services/playlist-resolver.service";
-
-import { PlayoutQueueManager } from "@/managers/playout-queue.manager";
+import { ScheduleCatchupService } from "@/services/schedule-catchup.service";
 
 import { SwitchManager } from "@/managers/switch-manager";
-
-import { ScheduleCatchupService } from "@/services/schedule-catchup.service";
-import { ConcatBuilderService } from "@/services/concat-builder.service";
 import { PlayoutManager } from "@/managers/playout-manager";
-
+import { SessionManager } from "@/managers/session.manager";
+import { LiveManager } from "@/managers/live-manager";
+import { createConcatFile } from "@/streaming/concat-builder";
 import path from "path";
 
+type BroadcastMode = "SCHEDULE" | "FALLBACK";
+
 export class BroadcastService {
-  private switcher = new SwitchManager();
-
-  private playout = new PlayoutQueueManager();
-
-  // private resolver = new PlaylistResolverService();
+  private resolver = new PlaylistResolverService();
 
   private catchup = new ScheduleCatchupService();
 
-  private playing = new Map<number, boolean>();
+  private session = new SessionManager();
 
-  private startOffsets = new Map<number, number>();
+  private mode = new Map<number, BroadcastMode>();
 
-  private liveMonitors = new Map<number, NodeJS.Timeout>();
+  private finishHandler: ((channelId: number) => Promise<void>) | null = null;
 
-  private liveEndHandler: ((channelId: number) => Promise<void>) | null = null;
+  private endHandler: ((channelId: number) => Promise<void>) | null = null;
 
-  private concatBuilder = new ConcatBuilderService();
+  constructor(
+    private switcher: SwitchManager,
+    private playout: PlayoutManager,
+    private live: LiveManager,
+  ) {
+    this.live.setEndHandler(async (channelId) => {
+      console.log("🔴 LIVE LOST CALLBACK", channelId);
 
-  // private playoutFFmpeg = new PlayoutFFmpegManager();
-  private playoutFFmpeg = new PlayoutManager();
+      if (this.endHandler) {
+        await this.endHandler(channelId);
+      }
+    });
+  }
 
   /*
-  ===============================
-      CALLBACK
-  ===============================
+  =====================================
+        CALLBACK
+  =====================================
   */
 
-  setLiveEndHandler(callback: (channelId: number) => Promise<void>) {
-    this.liveEndHandler = callback;
+  setPlaylistFinishedHandler(callback: (channelId: number) => Promise<void>) {
+    this.finishHandler = callback;
   }
 
-  isLive(channelId: number) {
-    return this.switcher.isLIVE(channelId);
+  setBroadcastEndHandler(callback: (channelId: number) => Promise<void>) {
+    this.endHandler = callback;
   }
 
   /*
-  ===============================
-          START
-  ===============================
+  =====================================
+        START
+  =====================================
   */
 
   async start(schedule: ScheduleWithRelations | null, channelId: number) {
@@ -66,13 +70,165 @@ export class BroadcastService {
   }
 
   /*
-  ===============================
-       GET PLAYLIST
-  ===============================
+  =====================================
+       MAIN SWITCH
+  =====================================
+  */
+
+ async switchBroadcast(
+  schedule: ScheduleWithRelations | null,
+  channelId: number,
+  force = false,
+) {
+    if (
+  this.switcher.isRunning(channelId)
+  &&
+  !force
+) {
+      console.log("⚠ CHANNEL ALREADY RUNNING", {
+        channelId,
+        mode: this.switcher.getMode(channelId),
+      });
+
+      return;
+    }
+
+    console.log("🔄 BROADCAST SWITCH", {
+      channelId,
+      schedule: schedule?.id ?? "FALLBACK",
+    });
+
+    const playlist = await this.getPlaylist(schedule, channelId);
+
+    if (!playlist) {
+      console.log("❌ No playlist");
+
+      return;
+    }
+
+    let startIndex = 0;
+
+    let offset = 0;
+
+    /*
+    ==========================
+       WALL CLOCK CATCHUP
+    ==========================
+    */
+
+    if (schedule) {
+      const result = this.catchup.calculate(schedule, new Date());
+
+      startIndex = result.itemIndex;
+
+      offset = result.offset;
+
+      console.log("⏱ CATCHUP", result);
+    }
+
+    /*
+    ==========================
+       RESOLVE PLAYLIST
+    ==========================
+    */
+
+    const items: ResolvedPlaylistItem[] = this.resolver.resolve(
+      playlist.items ?? [],
+    );
+
+    if (items.length === 0) {
+      console.log("⚠ Empty playlist");
+      return;
+    }
+
+    const hasStream = items.some((item) => item.type === "STREAM");
+
+    if (hasStream) {
+      console.log("🔴 LIVE PLAYLIST DETECTED");
+
+      startIndex = 0;
+      offset = 0;
+    } else {
+      const files = items
+        .filter((item) => item.videoUrl)
+        .map((item) => path.join(process.cwd(), "public", item.videoUrl!));
+
+      const concatFile = createConcatFile(channelId, files);
+
+      console.log("✅ CONCAT CREATED", concatFile);
+    }
+
+    /*
+    ==========================
+        MODE
+    ==========================
+    */
+
+    this.mode.set(
+      channelId,
+
+      schedule ? "SCHEDULE" : "FALLBACK",
+    );
+
+    /*
+    ==========================
+        SESSION
+    ==========================
+    */
+
+    await this.session.start(channelId, schedule?.id ?? null);
+
+    /*
+    ==========================
+        START PLAYOUT
+    ==========================
+    */
+
+    const channel = await getChannelBroadcastInfo(channelId);
+
+    if (!channel?.streamKey) {
+      console.log("❌ Missing stream key");
+
+      return;
+    }
+
+    if (items.length === 1 && items[0].type === "STREAM") {
+      await this.switcher.switchToLive(
+        channelId,
+        items[0].streamUrl!,
+        channel.streamKey,
+      );
+
+      return;
+    }
+
+    await this.switcher.startVOD(
+      channelId,
+      items,
+      channel.streamKey,
+      startIndex,
+      offset,
+      async () => {
+        console.log("📺 PLAYLIST FINISHED", channelId);
+
+        await this.session.stop(channelId);
+
+        if (this.finishHandler) {
+          await this.finishHandler(channelId);
+        }
+      },
+    );
+  }
+
+  /*
+  =====================================
+        GET PLAYLIST
+  =====================================
   */
 
   private async getPlaylist(
     schedule: ScheduleWithRelations | null,
+
     channelId: number,
   ) {
     if (schedule?.playlist) {
@@ -83,8 +239,15 @@ export class BroadcastService {
 
     const fallback = await getDefaultPlaylist(channelId);
 
+    console.log("🔎 FALLBACK DEBUG", {
+      channelId,
+      fallbackId: fallback?.id,
+      defaultPlaylistId: fallback?.defaultPlaylistId,
+      playlist: fallback?.defaultPlaylist?.name,
+    });
+
     if (!fallback?.defaultPlaylist) {
-      console.log("⚠ No fallback playlist");
+      console.log("❌ No fallback playlist");
 
       return null;
     }
@@ -95,286 +258,49 @@ export class BroadcastService {
   }
 
   /*
-===============================
-       PLAY NEXT
-===============================
-*/
-
-  private async playNext(channelId: number, streamKey: string): Promise<void> {
-    if (this.playing.get(channelId)) {
-      return;
-    }
-
-    this.playing.set(channelId, true);
-
-    try {
-      const item = this.playout.next(channelId);
-
-      if (!item) {
-        console.log("📺 Queue finished");
-
-        this.playing.set(channelId, false);
-
-        return;
-      }
-
-      console.log("▶ PLAY", {
-        id: item.id,
-        type: item.type,
-      });
-
-      /*
-    ======================
-          LIVE
-    ======================
-    */
-
-      if (item.type === "STREAM") {
-        if (!item.stream) {
-          this.playout.complete(channelId);
-
-          this.playing.set(channelId, false);
-
-          return this.playNext(channelId, streamKey);
-        }
-
-        await this.switcher.startLIVE(channelId, item.stream.url);
-
-        console.log("🔴 LIVE started");
-
-        this.monitorLive(channelId);
-
-        this.playing.set(channelId, false);
-
-        return;
-      }
-
-      /*
-    ======================
-          VOD
-          
-    No FFmpeg here anymore.
-    Concat handles VOD.
-    ======================
-    */
-
-      console.log("🎬 VOD handled by concat playout");
-
-      this.playing.set(channelId, false);
-    } catch (error) {
-      console.error("❌ playNext error", error);
-
-      this.playing.set(channelId, false);
-    }
-  }
-
-  /*
-===============================
-       LIVE MONITOR
-===============================
-*/
-
-  private monitorLive(channelId: number) {
-    if (this.liveMonitors.has(channelId)) {
-      return;
-    }
-
-    console.log("👀 Start live monitor", channelId);
-
-    const timer = setInterval(async () => {
-      if (!this.switcher.isLIVE(channelId)) {
-        clearInterval(timer);
-
-        this.liveMonitors.delete(channelId);
-
-        return;
-      }
-
-      const alive = await this.switcher.hasLivePublisher(channelId);
-
-      console.log("🔴 LIVE CHECK", {
-        channelId,
-        alive,
-      });
-
-      if (!alive) {
-        console.log("🔴 LIVE ENDED", channelId);
-
-        clearInterval(timer);
-
-        this.liveMonitors.delete(channelId);
-
-        // Stop LIVE mode
-        await this.switcher.stopLIVEOnly(channelId);
-
-        // Mark STREAM item finished
-        this.playout.complete(channelId);
-
-        const mode = this.playout.getMode(channelId);
-
-        console.log("📺 LIVE finished", {
-          channelId,
-          mode,
-        });
-
-        if (mode === "FALLBACK") {
-          console.log("📺 LIVE ended, scheduler decides next", channelId);
-
-          if (this.liveEndHandler) {
-            await this.liveEndHandler(channelId);
-          }
-        }
-
-        /*
-  Notify scheduler
-
-  Scheduler will call:
-  checkNow()
-      |
-      |
-  findLiveSchedule()
-      |
-      |
-  switchBroadcast()
-      |
-      |
-  startPlaylistPlayout()
-  */
-      }
-    }, 5000);
-
-    this.liveMonitors.set(channelId, timer);
-  }
-
-  /*
-  ===============================
-       SWITCH BROADCAST
-  ===============================
+  =====================================
+       STATUS
+  =====================================
   */
 
-  async switchBroadcast(
-  schedule: ScheduleWithRelations | null,
-  channelId: number,
-) {
-
-  if (this.switcher.isLIVE(channelId)) {
-    console.log("🔴 LIVE active");
-    return;
-  }
-
-  console.log("🔄 SWITCH START", {
-    channelId,
-    scheduleId: schedule?.id ?? "fallback",
-  });
-
-
-  const playlist = await this.getPlaylist(schedule, channelId);
-
-  if (!playlist) {
-    return;
-  }
-
-
-  let startIndex = 0;
-
-  if (schedule) {
-    const result = this.catchup.calculate(
-      schedule,
-      new Date()
-    );
-
-    startIndex = result.itemIndex;
-
-    this.startOffsets.set(
-      channelId,
-      result.offset
-    );
-  }
-
-
-  this.playout.replace(
-    channelId,
-    playlist.items ?? [],
-    schedule ? "SCHEDULE" : "FALLBACK",
-    startIndex,
-  );
-
-
-  const channel = await getChannelBroadcastInfo(channelId);
-
-
-  if (channel?.streamKey) {
-
-    console.log("🚀 START NEW PLAYOUT");
-
-    await this.startPlaylistPlayout(
-      channelId,
-      channel.streamKey,
-      playlist.items ?? [],
-      this.startOffsets.get(channelId) ?? 0,
-      schedule ? "SCHEDULE" : "FALLBACK",
-    );
-
-
-    console.log("✅ SWITCH COMPLETE");
-
-    this.startOffsets.delete(channelId);
-  }
-}
-
-  private async startPlaylistPlayout(
-    channelId: number,
-    streamKey: string,
-    items: PlaylistItemWithRelations[],
-    offset: number = 0,
-    mode: "SCHEDULE" | "FALLBACK",
-  ) {
-    try {
-      console.log("📄 Building concat playlist...", {
-        channelId,
-        totalItems: items.length,
-      });
-
-      const concatFile = await this.concatBuilder.build(channelId, items);
-
-      console.log("🚀 Starting FFmpeg playout", concatFile);
-
-      await this.playoutFFmpeg.start(channelId, concatFile, streamKey, offset, mode === "FALLBACK",);
-
-      console.log("✅ Playlist playout running", channelId);
-    } catch (error) {
-      console.error("❌ Playlist playout failed", error);
-    }
-  }
-
-  /*
-  ===============================
-        STOP
-  ===============================
-  */
-
-  async stop(channelId: number) {
-    const timer = this.liveMonitors.get(channelId);
-
-    if (timer) {
-      clearInterval(timer);
-      this.liveMonitors.delete(channelId);
-    }
-
-    await this.playoutFFmpeg.stop(channelId);
-
-    await this.switcher.stop(channelId);
-
-    this.playout.clear(channelId);
-
-    this.playing.delete(channelId);
-
-    this.startOffsets.delete(channelId);
+  isLive(channelId: number) {
+    return this.switcher.getMode(channelId) === "LIVE";
   }
 
   isRunning(channelId: number) {
-    return (
-      this.playoutFFmpeg.isRunning(channelId) || this.switcher.isLIVE(channelId)
-    );
+    return this.switcher.isRunning(channelId);
   }
+
+  getMode(channelId: number) {
+    return this.mode.get(channelId) ?? null;
+  }
+
+  /*
+  =====================================
+        STOP
+  =====================================
+  */
+
+  async stop(channelId: number) {
+    await this.playout.stop(channelId);
+
+    await this.switcher.stopCurrent(channelId);
+
+    await this.session.stop(channelId);
+
+    this.mode.delete(channelId);
+
+    console.log("🛑 BROADCAST STOPPED", channelId);
+  }
+
+  async recoverLive(channelId: number) {
+
+  console.log(
+    "🔄 RECOVER LIVE STATE",
+    channelId
+  );
+
+  await this.switcher.stopCurrent(channelId);
+
+}
 }

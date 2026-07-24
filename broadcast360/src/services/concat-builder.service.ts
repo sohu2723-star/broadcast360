@@ -4,146 +4,130 @@ import path from "path";
 import { PlaylistItemWithRelations } from "@/types/playlist";
 
 export class ConcatBuilderService {
-  private baseDir = path.join(
-    process.cwd(),
-    "public",
-    "streams",
-  );
+  /*
+  ==========================================
+       CREATE FFMPEG CONCAT FILE
+  ==========================================
+
+  Output:
+
+  tmp/concat/channel-1.txt
+
+
+  file 'movie1.mp4'
+  file 'movie2.mp4'
+  file 'ads.mp4'
+
+  ==========================================
+  */
 
   async build(
     channelId: number,
     items: PlaylistItemWithRelations[],
-  ) {
-    const channelDir = path.join(
-      this.baseDir,
-      `channel-${channelId}`,
-    );
+  ): Promise<string> {
+    const folder = path.join(process.cwd(), "tmp", "concat");
 
-    if (!fs.existsSync(channelDir)) {
-      fs.mkdirSync(channelDir, {
+    if (!fs.existsSync(folder)) {
+      fs.mkdirSync(folder, {
         recursive: true,
       });
     }
 
-
-    const concatFile = path.join(
-      channelDir,
-      "concat.txt",
-    );
-
+    const concatFile = path.join(folder, `channel-${channelId}.txt`);
 
     const files: string[] = [];
 
-
     for (const item of items) {
+      const file = this.resolveItem(item);
 
-      let videoPath: string | null = null;
-
-
-      /*
-      ======================
-          MOVIE
-      ======================
-      */
-
-      if (item.movie?.videoUrl) {
-        videoPath = item.movie.videoUrl;
-      }
-
-
-      /*
-      ======================
-          EPISODE
-      ======================
-      */
-
-      if (item.episode?.videoUrl) {
-        videoPath = item.episode.videoUrl;
-      }
-
-
-      /*
-      ======================
-          ENTERTAINMENT
-      ======================
-      */
-
-      if (item.entertainment?.videoUrl) {
-        videoPath =
-          item.entertainment.videoUrl;
-      }
-
-
-      /*
-      ======================
-          ADVERTISEMENT
-      ======================
-      */
-
-      if (item.advertisement?.videoUrl) {
-        videoPath =
-          item.advertisement.videoUrl;
-      }
-
-
-      if (!videoPath) {
-        console.log(
-          "⚠ Skip item",
-          item.id,
-          item.type,
-        );
+      if (!file) {
+        console.log("⚠ Skip item without video", {
+          id: item.id,
+          type: item.type,
+        });
 
         continue;
       }
 
-
-      const fullPath =
-        path.join(
-          process.cwd(),
-          "public",
-          videoPath,
-        );
-
-
-      if (!fs.existsSync(fullPath)) {
-        console.log(
-          "❌ File missing",
-          fullPath,
-        );
+      if (!fs.existsSync(file)) {
+        console.log("❌ File not found", file);
 
         continue;
       }
 
-
-      /*
-        FFmpeg concat format
-      */
-
-      files.push(
-        `file '${fullPath.replace(/\\/g, "/")}'`,
-      );
+      files.push(`file '${file.replace(/\\/g, "/")}'`);
     }
-
 
     if (files.length === 0) {
-      throw new Error(
-        "No valid media files",
-      );
+      throw new Error("No playable playlist items");
     }
 
+    fs.writeFileSync(concatFile, files.join("\n"), "utf8");
 
-    fs.writeFileSync(
+    console.log("✅ CONCAT READY", {
+      channelId,
+      count: files.length,
       concatFile,
-      files.join("\n"),
-    );
-
-
-    console.log(
-      "📄 Concat created",
-      concatFile,
-    );
-
+    });
 
     return concatFile;
+  }
+
+  /*
+  ==========================================
+       RESOLVE PLAYLIST ITEM
+  ==========================================
+  */
+
+  private resolveItem(item: PlaylistItemWithRelations): string | null {
+    let url: string | null = null;
+
+    switch (item.type) {
+      case "MOVIE":
+        url = item.movie?.videoUrl ?? null;
+
+        break;
+
+      case "EPISODE":
+        url = item.episode?.videoUrl ?? null;
+
+        break;
+
+      case "ADVERTISEMENT":
+        url = item.advertisement?.videoUrl ?? null;
+
+        break;
+
+      case "ENTERTAINMENT":
+        url = item.entertainment?.videoUrl ?? null;
+
+        break;
+
+      case "NEWS":
+        url = item.news?.videoUrl ?? null;
+
+        break;
+
+      default:
+        return null;
+    }
+
+    if (!url) {
+      return null;
+    }
+
+    /*
+      Database:
+
+      /videos/movies/a.mp4
+
+
+      Convert:
+
+      C:\broadcast360\public\videos\movies\a.mp4
+
+    */
+
+    return path.join(process.cwd(), "public", url);
   }
 }

@@ -1,259 +1,148 @@
 import { prisma } from "@/lib/prisma";
 
-
 export class SessionManager {
+  /*
+  ===============================
+       CREATE / START SESSION
+  ===============================
+  */
 
+  async start(channelId: number, scheduleId: number | null) {
+    console.log("🟡 SESSION START", {
+      channelId,
+      scheduleId,
+    });
 
-  async start(
-    channelId:number,
-    scheduleId?:number
-  ){
+    const session = await prisma.broadcastSession.upsert({
+      where: {
+        channelId,
+      },
 
+      update: {
+        scheduleId,
 
-    const existing =
-      await prisma.broadcastSession.findFirst({
+        status: "STARTING",
 
-        where:{
+        startedAt: new Date(),
 
-          channelId,
+        stoppedAt: null,
 
-          status:{
-            in:[
-              "STARTING",
-              "LIVE",
-              "SWITCHING"
-            ]
-          }
+        errorMessage: null,
+      },
 
-        }
-
-      });
-
-
-
-    if(existing){
-
-      console.log(
-        "⚠ Existing session:",
-        existing.id
-      );
-
-      return existing;
-
-    }
-
-
-
-    return prisma.broadcastSession.create({
-
-      data:{
-
+      create: {
         channelId,
 
         scheduleId,
 
-        status:"STARTING"
+        status: "STARTING",
 
-      }
-
+        startedAt: new Date(),
+      },
     });
 
-
+    return session;
   }
 
+  /*
+  ===============================
+       CHANGE LIVE
+  ===============================
+  */
 
-
-
-
-  async live(sessionId:number){
-
+  async live(channelId: number) {
     return prisma.broadcastSession.update({
-
-      where:{
-        id:sessionId
-      },
-
-      data:{
-
-        status:"LIVE",
-
-        startedAt:new Date()
-
-      }
-
-    });
-
-  }
-
-
-
-
-
-
-
-  async stop(channelId:number){
-
-    return prisma.broadcastSession.updateMany({
-
-      where:{
-
+      where: {
         channelId,
-
-        status:{
-          in:[
-            "STARTING",
-            "LIVE",
-            "SWITCHING"
-          ]
-        }
-
       },
 
-      data:{
-
-        status:"STOPPED",
-
-        stoppedAt:new Date()
-
-      }
-
+      data: {
+        status: "LIVE",
+      },
     });
-
   }
 
+  /*
+  ===============================
+       SWITCHING
+  ===============================
+  */
 
-
-
-
-
-
-  async getActiveSession(channelId:number){
-
-
-    return prisma.broadcastSession.findFirst({
-
-      where:{
-
+  async switching(channelId: number) {
+    return prisma.broadcastSession.update({
+      where: {
         channelId,
+      },
 
-        status:{
-          in:[
-            "STARTING",
-            "LIVE",
-            "SWITCHING"
-          ]
-        }
-
-      }
-
+      data: {
+        status: "SWITCHING",
+      },
     });
-
-
   }
 
+  /*
+  ===============================
+       STOP
+  ===============================
+  */
 
-
-
-
-
-  async isLive(channelId:number){
-
-    const session =
-      await this.getActiveSession(
-        channelId
-      );
-
-
-    return !!session;
-
-  }
-
-
-
-
-
-
-
-  async switching(channelId:number){
-
-    return prisma.broadcastSession.updateMany({
-
-      where:{
-
+  async stop(channelId: number) {
+    return prisma.broadcastSession.update({
+      where: {
         channelId,
-
-        status:"LIVE"
-
       },
 
+      data: {
+        status: "STOPPED",
 
-      data:{
-
-        status:"SWITCHING"
-
-      }
-
+        stoppedAt: new Date(),
+      },
     });
-
   }
 
+  /*
+  ===============================
+       ERROR
+  ===============================
+  */
 
-
-
-
-
-
-  async resumeLive(channelId:number){
-
-    return prisma.broadcastSession.updateMany({
-
-      where:{
-
+  async error(channelId: number, message: string) {
+    return prisma.broadcastSession.update({
+      where: {
         channelId,
-
-        status:"SWITCHING"
-
       },
 
+      data: {
+        status: "ERROR",
 
-      data:{
-
-        status:"LIVE"
-
-      }
-
-    });
-
-  }
-
-
-
-
-
-
-  async error(
-    channelId:number,
-    message:string
-  ){
-
-    return prisma.broadcastSession.updateMany({
-
-      where:{
-        channelId
+        errorMessage: message,
       },
-
-      data:{
-
-        status:"ERROR",
-
-        errorMessage:message
-
-      }
-
     });
-
   }
 
+  /*
+  ===============================
+       GET SESSION
+  ===============================
+  */
 
+  async get(channelId: number) {
+    return prisma.broadcastSession.findUnique({
+      where: {
+        channelId,
+      },
+    });
+  }
 
+  /*
+  ===============================
+       CHECK LIVE
+  ===============================
+  */
+
+  async isLive(channelId: number) {
+    const session = await this.get(channelId);
+
+    return session?.status === "LIVE";
+  }
 }

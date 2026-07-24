@@ -1,59 +1,151 @@
-import { PlaylistItemWithRelations } from "@/types/schedule.types";
+import { PlaylistItemWithRelations } from "@/types/playlist";
+
+export interface ResolvedPlaylistItem {
+  id: number;
+
+  type:
+    "MOVIE" | "EPISODE" | "ADVERTISEMENT" | "ENTERTAINMENT" | "NEWS" | "STREAM";
+
+  videoUrl?: string;
+
+  streamUrl?: string;
+
+  duration?: number | null;
+
+  order: number;
+}
 
 export class PlaylistResolverService {
-  resolve(item: PlaylistItemWithRelations): string | null {
-    let videoUrl: string | null = null;
+  /*
+  ==================================
+       RESOLVE PLAYLIST
+  ==================================
+  */
 
+  resolve(items: PlaylistItemWithRelations[]): ResolvedPlaylistItem[] {
+    return items
+
+      .sort((a, b) => a.order - b.order)
+
+      .map((item) => this.resolveItem(item))
+
+      .filter(Boolean) as ResolvedPlaylistItem[];
+  }
+
+  /*
+  ==================================
+       RESOLVE SINGLE ITEM
+  ==================================
+  */
+
+  private resolveItem(
+    item: PlaylistItemWithRelations,
+  ): ResolvedPlaylistItem | null {
     switch (item.type) {
       case "MOVIE":
-        videoUrl = item.movie?.videoUrl ?? null;
+        if (!item.movie?.videoUrl) {
+          return null;
+        }
 
-        break;
+        return {
+          id: item.id,
+
+          type: "MOVIE",
+
+          videoUrl: item.movie.videoUrl,
+
+          duration: item.duration ?? item.movie.duration,
+
+          order: item.order,
+        };
 
       case "EPISODE":
-        videoUrl = item.episode?.videoUrl ?? null;
+        if (!item.episode?.videoUrl) {
+          return null;
+        }
 
-        break;
+        return {
+          id: item.id,
+
+          type: "EPISODE",
+
+          videoUrl: item.episode.videoUrl,
+
+          duration: item.duration ?? item.episode.duration,
+
+          order: item.order,
+        };
 
       case "ADVERTISEMENT":
-        videoUrl = item.advertisement?.videoUrl ?? null;
+        if (!item.advertisement?.videoUrl) {
+          return null;
+        }
 
-        break;
+        return {
+          id: item.id,
+
+          type: "ADVERTISEMENT",
+
+          videoUrl: item.advertisement.videoUrl,
+
+          duration: item.duration ?? item.advertisement.duration,
+
+          order: item.order,
+        };
 
       case "ENTERTAINMENT":
-        videoUrl = item.entertainment?.videoUrl ?? null;
+        if (!item.entertainment?.videoUrl) {
+          return null;
+        }
 
-        break;
+        return {
+          id: item.id,
+
+          type: "ENTERTAINMENT",
+
+          videoUrl: item.entertainment.videoUrl,
+
+          duration: item.duration ?? item.entertainment.duration,
+
+          order: item.order,
+        };
 
       case "NEWS":
-        videoUrl = item.news?.videoUrl ?? null;
+        if (!item.news?.videoUrl) {
+          return null;
+        }
 
-        break;
+        return {
+          id: item.id,
+
+          type: "NEWS",
+
+          videoUrl: item.news.videoUrl,
+
+          duration: item.duration,
+
+          order: item.order,
+        };
 
       case "STREAM":
-        videoUrl = item.stream?.url ?? null;
+        if (!item.stream?.url) {
+          return null;
+        }
 
-        break;
+        return {
+          id: item.id,
+
+          type: "STREAM",
+
+          streamUrl: item.stream.url,
+
+          duration: item.duration,
+
+          order: item.order,
+        };
 
       default:
-        videoUrl = null;
+        return null;
     }
-
-    if (!videoUrl) {
-      console.log("⚠ No video URL for item:", {
-        id: item.id,
-        type: item.type,
-      });
-
-      return null;
-    }
-
-    console.log("✅ Resolved:", {
-      id: item.id,
-      type: item.type,
-      url: videoUrl,
-    });
-
-    return videoUrl;
   }
 }

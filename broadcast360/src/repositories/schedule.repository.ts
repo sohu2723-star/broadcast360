@@ -269,43 +269,48 @@ export const ScheduleRepository = {
   },
 
   findNextSchedule: async (channelId: number, now: Date) => {
-    return prisma.schedule.findFirst({
-      where: {
-        channelId,
+  return prisma.schedule.findFirst({
+    where: {
+      channelId,
 
-        status: "SCHEDULED",
-
-        startTime: {
-          gt: now,
-        },
+      status: {
+        notIn: [
+          "COMPLETED",
+          "CANCELLED",
+        ],
       },
 
-      orderBy: {
-        startTime: "asc",
+      startTime: {
+        gt: now,
       },
+    },
 
-      include: {
-        playlist: {
-          include: {
-            items: {
-              orderBy: {
-                order: "asc",
-              },
+    orderBy: {
+      startTime: "asc",
+    },
 
-              include: {
-                movie: true,
-                episode: true,
-                advertisement: true,
-                entertainment: true,
-                news: true,
-                stream: true,
-              },
+    include: {
+      playlist: {
+        include: {
+          items: {
+            orderBy: {
+              order: "asc",
+            },
+
+            include: {
+              movie: true,
+              episode: true,
+              advertisement: true,
+              entertainment: true,
+              news: true,
+              stream: true,
             },
           },
         },
       },
-    });
-  },
+    },
+  });
+},
 
   updateStatus: async (
     id: number,
@@ -320,4 +325,6 @@ export const ScheduleRepository = {
       },
     });
   },
+
+  
 };

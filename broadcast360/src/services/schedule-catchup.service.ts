@@ -1,130 +1,107 @@
 import { ScheduleWithRelations } from "@/types/schedule.types";
 import { PlaylistItemWithRelations } from "@/types/playlist";
 
-interface CatchupResult {
+export interface CatchupResult {
+  itemIndex: number;
 
-  itemIndex:number;
-
-  offset:number;
-
+  offset: number;
 }
 
-
 export class ScheduleCatchupService {
+  /*
+  =====================================
+      CALCULATE CURRENT PLAY POSITION
+  =====================================
+  */
 
-
-  calculate(
-    schedule:ScheduleWithRelations,
-    now:Date
-  ):CatchupResult {
-
-
-    if(!schedule.startTime){
+  calculate(schedule: ScheduleWithRelations, now: Date): CatchupResult {
+    if (!schedule.playlist?.items?.length) {
       return {
-        itemIndex:0,
-        offset:0
+        itemIndex: 0,
+
+        offset: 0,
       };
     }
 
+    /*
+    seconds since schedule start
+    */
 
-    const elapsed =
-      Math.floor(
-        (now.getTime() -
-        schedule.startTime.getTime())
-        /
-        1000
-      );
-
-
-    console.log(
-      "⏱ Schedule elapsed:",
-      elapsed,
-      "seconds"
+    const elapsed = Math.floor(
+      (now.getTime() - new Date(schedule.startTime).getTime()) / 1000,
     );
 
+    if (elapsed <= 0) {
+      return {
+        itemIndex: 0,
 
+        offset: 0,
+      };
+    }
 
     let currentTime = 0;
 
+    const items = schedule.playlist.items.sort((a, b) => a.order - b.order);
 
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
 
-    const items =
-      schedule.playlist?.items ?? [];
+      const duration = item.duration ?? this.getDuration(item);
 
-
-
-    for(
-      let i=0;
-      i<items.length;
-      i++
-    ){
-
-      const duration =
-        this.getDuration(items[i]);
-
-
-
-      if(
-        elapsed <
-        currentTime + duration
-      ){
-
-        return {
-
-          itemIndex:i,
-
-          offset:
-            elapsed-currentTime
-
-        };
-
+      if (!duration) {
+        continue;
       }
 
+      /*
+      Current item
+
+      Example:
+
+      elapsed 45 min
+
+      Movie A 30 min
+
+      Movie B starts at 30
+
+      45 is inside Movie B
+
+      */
+
+      if (elapsed >= currentTime && elapsed < currentTime + duration) {
+        return {
+          itemIndex: i,
+
+          offset: elapsed - currentTime,
+        };
+      }
 
       currentTime += duration;
-
     }
 
-
-
-    // schedule already finished
+    /*
+    Playlist already finished
+    */
 
     return {
+      itemIndex: items.length,
 
-      itemIndex:
-        items.length-1,
-
-      offset:0
-
+      offset: 0,
     };
-
   }
 
+  /*
+  =====================================
+       FALLBACK DURATION
+  =====================================
+  */
 
-
-
-
-  private getDuration(item: PlaylistItemWithRelations) {
-
-
-    if(item.movie){
-      return item.movie.duration;
-    }
-
-
-    if(item.episode){
-      return item.episode.duration;
-    }
-
-
-    if(item.advertisement){
-      return item.advertisement.duration;
-    }
-
-
-    return 0;
-
+  private getDuration(item:PlaylistItemWithRelations,): number {
+    return (
+      item.movie?.duration ??
+      item.episode?.duration ??
+      item.advertisement?.duration ??
+      item.entertainment?.duration ??
+      0
+    );
   }
-
-
 }
