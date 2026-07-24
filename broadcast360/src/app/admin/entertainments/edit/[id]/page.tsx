@@ -5,12 +5,15 @@ import { useParams, useRouter } from "next/navigation";
 
 import EntertainmentForm from "@/components/admin/entertainments/entertainmentForm";
 
+
+
 import type {
   Entertainment,
 } from "@/types/entertainment";
 
 
 export default function EditEntertainmentPage() {
+
 
   const params = useParams();
 
@@ -394,46 +397,36 @@ initialData={{
             );
         
             formData.append(
-              "releaseYear",
-              String(
-                form.releaseYear
-              )
-            );
+  "releaseYear",
+  String(
+    form.releaseYear
+  )
+);
 
+formData.append(
+  "duration",
+  String(
+    form.duration
+  )
+);
 
+if(form.video){
 
-         
+  formData.append(
+    "video",
+    form.video
+  );
 
+}
 
+if(form.thumbnail){
 
+  formData.append(
+    "thumbnail",
+    form.thumbnail
+  );
 
-
-
-            if(form.video){
-
-
-              formData.append(
-                "video",
-                form.video
-              );
-
-
-            }
-
-
-
-
-
-            if(form.thumbnail){
-
-
-              formData.append(
-                "thumbnail",
-                form.thumbnail
-              );
-
-
-            }
+}
           
             const res =
               await fetch(
@@ -529,3 +522,4 @@ if(res.ok){
   );
 
 }
+

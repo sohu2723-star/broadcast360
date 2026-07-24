@@ -64,6 +64,18 @@ model Movie {
   @@unique([title, releaseYear])
 }
 
+enum StreamProtocol {
+  RTSP
+  RTMP
+  HLS
+  WEBRTC
+}
+
+enum StreamStatus {
+  ONLINE
+  OFFLINE
+}
+
 // ============================
 // Stream INPUT
 // ============================
@@ -122,6 +134,8 @@ model Episode {
   series        Series         @relation(fields: [seriesId], references: [id])
   createdAt     DateTime       @default(now())
   playlistItems PlaylistItem[]
+
+  @@unique([seriesId, episodeNo])
 }
 
 // =====================
