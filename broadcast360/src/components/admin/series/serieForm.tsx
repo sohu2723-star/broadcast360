@@ -74,26 +74,26 @@ export default function SeriesForm({
   }
 
   return (
-    <div className="bg-[#0B1026] border border-white/10 rounded-2xl p-8 max-w-3xl">
+    <div className="max-w-3xl rounded-2xl border border-white/10 bg-[#0B1026] p-8">
       <form className="space-y-5" onSubmit={handleSubmit}>
         {/* TITLE */}
         <div>
-          <label className="block mb-2">Series Title</label>
+          <label className="mb-2 block">Series Title</label>
 
           <input
             value={form.title}
             onChange={(e) => setForm({ ...form, title: e.target.value })}
-            className="w-full bg-[#111936] border border-white/10 rounded-xl p-3"
+            className="w-full rounded-xl border border-white/10 bg-[#111936] p-3"
           />
 
           {errors.title && (
-            <p className="text-red-500 text-sm mt-1">{errors.title}</p>
+            <p className="mt-1 text-sm text-red-500">{errors.title}</p>
           )}
         </div>
 
         {/* DESCRIPTION */}
         <div>
-          <label className="block mb-2">Description</label>
+          <label className="mb-2 block">Description</label>
 
           <textarea
             rows={4}
@@ -104,76 +104,63 @@ export default function SeriesForm({
                 description: e.target.value,
               })
             }
-            className="w-full bg-[#111936] border border-white/10 rounded-xl p-3"
+            className="w-full rounded-xl border border-white/10 bg-[#111936] p-3"
           />
 
           {errors.description && (
-            <p className="text-red-500 text-sm mt-1">{errors.description}</p>
+            <p className="mt-1 text-sm text-red-500">{errors.description}</p>
           )}
         </div>
 
         {/* GENRE */}
         <div>
-          <label className="block mb-2">Genre</label>
+          <label className="mb-2 block">Genre</label>
 
           <input
             value={form.genre}
             onChange={(e) => setForm({ ...form, genre: e.target.value })}
-            className="w-full bg-[#111936] border border-white/10 rounded-xl p-3"
+            className="w-full rounded-xl border border-white/10 bg-[#111936] p-3"
           />
 
           {errors.genre && (
-            <p className="text-red-500 text-sm mt-1">{errors.genre}</p>
+            <p className="mt-1 text-sm text-red-500">{errors.genre}</p>
           )}
         </div>
 
         {/* RELEASE YEAR */}
-       <div>
-  <label className="block mb-2">
-    Release Year
-  </label>
+        <div>
+          <label className="mb-2 block">Release Year</label>
 
-<input
-  type="text"
-  inputMode="numeric"
-  maxLength={4}
-  placeholder="eg. 2020"
-  value={
-    form.releaseYear === ""
-      ? ""
-      : String(form.releaseYear)
-  }
-  onChange={(e) => {
-    const value = e.target.value;
+          <input
+            type="text"
+            inputMode="numeric"
+            maxLength={4}
+            placeholder="eg. 2020"
+            value={form.releaseYear === "" ? "" : String(form.releaseYear)}
+            onChange={(e) => {
+              const value = e.target.value;
 
-    if (/^\d*$/.test(value)) {
-      setForm({
-        ...form,
-        releaseYear:
-          value === ""
-            ? ""
-            : Number(value),
-      });
-    }
-  }}
-  className={`w-full bg-[#111936] rounded-xl p-4 h-14 text-lg border ${
-    errors.releaseYear
-      ? "border-red-500"
-      : "border-white/10"
-  }`}
-/>
+              if (/^\d*$/.test(value)) {
+                setForm({
+                  ...form,
+                  releaseYear: value === "" ? "" : Number(value),
+                });
+              }
+            }}
+            className={`h-14 w-full rounded-xl border bg-[#111936] p-4 text-lg ${
+              errors.releaseYear ? "border-red-500" : "border-white/10"
+            }`}
+          />
 
-{errors.releaseYear && (
-  <p className="text-red-500 text-sm mt-1">
-    {errors.releaseYear}
-  </p>
-)}
-</div>
+          {errors.releaseYear && (
+            <p className="mt-1 text-sm text-red-500">{errors.releaseYear}</p>
+          )}
+        </div>
 
         {/* CURRENT THUMBNAIL */}
         {thumbnailUrl && (
           <div>
-            <label className="block mb-2">Current Thumbnail</label>
+            <label className="mb-2 block">Current Thumbnail</label>
 
             <Image
               src={thumbnailUrl}
@@ -187,12 +174,12 @@ export default function SeriesForm({
 
         {/* FILE UPLOAD (FIXED UI) */}
         <div>
-          <label className="block mb-2">
+          <label className="mb-2 block">
             {seriesId ? "Upload New Thumbnail" : "Upload Thumbnail"}
           </label>
 
           <label className="flex items-center gap-3">
-            <span className="px-4 py-2 bg-blue-600 rounded cursor-pointer">
+            <span className="cursor-pointer rounded bg-blue-600 px-4 py-2">
               Choose File
             </span>
 
@@ -214,7 +201,7 @@ export default function SeriesForm({
           </label>
 
           {errors.thumbnail && (
-            <p className="text-red-500 text-sm mt-1">{errors.thumbnail}</p>
+            <p className="mt-1 text-sm text-red-500">{errors.thumbnail}</p>
           )}
         </div>
 
@@ -222,7 +209,7 @@ export default function SeriesForm({
         <div className="flex gap-4 pt-4">
           <button
             type="submit"
-            className="flex-1 bg-[#106EE9] py-3 rounded-xl font-bold hover:opacity-80"
+            className="flex-1 rounded-xl bg-[#106EE9] py-3 font-bold hover:opacity-80"
           >
             Save Series
           </button>
@@ -230,7 +217,7 @@ export default function SeriesForm({
           <button
             type="button"
             onClick={() => router.push("/admin/series")}
-            className="bg-[#F41010] px-6 py-3 rounded-xl font-bold hover:opacity-80"
+            className="rounded-xl bg-[#F41010] px-6 py-3 font-bold hover:opacity-80"
           >
             Cancel
           </button>

@@ -40,7 +40,7 @@ export default function EpisodeForm({
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
-  const schema = isEdit ? editEpisodeSchema : createEpisodeSchema;
+    const schema = isEdit ? editEpisodeSchema : createEpisodeSchema;
 
     const result = schema.safeParse(form);
 
@@ -66,7 +66,6 @@ export default function EpisodeForm({
   return (
     <div className="max-w-3xl rounded-2xl border border-white/10 bg-[#0B1026] p-8">
       <form onSubmit={handleSubmit} className="space-y-5">
-
         {/* TITLE */}
         <div>
           <label className="mb-2 block">Episode Title</label>
@@ -74,15 +73,11 @@ export default function EpisodeForm({
           <input
             value={form.title}
             className="w-full rounded-xl border border-white/10 bg-[#111936] p-3"
-            onChange={(e) =>
-              setForm({ ...form, title: e.target.value })
-            }
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
           />
 
           {errors.title && (
-            <p className="mt-1 text-sm text-red-500">
-              {errors.title}
-            </p>
+            <p className="mt-1 text-sm text-red-500">{errors.title}</p>
           )}
         </div>
 
@@ -104,9 +99,7 @@ export default function EpisodeForm({
           />
 
           {errors.episodeNo && (
-            <p className="mt-1 text-sm text-red-500">
-              {errors.episodeNo}
-            </p>
+            <p className="mt-1 text-sm text-red-500">{errors.episodeNo}</p>
           )}
         </div>
 
@@ -127,12 +120,10 @@ export default function EpisodeForm({
           />
 
           {errors.videoFile && (
-            <p className="mt-1 text-sm text-red-500">
-              {errors.videoFile}
-            </p>
+            <p className="mt-1 text-sm text-red-500">{errors.videoFile}</p>
           )}
         </div>
-         {/* THUMBNAIL */}
+        {/* THUMBNAIL */}
         <div>
           <label className="mb-2 block">Thumbnail Image</label>
 
@@ -148,9 +139,7 @@ export default function EpisodeForm({
             }
           />
           {errors.thumbnailFile && (
-            <p className="mt-1 text-sm text-red-500">
-              {errors.thumbnailFile}
-            </p>
+            <p className="mt-1 text-sm text-red-500">{errors.thumbnailFile}</p>
           )}
         </div>
 
@@ -168,7 +157,6 @@ export default function EpisodeForm({
             Cancel
           </button>
         </div>
-
       </form>
     </div>
   );

@@ -3,10 +3,9 @@ import PlaylistList from "@/components/admin/playlists/PlaylistList";
 import Link from "next/link";
 
 async function getProgram(id: number) {
-  const res = await fetch(
-    `http://localhost:3000/api/programs/${id}`,
-    { cache: "no-store" }
-  );
+  const res = await fetch(`http://localhost:3000/api/programs/${id}`, {
+    cache: "no-store",
+  });
 
   return res.json();
 }
@@ -14,7 +13,7 @@ async function getProgram(id: number) {
 async function getPlaylists(id: number, page: number) {
   const res = await fetch(
     `http://localhost:3000/api/programs/${id}/playlists?page=${page}`,
-    { cache: "no-store" }
+    { cache: "no-store" },
   );
 
   return res.json();
@@ -35,44 +34,27 @@ export default async function Page({
 
   const programData = await getProgram(id);
   const playlistData = await getPlaylists(id, currentPage);
+  console.log("PAGE PLAYLIST DATA:", playlistData);
 
   return (
-    <div className="p-6 space-y-6">
-      
+    <div className="space-y-6 p-6">
       {/* HEADER ACTIONS */}
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between">
         <Link
           href="/admin/programs"
-          className="px-4 py-2 bg-gray-700 rounded-lg text-white inline-block"
+          className="inline-block rounded-lg bg-gray-700 px-4 py-2 text-white"
         >
           Back
         </Link>
 
         <div className="flex gap-3">
-
           <Link
+            href={`/admin/programs/${programId}/playlists/create`}
 
-            href={
-            `/admin/programs/${programId}/playlists/create`
-            }
-
-            className="
-            inline-block
-            mt-5
-            bg-[#106EE9]
-            text-white
-            px-5
-            py-3
-            rounded-lg
-            "
-            >
-
+            className="mt-5 inline-block rounded-lg bg-[#106EE9] px-5 py-3 text-white"
+          >
             + Add Playlist
-
-            </Link>
-
-
-
+          </Link>
         </div>
       </div>
 
@@ -80,10 +62,8 @@ export default async function Page({
       <ProgramCard program={programData.data} />
 
       {/* PLAYLIST SECTION */}
-      <div className="bg-[#0B1026] border border-white/10 rounded-xl p-4">
-        <h2 className="text-white font-semibold mb-4">
-          Playlists
-        </h2>
+      <div className="rounded-xl border border-white/10 bg-[#0B1026] p-4">
+        <h2 className="mb-4 font-semibold text-white">Playlists</h2>
 
         <PlaylistList
           programId={id}

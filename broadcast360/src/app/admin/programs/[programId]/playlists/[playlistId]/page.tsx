@@ -1,12 +1,13 @@
 import PlaylistItemList from "@/components/admin/playlist-items/PlaylistItemList";
 import PlaylistInfoCard from "@/components/admin/playlists/PlaylistInfoCard";
+import { Series } from "@/generated/prisma/edge";
 
 async function getPlaylist(programId: number, playlistId: number) {
   const baseUrl = process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
 
   const res = await fetch(
     `${baseUrl}/api/programs/${programId}/playlists/${playlistId}`,
-    { cache: "no-store" }
+    { cache: "no-store" },
   );
 
   const data = await res.json();
@@ -44,7 +45,7 @@ export default async function PlaylistPage({
   const playlist = data.data;
 
   return (
-    <div className="p-8 bg-[#010312] min-h-screen">
+    <div className="min-h-screen bg-[#010312] p-8">
       <PlaylistInfoCard
         channelName={playlist.program.channel.name}
         programName={playlist.program.title}

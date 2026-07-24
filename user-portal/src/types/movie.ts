@@ -1,6 +1,8 @@
 export interface Movie {
   id: number;
 
+  movieKey: string;
+
   title: string;
 
   description?: string | null;
@@ -15,17 +17,32 @@ export interface Movie {
 
   releaseYear?: number | null;
 
-  createdAt: string | Date;
+  createdAt?: string | Date;
+
+
+  // Channel
 
   channelId?: number;
 
   channelName?: string;
+
+
+
+  // Playlist
+
+  playlistId?: number;
+
+  playlistItemId?: number;
+
+  playlistOrder?: number;
+
+
+
+  // Schedule
 
   scheduleId?: number;
 
   scheduleStart?: string;
 
   scheduleEnd?: string | null;
-
-  movieKey?: string;
 }

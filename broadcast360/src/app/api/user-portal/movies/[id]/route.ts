@@ -11,7 +11,11 @@ export async function GET(request: NextRequest, context: Context) {
   try {
     const { id } = await context.params;
 
-    const movieId = Number(id);
+    // movieKey format:
+    // movieId-channelId
+    // example: 10-2
+
+    const movieId = Number(id.split("-")[0]);
 
     if (Number.isNaN(movieId)) {
       return NextResponse.json(
@@ -39,6 +43,20 @@ export async function GET(request: NextRequest, context: Context) {
                     channel: true,
                   },
                 },
+
+                items: {
+                  where: {
+                    type: "MOVIE",
+                  },
+
+                  include: {
+                    movie: true,
+                  },
+
+                  orderBy: {
+                    order: "asc",
+                  },
+                },
               },
             },
           },
@@ -57,11 +75,84 @@ export async function GET(request: NextRequest, context: Context) {
       );
     }
 
-    const schedule = movie.playlistItems[0]?.playlist?.schedules[0];
+    const playlist = movie.playlistItems[0]?.playlist;
+
+    const schedule = playlist?.schedules[0];
+
+    // Playlist Part 1,2,3
+
+    const playlistMovies =
+      playlist?.items
+
+        .filter((item) => item.movie !== null)
+
+        .map((item) => ({
+          id: item.movie!.id,
+
+          movieKey: `${item.movie!.id}-${schedule?.channel.id}`,
+
+          title: item.movie!.title,
+
+          description: item.movie!.description,
+
+          genre: item.movie!.genre,
+
+          thumbnail: item.movie!.thumbnail
+            ? `http://localhost:3000${item.movie!.thumbnail}`
+            : null,
+
+          videoUrl: item.movie!.videoUrl
+            ? item.movie!.videoUrl.startsWith("http")
+              ? item.movie!.videoUrl
+              : `http://localhost:3000${item.movie!.videoUrl}`
+            : null,
+
+          duration: item.movie!.duration,
+
+          releaseYear: item.movie!.releaseYear,
+
+          playlistId: item.playlistId,
+
+          playlistItemId: item.id,
+
+          playlistOrder: item.order,
+
+          channelId: schedule?.channel.id ?? null,
+
+          channelName: schedule?.channel.name ?? null,
+        })) ?? [];
+
+    // Related movies same channel only
+
+    const playlistIds = playlistMovies.map((item) => item.id);
+
+    const relatedMovies = await prisma.movie.findMany({
+      where: {
+        id: {
+          notIn: playlistIds,
+        },
+
+        playlistItems: {
+          some: {
+            playlist: {
+              schedules: {
+                some: {
+                  channelId: schedule?.channel.id,
+                },
+              },
+            },
+          },
+        },
+      },
+
+      take: 10,
+    });
 
     return NextResponse.json({
       movie: {
         id: movie.id,
+
+        movieKey: `${movie.id}-${schedule?.channel.id}`,
 
         title: movie.title,
 
@@ -69,9 +160,15 @@ export async function GET(request: NextRequest, context: Context) {
 
         genre: movie.genre,
 
-        thumbnail: movie.thumbnail,
+        thumbnail: movie.thumbnail
+          ? `http://localhost:3000${movie.thumbnail}`
+          : null,
 
-        videoUrl: movie.videoUrl,
+        videoUrl: movie.videoUrl
+          ? movie.videoUrl.startsWith("http")
+            ? movie.videoUrl
+            : `http://localhost:3000${movie.videoUrl}`
+          : null,
 
         duration: movie.duration,
 
@@ -80,20 +177,42 @@ export async function GET(request: NextRequest, context: Context) {
         channelId: schedule?.channel.id ?? null,
 
         channelName: schedule?.channel.name ?? null,
-
-        scheduleId: schedule?.id ?? null,
-
-        scheduleStart: schedule?.startTime ?? null,
-
-        scheduleEnd: schedule?.endTime ?? null,
       },
+
+      playlist: playlistMovies,
+
+      relatedMovies: relatedMovies.map((item) => ({
+        id: item.id,
+
+        movieKey: `${item.id}-${schedule?.channel.id}`,
+
+        title: item.title,
+
+        description: item.description,
+
+        genre: item.genre,
+
+        thumbnail: item.thumbnail
+          ? `http://localhost:3000${item.thumbnail}`
+          : null,
+
+        videoUrl: item.videoUrl,
+
+        duration: item.duration,
+
+        releaseYear: item.releaseYear,
+
+        channelId: schedule?.channel.id ?? null,
+
+        channelName: schedule?.channel.name ?? null,
+      })),
     });
   } catch (error) {
-    console.error("GET MOVIE BY ID ERROR:", error);
+    console.error("DETAIL MOVIE ERROR", error);
 
     return NextResponse.json(
       {
-        message: "Failed to fetch movie",
+        message: "Failed fetch movie",
       },
       {
         status: 500,

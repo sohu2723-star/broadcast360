@@ -12,8 +12,8 @@ export default function CreateSeriesPage() {
 
   async function handleSubmit(data: SeriesFormData) {
     try {
-      // ✅ SAFE NORMALIZATION
-     const releaseYear =
+      //  SAFE NORMALIZATION
+      const releaseYear =
         typeof data.releaseYear === "string"
           ? Number(data.releaseYear)
           : data.releaseYear;
@@ -26,7 +26,7 @@ export default function CreateSeriesPage() {
         thumbnail: data.thumbnail ?? null,
       };
 
-      // ✅ VALIDATE
+      // VALIDATE
       const result = createSeriesSchema.safeParse(payload);
 
       if (!result.success) {
@@ -34,19 +34,15 @@ export default function CreateSeriesPage() {
         setErrors({ api: result.error.issues[0].message });
         return;
       }
-const year = result.data.releaseYear;
+      const year = result.data.releaseYear;
       const currentYear = new Date().getFullYear();
 
-      if (
-        !Number.isInteger(year) ||
-        year < 1900 ||
-        year > currentYear
-      ) {
-       setErrors({ api: "Invalid release year format" });
+      if (!Number.isInteger(year) || year < 1900 || year > currentYear) {
+        setErrors({ api: "Invalid release year format" });
         return;
       }
 
-      // ✅ BUILD FORMDATA
+      //  BUILD FORMDATA
       const formData = new FormData();
 
       formData.append("title", result.data.title);
@@ -58,7 +54,7 @@ const year = result.data.releaseYear;
         formData.append("thumbnail", result.data.thumbnail);
       }
 
-      // ✅ API CALL
+      // API CALL
       const res = await fetch("/api/series", {
         method: "POST",
         body: formData,
@@ -82,19 +78,17 @@ const year = result.data.releaseYear;
   }
 
   return (
-  <div>
-    <h1 className="text-3xl font-bold text-white mb-8">
-      Create Series
-    </h1>
+    <div>
+      <h1 className="mb-8 text-3xl font-bold text-white">Create Series</h1>
 
-    {/* ✅ ADD THIS HERE */}
-    {errors.api && (
-      <div className="bg-red-900/20 text-red-400 p-3 rounded mb-4">
-        {errors.api}
-      </div>
-    )}
+      {/* ADD THIS HERE */}
+      {errors.api && (
+        <div className="mb-4 rounded bg-red-900/20 p-3 text-red-400">
+          {errors.api}
+        </div>
+      )}
 
-    <SeriesForm onSubmit={handleSubmit} />
-  </div>
-);
+      <SeriesForm onSubmit={handleSubmit} />
+    </div>
+  );
 }
