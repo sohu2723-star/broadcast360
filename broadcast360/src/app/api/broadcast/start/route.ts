@@ -1,78 +1,124 @@
 import { NextResponse } from "next/server";
 
-import { ScheduleRepository } from "@/repositories/schedule.repository";
-
+import { SchedulerManager } from "@/managers/scheduler.manager";
 import { BroadcastService } from "@/services/broadcast.service";
 
-import { SchedulerManager } from "@/managers/scheduler.manager";
+/*
+================================
+ SINGLETON ENGINE
+================================
+*/
 
 const broadcast = globalThis.broadcastService ?? new BroadcastService();
 
-const scheduler = globalThis.schedulerManager ?? new SchedulerManager();
+const scheduler =
+  globalThis.schedulerManager ?? new SchedulerManager(broadcast);
 
 globalThis.broadcastService = broadcast;
 
 globalThis.schedulerManager = scheduler;
 
+/*
+================================
+ PREVENT DOUBLE START
+================================
+*/
+
+const startingChannels = globalThis.startingBroadcasts ?? new Set<number>();
+
+globalThis.startingBroadcasts = startingChannels;
+
+/*
+================================
+ POST
+================================
+*/
+
 export async function POST(req: Request) {
+  let channelId: number | null = null;
+
   try {
     const body = await req.json();
 
-    const channelId = Number(body.channelId);
+    channelId = Number(body.channelId);
 
-    if (!channelId) {
+    if (!channelId || Number.isNaN(channelId)) {
       return NextResponse.json(
         {
           error: "channelId required",
         },
+
         {
           status: 400,
         },
       );
     }
 
-    const schedule = await ScheduleRepository.findLiveSchedule(
-      channelId,
-      new Date(),
-    );
+    /*
+================================
+ DUPLICATE PROTECTION
+================================
+*/
+
+    if (startingChannels.has(channelId)) {
+      return NextResponse.json(
+        {
+          error: "Broadcast is already starting",
+        },
+
+        {
+          status: 409,
+        },
+      );
+    }
+
+    startingChannels.add(channelId);
+
+    console.log("🚀 START BROADCAST", channelId);
 
     /*
-      Start scheduler loop
-    */
+================================
+ START SCHEDULER
+================================
+
+Scheduler will:
+- find current schedule
+- load playlist
+- start broadcast
+- fallback if empty
+
+*/
 
     if (!scheduler.isRunning(channelId)) {
       scheduler.start(channelId);
-    }
 
-    /*
-      Start broadcast first time
-    */
-
-    if (!broadcast.isRunning(channelId)) {
-      console.log("▶ Initial broadcast start");
-
-      await broadcast.start(schedule, channelId);
+      console.log("⏰ Scheduler started", channelId);
     } else {
-      console.log("⚠ Broadcast already running");
+      console.log("⚠ Scheduler already running", channelId);
     }
 
     return NextResponse.json({
       success: true,
 
-      message: "Broadcast started",
-
       channelId,
+
+      message: "Broadcast scheduler started",
     });
   } catch (error) {
-    console.error(error);
+    console.error("❌ Start broadcast error", error);
 
     return NextResponse.json(
       {
-        error: "Internal error",
+        error: "Internal server error",
       },
+
       {
         status: 500,
       },
     );
+  } finally {
+    if (channelId) {
+      startingChannels.delete(channelId);
+    }
   }
 }

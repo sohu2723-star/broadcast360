@@ -5,9 +5,6 @@ type QueueMode = "FALLBACK" | "SCHEDULE";
 interface QueueState {
   items: PlaylistItemWithRelations[];
 
-  /**
-   * current playing index
-   */
   index: number;
 
   mode: QueueMode;
@@ -18,62 +15,44 @@ export class PlayoutQueueManager {
 
   private current = new Map<number, PlaylistItemWithRelations>();
 
-  /**
-   * Load new playlist queue
-   */
   load(
     channelId: number,
     items: PlaylistItemWithRelations[],
     mode: QueueMode,
-    startIndex: number = 0,
+    startIndex = 0,
   ) {
-    console.log("📥 Queue loaded", {
+    console.log("📥 Queue load", {
       channelId,
       mode,
-      totalItems: items.length,
+      items: items.length,
       startIndex,
     });
 
     this.queues.set(channelId, {
       items: [...items],
-
-      // IMPORTANT
-      // start from catchup item
       index: startIndex,
-
       mode,
     });
+
+    this.current.delete(channelId);
   }
 
-  /**
-   * Get next item
-   */
   next(channelId: number) {
     const queue = this.queues.get(channelId);
 
     if (!queue) {
-      console.log("⚠ No queue", channelId);
+      console.log("⚠ queue missing", channelId);
 
       return null;
     }
 
-    /**
-     * Queue finished
-     */
     if (queue.index >= queue.items.length) {
-      /**
-       * fallback playlist loops forever
-       */
       if (queue.mode === "FALLBACK") {
-        console.log("🔁 Fallback loop");
+        console.log("🔁 fallback restart");
 
         queue.index = 0;
       } else {
-
-      /**
-       * schedule ends
-       */
-        console.log("📺 Schedule completed");
+        console.log("📺 schedule finished");
 
         return null;
       }
@@ -81,57 +60,40 @@ export class PlayoutQueueManager {
 
     const item = queue.items[queue.index];
 
-    console.log("▶ Queue next", {
+    this.current.set(channelId, item);
+
+    console.log("▶ Next item", {
+      channelId,
       index: queue.index,
+      id: item.id,
       type: item.type,
     });
-
-    queue.index++;
-
-    this.current.set(channelId, item);
 
     return item;
   }
 
-  /**
-   * Replace current queue
-   * used for schedule switching
-   */
+  complete(channelId: number) {
+    const queue = this.queues.get(channelId);
+
+    if (!queue) return;
+
+    queue.index++;
+
+    this.current.delete(channelId);
+
+    console.log("✅ Item complete", {
+      channelId,
+      nextIndex: queue.index,
+    });
+  }
+
   replace(
     channelId: number,
     items: PlaylistItemWithRelations[],
     mode: QueueMode,
-    startIndex: number = 0,
+    startIndex = 0,
   ) {
-    console.log("🔄 Queue replaced", {
-      channelId,
-      mode,
-      startIndex,
-    });
-
     this.load(channelId, items, mode, startIndex);
-  }
-
-  getMode(channelId: number) {
-    return this.queues.get(channelId)?.mode;
-  }
-
-  getIndex(channelId: number) {
-    return this.queues.get(channelId)?.index;
-  }
-
-  isEmpty(channelId: number) {
-    const queue = this.queues.get(channelId);
-
-    if (!queue) {
-      return true;
-    }
-
-    return queue.index >= queue.items.length;
-  }
-
-  getCurrent(channelId: number) {
-    return this.current.get(channelId);
   }
 
   clear(channelId: number) {
@@ -139,4 +101,24 @@ export class PlayoutQueueManager {
 
     this.current.delete(channelId);
   }
+
+  getCurrent(channelId: number) {
+    return this.current.get(channelId) ?? null;
+  }
+
+  getMode(channelId: number): QueueMode | null {
+  return this.queues.get(channelId)?.mode ?? null;
+}
+
+  getIndex(channelId: number) {
+    return this.queues.get(channelId)?.index ?? 0;
+  }
+
+  getItems(channelId: number): PlaylistItemWithRelations[] {
+  return this.queues.get(channelId)?.items ?? [];
+}
+
+getQueue(channelId: number) {
+  return this.queues.get(channelId) ?? null;
+}
 }
