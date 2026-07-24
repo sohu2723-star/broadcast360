@@ -11,10 +11,7 @@ import { ScheduleCatchupService } from "@/services/schedule-catchup.service";
 
 import { SwitchManager } from "@/managers/switch-manager";
 import { PlayoutManager } from "@/managers/playout-manager";
-import { SessionManager } from "@/managers/session.manager";
-import { LiveManager } from "@/managers/live-manager";
-import { createConcatFile } from "@/streaming/concat-builder";
-import path from "path";
+import { SessionManager } from "@/managers/session-manager";
 
 type BroadcastMode = "SCHEDULE" | "FALLBACK";
 
@@ -29,21 +26,13 @@ export class BroadcastService {
 
   private finishHandler: ((channelId: number) => Promise<void>) | null = null;
 
-  private endHandler: ((channelId: number) => Promise<void>) | null = null;
+  private liveEndHandler: ((channelId: number) => Promise<void>) | null = null;
 
   constructor(
     private switcher: SwitchManager,
-    private playout: PlayoutManager,
-    private live: LiveManager,
-  ) {
-    this.live.setEndHandler(async (channelId) => {
-      console.log("🔴 LIVE LOST CALLBACK", channelId);
 
-      if (this.endHandler) {
-        await this.endHandler(channelId);
-      }
-    });
-  }
+    private playout: PlayoutManager,
+  ) {}
 
   /*
   =====================================
@@ -51,12 +40,18 @@ export class BroadcastService {
   =====================================
   */
 
+  /*
+=====================================
+      CALLBACK
+=====================================
+*/
+
   setPlaylistFinishedHandler(callback: (channelId: number) => Promise<void>) {
     this.finishHandler = callback;
   }
 
-  setBroadcastEndHandler(callback: (channelId: number) => Promise<void>) {
-    this.endHandler = callback;
+  setLiveEndHandler(callback: (channelId: number) => Promise<void>) {
+    this.liveEndHandler = callback;
   }
 
   /*
@@ -75,24 +70,11 @@ export class BroadcastService {
   =====================================
   */
 
- async switchBroadcast(
-  schedule: ScheduleWithRelations | null,
-  channelId: number,
-  force = false,
-) {
-    if (
-  this.switcher.isRunning(channelId)
-  &&
-  !force
-) {
-      console.log("⚠ CHANNEL ALREADY RUNNING", {
-        channelId,
-        mode: this.switcher.getMode(channelId),
-      });
+  async switchBroadcast(
+    schedule: ScheduleWithRelations | null,
 
-      return;
-    }
-
+    channelId: number,
+  ) {
     console.log("🔄 BROADCAST SWITCH", {
       channelId,
       schedule: schedule?.id ?? "FALLBACK",
@@ -138,24 +120,8 @@ export class BroadcastService {
 
     if (items.length === 0) {
       console.log("⚠ Empty playlist");
+
       return;
-    }
-
-    const hasStream = items.some((item) => item.type === "STREAM");
-
-    if (hasStream) {
-      console.log("🔴 LIVE PLAYLIST DETECTED");
-
-      startIndex = 0;
-      offset = 0;
-    } else {
-      const files = items
-        .filter((item) => item.videoUrl)
-        .map((item) => path.join(process.cwd(), "public", item.videoUrl!));
-
-      const concatFile = createConcatFile(channelId, files);
-
-      console.log("✅ CONCAT CREATED", concatFile);
     }
 
     /*
@@ -192,26 +158,25 @@ export class BroadcastService {
       return;
     }
 
-    if (items.length === 1 && items[0].type === "STREAM") {
-      await this.switcher.switchToLive(
-        channelId,
-        items[0].streamUrl!,
-        channel.streamKey,
-      );
-
-      return;
-    }
-
-    await this.switcher.startVOD(
+    await this.playout.start(
       channelId,
+
       items,
+
       channel.streamKey,
+
       startIndex,
+
       offset,
+
       async () => {
         console.log("📺 PLAYLIST FINISHED", channelId);
 
         await this.session.stop(channelId);
+
+        if (this.liveEndHandler) {
+          await this.liveEndHandler(channelId);
+        }
 
         if (this.finishHandler) {
           await this.finishHandler(channelId);
@@ -238,13 +203,6 @@ export class BroadcastService {
     }
 
     const fallback = await getDefaultPlaylist(channelId);
-
-    console.log("🔎 FALLBACK DEBUG", {
-      channelId,
-      fallbackId: fallback?.id,
-      defaultPlaylistId: fallback?.defaultPlaylistId,
-      playlist: fallback?.defaultPlaylist?.name,
-    });
 
     if (!fallback?.defaultPlaylist) {
       console.log("❌ No fallback playlist");
@@ -292,15 +250,4 @@ export class BroadcastService {
 
     console.log("🛑 BROADCAST STOPPED", channelId);
   }
-
-  async recoverLive(channelId: number) {
-
-  console.log(
-    "🔄 RECOVER LIVE STATE",
-    channelId
-  );
-
-  await this.switcher.stopCurrent(channelId);
-
-}
 }

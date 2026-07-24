@@ -3,14 +3,19 @@ import { ChildProcess } from "child_process";
 import { FFmpegManager } from "@/streaming/ffmpeg";
 import { PlayoutManager } from "./playout-manager";
 import { LiveManager } from "./live-manager";
-import { ResolvedPlaylistItem } from "@/types/playlist";
 
-type BroadcastMode = "STOPPED" | "VOD" | "LIVE";
+type BroadcastMode =
+  | "STOPPED"
+  | "VOD"
+  | "LIVE";
 
 export class SwitchManager {
-  private mode = new Map<number, BroadcastMode>();
 
-  private current = new Map<number, ChildProcess>();
+  private mode =
+    new Map<number, BroadcastMode>();
+
+  private current =
+    new Map<number, ChildProcess>();
 
   constructor(
     private ffmpeg: FFmpegManager,
@@ -25,62 +30,62 @@ export class SwitchManager {
   */
 
   async startVOD(
-    channelId: number,
-    items: ResolvedPlaylistItem[],
-    streamKey: string,
-    startIndex: number,
-    offset: number,
-    onFinished: () => Promise<void>,
-  ) {
-    console.log("🟢 SWITCH TO VOD", channelId);
+    channelId:number,
+    file:string,
+    streamKey:string,
+    offset:number = 0,
+  ): Promise<ChildProcess>{
 
-    await this.playout.start(
+    await this.stopCurrent(channelId);
+
+    const args = [
+
+      "-re",
+
+      ...(offset > 0
+        ? ["-ss", String(offset)]
+        : []),
+
+      "-i",
+      file,
+
+      "-c:v","libx264",
+      "-preset","veryfast",
+      "-tune","zerolatency",
+
+      "-pix_fmt","yuv420p",
+
+      "-r","30",
+
+      "-g","60",
+
+      "-c:a","aac",
+
+      "-ar","48000",
+
+      "-b:a","128k",
+
+      "-f","flv",
+
+      `rtmp://127.0.0.1:1935/live/${streamKey}`
+
+    ];
+
+    const process =
+      this.ffmpeg.start(
+        channelId,
+        args
+      );
+
+    this.current.set(
       channelId,
-      items,
-      streamKey,
-      startIndex,
-      offset,
-      onFinished,
+      process
     );
 
-    this.mode.set(channelId, "VOD");
-
-    console.log("✅ MODE VOD", channelId);
-  }
-
-  private async waitStream(streamKey: string): Promise<boolean> {
-    for (let i = 0; i < 20; i++) {
-      try {
-        const res = await fetch(
-          `http://127.0.0.1:9997/v3/paths/get/live/${streamKey}`,
-        );
-
-        if (res.ok) {
-          console.log("✅ STREAM READY");
-
-          return true;
-        }
-      } catch (error) {
-        console.log("⏳ Waiting stream...");
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, 500));
-    }
-
-    return false;
-  }
-
-  async switchToLive(channelId: number, input: string, streamKey: string) {
-    console.log("🔴 START LIVE INPUT", {
+    this.mode.set(
       channelId,
-      input,
-    });
-
-    const process = await this.live.start(channelId, input, streamKey);
-
-    this.mode.set(channelId, "LIVE");
-
-    console.log("✅ LIVE MODE ACTIVE", channelId);
+      "VOD"
+    );
 
     return process;
   }
@@ -91,22 +96,30 @@ export class SwitchManager {
   ===========================
   */
 
-  async startLIVE(channelId: number, input: string, streamKey: string) {
-    console.log("🔴 SWITCH TO LIVE", channelId);
+  async startLIVE(
+    channelId:number,
+    input:string,
+    streamKey:string,
+  ): Promise<ChildProcess>{
 
     await this.stopCurrent(channelId);
 
-    const process = await this.live.start(channelId, input, streamKey);
+    const process =
+      await this.live.start(
+        channelId,
+        input,
+        streamKey
+      );
 
-    const ready = await this.waitStream(streamKey);
+    this.current.set(
+      channelId,
+      process
+    );
 
-    if (!ready) {
-      throw new Error("Live not ready");
-    }
-
-    this.mode.set(channelId, "LIVE");
-
-    console.log("✅ MODE LIVE", channelId);
+    this.mode.set(
+      channelId,
+      "LIVE"
+    );
 
     return process;
   }
@@ -117,25 +130,18 @@ export class SwitchManager {
   ===========================
   */
 
-  async stopCurrent(channelId: number): Promise<void> {
-    const mode = this.mode.get(channelId);
+  async stopCurrent(
+    channelId:number,
+  ): Promise<void>{
 
-    console.log("🛑 STOP CURRENT", {
-      channelId,
-      mode,
-    });
-
-    if (mode === "VOD") {
-      await this.playout.stop(channelId);
-    }
-
-    if (mode === "LIVE") {
-      await this.live.stop(channelId);
-    }
+    await this.ffmpeg.stop(channelId);
 
     this.current.delete(channelId);
 
-    this.mode.set(channelId, "STOPPED");
+    this.mode.set(
+      channelId,
+      "STOPPED"
+    );
   }
 
   /*
@@ -144,11 +150,20 @@ export class SwitchManager {
   ===========================
   */
 
-  getMode(channelId: number): BroadcastMode {
-    return this.mode.get(channelId) ?? "STOPPED";
+  getMode(
+    channelId:number,
+  ): BroadcastMode{
+
+    return (
+      this.mode.get(channelId)
+      ?? "STOPPED"
+    );
   }
 
-  isRunning(channelId: number): boolean {
-    return this.ffmpeg.isRunning(channelId) || this.live.isRunning(channelId);
+  isRunning(
+    channelId:number,
+  ): boolean{
+
+    return this.ffmpeg.isRunning(channelId);
   }
 }

@@ -1,36 +1,71 @@
 import { PlaylistItemWithRelations } from "@/types/playlist";
 
+
 export interface ResolvedPlaylistItem {
-  id: number;
+
+  id:number;
 
   type:
-    "MOVIE" | "EPISODE" | "ADVERTISEMENT" | "ENTERTAINMENT" | "NEWS" | "STREAM";
+    | "MOVIE"
+    | "EPISODE"
+    | "ADVERTISEMENT"
+    | "ENTERTAINMENT"
+    | "NEWS"
+    | "STREAM";
 
-  videoUrl?: string;
 
-  streamUrl?: string;
+  videoUrl?:string;
 
-  duration?: number | null;
+  streamUrl?:string;
 
-  order: number;
+  duration?:number | null;
+
+  order:number;
+
 }
 
+
+
 export class PlaylistResolverService {
+
+
+
   /*
   ==================================
        RESOLVE PLAYLIST
   ==================================
   */
 
-  resolve(items: PlaylistItemWithRelations[]): ResolvedPlaylistItem[] {
+
+  resolve(
+    items:PlaylistItemWithRelations[],
+  ):ResolvedPlaylistItem[]{
+
+
     return items
 
-      .sort((a, b) => a.order - b.order)
+      .sort(
+        (a,b)=>
+          a.order - b.order
+      )
 
-      .map((item) => this.resolveItem(item))
 
-      .filter(Boolean) as ResolvedPlaylistItem[];
+      .map(
+        item =>
+          this.resolveItem(item)
+      )
+
+
+      .filter(
+        Boolean
+      ) as ResolvedPlaylistItem[];
+
+
   }
+
+
+
+
 
   /*
   ==================================
@@ -38,114 +73,247 @@ export class PlaylistResolverService {
   ==================================
   */
 
+
   private resolveItem(
-    item: PlaylistItemWithRelations,
-  ): ResolvedPlaylistItem | null {
-    switch (item.type) {
+    item:PlaylistItemWithRelations,
+  ):ResolvedPlaylistItem|null{
+
+
+
+    switch(item.type){
+
+
+
       case "MOVIE":
-        if (!item.movie?.videoUrl) {
+
+
+        if(!item.movie?.videoUrl){
+
           return null;
+
         }
 
+
         return {
-          id: item.id,
 
-          type: "MOVIE",
+          id:item.id,
 
-          videoUrl: item.movie.videoUrl,
+          type:"MOVIE",
 
-          duration: item.duration ?? item.movie.duration,
+          videoUrl:
+            item.movie.videoUrl,
 
-          order: item.order,
+          duration:
+            item.duration ??
+            item.movie.duration,
+
+          order:
+            item.order,
+
         };
+
+
+
+
 
       case "EPISODE":
-        if (!item.episode?.videoUrl) {
+
+
+        if(!item.episode?.videoUrl){
+
           return null;
+
         }
 
+
         return {
-          id: item.id,
 
-          type: "EPISODE",
 
-          videoUrl: item.episode.videoUrl,
+          id:item.id,
 
-          duration: item.duration ?? item.episode.duration,
+          type:"EPISODE",
 
-          order: item.order,
+
+          videoUrl:
+            item.episode.videoUrl,
+
+
+          duration:
+            item.duration ??
+            item.episode.duration,
+
+
+          order:
+            item.order,
+
+
         };
+
+
+
+
+
 
       case "ADVERTISEMENT":
-        if (!item.advertisement?.videoUrl) {
+
+
+        if(!item.advertisement?.videoUrl){
+
           return null;
+
         }
 
+
         return {
-          id: item.id,
 
-          type: "ADVERTISEMENT",
+          id:item.id,
 
-          videoUrl: item.advertisement.videoUrl,
+          type:"ADVERTISEMENT",
 
-          duration: item.duration ?? item.advertisement.duration,
 
-          order: item.order,
+          videoUrl:
+            item.advertisement.videoUrl,
+
+
+          duration:
+            item.duration ??
+            item.advertisement.duration,
+
+
+          order:
+            item.order,
+
+
         };
+
+
+
+
+
+
 
       case "ENTERTAINMENT":
-        if (!item.entertainment?.videoUrl) {
+
+
+        if(!item.entertainment?.videoUrl){
+
           return null;
+
         }
 
+
         return {
-          id: item.id,
 
-          type: "ENTERTAINMENT",
 
-          videoUrl: item.entertainment.videoUrl,
+          id:item.id,
 
-          duration: item.duration ?? item.entertainment.duration,
+          type:"ENTERTAINMENT",
 
-          order: item.order,
+
+          videoUrl:
+            item.entertainment.videoUrl,
+
+
+          duration:
+            item.duration ??
+            item.entertainment.duration,
+
+
+          order:
+            item.order,
+
+
         };
+
+
+
+
+
+
 
       case "NEWS":
-        if (!item.news?.videoUrl) {
+
+
+        if(!item.news?.videoUrl){
+
           return null;
+
         }
 
+
         return {
-          id: item.id,
 
-          type: "NEWS",
 
-          videoUrl: item.news.videoUrl,
+          id:item.id,
 
-          duration: item.duration,
+          type:"NEWS",
 
-          order: item.order,
+
+          videoUrl:
+            item.news.videoUrl,
+
+
+          duration:
+            item.duration,
+
+
+          order:
+            item.order,
+
+
         };
+
+
+
+
+
+
 
       case "STREAM":
-        if (!item.stream?.url) {
+
+
+        if(!item.stream?.url){
+
           return null;
+
         }
 
+
         return {
-          id: item.id,
 
-          type: "STREAM",
 
-          streamUrl: item.stream.url,
+          id:item.id,
 
-          duration: item.duration,
 
-          order: item.order,
+          type:"STREAM",
+
+
+          streamUrl:
+            item.stream.url,
+
+
+          duration:
+            item.duration,
+
+
+          order:
+            item.order,
+
+
         };
 
+
+
+
+
+
       default:
+
         return null;
+
     }
+
   }
+
+
 }

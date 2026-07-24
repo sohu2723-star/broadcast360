@@ -47,136 +47,218 @@ export class PlayoutManager {
   */
 
   private async playNext(
-    channelId: number,
-    streamKey: string,
-    offset: number,
-    onFinished: () => Promise<void>,
-  ): Promise<void> {
-    const queue = this.queues.get(channelId);
+  channelId: number,
+  streamKey: string,
+  offset: number,
+  onFinished: () => Promise<void>,
+): Promise<void> {
 
-    if (!queue) {
-      return;
-    }
+  const queue = this.queues.get(channelId);
 
-    const index = this.indexes.get(channelId) ?? 0;
+  if (!queue) {
+    return;
+  }
 
-    const item = queue[index];
+  const index = this.indexes.get(channelId) ?? 0;
 
-    if (!item) {
-      console.log("✅ PLAYLIST COMPLETE", channelId);
+  const item = queue[index];
 
-      await onFinished();
 
-      return;
-    }
+  if (!item) {
+    console.log("✅ PLAYLIST COMPLETE", channelId);
 
-    console.log("▶ PLAY ITEM", {
-      id: item.id,
-      type: item.type,
-      index,
-    });
+    await onFinished();
 
-    /*
+    return;
+  }
+
+
+  console.log("▶ PLAY ITEM", {
+    id: item.id,
+    type: item.type,
+    index,
+  });
+
+
+
+  /*
   ===============================
         STREAM ITEM
   ===============================
   */
 
-   /*
-===============================
-      NON-VOD ITEM
-===============================
-*/
+  if (item.type === "STREAM") {
 
-if (!item.videoUrl) {
-  console.log("⚠ Skip non-video item", item.type);
+    console.log(
+      "🔴 STREAM ITEM",
+      item.streamUrl
+    );
 
-  this.nextIndex(channelId);
 
-  return this.playNext(
-    channelId,
-    streamKey,
-    0,
-    onFinished,
-  );
-}
-    /*
+    // later SwitchManager handles live switching
+
+    this.nextIndex(channelId);
+
+    return this.playNext(
+      channelId,
+      streamKey,
+      0,
+      onFinished,
+    );
+  }
+
+
+
+  /*
   ===============================
         VOD ITEM
   ===============================
   */
 
-    const concatFile = path.join(
-      process.cwd(),
-      "tmp",
-      `channel-${channelId}.txt`,
+
+  if (!item.videoUrl) {
+
+    console.log(
+      "⚠ Missing video",
+      item.id
     );
 
-    const output =
-  `rtmp://127.0.0.1:1935/live/${streamKey}`;
 
-    const args: string[] = [
-      "-re",
+    this.nextIndex(channelId);
 
-      "-f",
-      "concat",
+    return this.playNext(
+      channelId,
+      streamKey,
+      0,
+      onFinished,
+    );
+  }
 
-      "-safe",
-      "0",
 
-      "-i",
-      concatFile,
+  const videoPath = path.join(
+    process.cwd(),
+    "public",
+    item.videoUrl
+  );
 
-      "-c:v",
-      "libx264",
 
-      "-preset",
-      "veryfast",
+  const output =
+    `rtmp://127.0.0.1:1935/live/${streamKey}`;
 
-      "-tune",
-      "zerolatency",
 
-      "-pix_fmt",
-      "yuv420p",
 
-      "-g",
-      "60",
+  const args: string[] = [
 
-      "-c:a",
-      "aac",
+    "-re",
 
-      "-ar",
-      "48000",
 
-      "-b:a",
-      "128k",
+    ...(offset > 0
+      ? ["-ss", String(offset)]
+      : []
+    ),
 
-      "-f",
-      "flv",
 
-      output,
-    ];
+    "-i",
+    videoPath,
 
-    console.log("🚀 START CONCAT VOD", {
-      id: item.id,
-      file: concatFile,
-    });
 
-    const ffmpegProcess = this.ffmpeg.start(channelId, args);
+    "-c:v",
+    "libx264",
 
-    this.processes.set(channelId, ffmpegProcess);
 
-    ffmpegProcess.once("close", async (code) => {
-      console.log("✅ CONCAT FINISHED", {
-        channelId,
-        code,
-      });
+    "-preset",
+    "veryfast",
+
+
+    "-tune",
+    "zerolatency",
+
+
+    "-pix_fmt",
+    "yuv420p",
+
+
+    "-g",
+    "60",
+
+
+    "-c:a",
+    "aac",
+
+
+    "-ar",
+    "48000",
+
+
+    "-b:a",
+    "128k",
+
+
+    "-f",
+    "flv",
+
+
+    output,
+  ];
+
+
+
+  console.log(
+    "🚀 START VOD",
+    {
+      id:item.id,
+      file:videoPath
+    }
+  );
+
+
+
+  const ffmpegProcess =
+    this.ffmpeg.start(
+      channelId,
+      args,
+    );
+
+
+
+  this.processes.set(
+    channelId,
+    ffmpegProcess
+  );
+
+
+
+  ffmpegProcess.once(
+    "close",
+    async(code)=>{
+
+      console.log(
+        "✅ ITEM FINISHED",
+        {
+          channelId,
+          id:item.id,
+          code
+        }
+      );
+
 
       this.processes.delete(channelId);
 
-      await onFinished();
-    });
-  }
+
+      this.nextIndex(channelId);
+
+
+
+      await this.playNext(
+        channelId,
+        streamKey,
+        0,
+        onFinished
+      );
+
+    }
+  );
+}
 
   /*
   ==================================

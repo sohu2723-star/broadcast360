@@ -3,7 +3,11 @@ import path from "path";
 
 import { PlaylistItemWithRelations } from "@/types/playlist";
 
+
 export class ConcatBuilderService {
+
+
+
   /*
   ==========================================
        CREATE FFMPEG CONCAT FILE
@@ -21,57 +25,141 @@ export class ConcatBuilderService {
   ==========================================
   */
 
+
   async build(
-    channelId: number,
-    items: PlaylistItemWithRelations[],
-  ): Promise<string> {
-    const folder = path.join(process.cwd(), "tmp", "concat");
+    channelId:number,
+    items:PlaylistItemWithRelations[],
+  ):Promise<string>{
 
-    if (!fs.existsSync(folder)) {
-      fs.mkdirSync(folder, {
-        recursive: true,
-      });
+
+
+    const folder =
+      path.join(
+        process.cwd(),
+        "tmp",
+        "concat",
+      );
+
+
+
+    if(!fs.existsSync(folder)){
+
+
+      fs.mkdirSync(
+        folder,
+        {
+          recursive:true,
+        }
+      );
+
+
     }
 
-    const concatFile = path.join(folder, `channel-${channelId}.txt`);
 
-    const files: string[] = [];
 
-    for (const item of items) {
-      const file = this.resolveItem(item);
 
-      if (!file) {
-        console.log("⚠ Skip item without video", {
-          id: item.id,
-          type: item.type,
-        });
+    const concatFile =
+      path.join(
+        folder,
+        `channel-${channelId}.txt`,
+      );
+
+
+
+    const files:string[] = [];
+
+
+
+    for(const item of items){
+
+
+      const file =
+        this.resolveItem(item);
+
+
+
+      if(!file){
+
+        console.log(
+          "⚠ Skip item without video",
+          {
+            id:item.id,
+            type:item.type,
+          }
+        );
 
         continue;
+
       }
 
-      if (!fs.existsSync(file)) {
-        console.log("❌ File not found", file);
+
+
+      if(!fs.existsSync(file)){
+
+
+        console.log(
+          "❌ File not found",
+          file,
+        );
+
 
         continue;
+
       }
 
-      files.push(`file '${file.replace(/\\/g, "/")}'`);
+
+
+      files.push(
+        `file '${file.replace(/\\/g,"/")}'`
+      );
+
+
     }
 
-    if (files.length === 0) {
-      throw new Error("No playable playlist items");
+
+
+
+    if(files.length === 0){
+
+
+      throw new Error(
+        "No playable playlist items",
+      );
+
+
     }
 
-    fs.writeFileSync(concatFile, files.join("\n"), "utf8");
 
-    console.log("✅ CONCAT READY", {
-      channelId,
-      count: files.length,
+
+
+    fs.writeFileSync(
       concatFile,
-    });
+      files.join("\n"),
+      "utf8",
+    );
+
+
+
+
+    console.log(
+      "✅ CONCAT READY",
+      {
+        channelId,
+        count:files.length,
+        concatFile,
+      }
+    );
+
+
 
     return concatFile;
+
   }
+
+
+
+
+
 
   /*
   ==========================================
@@ -79,42 +167,90 @@ export class ConcatBuilderService {
   ==========================================
   */
 
-  private resolveItem(item: PlaylistItemWithRelations): string | null {
-    let url: string | null = null;
 
-    switch (item.type) {
+  private resolveItem(
+    item:PlaylistItemWithRelations,
+  ):string|null{
+
+
+    let url:string|null = null;
+
+
+
+    switch(item.type){
+
+
       case "MOVIE":
-        url = item.movie?.videoUrl ?? null;
+
+        url =
+          item.movie?.videoUrl
+          ??
+          null;
 
         break;
+
+
 
       case "EPISODE":
-        url = item.episode?.videoUrl ?? null;
+
+        url =
+          item.episode?.videoUrl
+          ??
+          null;
 
         break;
+
+
 
       case "ADVERTISEMENT":
-        url = item.advertisement?.videoUrl ?? null;
+
+        url =
+          item.advertisement?.videoUrl
+          ??
+          null;
 
         break;
+
+
 
       case "ENTERTAINMENT":
-        url = item.entertainment?.videoUrl ?? null;
+
+        url =
+          item.entertainment?.videoUrl
+          ??
+          null;
 
         break;
+
+
 
       case "NEWS":
-        url = item.news?.videoUrl ?? null;
+
+        url =
+          item.news?.videoUrl
+          ??
+          null;
 
         break;
 
+
+
       default:
+
         return null;
+
     }
 
-    if (!url) {
+
+
+    if(!url){
+
       return null;
+
     }
+
+
+
 
     /*
       Database:
@@ -128,6 +264,15 @@ export class ConcatBuilderService {
 
     */
 
-    return path.join(process.cwd(), "public", url);
+
+    return path.join(
+      process.cwd(),
+      "public",
+      url,
+    );
+
+
   }
+
+
 }
