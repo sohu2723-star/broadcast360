@@ -9,7 +9,7 @@ export function getSeries() {
  */
 export function getSeriesById(
   id: number,
-  opts?: { skip: number; take: number }
+  opts?: { skip: number; take: number },
 ) {
   return prisma.series.findUnique({
     where: { id },
@@ -59,15 +59,19 @@ export async function getPaginatedSeries({
   const [data, total] = await prisma.$transaction([
     prisma.series.findMany({
       where: whereClause,
-      skip,
-      take: limit,
       include: {
+        episodes: {
+          orderBy: {
+            createdAt: "desc",
+          },
+          take: 1,
+          select: {
+            createdAt: true,
+          },
+        },
         _count: {
           select: { episodes: true },
         },
-      },
-      orderBy: {
-        id: "desc",
       },
     }),
     prisma.series.count({
@@ -75,7 +79,14 @@ export async function getPaginatedSeries({
     }),
   ]);
 
-  const formattedData = data.map((item) => ({
+  const sortedData = data.sort((a, b) => {
+    const latestA = a.episodes[0]?.createdAt ?? a.createdAt;
+    const latestB = b.episodes[0]?.createdAt ?? b.createdAt;
+
+    return new Date(latestB).getTime() - new Date(latestA).getTime();
+  });
+
+  const formattedData = sortedData.map((item) => ({
     id: item.id,
     title: item.title,
     genre: item.genre,
@@ -113,7 +124,7 @@ export function updateSeries(
     genre: string;
     releaseYear: number;
     thumbnail?: string; // optional for edit
-  }
+  },
 ) {
   return prisma.series.update({
     where: { id },

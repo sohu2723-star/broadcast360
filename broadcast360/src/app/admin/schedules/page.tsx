@@ -66,8 +66,8 @@ export default function SchedulesPage() {
   return (
     <div>
       {/* HEADER */}
-      <div className="flex justify-between items-center mb-8 gap-4">
-        <div className="flex gap-3 w-full max-w-2xl">
+      <div className="mb-8 flex items-center justify-between gap-4">
+        <div className="flex w-full max-w-2xl gap-3">
           <ScheduleSearch
             value={search}
             onChange={(value) => {
@@ -87,7 +87,7 @@ export default function SchedulesPage() {
 
         <Link
           href="/admin/schedules/create"
-          className="bg-[#106EE9] px-5 py-3 rounded-xl"
+          className="rounded-xl bg-[#106EE9] px-5 py-3"
         >
           + Add Schedule
         </Link>
@@ -99,11 +99,11 @@ export default function SchedulesPage() {
       {/* PAGINATION */}
       {/* PAGINATION */}
       {!loading && totalPages > 1 && (
-        <div className="mt-6 bg-[#0B1026] border border-white/10 rounded-xl px-5 py-4 flex items-center justify-between">
+        <div className="mt-6 flex items-center justify-between rounded-xl border border-white/10 bg-[#0B1026] px-5 py-4">
           {/* Page Info */}
           <div className="text-sm text-gray-400">
-            Page <span className="text-white font-semibold">{page}</span> of{" "}
-            <span className="text-white font-semibold">{totalPages}</span>
+            Page <span className="font-semibold text-white">{page}</span> of{" "}
+            <span className="font-semibold text-white">{totalPages}</span>
           </div>
 
           {/* Pagination */}
@@ -112,7 +112,7 @@ export default function SchedulesPage() {
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="px-4 py-2 rounded-lg bg-white/5 text-white hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed transition"
+              className="rounded-lg bg-white/5 px-4 py-2 text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
             >
               Previous
             </button>
@@ -125,7 +125,7 @@ export default function SchedulesPage() {
                 <button
                   key={pageNumber}
                   onClick={() => setPage(pageNumber)}
-                  className={`w-10 h-10 rounded-lg transition font-medium ${
+                  className={`h-10 w-10 rounded-lg font-medium transition ${
                     page === pageNumber
                       ? "bg-[#106EE9] text-white"
                       : "bg-white/5 text-gray-300 hover:bg-white/10"
@@ -140,7 +140,7 @@ export default function SchedulesPage() {
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="px-4 py-2 rounded-lg bg-white/5 text-white hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed transition"
+              className="rounded-lg bg-white/5 px-4 py-2 text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
             >
               Next
             </button>
