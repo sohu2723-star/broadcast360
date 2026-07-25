@@ -2,125 +2,57 @@ import { ScheduleWithRelations } from "@/types/schedule.types";
 import { PlaylistItemWithRelations } from "@/types/playlist";
 
 export interface CatchupResult {
+  itemIndex: number;
 
-  itemIndex:number;
-
-  offset:number;
-
+  offset: number;
 }
 
-
-
 export class ScheduleCatchupService {
-
-
-
   /*
   =====================================
       CALCULATE CURRENT PLAY POSITION
   =====================================
   */
 
-
-  calculate(
-    schedule:ScheduleWithRelations,
-    now:Date,
-  ):CatchupResult {
-
-
-
-    if(!schedule.playlist?.items?.length){
-
+  calculate(schedule: ScheduleWithRelations, now: Date): CatchupResult {
+    if (!schedule.playlist?.items?.length) {
       return {
+        itemIndex: 0,
 
-        itemIndex:0,
-
-        offset:0,
-
+        offset: 0,
       };
-
     }
-
-
 
     /*
     seconds since schedule start
     */
 
+    const elapsed = Math.floor(
+      (now.getTime() - new Date(schedule.startTime).getTime()) / 1000,
+    );
 
-    const elapsed =
-      Math.floor(
-        (
-          now.getTime()
-          -
-          new Date(
-            schedule.startTime
-          ).getTime()
-
-        ) / 1000
-      );
-
-
-
-    if(elapsed <= 0){
-
+    if (elapsed <= 0) {
       return {
+        itemIndex: 0,
 
-        itemIndex:0,
-
-        offset:0,
-
+        offset: 0,
       };
-
     }
-
-
-
 
     let currentTime = 0;
 
+    const items = [...schedule.playlist.items].sort(
+      (a, b) => a.order - b.order,
+    );
 
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
 
-    const items =
-      schedule.playlist.items
-      .sort(
-        (a,b)=>
-          a.order - b.order
-      );
+      const duration = item.duration ?? this.getDuration(item);
 
-
-
-
-
-    for(
-      let i=0;
-      i<items.length;
-      i++
-    ){
-
-
-
-      const item =
-        items[i];
-
-
-
-      const duration =
-        item.duration
-        ??
-        this.getDuration(item);
-
-
-
-      if(!duration){
-
+      if (!duration) {
         continue;
-
       }
-
-
-
-
 
       /*
       Current item
@@ -137,64 +69,27 @@ export class ScheduleCatchupService {
 
       */
 
-
-      if(
-        elapsed >= currentTime &&
-        elapsed < currentTime + duration
-      ){
-
-
+      if (elapsed >= currentTime && elapsed < currentTime + duration) {
         return {
+          itemIndex: i,
 
-
-          itemIndex:i,
-
-
-          offset:
-            elapsed - currentTime,
-
-
+          offset: elapsed - currentTime,
         };
-
-
       }
 
-
-
-
       currentTime += duration;
-
-
     }
-
-
-
-
 
     /*
     Playlist already finished
     */
 
-
     return {
+      itemIndex: items.length,
 
-
-      itemIndex:
-        items.length,
-
-
-      offset:0,
-
-
+      offset: 0,
     };
-
-
   }
-
-
-
-
-
 
   /*
   =====================================
@@ -202,28 +97,13 @@ export class ScheduleCatchupService {
   =====================================
   */
 
-
-  private getDuration(
-      item:PlaylistItemWithRelations,
-  ):number {
-
-
-
+  private getDuration(item: PlaylistItemWithRelations): number {
     return (
-
-      item.movie?.duration
-      ??
-      item.episode?.duration
-      ??
-      item.advertisement?.duration
-      ??
-      item.entertainment?.duration
-      ??
+      item.movie?.duration ??
+      item.episode?.duration ??
+      item.advertisement?.duration ??
+      item.entertainment?.duration ??
       0
-
     );
-
   }
-
-
 }

@@ -1,8 +1,8 @@
-import { ChildProcess } from "child_process";
 import path from "path";
 
 import { FFmpegManager } from "@/streaming/ffmpeg";
 import { ResolvedPlaylistItem } from "@/types/playlist";
+import { ChildProcess } from "child_process";
 
 export class PlayoutManager {
   private queues = new Map<number, ResolvedPlaylistItem[]>();
@@ -11,20 +11,21 @@ export class PlayoutManager {
 
   private processes = new Map<number, ChildProcess>();
 
-  constructor(private ffmpeg: FFmpegManager) {}
-
-  /*
-  ==================================
-        START PLAYOUT
-  ==================================
-  */
+  constructor(
+    private ffmpeg: FFmpegManager,
+    private onLiveRequested: (
+      channelId: number,
+      url: string,
+      streamKey: string,
+    ) => Promise<void>,
+  ) {}
 
   async start(
     channelId: number,
     items: ResolvedPlaylistItem[],
     streamKey: string,
-    startIndex: number = 0,
-    offset: number = 0,
+    startIndex = 0,
+    offset = 0,
     onFinished: () => Promise<void>,
   ): Promise<void> {
     console.log("▶ START PLAYOUT", {
@@ -40,231 +41,128 @@ export class PlayoutManager {
     await this.playNext(channelId, streamKey, offset, onFinished);
   }
 
-  /*
-  ==================================
-        PLAY NEXT ITEM
-  ==================================
-  */
-
   private async playNext(
-  channelId: number,
-  streamKey: string,
-  offset: number,
-  onFinished: () => Promise<void>,
-): Promise<void> {
+    channelId: number,
+    streamKey: string,
+    offset: number,
+    onFinished: () => Promise<void>,
+  ): Promise<void> {
+    const queue = this.queues.get(channelId);
 
-  const queue = this.queues.get(channelId);
-
-  if (!queue) {
-    return;
-  }
-
-  const index = this.indexes.get(channelId) ?? 0;
-
-  const item = queue[index];
-
-
-  if (!item) {
-    console.log("✅ PLAYLIST COMPLETE", channelId);
-
-    await onFinished();
-
-    return;
-  }
-
-
-  console.log("▶ PLAY ITEM", {
-    id: item.id,
-    type: item.type,
-    index,
-  });
-
-
-
-  /*
-  ===============================
-        STREAM ITEM
-  ===============================
-  */
-
-  if (item.type === "STREAM") {
-
-    console.log(
-      "🔴 STREAM ITEM",
-      item.streamUrl
-    );
-
-
-    // later SwitchManager handles live switching
-
-    this.nextIndex(channelId);
-
-    return this.playNext(
-      channelId,
-      streamKey,
-      0,
-      onFinished,
-    );
-  }
-
-
-
-  /*
-  ===============================
-        VOD ITEM
-  ===============================
-  */
-
-
-  if (!item.videoUrl) {
-
-    console.log(
-      "⚠ Missing video",
-      item.id
-    );
-
-
-    this.nextIndex(channelId);
-
-    return this.playNext(
-      channelId,
-      streamKey,
-      0,
-      onFinished,
-    );
-  }
-
-
-  const videoPath = path.join(
-    process.cwd(),
-    "public",
-    item.videoUrl
-  );
-
-
-  const output =
-    `rtmp://127.0.0.1:1935/live/${streamKey}`;
-
-
-
-  const args: string[] = [
-
-    "-re",
-
-
-    ...(offset > 0
-      ? ["-ss", String(offset)]
-      : []
-    ),
-
-
-    "-i",
-    videoPath,
-
-
-    "-c:v",
-    "libx264",
-
-
-    "-preset",
-    "veryfast",
-
-
-    "-tune",
-    "zerolatency",
-
-
-    "-pix_fmt",
-    "yuv420p",
-
-
-    "-g",
-    "60",
-
-
-    "-c:a",
-    "aac",
-
-
-    "-ar",
-    "48000",
-
-
-    "-b:a",
-    "128k",
-
-
-    "-f",
-    "flv",
-
-
-    output,
-  ];
-
-
-
-  console.log(
-    "🚀 START VOD",
-    {
-      id:item.id,
-      file:videoPath
+    if (!queue) {
+      return;
     }
-  );
 
+    const index = this.indexes.get(channelId) ?? 0;
 
+    const item = queue[index];
 
-  const ffmpegProcess =
-    this.ffmpeg.start(
-      channelId,
-      args,
-    );
+    if (!item) {
+      console.log("✅ PLAYLIST COMPLETE", channelId);
 
+      await onFinished();
 
+      return;
+    }
 
-  this.processes.set(
-    channelId,
-    ffmpegProcess
-  );
+    console.log("▶ PLAY ITEM", {
+      id: item.id,
+      type: item.type,
+      index,
+    });
 
+    if (item.type === "STREAM") {
+      console.log("🔴 STREAM ITEM", {
+        id: item.id,
+        url: item.streamUrl,
+      });
 
+      if (!item.streamUrl) {
+        console.log("⚠ STREAM URL missing", item.id);
 
-  ffmpegProcess.once(
-    "close",
-    async(code)=>{
+        this.nextIndex(channelId);
 
-      console.log(
-        "✅ ITEM FINISHED",
-        {
-          channelId,
-          id:item.id,
-          code
-        }
-      );
+        return this.playNext(channelId, streamKey, 0, onFinished);
+      }
 
+      await this.onLiveRequested(channelId, item.streamUrl, streamKey);
 
-      this.processes.delete(channelId);
+      return;
+    }
 
+    if (!item.videoUrl) {
+      console.log("⚠ Missing video", item.id);
 
       this.nextIndex(channelId);
 
-
-
-      await this.playNext(
-        channelId,
-        streamKey,
-        0,
-        onFinished
-      );
-
+      return this.playNext(channelId, streamKey, 0, onFinished);
     }
-  );
-}
 
-  /*
-  ==================================
-          NEXT INDEX
-  ==================================
-  */
+    const videoPath = path.join(process.cwd(), "public", item.videoUrl);
+
+    const output = `rtmp://127.0.0.1:1935/vod/${channelId}`;
+
+    const args = [
+      "-re",
+
+      ...(offset > 0 ? ["-ss", String(offset)] : []),
+
+      "-i",
+      videoPath,
+
+      "-c:v",
+      "libx264",
+
+      "-preset",
+      "veryfast",
+
+      "-tune",
+      "zerolatency",
+
+      "-pix_fmt",
+      "yuv420p",
+
+      "-g",
+      "60",
+
+      "-c:a",
+      "aac",
+
+      "-ar",
+      "48000",
+
+      "-b:a",
+      "128k",
+
+      "-f",
+      "flv",
+
+      output,
+    ];
+
+    console.log("🚀 START VOD", {
+      id: item.id,
+      file: videoPath,
+    });
+
+    const ffmpegProcess = this.ffmpeg.start(channelId,"SOURCE", args);
+
+    this.processes.set(channelId, ffmpegProcess);
+
+    ffmpegProcess.once("close", async (code) => {
+      console.log("✅ ITEM FINISHED", {
+        channelId,
+        id: item.id,
+        code,
+      });
+
+      this.processes.delete(channelId);
+
+      this.nextIndex(channelId);
+
+      await this.playNext(channelId, streamKey, 0, onFinished);
+    });
+  }
 
   private nextIndex(channelId: number) {
     const current = this.indexes.get(channelId) ?? 0;
@@ -272,14 +170,8 @@ export class PlayoutManager {
     this.indexes.set(channelId, current + 1);
   }
 
-  /*
-  ==================================
-             STOP
-  ==================================
-  */
-
-  async stop(channelId: number): Promise<void> {
-    await this.ffmpeg.stop(channelId);
+  async stop(channelId: number) {
+    await this.ffmpeg.stop(channelId, "SOURCE");
 
     this.queues.delete(channelId);
 
@@ -290,13 +182,7 @@ export class PlayoutManager {
     console.log("🛑 PLAYOUT STOP", channelId);
   }
 
-  /*
-  ==================================
-             STATUS
-  ==================================
-  */
-
-  isRunning(channelId: number): boolean {
-    return this.processes.has(channelId);
+  isRunning(channelId: number) {
+    return this.ffmpeg.isRunning(channelId);
   }
 }

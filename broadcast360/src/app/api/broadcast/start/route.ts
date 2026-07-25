@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { broadcast } from "@/services/broadcast-container";
+import { scheduler } from "@/services/scheduler-container";
 import { ScheduleRepository } from "@/repositories/schedule.repository";
 
 export async function POST(request: Request) {
@@ -28,22 +29,31 @@ export async function POST(request: Request) {
       );
     }
 
+
     /*
     ==========================
        CHECK CURRENT SCHEDULE
-       BY CURRENT TIME
     ==========================
     */
 
     const now = new Date();
 
-    const schedule = await ScheduleRepository.findLiveSchedule(channelId, now);
+    const schedule =
+      await ScheduleRepository.findLiveSchedule(
+        channelId,
+        now,
+      );
 
-    console.log("🔎 CURRENT SCHEDULE CHECK", {
-      channelId,
-      scheduleId: schedule?.id ?? null,
-      time: now,
-    });
+
+    console.log(
+      "🔎 CURRENT SCHEDULE CHECK",
+      {
+        channelId,
+        scheduleId: schedule?.id ?? null,
+        time: now,
+      }
+    );
+
 
     /*
     ==========================
@@ -51,7 +61,22 @@ export async function POST(request: Request) {
     ==========================
     */
 
-    await broadcast.start(schedule, channelId);
+    await broadcast.start(
+      schedule,
+      channelId,
+    );
+
+
+    /*
+    ==========================
+       START SCHEDULER
+    ==========================
+    */
+
+    scheduler.start(
+      channelId,
+    );
+
 
     /*
     ==========================
@@ -59,24 +84,38 @@ export async function POST(request: Request) {
     ==========================
     */
 
-    return NextResponse.json({
-      success: true,
+    return NextResponse.json(
+      {
+        success: true,
 
-      channelId,
+        channelId,
 
-      schedule: schedule?.id ?? null,
+        schedule:
+          schedule?.id ?? null,
 
-      mode: schedule ? "SCHEDULE" : "FALLBACK",
-    });
-  } catch (error) {
-    console.error("❌ Broadcast start failed", error);
+        mode:
+          schedule
+            ? "SCHEDULE"
+            : "FALLBACK",
+      }
+    );
+
+
+  } catch(error) {
+
+    console.error(
+      "❌ Broadcast start failed",
+      error,
+    );
+
 
     return NextResponse.json(
       {
-        error: "Broadcast start failed",
+        error:
+          "Broadcast start failed",
       },
       {
-        status: 500,
+        status:500,
       },
     );
   }

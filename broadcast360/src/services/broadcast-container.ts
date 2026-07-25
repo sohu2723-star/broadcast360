@@ -1,38 +1,84 @@
 import { BroadcastService } from "./broadcast.service";
 
+import { FFmpegManager } from "@/streaming/ffmpeg";
+
 import { SwitchManager } from "@/managers/switch-manager";
 import { PlayoutManager } from "@/managers/playout-manager";
-import { FFmpegManager } from "@/streaming/ffmpeg";
 import { LiveManager } from "@/managers/live-manager";
+import { PreloadManager } from "@/managers/preload-manager";
 
-
-// ==========================
-// SINGLETON SERVICES
-// ==========================
+/*
+=========================
+ SINGLETON INSTANCES
+=========================
+*/
 
 const ffmpeg = new FFmpegManager();
 
-const playout = new PlayoutManager(
-  ffmpeg
-);
+const preload = new PreloadManager();
 
 const live = new LiveManager();
 
+/*
+=========================
+ CREATE SWITCH LATER
+=========================
+*/
 
-const switcher = new SwitchManager(
+let switchManager: SwitchManager | null = null;
+
+/*
+=========================
+ PLAYOUT
+=========================
+*/
+
+const playout = new PlayoutManager(
   ffmpeg,
-  playout,
-  live
+
+  async (channelId, url, streamKey) => {
+    if (!switchManager) {
+      console.log("⚠ SwitchManager not ready");
+
+      return;
+    }
+
+    await switchManager.switchToLIVE(
+      channelId,
+
+      streamKey,
+    );
+  },
 );
 
+/*
+=========================
+ SWITCH MANAGER
+=========================
+*/
 
-// ==========================
-// BROADCAST INSTANCE
-// ==========================
+switchManager = new SwitchManager(
+  ffmpeg,
 
-export const broadcast =
-  new BroadcastService(
-    switcher,
-    playout,
-    live
-  );
+  playout,
+
+  live,
+
+  preload,
+);
+
+/*
+=========================
+ BROADCAST SERVICE
+=========================
+*/
+
+export const broadcast = new BroadcastService(
+  switchManager,
+
+  playout,
+
+  live,
+);
+
+export { ffmpeg, playout, live, preload, switchManager };

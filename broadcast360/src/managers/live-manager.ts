@@ -16,7 +16,7 @@ export class LiveManager {
       return existing;
     }
 
-    const output = `rtmp://127.0.0.1:1935/live/${streamKey}`;
+    const output = `rtmp://127.0.0.1:1935/camera/${channelId}`;
 
     const args = [
       "-i",
