@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
 
 import PlaybackLayout from "@/components/entertainment-playback/PlaybackLayout";
-import { getEntertainments } from "@/services/entertainment.service";
 
 import type { Entertainment } from "@/types/entertainment";
+
 
 interface PageProps {
   params: Promise<{
@@ -11,39 +11,71 @@ interface PageProps {
   }>;
 }
 
+
+
 export default async function EntertainmentPlaybackPage({
   params,
 }: PageProps) {
+
+
   const { id } = await params;
 
-  const entertainments: Entertainment[] =
-    await getEntertainments();
 
-  // Find exact entertainment by entertainmentKey
-  const entertainment = entertainments.find(
-    (item) => item.entertainmentKey === id,
-  );
 
-  if (!entertainment) {
-    notFound();
-  }
-
-  // Same category related entertainments
-  const relatedEntertainments =
-    entertainments.filter(
-      (item) =>
-        item.entertainmentKey !==
-          entertainment.entertainmentKey &&
-        item.category ===
-          entertainment.category,
+  const response =
+    await fetch(
+      `http://localhost:3000/api/user-portal/entertainments/${id}`,
+      {
+        cache: "no-store",
+      }
     );
 
+
+
+  if (!response.ok) {
+
+    notFound();
+
+  }
+
+
+
+  const data =
+    await response.json();
+
+
+
+
+  const entertainment: Entertainment =
+    data.currentItem;
+
+
+
+  const playlistItems: Entertainment[] =
+    data.items;
+
+
+
+  const relatedEntertainments: Entertainment[] =
+    data.relatedEntertainments || [];
+
+
+
+
   return (
+
     <PlaybackLayout
+
       entertainment={entertainment}
+
+      playlistItems={playlistItems}
+
       relatedEntertainments={
         relatedEntertainments
       }
+
     />
+
   );
+
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 
 import type { Entertainment } from "@/types/entertainment";
@@ -7,18 +8,23 @@ import type { Entertainment } from "@/types/entertainment";
 import VideoPlayer from "./VideoPlayer";
 import EntertainmentMetadata from "./EntertainmentMetadata";
 import RelatedEntertainments from "./RelatedEntertainments";
+import PlaylistParts from "./PlaylistParts";
 
 
 interface Props {
   entertainment: Entertainment;
+  playlistItems: Entertainment[];
   relatedEntertainments: Entertainment[];
 }
 
-
 export default function PlaybackLayout({
   entertainment,
+  playlistItems,
   relatedEntertainments,
 }: Props) {
+
+  const [currentEntertainment, setCurrentEntertainment] =
+  useState(entertainment);
 
   return (
     <main className="min-h-screen bg-[#010312] text-white">
@@ -44,14 +50,14 @@ export default function PlaybackLayout({
 
 
             <VideoPlayer
-              entertainment={entertainment}
+               entertainment={currentEntertainment}
             />
 
 
             <div className="mt-5 border-t border-white/10 pt-5">
 
               <EntertainmentMetadata
-                entertainment={entertainment}
+                 entertainment={currentEntertainment}
               />
 
             </div>
@@ -63,24 +69,29 @@ export default function PlaybackLayout({
 
           {/* RIGHT RELATED */}
 
-          <div className="rounded-xl border border-[#106EE9]/20 bg-[#0B1026] p-4">
+         {/* RIGHT PLAYLIST PARTS */}
 
+<div className="rounded-xl border border-[#106EE9]/20 bg-[#0B1026] p-4">
 
-            <h2 className="mb-4 text-lg font-bold">
-              👀 Related Entertainments
-            </h2>
+  <h2 className="mb-4 text-lg font-bold">
+    🎬 Playlist Parts
+  </h2>
 
+ <PlaylistParts
+  entertainments={playlistItems}
+  onSelect={setCurrentEntertainment}
+/>
 
-            <RelatedEntertainments
-              entertainments={relatedEntertainments}
-            />
-
-
-          </div>
+</div>
 
 
         </div>
-
+        
+        <RelatedEntertainments
+          entertainments={
+            relatedEntertainments
+          }
+        />
 
       </div>
 

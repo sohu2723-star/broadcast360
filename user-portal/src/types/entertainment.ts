@@ -1,4 +1,5 @@
 export interface Entertainment {
+
   id: number;
 
   title: string;
@@ -15,17 +16,30 @@ export interface Entertainment {
 
   releaseYear?: number | null;
 
-  createdAt: string | Date;
+  createdAt?: string | Date;
 
+
+  // Playlist information
+  playlistId?: number;
+
+  playlistName?: string;
+
+
+  // Channel information
   channelId?: number;
 
   channelName?: string;
 
+
+  // Schedule information
   scheduleId?: number;
 
   scheduleStart?: string;
 
   scheduleEnd?: string | null;
 
+
+  // Old entertainment detail key
   entertainmentKey?: string;
+
 }

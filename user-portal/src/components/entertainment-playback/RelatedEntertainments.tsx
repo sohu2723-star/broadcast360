@@ -1,155 +1,108 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 
 import type { Entertainment } from "@/types/entertainment";
 
 
-function formatDuration(seconds:number){
-
-  if(!seconds || seconds <= 0)
-    return "-";
-
-
-  const minutes =
-    Math.floor(seconds / 60);
-
-  const sec =
-    seconds % 60;
-
-
-  return `${minutes}m ${sec}s`;
+interface Props {
+  entertainments: Entertainment[];
 }
-
-
 
 
 export default function RelatedEntertainments({
   entertainments,
-}:{
-  entertainments: Entertainment[];
-}){
+}: Props) {
 
 
-  const related =
-    Array.from(
-      new Map(
-        entertainments.map(
-          (item)=>[
-            item.id,
-            item
-          ]
-        )
-      ).values()
-    );
-
-
-
-  if(!related.length){
-
-    return (
-
-      <div className="rounded-xl border border-[#106EE9]/20 bg-[#0B1026] p-3 text-center text-xs text-gray-400">
-
-        No related entertainments found.
-
-      </div>
-
-    );
-
-  }
-
+  if (!entertainments.length) return null;
 
 
   return (
 
-    <div className="space-y-2">
+    <section className="mt-12">
+
+      <h2 className="mb-6 text-2xl font-bold text-white">
+        You may also like this
+      </h2>
 
 
-      {related.map((item)=>(
-        
-
-        <Link
-
-          key={item.id}
-
-          href={`/entertainments/${item.entertainmentKey}`}
-
-          className="group flex h-[72px] gap-2 rounded-lg border border-white/10 bg-[#010312] p-2 hover:border-[#106EE9]"
-
-        >
+      <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
 
 
-          <div className="relative h-14 w-20 overflow-hidden rounded-md bg-black">
+        {entertainments.map((item) => (
 
+          <Link
+            key={item.id}
+            href={`/entertainments/${item.id}`}
+            className="group overflow-hidden rounded-2xl bg-zinc-900"
+          >
 
-            {item.thumbnail ? (
+            <div className="relative aspect-[2/3]">
+
 
               <Image
 
-                src={item.thumbnail}
+                src={
+                  item.thumbnail ||
+                  "/images/no-image.png"
+                }
 
                 alt={item.title}
 
                 fill
 
-                className="object-cover"
-
                 unoptimized
+
+                className="object-cover transition duration-500 group-hover:scale-105"
 
               />
 
-            ):(
-              <div className="flex h-full items-center justify-center text-xs text-gray-500">
 
-                🎬
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+
+
+              <div className="absolute bottom-0 left-0 right-0 p-5">
+
+
+                <h3 className="line-clamp-2 text-xl font-bold text-white">
+
+                  {item.title}
+
+                </h3>
+
+
+                <p className="mt-3 text-sm text-gray-300">
+
+                  {item.category || "Entertainment"}
+
+                </p>
+
+
+                <p className="text-sm text-gray-400">
+
+                  {item.releaseYear ?? "-"}
+
+                </p>
+
 
               </div>
-            )}
 
 
-          </div>
+            </div>
 
 
+          </Link>
+
+        ))}
 
 
-          <div className="min-w-0 flex-1">
+      </div>
 
 
-            <h3 className="truncate text-xs font-bold">
-
-              {item.title}
-
-            </h3>
-
-
-
-            <p className="text-[10px] text-gray-400">
-
-              🎭 {item.category || "Entertainment"}
-
-            </p>
-
-
-
-            <p className="text-[10px] text-gray-500">
-
-              ⏱ {formatDuration(item.duration)}
-
-            </p>
-
-
-          </div>
-
-
-        </Link>
-
-
-      ))}
-
-
-    </div>
+    </section>
 
   );
+
 }

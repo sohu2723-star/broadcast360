@@ -22,8 +22,8 @@ export default function EntertainmentSearch({
         type="search"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Search by title or category..."
-        className="w-full rounded-2xl border border-slate-700 bg-[#0F172A] py-4 pl-12 pr-4 text-white placeholder:text-slate-400 outline-none transition-all duration-300 focus:border-[#106EE9] focus:ring-2 focus:ring-[#106EE9]/30"
+        placeholder="Search entertainment..."
+      className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 pl-12 text-white outline-none focus:border-red-500"
       />
     </div>
   );

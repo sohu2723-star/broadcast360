@@ -42,15 +42,13 @@ function formatDuration(seconds:number){
 export default function EntertainmentCard({
   entertainment,
 }:Props){
+  
 
 return (
 
 <Link
-
-href={`/entertainments/${entertainment.entertainmentKey}`}
-
-className="group relative block h-[380px] w-[250px] flex-shrink-0 overflow-hidden rounded-xl bg-zinc-900"
-
+  href={`/entertainments/${entertainment.playlistId}`}
+  className="group relative block h-[380px] w-full overflow-hidden rounded-xl bg-zinc-900"
 >
 
 
