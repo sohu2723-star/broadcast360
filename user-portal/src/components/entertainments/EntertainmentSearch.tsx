@@ -23,8 +23,7 @@ export default function EntertainmentSearch({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Search entertainment..."
-      className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 pl-12 text-white outline-none focus:border-red-500"
-      />
+className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-3 pl-12 text-white outline-none focus:border-[#106EE9]"      />
     </div>
   );
 }
