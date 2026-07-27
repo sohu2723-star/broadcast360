@@ -49,7 +49,7 @@ export default function CreateEpisodePage() {
     <div>
       <h1 className="mb-8 text-3xl font-bold text-white">Create Episode</h1>
 
-      <EpisodeForm onSubmit={handleSubmit} />
+      <EpisodeForm isEdit={false} onSubmit={handleSubmit} />
     </div>
   );
 }
