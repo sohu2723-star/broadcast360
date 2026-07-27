@@ -10,27 +10,27 @@ export const ScheduleRepository = {
   },
 
   findById: async (id: number) => {
-  return prisma.schedule.findUnique({
-    where: { id },
-    include: {
-      channel: true,
-      playlist: {
-        include: {
-          items: {
-            include: {
-              movie: true,
-              episode: true,
-              advertisement: true,
-              entertainment: true,
-              news: true,
-              stream: true,
+    return prisma.schedule.findUnique({
+      where: { id },
+      include: {
+        channel: true,
+        playlist: {
+          include: {
+            items: {
+              include: {
+                movie: true,
+                episode: true,
+                advertisement: true,
+                entertainment: true,
+                news: true,
+                stream: true,
+              },
             },
           },
         },
       },
-    },
-  });
-},
+    });
+  },
 
   findByChannel: async (channelId: number) => {
     return prisma.schedule.findMany({
@@ -58,8 +58,12 @@ export const ScheduleRepository = {
         search
           ? {
               OR: [
-                { channel: { name: { contains: search, mode: "insensitive" } } },
-                { playlist: { name: { contains: search, mode: "insensitive" } } },
+                {
+                  channel: { name: { contains: search, mode: "insensitive" } },
+                },
+                {
+                  playlist: { name: { contains: search, mode: "insensitive" } },
+                },
               ],
             }
           : {},
@@ -107,7 +111,7 @@ export const ScheduleRepository = {
       playlistId: number;
       startTime: Date;
       endTime: Date | null;
-    }
+    },
   ) => {
     return prisma.schedule.update({
       where: { id },
@@ -123,196 +127,189 @@ export const ScheduleRepository = {
     });
   },
 
-/**
- * Get schedules around current time
- */
+  /**
+   * Get schedules around current time
+   */
   getSchedulesAroundTime: async (now: Date) => {
-  return prisma.schedule.findMany({
-    where: {
-      startTime: {
-        lte: new Date(now.getTime() + 60 * 60 * 1000),
+    return prisma.schedule.findMany({
+      where: {
+        startTime: {
+          lte: new Date(now.getTime() + 60 * 60 * 1000),
+        },
       },
-    },
-    include: {
-      playlist: {
-        include: {
-          items: {
-            orderBy: {
-              order: "asc",
-            },
-            include: {
-              movie: true,
-              episode: true,
-              advertisement: true,
-              entertainment: true,
-              news: true,
-              stream: true,
+      include: {
+        playlist: {
+          include: {
+            items: {
+              orderBy: {
+                order: "asc",
+              },
+              include: {
+                movie: true,
+                episode: true,
+                advertisement: true,
+                entertainment: true,
+                news: true,
+                stream: true,
+              },
             },
           },
         },
       },
-    },
-  });
-},
+    });
+  },
 
-  findLiveSchedule: async (
-  channelId: number,
-  now: Date
-) => {
-
-  console.log("🔎 Checking schedule", {
-    channelId,
-    now: now.toISOString(),
-  });
-
-
-  const schedule = await prisma.schedule.findFirst({
-
-    where: {
-
+  findLiveSchedule: async (channelId: number, now: Date) => {
+    console.log("🔎 Checking live schedule", {
       channelId,
+      now: now.toISOString(),
+    });
 
+    const schedule = await prisma.schedule.findFirst({
+      where: {
+        channelId,
 
-      // only active schedules
-      status: {
-        in: [
-          "SCHEDULED",
-          "LIVE",
+        AND: [
+          {
+            startTime: {
+              lte: now,
+            },
+          },
+
+          {
+            OR: [
+              {
+                endTime: null,
+              },
+
+              {
+                endTime: {
+                  gt: now,
+                },
+              },
+            ],
+          },
+
+          {
+            status: {
+              notIn: ["COMPLETED", "CANCELLED"],
+            },
+          },
         ],
       },
 
-
-      // schedule already started
-      startTime: {
-        lte: now,
-      },
-
-
-      // schedule not finished
-      OR: [
+      orderBy: [
         {
-          endTime: null,
-        },
-        {
-          endTime: {
-            gt: now,
-          },
+          startTime: "desc",
         },
       ],
-    },
 
+      include: {
+        channel: true,
 
-    orderBy: {
-      startTime: "desc",
-    },
+        playlist: {
+          include: {
+            items: {
+              orderBy: {
+                order: "asc",
+              },
 
+              include: {
+                movie: true,
 
-    include: {
+                episode: true,
 
-      playlist: {
+                advertisement: true,
 
-        include: {
+                entertainment: true,
 
-          items: {
+                news: true,
 
-            orderBy: {
-              order: "asc",
+                stream: true,
+              },
             },
-
-
-            include: {
-
-              movie: true,
-
-              episode: true,
-
-              advertisement: true,
-
-              entertainment: true,
-
-              news: true,
-
-              stream: true,
-
-            },
-
           },
-
         },
-
       },
+    });
 
-    },
+    if (!schedule) {
+      console.log("📅 No active schedule");
 
-  });
+      return null;
+    }
 
+    console.log("📺 Active schedule", {
+      id: schedule.id,
 
+      status: schedule.status,
 
-  console.log(
-    "📅 Schedule result:",
-    schedule
-      ? {
+      playlist: schedule.playlist?.name,
+    });
+
+    /*
+================================
+ AUTO MARK LIVE
+================================
+*/
+
+    if (schedule.status === "SCHEDULED") {
+      await prisma.schedule.update({
+        where: {
           id: schedule.id,
-          status: schedule.status,
-          startTime: schedule.startTime,
-          endTime: schedule.endTime,
-          playlist: schedule.playlist?.name,
-        }
-      : null
-  );
+        },
 
+        data: {
+          status: "LIVE",
+        },
+      });
+    }
 
-  return schedule;
+    return schedule;
+  },
 
-},
+  findNextSchedule: async (channelId: number, now: Date) => {
+    return prisma.schedule.findFirst({
+      where: {
+        channelId,
 
-findNextSchedule: async (
-  channelId: number,
-  now: Date,
-) => {
-  return prisma.schedule.findFirst({
-    where: {
-      channelId,
+        status: "SCHEDULED",
 
-      status: {
-        in: ["SCHEDULED", "LIVE"],
+        startTime: {
+          gt: now,
+        },
       },
 
-      startTime: {
-        gt: now,
+      orderBy: {
+        startTime: "asc",
       },
-    },
 
-    orderBy: {
-      startTime: "asc",
-    },
+      include: {
+        playlist: {
+          include: {
+            items: {
+              orderBy: {
+                order: "asc",
+              },
 
-    include: {
-      playlist: {
-        include: {
-          items: {
-            orderBy: {
-              order: "asc",
-            },
-            include: {
-              movie: true,
-              episode: true,
-              advertisement: true,
-              entertainment: true,
-              news: true,
-              stream: true,
+              include: {
+                movie: true,
+                episode: true,
+                advertisement: true,
+                entertainment: true,
+                news: true,
+                stream: true,
+              },
             },
           },
         },
       },
-    },
-  });
-},
-
+    });
+  },
 
   updateStatus: async (
     id: number,
-    status: "SCHEDULED" | "LIVE" | "COMPLETED" | "CANCELLED"
+    status: "SCHEDULED" | "LIVE" | "COMPLETED" | "CANCELLED",
   ) => {
     return prisma.schedule.update({
       where: {
@@ -323,6 +320,4 @@ findNextSchedule: async (
       },
     });
   },
-
-
 };

@@ -157,6 +157,8 @@ export default function EditEntertainmentPage() {
 
             formData.append("releaseYear", String(form.releaseYear));
 
+            formData.append("duration", String(form.duration));
+
             if (form.video) {
               formData.append("video", form.video);
             }

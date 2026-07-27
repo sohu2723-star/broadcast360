@@ -10,6 +10,7 @@ export default function CreateEntertainmentPage() {
 
   const [message, setMessage] = useState("");
 
+
   const [messageType, setMessageType] =
     useState<"success" | "error" | "">("");
       const [titleError, setTitleError] = useState("");
@@ -22,6 +23,7 @@ export default function CreateEntertainmentPage() {
       formData.append("title", data.title);
       formData.append("description", data.description);
       formData.append("category", data.category);
+
       formData.append(
         "releaseYear",
         String(data.releaseYear)
@@ -33,6 +35,7 @@ export default function CreateEntertainmentPage() {
       );
 
 
+
       if (data.video instanceof File) {
         formData.append("video", data.video);
       }
@@ -40,7 +43,6 @@ export default function CreateEntertainmentPage() {
       if (data.thumbnail instanceof File) {
         formData.append("thumbnail", data.thumbnail);
       }
-
 
       const res = await fetch("/api/entertainments", {
         method: "POST",
@@ -186,3 +188,4 @@ export default function CreateEntertainmentPage() {
     </div>
   );
 }
+

@@ -11,16 +11,12 @@ export async function GET(request: NextRequest, context: Context) {
   try {
     const { id } = await context.params;
 
-    // movieKey format:
-    // movieId-channelId
-    // example: 10-2
+    const playlistItemId = Number(id);
 
-    const movieId = Number(id.split("-")[0]);
-
-    if (Number.isNaN(movieId)) {
+    if (Number.isNaN(playlistItemId)) {
       return NextResponse.json(
         {
-          message: "Invalid movie id",
+          message: "Invalid playlist item id",
         },
         {
           status: 400,
@@ -28,35 +24,33 @@ export async function GET(request: NextRequest, context: Context) {
       );
     }
 
-    const movie = await prisma.movie.findUnique({
+    const playlistItem = await prisma.playlistItem.findUnique({
       where: {
-        id: movieId,
+        id: playlistItemId,
       },
 
       include: {
-        playlistItems: {
+        movie: true,
+
+        playlist: {
           include: {
-            playlist: {
+            items: {
+              where: {
+                type: "MOVIE",
+              },
+
               include: {
-                schedules: {
-                  include: {
-                    channel: true,
-                  },
-                },
+                movie: true,
+              },
 
-                items: {
-                  where: {
-                    type: "MOVIE",
-                  },
+              orderBy: {
+                order: "asc",
+              },
+            },
 
-                  include: {
-                    movie: true,
-                  },
-
-                  orderBy: {
-                    order: "asc",
-                  },
-                },
+            schedules: {
+              include: {
+                channel: true,
               },
             },
           },
@@ -64,7 +58,7 @@ export async function GET(request: NextRequest, context: Context) {
       },
     });
 
-    if (!movie) {
+    if (!playlistItem || !playlistItem.movie) {
       return NextResponse.json(
         {
           message: "Movie not found",
@@ -75,21 +69,23 @@ export async function GET(request: NextRequest, context: Context) {
       );
     }
 
-    const playlist = movie.playlistItems[0]?.playlist;
+    const movie = playlistItem.movie;
 
-    const schedule = playlist?.schedules[0];
+    const schedule = playlistItem.playlist?.schedules[0];
 
-    // Playlist Part 1,2,3
+    // =========================
+    // PLAYLIST ONLY
+    // =========================
 
     const playlistMovies =
-      playlist?.items
+      playlistItem.playlist?.items
 
         .filter((item) => item.movie !== null)
 
         .map((item) => ({
           id: item.movie!.id,
 
-          movieKey: `${item.movie!.id}-${schedule?.channel.id}`,
+          movieKey: String(item.movie!.id),
 
           title: item.movie!.title,
 
@@ -122,37 +118,11 @@ export async function GET(request: NextRequest, context: Context) {
           channelName: schedule?.channel.name ?? null,
         })) ?? [];
 
-    // Related movies same channel only
-
-    const playlistIds = playlistMovies.map((item) => item.id);
-
-    const relatedMovies = await prisma.movie.findMany({
-      where: {
-        id: {
-          notIn: playlistIds,
-        },
-
-        playlistItems: {
-          some: {
-            playlist: {
-              schedules: {
-                some: {
-                  channelId: schedule?.channel.id,
-                },
-              },
-            },
-          },
-        },
-      },
-
-      take: 10,
-    });
-
     return NextResponse.json({
       movie: {
         id: movie.id,
 
-        movieKey: `${movie.id}-${schedule?.channel.id}`,
+        movieKey: String(movie.id),
 
         title: movie.title,
 
@@ -174,45 +144,27 @@ export async function GET(request: NextRequest, context: Context) {
 
         releaseYear: movie.releaseYear,
 
+        playlistId: playlistItem.playlistId,
+
+        playlistItemId: playlistItem.id,
+
+        playlistOrder: playlistItem.order,
+
         channelId: schedule?.channel.id ?? null,
 
         channelName: schedule?.channel.name ?? null,
       },
 
+      // Part 1, Part 2, Part 3 only
+
       playlist: playlistMovies,
-
-      relatedMovies: relatedMovies.map((item) => ({
-        id: item.id,
-
-        movieKey: `${item.id}-${schedule?.channel.id}`,
-
-        title: item.title,
-
-        description: item.description,
-
-        genre: item.genre,
-
-        thumbnail: item.thumbnail
-          ? `http://localhost:3000${item.thumbnail}`
-          : null,
-
-        videoUrl: item.videoUrl,
-
-        duration: item.duration,
-
-        releaseYear: item.releaseYear,
-
-        channelId: schedule?.channel.id ?? null,
-
-        channelName: schedule?.channel.name ?? null,
-      })),
     });
   } catch (error) {
-    console.error("DETAIL MOVIE ERROR", error);
+    console.error("WATCH MOVIE API ERROR:", error);
 
     return NextResponse.json(
       {
-        message: "Failed fetch movie",
+        message: "Failed to load video",
       },
       {
         status: 500,

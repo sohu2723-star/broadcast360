@@ -1,13 +1,11 @@
-export interface Movie {
+export interface Entertainment {
   id: number;
-
-  movieKey: string;
 
   title: string;
 
   description?: string | null;
 
-  genre?: string | null;
+  category?: string | null;
 
   thumbnail?: string | null;
 
@@ -17,32 +15,17 @@ export interface Movie {
 
   releaseYear?: number | null;
 
-  createdAt?: string | Date;
-
-
-  // Channel
+  createdAt: string | Date;
 
   channelId?: number;
 
   channelName?: string;
-
-
-
-  // Playlist
-
-  playlistId?: number;
-
-  playlistItemId?: number;
-
-  playlistOrder?: number;
-
-
-
-  // Schedule
 
   scheduleId?: number;
 
   scheduleStart?: string;
 
   scheduleEnd?: string | null;
+
+  entertainmentKey?: string;
 }

@@ -78,13 +78,13 @@ export default function MoviePage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#010312] text-white">
+    <main className="min-h-screen bg-black text-white">
       <div className="mx-2 md:mx-4 lg:mx-6 max-w-7xl py-10">
         <h1 className="mb-8 text-4xl font-bold">MOVIES</h1>
 
         {/* Search + Channel Filter */}
 
-        <div className="mb-12 flex flex-col gap-4 rounded-2xl border border-[#106EE9]/20 bg-[#0B1026] p-5 md:flex-row">
+        <div className="mb-12 flex flex-col gap-4 md:flex-row md:items-center">
           <div className="flex-1">
             <MovieSearch value={search} onChange={changeSearch} />
           </div>
@@ -104,11 +104,11 @@ export default function MoviePage() {
           <h2 className="mb-6 text-2xl font-bold">🔥 HOT MOVIES SHOWCASE</h2>
 
           {loading ? (
-            <div className="rounded-2xl bg-[#0B1026] p-10 text-center text-gray-400">
+            <div className="rounded-2xl  bg-black p-10 text-center text-gray-400">
               Loading movies...
             </div>
           ) : filteredMovies.length === 0 ? (
-            <div className="rounded-2xl bg-[#0B1026] p-10 text-center text-gray-400">
+            <div className="rounded-2xl  bg-black p-10 text-center text-gray-400">
               No movies found.
             </div>
           ) : (
@@ -122,11 +122,11 @@ export default function MoviePage() {
           <h2 className="mb-8 text-2xl font-bold">🎬 ALL MOVIES ARCHIVE</h2>
 
           {loading ? (
-            <div className="rounded-2xl bg-[#0B1026] p-10 text-center text-gray-400">
+            <div className="rounded-2xl  bg-black p-10 text-center text-gray-400">
               Loading movies...
             </div>
           ) : filteredMovies.length === 0 ? (
-            <div className="rounded-2xl bg-[#0B1026] p-10 text-center text-gray-400">
+            <div className="rounded-2xl  bg-black p-10 text-center text-gray-400">
               No movies found.
             </div>
           ) : (
@@ -137,7 +137,7 @@ export default function MoviePage() {
                 <button
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage((prev) => prev - 1)}
-                  className="rounded-lg bg-[#0B1026] px-5 py-2 disabled:opacity-40"
+                  className="rounded-lg bg-[#11151a] px-5 py-2 disabled:opacity-40"
                 >
                   Previous
                 </button>
@@ -149,7 +149,7 @@ export default function MoviePage() {
                 <button
                   disabled={currentPage === totalPages || totalPages === 0}
                   onClick={() => setCurrentPage((prev) => prev + 1)}
-                  className="rounded-lg bg-[#106EE9] px-5 py-2 disabled:opacity-40"
+                  className="rounded-lg bg-[#11151a] px-5 py-2 disabled:opacity-40"
                 >
                   Next
                 </button>
