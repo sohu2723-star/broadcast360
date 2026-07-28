@@ -166,7 +166,6 @@ video?: File;
 ) {
 
  
-console.log("EDIT DATA:", data);
   const existingEntertainment =
     await prisma.entertainment.findFirst({
       where: {

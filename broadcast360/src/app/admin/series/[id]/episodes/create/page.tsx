@@ -20,41 +20,36 @@ export default function CreateEpisodePage() {
     if (data.videoFile) {
       formData.append("video", data.videoFile);
     }
- if (data.thumbnailFile) {
+    if (data.thumbnailFile) {
       formData.append("thumbnail", data.thumbnailFile);
     }
 
-    const res = await fetch(
-      `/api/series/${seriesId}/episodes`,
-      {
-        method: "POST",
-        body: formData,
-      }
-    );
+    const res = await fetch(`/api/series/${seriesId}/episodes`, {
+      method: "POST",
+      body: formData,
+    });
 
-let result;
+    let result;
 
-try {
-  result = await res.json();
-} catch {
-  result = {};
-}
+    try {
+      result = await res.json();
+    } catch {
+      result = {};
+    }
 
-if (!res.ok) {
-  alert(result?.message || "Failed to create episode");
-  return;
-}
+    if (!res.ok) {
+      alert(result?.message || "Failed to create episode");
+      return;
+    }
     router.push(`/admin/series/${seriesId}`);
     router.refresh();
   }
 
   return (
     <div>
-      <h1 className="text-3xl font-bold text-white mb-8">
-        Create Episode
-      </h1>
+      <h1 className="mb-8 text-3xl font-bold text-white">Create Episode</h1>
 
-      <EpisodeForm onSubmit={handleSubmit} />
+      <EpisodeForm isEdit={false} onSubmit={handleSubmit} />
     </div>
   );
 }

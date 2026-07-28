@@ -103,44 +103,26 @@ export default function ChannelForm({ mode, initialData }: ChannelFormProps) {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-8">
+      <h1 className="mb-8 text-3xl font-bold">
         {mode === "create" ? "Create Channel" : "Edit Channel"}
       </h1>
-      <div
-        className="
-        bg-[#0B1026]
-        p-8
-        rounded-2xl
-        space-y-5
-        max-w-xl
-      "
-      >
+      <div className="max-w-xl space-y-5 rounded-2xl bg-[#0B1026] p-8">
         <div>
-          <label className="block mb-2">Channel Name</label>
+          <label className="mb-2 block">Channel Name</label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="
-            w-full
-            p-3
-            bg-[#010312]
-            rounded-xl
-            "
+            className="w-full rounded-xl bg-[#010312] p-3"
           />
-          {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
+          {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
         </div>
         <div>
-          <label className="block mb-2">Country</label>
+          <label className="mb-2 block">Country</label>
 
           <select
             value={country}
             onChange={(e) => setCountry(e.target.value)}
-            className="
-            w-full
-            p-3
-            bg-[#010312]
-            rounded-xl
-            "
+            className="w-full rounded-xl bg-[#010312] p-3"
           >
             <option value="">Select Country</option>
 
@@ -152,41 +134,32 @@ export default function ChannelForm({ mode, initialData }: ChannelFormProps) {
           </select>
 
           {errors.country && (
-            <p className="text-red-500 text-sm">{errors.country}</p>
+            <p className="text-sm text-red-500">{errors.country}</p>
           )}
         </div>
         <div>
-          <label className="block mb-2">Description</label>
+          <label className="mb-2 block">Description</label>
 
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={4}
-            className="
-            w-full
-            p-3
-            bg-[#010312]
-            rounded-xl
-            "
+            className="w-full rounded-xl bg-[#010312] p-3"
           />
           {errors.description && (
-            <p className="text-red-500 text-sm">{errors.description}</p>
+            <p className="text-sm text-red-500">{errors.description}</p>
           )}
         </div>
 
         <div>
-          <label className="block mb-2">Logo</label>
+          <label className="mb-2 block">Logo</label>
           {(logoUrl || preview) && (
             <Image
               src={preview || logoUrl}
               alt="logo"
               width={90}
               height={90}
-              className="
-              rounded-xl
-              mb-3
-              object-cover
-              "
+              className="mb-3 rounded-xl object-cover"
             />
           )}
           <input
@@ -210,28 +183,18 @@ export default function ChannelForm({ mode, initialData }: ChannelFormProps) {
             }}
           />
 
-          {errors.logo && <p className="text-red-500 text-sm">{errors.logo}</p>}
+          {errors.logo && <p className="text-sm text-red-500">{errors.logo}</p>}
         </div>
         <div className="flex gap-4">
           <button
             onClick={submit}
-            className="
-            bg-[#106EE9]
-            px-6
-            py-3
-            rounded-xl
-            "
+            className="rounded-xl bg-[#106EE9] px-6 py-3"
           >
             {mode === "create" ? "Save" : "Update"}
           </button>
           <button
             onClick={() => router.push("/admin/channels")}
-            className="
-            bg-[#F41010]
-            px-6
-            py-3
-            rounded-xl
-            "
+            className="rounded-xl bg-[#F41010] px-6 py-3"
           >
             Cancel
           </button>

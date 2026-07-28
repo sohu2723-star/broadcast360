@@ -43,7 +43,7 @@ model Channel {
   logo              String?
   country           String?
   streams           Stream[]
-  streamKey         String           @unique
+  streamKey         String             @unique
   news              News[]
   schedules         Schedule[]
   recordings        Recording[]
@@ -53,7 +53,7 @@ model Channel {
 
   // 24/7 fallback playlist
   defaultPlaylistId Int?
-  defaultPlaylist   Playlist?          @relation("ChannelDefaultPlaylist", fields: [defaultPlaylistId], references: [id])
+  defaultPlaylist   Playlist? @relation("ChannelDefaultPlaylist", fields: [defaultPlaylistId], references: [id])
 }
 
 // =====================
@@ -72,7 +72,7 @@ model Movie {
   createdAt     DateTime       @default(now())
   playlistItems PlaylistItem[]
 
-  @@unique ([title, releaseYear])
+  @@unique([title, releaseYear])
 }
 
 enum StreamProtocol {
@@ -100,8 +100,21 @@ model Stream {
   description String?
   createdAt   DateTime       @default(now())
 
-  channel Channel @relation(fields: [channelId], references: [id])
+  channel       Channel        @relation(fields: [channelId], references: [id])
   playlistItems PlaylistItem[]
+}
+
+enum StreamProtocol {
+  RTMP
+  RTSP
+  HLS
+  WEBRTC
+  SRT
+}
+
+enum StreamStatus {
+  ONLINE
+  OFFLINE
 }
 
 // =====================
@@ -135,7 +148,7 @@ model Episode {
   createdAt     DateTime       @default(now())
   playlistItems PlaylistItem[]
 
-    @@unique([seriesId, episodeNo])
+  @@unique([seriesId, episodeNo])
 }
 
 // =====================
@@ -259,7 +272,7 @@ model PlaylistItem {
 
   stream Stream? @relation(fields: [streamId], references: [id])
 
-  entertainment Entertainment? @relation(fields:[entertainmentId], references:[id])
+  entertainment Entertainment? @relation(fields: [entertainmentId], references: [id])
 
   createdAt DateTime @default(now())
 
@@ -274,17 +287,17 @@ enum ScheduleStatus {
 }
 
 model Schedule {
-  id        Int            @id @default(autoincrement())
-  channelId Int
+  id         Int            @id @default(autoincrement())
+  channelId  Int
   playlistId Int
-  startTime DateTime
-  endTime   DateTime?
-  status    ScheduleStatus @default(SCHEDULED)
+  startTime  DateTime
+  endTime    DateTime?
+  status     ScheduleStatus @default(SCHEDULED)
 
-  channel   Channel        @relation(fields: [channelId], references: [id])
-  playlist  Playlist       @relation(fields: [playlistId], references: [id])
+  channel  Channel  @relation(fields: [channelId], references: [id])
+  playlist Playlist @relation(fields: [playlistId], references: [id])
 
-  sessions  BroadcastSession[]
+  sessions BroadcastSession[]
 
   createdAt DateTime @default(now())
 }
@@ -298,27 +311,26 @@ enum BroadcastStatus {
   ERROR
 }
 
-
 model BroadcastSession {
-  id          Int             @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
   channelId   Int             @unique
   scheduleId  Int?
 
-  status      BroadcastStatus @default(STOPPED)
+  status BroadcastStatus @default(STOPPED)
 
-  startedAt   DateTime?
-  stoppedAt   DateTime?
+  startedAt DateTime?
+  stoppedAt DateTime?
 
   currentItemId Int?
 
   errorMessage String?
 
-  channel     Channel         @relation(fields: [channelId], references: [id])
-  schedule    Schedule?       @relation(fields: [scheduleId], references: [id])
+  channel  Channel   @relation(fields: [channelId], references: [id])
+  schedule Schedule? @relation(fields: [scheduleId], references: [id])
 
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Recording {
@@ -333,4 +345,3 @@ model Recording {
   channel   Channel  @relation(fields: [channelId], references: [id])
   createdAt DateTime @default(now())
 }
-

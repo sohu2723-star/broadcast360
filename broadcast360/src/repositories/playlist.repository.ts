@@ -11,11 +11,7 @@ export const PlaylistRepository = {
     });
   },
 
-  findByProgramId: async (
-    programId: number,
-    page: number,
-    limit: number
-  ) => {
+  findByProgramId: async (programId: number, page: number, limit: number) => {
     const skip = (page - 1) * limit;
 
     const [playlists, total] = await Promise.all([
@@ -57,7 +53,9 @@ export const PlaylistRepository = {
           orderBy: { order: "asc" },
           include: {
             movie: true,
-            episode: true,
+            episode: {
+              include: { series: true },
+            },
             advertisement: true,
             news: true,
             stream: true,
@@ -84,32 +82,31 @@ export const PlaylistRepository = {
   },
 
   getTotalDuration: async (playlistId: number) => {
-  const items = await prisma.playlistItem.findMany({
-    where: { playlistId },
-    include: {
-      movie: true,
-      episode: true,
-      advertisement: true,
-      news: true,
-      stream: true,
-      entertainment: true,
-    },
-  });
+    const items = await prisma.playlistItem.findMany({
+      where: { playlistId },
+      include: {
+        movie: true,
+        episode: true,
+        advertisement: true,
+        news: true,
+        stream: true,
+        entertainment: true,
+      },
+    });
 
-  const totalSeconds = items.reduce((sum, item) => {
-    const duration =
-      item.movie?.duration ||
-      item.episode?.duration ||
-      item.advertisement?.duration ||
-      item.entertainment?.duration ||
-      0;
+    const totalSeconds = items.reduce((sum, item) => {
+      const duration =
+        item.movie?.duration ||
+        item.episode?.duration ||
+        item.advertisement?.duration ||
+        item.entertainment?.duration ||
+        0;
 
-    return sum + duration;
-  }, 0);
+      return sum + duration;
+    }, 0);
 
-  return totalSeconds;
-},
-
+    return totalSeconds;
+  },
 };
 
 export const getDefaultPlaylist = async (channelId: number) => {

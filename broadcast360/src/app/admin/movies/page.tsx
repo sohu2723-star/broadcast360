@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import Pagination from "@/components/admin/Pagination";
 
 interface Movie {
   id: number;
@@ -21,23 +22,21 @@ interface PaginationData {
 
 export default function MoviesPage() {
   const [movies, setMovies] = useState<Movie[]>([]);
-  const [pagination, setPagination] = useState<PaginationData>({ page: 1, limit: 5, total: 0 });
-  const [search, setSearch] = useState(""); // Search state
+  const [pagination, setPagination] = useState<PaginationData>({
+    page: 1,
+    limit: 5,
+    total: 0,
+  });
+  const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const formatDuration = (sec: number) => {
-  const hours = Math.floor(sec / 3600);
-  const mins = Math.floor((sec % 3600) / 60);
-  const seconds = sec % 60;
+  const formatDuration = (seconds: number) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
 
-  if (hours > 0) {
-    return `${hours}:${mins.toString().padStart(2, "0")}:${seconds
-      .toString()
-      .padStart(2, "0")}`;
-  }
-
-  return `${mins}:${seconds.toString().padStart(2, "0")}`;
-};
+    return [hrs, mins, secs].map((v) => String(v).padStart(2, "0")).join(":");
+  };
 
   // FETCH MOVIES WITH SEARCH & PAGINATION
   const loadMovies = useCallback(async (page: number, query: string) => {
@@ -46,37 +45,38 @@ export default function MoviesPage() {
       const searchParam = query ? `&search=${encodeURIComponent(query)}` : "";
       const res = await fetch(`/api/movies?page=${page}&limit=5${searchParam}`);
       const result = await res.json();
-      
+
       if (result.data) {
         setMovies(result.data);
         setPagination(result.pagination);
       }
     } catch (error) {
-      console.log(error);
+      console.error(error);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Sync state 
- useEffect(() => {
-  const timer = setTimeout(() => {
-    loadMovies(pagination.page, search);
-  }, 400);
+  // Sync state with Debounce for Search & Direct Call for Page Change
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      loadMovies(pagination.page, search);
+    }, 400);
 
-  return () => clearTimeout(timer);
-}, [pagination.page, search]);
+    return () => clearTimeout(timer);
+  }, [pagination.page, search, loadMovies]);
 
   // Handle Input Changes & Reset to Page 1
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearch(value);
-    setPagination((prev) => ({ ...prev, page: 1 })); 
-    loadMovies(1, value);
+    setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
   const handleDelete = async (id: number, title: string) => {
-    const confirmDelete = window.confirm(`Are you sure you want to delete "${title}"?`);
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete "${title}"?`,
+    );
     if (!confirmDelete) return;
 
     try {
@@ -90,38 +90,40 @@ export default function MoviesPage() {
     }
   };
 
-  const totalPages = Math.ceil(pagination.total / pagination.limit);
+  const totalPages = Math.ceil(pagination.total / pagination.limit) || 1;
 
   return (
     <div>
       {/* Header Section */}
-      <div className="flex justify-between items-center mb-8 gap-4">
+      <div className="mb-8 flex items-center justify-between gap-4">
+        {/* Search Input */}
+        <div className="w-full max-w-md">
+          <input
+            type="text"
+            placeholder="Search movies by title or genre..."
+            value={search}
+            onChange={handleSearchChange}
+            className="w-full rounded-xl border border-white/10 bg-[#0B1026] px-4 py-3 text-sm text-white placeholder-gray-500 transition focus:border-[#106EE9] focus:outline-none"
+          />
+        </div>
 
-   {/* Search Input */}
-      <div className="max-w-md w-full">
-        <input
-          type="text"
-          placeholder="Search movies by title or genre..."
-          value={search}
-          onChange={handleSearchChange}
-           className="w-full bg-[#0B1026] text-white border border-white/10 rounded-xl px-4 py-3 placeholder-gray-500 focus:outline-none focus:border-[#106EE9] transition text-sm"
-        />
-      </div>
-
-        <Link href="/admin/movies/create" className="bg-[#106EE9] px-5 py-3 rounded-xl whitespace-nowrap">
+        <Link
+          href="/admin/movies/create"
+          className="rounded-xl bg-[#106EE9] px-5 py-3 whitespace-nowrap"
+        >
           + Add Movie
         </Link>
       </div>
 
       {/* Main Data Table */}
-      <div className="bg-[#0B1026] rounded-2xl border border-white/10 overflow-hidden">
+      <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#0B1026]">
         {loading ? (
           <div className="p-10 text-center text-white">Loading movies...</div>
         ) : (
           <table className="w-full">
             <thead>
               <tr className="border-b border-white/10 text-gray-400">
-                <th className="p-5 text-left w-[80px]">Cover</th>
+                <th className="w-[80px] p-5 text-left">Cover</th>
                 <th className="p-5 text-left">Movie Title</th>
                 <th className="p-5 text-left">Genre</th>
                 <th className="p-4 text-left">Release Year</th>
@@ -133,46 +135,67 @@ export default function MoviesPage() {
             <tbody>
               {movies.length === 0 ? (
                 <tr>
-                  {/* Empty state handles no results */}
-                  <td colSpan={6} className="p-14 text-center text-gray-500 text-sm">
+                  <td
+                    colSpan={6}
+                    className="p-14 text-center text-sm text-gray-500"
+                  >
                     No movies found matching your search criteria.
                   </td>
                 </tr>
               ) : (
                 movies.map((movie) => {
-
                   return (
-                    <tr key={movie.id} className="border-b border-white/10 vertical-middle">
+                    <tr
+                      key={movie.id}
+                      className="border-b border-white/10 hover:bg-white/[0.03]"
+                    >
                       <td className="p-5">
                         {movie.thumbnail ? (
-                          <Image 
-                            src={movie.thumbnail} 
-                            alt={movie.title} 
+                          <Image
+                            src={movie.thumbnail}
+                            alt={movie.title}
                             width={48}
                             height={64}
-                            className="w-12 h-16 object-cover rounded-lg bg-white/5 border border-white/10 shadow-md"
+                            className="h-16 w-12 rounded-lg border border-white/10 bg-white/5 object-cover shadow-md"
                           />
                         ) : (
-                          <div className="w-12 h-16 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center text-[10px] text-gray-500 text-center p-1">
+                          <div className="flex h-16 w-12 items-center justify-center rounded-lg border border-white/10 bg-white/5 p-1 text-center text-[10px] text-gray-500">
                             No Pic
                           </div>
                         )}
                       </td>
 
-                      <td className="p-5 font-medium text-white">{movie.title}</td>
-                      <td className="p-5 text-gray-300">{movie.genre ?? "-"}</td>
-                      <td className="p-4 text-gray-300">{movie.releaseYear ?? "-"}</td>
-                      <td className="p-4 text-gray-300">{movie.duration ? formatDuration(movie.duration) : "-"}</td>
+                      <td className="p-5 font-medium text-white">
+                        {movie.title}
+                      </td>
+                      <td className="p-5 text-gray-300">
+                        {movie.genre ?? "-"}
+                      </td>
+                      <td className="p-10 text-gray-300">
+                        {movie.releaseYear ?? "-"}
+                      </td>
+                      <td className="p-4 text-gray-300">
+                        {movie.duration ? formatDuration(movie.duration) : "-"}
+                      </td>
 
                       <td className="p-5">
                         <div className="flex gap-3">
-                          <Link href={`/admin/movies/${movie.id}`} className="bg-[#106EE9] px-4 py-2 rounded-lg text-sm">
+                          <Link
+                            href={`/admin/movies/${movie.id}`}
+                            className="rounded-lg bg-[#106EE9] px-4 py-2 text-sm"
+                          >
                             Details
                           </Link>
-                          <Link href={`/admin/movies/edit/${movie.id}`} className="bg-[#400FD3] px-4 py-2 rounded-lg text-sm">
+                          <Link
+                            href={`/admin/movies/edit/${movie.id}`}
+                            className="rounded-lg bg-[#400FD3] px-4 py-2 text-sm"
+                          >
                             Edit
                           </Link>
-                          <button onClick={() => handleDelete(movie.id, movie.title)} className="bg-[#F41010] px-4 py-2 rounded-lg text-white text-sm">
+                          <button
+                            onClick={() => handleDelete(movie.id, movie.title)}
+                            className="rounded-lg bg-[#F41010] px-4 py-2 text-sm text-white"
+                          >
                             Delete
                           </button>
                         </div>
@@ -184,33 +207,19 @@ export default function MoviesPage() {
             </tbody>
           </table>
         )}
-
-        {/* Pagination UI Controls */}
-        {!loading && totalPages > 1 && (
-          <div className="p-5 flex justify-between items-center border-t border-white/10 text-sm text-gray-400">
-            <div>
-              Page <span className="text-white font-medium">{pagination.page}</span> of{" "}
-              <span className="text-white font-medium">{totalPages}</span>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setPagination((prev) => ({ ...prev, page: Math.max(1, prev.page - 1) }))}
-                disabled={pagination.page === 1}
-                className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition"
-              >
-                Previous
-              </button>
-              <button
-                onClick={() => setPagination((prev) => ({ ...prev, page: Math.min(totalPages, prev.page + 1) }))}
-                disabled={pagination.page === totalPages}
-                className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition"
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* REUSABLE PAGINATION */}
+      <Pagination
+        page={pagination.page}
+        totalPages={totalPages}
+        setPage={(newPage) => {
+          const nextPg =
+            typeof newPage === "function" ? newPage(pagination.page) : newPage;
+          setPagination((prev) => ({ ...prev, page: nextPg }));
+        }}
+        loading={loading}
+      />
     </div>
   );
 }

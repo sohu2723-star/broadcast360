@@ -24,7 +24,7 @@ export async function fetchSeries() {
 export async function fetchPaginatedSeries(
   page: number,
   limit: number,
-  search?: string
+  search?: string,
 ) {
   const validatedPage = Math.max(1, page);
   const validatedLimit = Math.max(1, limit);
@@ -45,17 +45,15 @@ export async function fetchPaginatedSeries(
   };
 }
 
-
 /**
  * Get single series by ID
  */
 export function fetchSeriesById(
   id: number,
-  opts?: { skip: number; take: number }
+  opts?: { skip: number; take: number },
 ) {
   return getSeriesById(id, opts);
 }
-
 
 /**
  * Delete series
@@ -74,12 +72,7 @@ async function saveThumbnail(file: File) {
   const filename = `${Date.now()}-${file.name}`;
 
   // ✅ FIXED ROOT PATH
-  const uploadDir = path.join(
-    process.cwd(),
-    "public",
-    "thumbnails",
-    "series"
-  );
+  const uploadDir = path.join(process.cwd(), "public", "thumbnails", "series");
 
   const uploadPath = path.join(uploadDir, filename);
 
@@ -102,7 +95,7 @@ export async function editSeries(
     genre: string;
     releaseYear: number;
     thumbnail?: File | null;
-  }
+  },
 ) {
   let thumbnailUrl: string | undefined;
 

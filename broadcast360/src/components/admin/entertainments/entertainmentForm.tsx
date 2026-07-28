@@ -8,6 +8,7 @@ import {
   createEntertainmentSchema,
   editEntertainmentSchema,
 } from "@/lib/validators/entertainment.validator";
+import ImageUploader from "@/components/ImageUploader";
 
 type Props = {
   onSubmit: (data: EntertainmentFormData) => Promise<void>;
@@ -215,63 +216,21 @@ export default function EntertainmentForm({
   }
 
   return (
-    <div className="w-full">
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-        {/* LEFT PREVIEW */}
-        {(!isCreateMode || videoPreview || thumbnailPreview) && (
-          <div className="space-y-5 lg:col-span-2">
-            {/* VIDEO PREVIEW */}
-            {videoPreview && (
-              <div className="rounded-2xl border border-white/5 bg-[#111936] p-4">
-                <label className="mb-3 block text-xs font-semibold text-slate-400 uppercase">
-                  Video Preview
-                </label>
-
-                <div className="flex aspect-video items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-[#070b19]">
-                  <video
-                    key={videoPreview}
-                    controls
-                    className="h-full w-full bg-black object-contain"
-                  >
-                    <source src={videoPreview} />
-                  </video>
-                </div>
-              </div>
-            )}
-
-            {/* THUMBNAIL PREVIEW */}
-            {thumbnailPreview && (
-              <div className="rounded-2xl border border-white/5 bg-[#111936] p-4">
-                <label className="mb-3 block text-xs font-semibold text-slate-400 uppercase">
-                  Thumbnail Preview
-                </label>
-
-                <div className="flex aspect-video items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-[#070b19]">
-                  <img
-                    src={thumbnailPreview}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-        {/* FORM RIGHT */}
-        <form
-          onSubmit={handleSubmit}
-          className="rounded-2xl border border-white/10 bg-[#0B1026] p-6 lg:col-span-3"
-        >
+    <div className="max-w-6xl rounded-2xl border border-white/10 bg-[#0B1026] p-8 text-white">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* LEFT AND RIGHT GRID LAYOUT */}
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+          {/* LEFT SIDE: FORM INPUTS & VIDEO PREVIEW */}
           <div className="space-y-5">
             {/* TITLE */}
             <div>
-              <label className="mb-2 block text-sm text-slate-200">
+              <label className="mb-2 block font-medium text-slate-200">
                 Entertainment Title
               </label>
-
               <input
-                className={`w-full rounded-lg border bg-[#111936] p-3 text-white focus:outline-none ${
+                className={`w-full rounded-xl border bg-[#111936] p-3 text-white transition-all focus:outline-none ${
                   errors.title
-                    ? "border-red-500"
+                    ? "border-red-500 focus:border-red-500"
                     : "border-white/10 focus:border-blue-500"
                 }`}
                 value={form.title}
@@ -296,209 +255,101 @@ export default function EntertainmentForm({
               />
 
               {errors.title && (
-                <p className="mt-1 text-xs text-red-400">{errors.title}</p>
+                <p className="mt-1 text-xs font-medium text-red-400">
+                  ⚠ {errors.title}
+                </p>
               )}
 
               {titleError && (
-                <p className="mt-1 text-xs text-red-400">{titleError}</p>
-              )}
-            </div>
-
-            {/* CATEGORY */}
-            <div>
-              <label className="mb-2 block text-sm text-slate-200">
-                Category
-              </label>
-
-              <select
-                className={`w-full rounded-lg border bg-[#111936] p-3 text-white transition outline-none ${
-                  errors.category
-                    ? "border-red-500"
-                    : "border-white/10 focus:border-blue-500"
-                }`}
-                value={form.category}
-                onChange={(e) => {
-                  setForm({
-                    ...form,
-                    category: e.target.value,
-                  });
-
-                  if (errors.category) {
-                    setErrors({
-                      ...errors,
-                      category: "",
-                    });
-                  }
-                }}
-              >
-                <option value="" className="bg-[#111936]">
-                  Select Category
-                </option>
-
-                {GENRES.map((genre) => (
-                  <option key={genre} value={genre} className="bg-[#111936]">
-                    {genre}
-                  </option>
-                ))}
-              </select>
-
-              {errors.category && (
-                <p className="mt-1 text-xs text-red-400">{errors.category}</p>
-              )}
-            </div>
-
-            {/* TYPE + RELEASE YEAR */}
-
-            <div>
-              <label className="mb-2 block text-sm text-slate-200">
-                Release Year
-              </label>
-
-              <input
-                type="text"
-                inputMode="numeric"
-                maxLength={4}
-                placeholder="2026"
-                className={`w-full rounded-lg border bg-[#111936] p-3 text-white ${
-                  errors.releaseYear ? "border-red-500" : "border-white/10"
-                }`}
-                value={form.releaseYear === 0 ? "" : String(form.releaseYear)}
-                onChange={(e) => {
-                  const value = e.target.value;
-
-                  if (/^\d*$/.test(value)) {
-                    setForm({
-                      ...form,
-                      releaseYear: value === "" ? 0 : Number(value),
-                    });
-
-                    if (errors.releaseYear) {
-                      setErrors({
-                        ...errors,
-                        releaseYear: "",
-                      });
-                    }
-                  }
-                }}
-              />
-
-              {errors.releaseYear && (
-                <p className="mt-1 text-xs text-red-400">
-                  {errors.releaseYear}
+                <p className="mt-1 text-xs font-medium text-red-400">
+                  ⚠ {titleError}
                 </p>
               )}
             </div>
 
-            {/* VIDEO + THUMBNAIL */}
+            {/* CATEGORY & RELEASE YEAR (2 COLUMNS) */}
             <div className="grid grid-cols-2 gap-4">
-              {/* VIDEO */}
+              {/* CATEGORY */}
               <div>
                 <label className="mb-2 block text-sm text-slate-200">
-                  Video File
+                  Category
                 </label>
-                <button
-                  type="button"
-                  onClick={openVideoPicker}
-                  className="flex h-12 w-full cursor-pointer items-center justify-center rounded-lg border border-dashed border-white/20 bg-[#111936] hover:border-blue-500"
-                >
-                  <span className="text-sm text-slate-400">
-                    {videoName || "Choose Video"}
-                  </span>
-                </button>
 
-                <input
-                  ref={videoInputRef}
-                  type="file"
-                  accept="video/*"
-                  className="hidden"
+                <select
+                  className={`w-full rounded-lg border bg-[#111936] p-3 text-white transition outline-none ${
+                    errors.category
+                      ? "border-red-500"
+                      : "border-white/10 focus:border-blue-500"
+                  }`}
+                  value={form.category}
                   onChange={(e) => {
-                    const file = e.target.files?.[0] ?? null;
-
                     setForm({
                       ...form,
-                      video: file,
+                      category: e.target.value,
                     });
 
-                    if (file) {
-                      const preview = URL.createObjectURL(file);
-
-                      setVideoPreview(preview);
-
-                      setVideoName(file.name);
-
-                      if (!entertainmentId) {
-                        setShowPreview(true);
-                      }
-
+                    if (errors.category) {
                       setErrors({
                         ...errors,
-                        video: "",
+                        category: "",
                       });
-                    } else {
-                      if (entertainmentId) {
-                        setVideoPreview(originalVideo.current);
-                      } else {
-                        setVideoPreview("");
-                      }
-
-                      setVideoName("");
                     }
                   }}
-                />
+                >
+                  <option value="" className="bg-[#111936]">
+                    Select Category
+                  </option>
 
-                {errors.video && (
-                  <p className="mt-1 text-xs text-red-400">{errors.video}</p>
+                  {GENRES.map((genre) => (
+                    <option key={genre} value={genre} className="bg-[#111936]">
+                      {genre}
+                    </option>
+                  ))}
+                </select>
+
+                {errors.category && (
+                  <p className="mt-1 text-xs text-red-400">{errors.category}</p>
                 )}
               </div>
 
-              {/* THUMBNAIL */}
+              {/* RELEASE YEAR */}
               <div>
-                <label className="mb-2 block text-sm text-slate-200">
-                  Thumbnail
+                <label className="mb-2 block font-medium text-slate-200">
+                  Release Year
                 </label>
-                <button
-                  type="button"
-                  onClick={openThumbnailPicker}
-                  className="flex h-12 w-full cursor-pointer items-center justify-center rounded-lg border border-dashed border-white/20 bg-[#111936] hover:border-blue-500"
-                >
-                  <span className="text-sm text-slate-400">
-                    {thumbnailName || "Choose Image"}
-                  </span>
-                </button>
-
                 <input
-                  ref={thumbnailInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={4}
+                  placeholder="2026"
+                  className={`w-full rounded-xl border bg-[#111936] p-3 text-white transition-all focus:outline-none ${
+                    errors.releaseYear
+                      ? "border-red-500"
+                      : "border-white/10 focus:border-blue-500"
+                  }`}
+                  value={form.releaseYear === 0 ? "" : String(form.releaseYear)}
                   onChange={(e) => {
-                    const file = e.target.files?.[0] ?? null;
+                    const value = e.target.value;
 
-                    setForm({
-                      ...form,
-                      thumbnail: file,
-                    });
-
-                    if (file) {
-                      setThumbnailPreview(URL.createObjectURL(file));
-
-                      setThumbnailName(file.name);
-
-                      if (!entertainmentId) {
-                        setShowPreview(true);
-                      }
-
-                      setErrors({
-                        ...errors,
-                        thumbnail: "",
+                    if (/^\d*$/.test(value)) {
+                      setForm({
+                        ...form,
+                        releaseYear: value === "" ? 0 : Number(value),
                       });
+
+                      if (errors.releaseYear) {
+                        setErrors({
+                          ...errors,
+                          releaseYear: "",
+                        });
+                      }
                     }
                   }}
                 />
 
-                {errors.thumbnail && (
-                  <p className="mt-1 text-xs text-red-400">
-                    {errors.thumbnail}
+                {errors.releaseYear && (
+                  <p className="mt-1 text-xs font-medium text-red-400">
+                    ⚠ {errors.releaseYear}
                   </p>
                 )}
               </div>
@@ -506,12 +357,12 @@ export default function EntertainmentForm({
 
             {/* DESCRIPTION */}
             <div>
-              <label className="mb-2 block text-sm text-slate-200">
+              <label className="mb-2 block font-medium text-slate-200">
                 Description
               </label>
               <textarea
-                rows={5}
-                className={`w-full rounded-lg border bg-[#111936] p-3 text-white ${
+                rows={3}
+                className={`w-full rounded-xl border bg-[#111936] p-3 text-white transition-all focus:outline-none ${
                   errors.description
                     ? "border-red-500"
                     : "border-white/10 focus:border-blue-500"
@@ -534,34 +385,141 @@ export default function EntertainmentForm({
               />
 
               {errors.description && (
-                <p className="mt-1 text-xs text-red-400">
-                  {errors.description}
+                <p className="mt-1 text-xs font-medium text-red-400">
+                  ⚠ {errors.description}
                 </p>
+              )}
+            </div>
+
+            {/* VIDEO FILE UPLOADER & PREVIEW */}
+            <div>
+              <label className="mb-2 block font-medium text-slate-200">
+                Video File
+              </label>
+              <button
+                type="button"
+                onClick={openVideoPicker}
+                className="flex h-12 w-full cursor-pointer items-center justify-center rounded-xl border border-dashed border-white/20 bg-[#111936] transition-all hover:border-blue-500"
+              >
+                <span className="truncate px-4 text-sm text-slate-400">
+                  {videoName ? `✓ ${videoName}` : "Choose Video File"}
+                </span>
+              </button>
+
+              <input
+                ref={videoInputRef}
+                type="file"
+                accept="video/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] ?? null;
+
+                  setForm({
+                    ...form,
+                    video: file,
+                  });
+
+                  if (file) {
+                    const preview = URL.createObjectURL(file);
+                    setVideoPreview(preview);
+                    setVideoName(file.name);
+
+                    if (!entertainmentId) {
+                      setShowPreview(true);
+                    }
+
+                    setErrors({
+                      ...errors,
+                      video: "",
+                    });
+                  } else {
+                    if (entertainmentId) {
+                      setVideoPreview(originalVideo.current);
+                    } else {
+                      setVideoPreview("");
+                    }
+                    setVideoName("");
+                  }
+                }}
+              />
+
+              {errors.video && (
+                <p className="mt-1 text-xs font-medium text-red-400">
+                  ⚠ {errors.video}
+                </p>
+              )}
+
+              {/* VIDEO PREVIEW BOX */}
+              {videoPreview && (
+                <div className="mt-4 overflow-hidden rounded-xl border border-white/10 bg-[#111936] p-2">
+                  <video
+                    key={videoPreview}
+                    controls
+                    className="aspect-video w-full rounded-lg bg-black object-contain"
+                  >
+                    <source src={videoPreview} />
+                  </video>
+                </div>
               )}
             </div>
           </div>
 
-          {/* BUTTON */}
-          <div className="mt-6 flex justify-end gap-3 border-t border-white/10 pt-6">
-            <button
-              type="submit"
-              className="rounded-lg bg-blue-600 px-8 py-2.5 font-medium text-white transition hover:bg-blue-700"
-            >
-              {entertainmentId
-                ? "Update Entertainment"
-                : "Create Entertainment"}
-            </button>
+          {/* RIGHT SIDE: THUMBNAIL IMAGE UPLOADER */}
+          <div className="flex flex-col">
+            <ImageUploader
+              label="Entertainment Thumbnail"
+              type="POSTER"
+              value={thumbnailPreview || undefined}
+              onChange={(file) => {
+                setForm({
+                  ...form,
+                  thumbnail: file,
+                });
 
-            <button
-              type="button"
-              onClick={() => router.push("/admin/entertainments")}
-              className="rounded-lg bg-red-600 px-6 py-2.5 font-medium text-white transition hover:bg-red-700"
-            >
-              Cancel
-            </button>
+                if (file) {
+                  setThumbnailPreview(URL.createObjectURL(file));
+                  setThumbnailName(file.name);
+
+                  if (!entertainmentId) {
+                    setShowPreview(true);
+                  }
+
+                  setErrors({
+                    ...errors,
+                    thumbnail: "",
+                  });
+                } else {
+                  setThumbnailPreview("");
+                  setThumbnailName("");
+                }
+              }}
+            />
+            {errors.thumbnail && (
+              <p className="mt-1 text-xs font-medium text-red-400">
+                ⚠ {errors.thumbnail}
+              </p>
+            )}
           </div>
-        </form>
-      </div>
+        </div>
+
+        {/* BUTTONS AREA */}
+        <div className="mt-6 flex gap-4 border-t border-white/10 pt-4">
+          <button
+            type="submit"
+            className="flex-1 cursor-pointer rounded-xl bg-[#106EE9] py-3 text-sm font-bold text-white transition-all hover:opacity-80"
+          >
+            {entertainmentId ? "Update Entertainment" : "Create Entertainment"}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => router.push("/admin/entertainments")}
+            className="cursor-pointer rounded-xl bg-[#F41010] px-6 py-3 text-sm font-bold text-white transition-all hover:opacity-80"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

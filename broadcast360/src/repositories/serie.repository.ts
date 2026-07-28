@@ -7,11 +7,11 @@ export function getSeries() {
 /**
  * Get single series by ID
  */
-export function getSeriesById(
+export async function getSeriesById(
   id: number,
-  opts?: { skip: number; take: number }
+  opts?: { skip: number; take: number },
 ) {
-  return prisma.series.findUnique({
+  const series = await prisma.series.findUnique({
     where: { id },
     include: {
       episodes: {
@@ -19,8 +19,31 @@ export function getSeriesById(
         take: opts?.take,
         orderBy: { episodeNo: "asc" },
       },
+
+      _count: {
+        select: { episodes: true },
+      },
     },
   });
+
+  if (!series) return null;
+
+  const allEpisodes = await prisma.episode.findMany({
+    where: { seriesId: id },
+    select: { episodeNo: true },
+  });
+
+  const uniqueEpisodes = new Set(
+    allEpisodes
+      .map((ep) => ep.episodeNo)
+      .filter((epNo) => epNo !== null && epNo !== undefined),
+  );
+
+  return {
+    ...series,
+    episodeCount: uniqueEpisodes.size, // Unique Episodes count (e.g., 2)
+    partCount: series._count.episodes, // Total Parts count (e.g., 4)
+  };
 }
 
 /**
@@ -59,15 +82,19 @@ export async function getPaginatedSeries({
   const [data, total] = await prisma.$transaction([
     prisma.series.findMany({
       where: whereClause,
-      skip,
-      take: limit,
       include: {
-        _count: {
-          select: { episodes: true },
+        episodes: {
+          select: {
+            createdAt: true,
+            episodeNo: true, // Fetch episode numbers to calculate unique count
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
         },
-      },
-      orderBy: {
-        id: "desc",
+        _count: {
+          select: { episodes: true }, // Total parts count
+        },
       },
     }),
     prisma.series.count({
@@ -75,21 +102,40 @@ export async function getPaginatedSeries({
     }),
   ]);
 
-  const formattedData = data.map((item) => ({
-    id: item.id,
-    title: item.title,
-    genre: item.genre,
-    thumbnail: item.thumbnail,
-    episodeCount: item._count.episodes,
-    createdAt: item.createdAt,
-  }));
+  // 1. Sort by latest episode or series creation date
+  const sortedData = data.sort((a, b) => {
+    const latestA = a.episodes[0]?.createdAt ?? a.createdAt;
+    const latestB = b.episodes[0]?.createdAt ?? b.createdAt;
+
+    return new Date(latestB).getTime() - new Date(latestA).getTime();
+  });
+
+  const paginatedData = sortedData.slice(skip, skip + limit);
+
+  // 3. Format only the paginated slice
+  const formattedData = paginatedData.map((item) => {
+    // Collect all unique episodeNo values
+    const uniqueEpisodeNumbers = new Set(
+      item.episodes
+        .map((ep) => ep.episodeNo)
+        .filter((epNo) => epNo !== null && epNo !== undefined),
+    );
+
+    return {
+      id: item.id,
+      title: item.title,
+      genre: item.genre,
+      thumbnail: item.thumbnail,
+      episodeCount: uniqueEpisodeNumbers.size, // Unique episode count
+      partCount: item._count.episodes, // Total parts count
+      createdAt: item.createdAt,
+    };
+  });
 
   return { data: formattedData, total };
 }
 
-/* =========================
-   CREATE
-========================= */
+/* CREATE*/
 export function createSeries(data: {
   title: string;
   description: string;
@@ -113,7 +159,7 @@ export function updateSeries(
     genre: string;
     releaseYear: number;
     thumbnail?: string; // optional for edit
-  }
+  },
 ) {
   return prisma.series.update({
     where: { id },

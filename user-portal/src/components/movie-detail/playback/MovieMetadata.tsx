@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+
 import type { Movie } from "@/types/movie";
 
 function formatDuration(seconds: number) {
@@ -8,31 +9,27 @@ function formatDuration(seconds: number) {
 
   const hours = Math.floor(seconds / 3600);
 
-  const minutes = Math.floor(
-    (seconds % 3600) / 60
-  );
+  const minutes = Math.floor((seconds % 3600) / 60);
 
   const remainingSeconds = seconds % 60;
-
 
   if (hours > 0) {
     return `${hours}h ${minutes}m ${remainingSeconds}s`;
   }
 
-
   if (minutes > 0) {
     return `${minutes}m ${remainingSeconds}s`;
   }
 
-
   return `${remainingSeconds}s`;
 }
+
 export default function MovieMetadata({ movie }: { movie: Movie }) {
   const [showMore, setShowMore] = useState(false);
 
-  const limit = 50;
-
   const description = movie.description || "No description available.";
+
+  const limit = 150;
 
   const shortDescription =
     description.length > limit
@@ -61,16 +58,14 @@ export default function MovieMetadata({ movie }: { movie: Movie }) {
         </span>
       </div>
 
-      {/* Description */}
-
-      <div className="mt-4 max-w-full text-sm leading-6 text-gray-400 break-words">
+      <div className="mt-4 max-w-full break-words text-sm leading-6 text-gray-400">
         <p>
           {showMore ? description : shortDescription}
 
           {description.length > limit && (
             <button
               onClick={() => setShowMore(!showMore)}
-              className="ml-2 text-[#106EE9] hover:underline"
+              className="ml-2 font-medium text-[#106EE9] hover:underline"
             >
               {showMore ? "Show Less" : "More"}
             </button>

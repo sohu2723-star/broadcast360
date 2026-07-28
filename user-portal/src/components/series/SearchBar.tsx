@@ -39,7 +39,7 @@ export default function SearchBar({
         py-3
         text-white
         outline-none
-        focus:border-red-500
+        focus:border-blue-500
       "
     />
   );
