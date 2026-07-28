@@ -9,40 +9,28 @@ export interface Movie {
 
   genre?: string | null;
 
+  releaseYear?: number | null;
+
   thumbnail?: string | null;
 
   videoUrl?: string | null;
 
   duration: number;
 
-  releaseYear?: number | null;
 
-  createdAt?: string | Date;
-
-
-  // Channel
-
-  channelId?: number;
+  channelId?: number | null;
 
   channelName?: string;
 
 
-
-  // Playlist
-
   playlistId?: number;
 
-  playlistItemId?: number;
+  playlistName?: string;
 
-  playlistOrder?: number;
-
-
-
-  // Schedule
 
   scheduleId?: number;
 
-  scheduleStart?: string;
+  scheduleStart?: string | null;
 
   scheduleEnd?: string | null;
 }

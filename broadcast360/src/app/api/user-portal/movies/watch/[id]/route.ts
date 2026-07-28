@@ -7,16 +7,28 @@ interface Context {
   }>;
 }
 
+function imageUrl(path: string | null) {
+  if (!path) return null;
+
+  return path.startsWith("http") ? path : `http://localhost:3000${path}`;
+}
+
+function videoUrl(path: string | null) {
+  if (!path) return null;
+
+  return path.startsWith("http") ? path : `http://localhost:3000${path}`;
+}
+
 export async function GET(request: NextRequest, context: Context) {
   try {
     const { id } = await context.params;
 
-    const playlistItemId = Number(id);
+    const playlistId = Number(id);
 
-    if (Number.isNaN(playlistItemId)) {
+    if (Number.isNaN(playlistId)) {
       return NextResponse.json(
         {
-          message: "Invalid playlist item id",
+          message: "Invalid playlist id",
         },
         {
           status: 400,
@@ -24,41 +36,48 @@ export async function GET(request: NextRequest, context: Context) {
       );
     }
 
-    const playlistItem = await prisma.playlistItem.findUnique({
+    const playlist = await prisma.playlist.findUnique({
       where: {
-        id: playlistItemId,
+        id: playlistId,
       },
 
       include: {
-        movie: true,
+        items: {
+          where: {
+            type: "MOVIE",
+          },
 
-        playlist: {
           include: {
-            items: {
-              where: {
-                type: "MOVIE",
-              },
+            movie: true,
+          },
 
-              include: {
-                movie: true,
-              },
+          orderBy: {
+            order: "asc",
+          },
+        },
 
-              orderBy: {
-                order: "asc",
-              },
-            },
-
-            schedules: {
-              include: {
-                channel: true,
-              },
-            },
+        schedules: {
+          include: {
+            channel: true,
           },
         },
       },
     });
 
-    if (!playlistItem || !playlistItem.movie) {
+    if (!playlist || playlist.items.length === 0) {
+      return NextResponse.json(
+        {
+          message: "Playlist not found",
+        },
+        {
+          status: 404,
+        },
+      );
+    }
+
+    const firstMovie = playlist.items[0]?.movie;
+
+    if (!firstMovie) {
       return NextResponse.json(
         {
           message: "Movie not found",
@@ -69,103 +88,168 @@ export async function GET(request: NextRequest, context: Context) {
       );
     }
 
-    const movie = playlistItem.movie;
+    const schedule = playlist.schedules[0];
 
-    const schedule = playlistItem.playlist?.schedules[0];
+    /*
+      MAIN MOVIE
+    */
 
-    // =========================
-    // PLAYLIST ONLY
-    // =========================
+    const movie = {
+      id: firstMovie.id,
 
-    const playlistMovies =
-      playlistItem.playlist?.items
+      movieKey: String(playlist.id),
 
-        .filter((item) => item.movie !== null)
+      playlistId: playlist.id,
 
-        .map((item) => ({
-          id: item.movie!.id,
+      playlistName: playlist.name,
 
-          movieKey: String(item.movie!.id),
+      title: firstMovie.title,
 
-          title: item.movie!.title,
+      description: firstMovie.description,
 
-          description: item.movie!.description,
+      genre: firstMovie.genre,
 
-          genre: item.movie!.genre,
+      thumbnail: imageUrl(firstMovie.thumbnail),
 
-          thumbnail: item.movie!.thumbnail
-            ? `http://localhost:3000${item.movie!.thumbnail}`
-            : null,
+      videoUrl: videoUrl(firstMovie.videoUrl),
 
-          videoUrl: item.movie!.videoUrl
-            ? item.movie!.videoUrl.startsWith("http")
-              ? item.movie!.videoUrl
-              : `http://localhost:3000${item.movie!.videoUrl}`
-            : null,
+      duration: firstMovie.duration,
 
-          duration: item.movie!.duration,
+      releaseYear: firstMovie.releaseYear,
 
-          releaseYear: item.movie!.releaseYear,
+      channelId: schedule?.channel?.id ?? null,
 
-          playlistId: item.playlistId,
+      channelName: schedule?.channel?.name ?? "-",
+    };
 
-          playlistItemId: item.id,
+    /*
+      PLAYLIST PARTS
+      Part 1, Part 2, Part 3
+    */
 
-          playlistOrder: item.order,
+    const playlistItems = playlist.items.map((item) => ({
+      id: item.id,
 
-          channelId: schedule?.channel.id ?? null,
+      movieId: item.movie?.id ?? 0,
 
-          channelName: schedule?.channel.name ?? null,
-        })) ?? [];
+      part: item.order,
 
-    return NextResponse.json({
-      movie: {
-        id: movie.id,
+      title: item.movie?.title ?? "",
 
-        movieKey: String(movie.id),
+      thumbnail: imageUrl(item.movie?.thumbnail ?? null),
 
-        title: movie.title,
+      videoUrl: videoUrl(item.movie?.videoUrl ?? null),
+    }));
 
-        description: movie.description,
+    /*
+      RELATED MOVIES
 
-        genre: movie.genre,
+      Same genre
+      Different channel
+      Random 10
+    */
 
-        thumbnail: movie.thumbnail
-          ? `http://localhost:3000${movie.thumbnail}`
-          : null,
+    const currentChannelId = schedule?.channel?.id;
 
-        videoUrl: movie.videoUrl
-          ? movie.videoUrl.startsWith("http")
-            ? movie.videoUrl
-            : `http://localhost:3000${movie.videoUrl}`
-          : null,
+    const relatedPlaylists = await prisma.playlist.findMany({
+      where: {
+        id: {
+          not: playlist.id,
+        },
 
-        duration: movie.duration,
-
-        releaseYear: movie.releaseYear,
-
-        playlistId: playlistItem.playlistId,
-
-        playlistItemId: playlistItem.id,
-
-        playlistOrder: playlistItem.order,
-
-        channelId: schedule?.channel.id ?? null,
-
-        channelName: schedule?.channel.name ?? null,
+        items: {
+          some: {
+            movie: {
+              genre: firstMovie.genre,
+            },
+          },
+        },
       },
 
-      // Part 1, Part 2, Part 3 only
+      include: {
+        items: {
+          where: {
+            type: "MOVIE",
+          },
 
-      playlist: playlistMovies,
+          include: {
+            movie: true,
+          },
+
+          orderBy: {
+            order: "asc",
+          },
+
+          take: 1,
+        },
+
+        schedules: {
+          include: {
+            channel: true,
+          },
+        },
+      },
+
+      take: 50,
+    });
+
+    const relatedMovies = relatedPlaylists
+
+      .filter((item) => {
+        const relatedChannelId = item.schedules[0]?.channel?.id;
+
+        return relatedChannelId !== currentChannelId;
+      })
+
+      .sort(() => Math.random() - 0.5)
+
+      .slice(0, 10)
+
+      .map((item) => {
+        const relatedMovie = item.items[0]?.movie;
+
+        const relatedSchedule = item.schedules[0];
+
+        return {
+          id: item.id,
+
+          movieKey: String(item.id),
+
+          playlistId: item.id,
+
+          playlistName: item.name,
+
+          title: relatedMovie?.title ?? item.name,
+
+          genre: relatedMovie?.genre ?? "Movie",
+
+          releaseYear: relatedMovie?.releaseYear ?? null,
+
+          duration: relatedMovie?.duration ?? 0,
+
+          thumbnail: imageUrl(relatedMovie?.thumbnail ?? null),
+
+          channelId: relatedSchedule?.channel?.id ?? null,
+
+          channelName: relatedSchedule?.channel?.name ?? "-",
+        };
+      });
+
+    return NextResponse.json({
+      movie,
+
+      playlist: playlistItems,
+
+      relatedMovies,
     });
   } catch (error) {
     console.error("WATCH MOVIE API ERROR:", error);
 
     return NextResponse.json(
       {
-        message: "Failed to load video",
+        message: "Failed to load movie",
       },
+
       {
         status: 500,
       },
