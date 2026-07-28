@@ -1,10 +1,10 @@
-
 "use client";
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { MovieFormData } from "@/types/movie";
 import Image from "next/image";
+import { GENRES } from "@/lib/constants/genres";
 import {
   createMovieSchema,
   editMovieSchema,
@@ -18,10 +18,7 @@ type Props = {
 
   showPreview?: boolean;
 
-  onPreviewChange?: (
-    video: string | null,
-    thumbnail: string | null
-  ) => void;
+  onPreviewChange?: (video: string | null, thumbnail: string | null) => void;
 };
 
 export default function MovieForm({
@@ -42,7 +39,7 @@ export default function MovieForm({
       video: null,
       thumbnail: null,
       releaseYear: 0,
-    }
+    },
   );
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -65,57 +62,54 @@ export default function MovieForm({
   useEffect(() => {
     function handleWindowFocus() {
       setTimeout(() => {
-
         // VIDEO CANCEL
         if (filePickerOpened.current) {
           const input = videoInputRef.current;
 
-        if (input && !input.files?.length) {
-  setForm((prev) => ({
-    ...prev,
-    video: null,
-  }));
+          if (input && !input.files?.length) {
+            setForm((prev) => ({
+              ...prev,
+              video: null,
+            }));
 
-  setVideoPreview(null);
+            setVideoPreview(null);
 
-  onPreviewChange?.(null, null);
+            onPreviewChange?.(null, null);
 
-  if (!movieId) {
-    setErrors((prev) => ({
-      ...prev,
-      video: "Movie file is required",
-    }));
-  }
-}
+            if (!movieId) {
+              setErrors((prev) => ({
+                ...prev,
+                video: "Movie file is required",
+              }));
+            }
+          }
 
           filePickerOpened.current = false;
         }
 
-
         // THUMBNAIL CANCEL
         if (thumbnailPickerOpened.current) {
           const input = thumbnailInputRef.current;
-if (input && !input.files?.length) {
-  setForm((prev) => ({
-    ...prev,
-    thumbnail: null,
-  }));
+          if (input && !input.files?.length) {
+            setForm((prev) => ({
+              ...prev,
+              thumbnail: null,
+            }));
 
-  setThumbnailPreview(null);
+            setThumbnailPreview(null);
 
-  onPreviewChange?.(null, null);
+            onPreviewChange?.(null, null);
 
-  if (!movieId) {
-    setErrors((prev) => ({
-      ...prev,
-      thumbnail: "Thumbnail is required",
-    }));
-  }
-}
+            if (!movieId) {
+              setErrors((prev) => ({
+                ...prev,
+                thumbnail: "Thumbnail is required",
+              }));
+            }
+          }
 
           thumbnailPickerOpened.current = false;
         }
-
       }, 300);
     }
 
@@ -126,7 +120,6 @@ if (input && !input.files?.length) {
     };
   }, [movieId]);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
- 
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -151,85 +144,94 @@ if (input && !input.files?.length) {
   }
 
   return (
-    <div className="bg-[#0B1026] border border-white/10 rounded-2xl p-8 max-w-3xl">
+    <div className="max-w-3xl rounded-2xl border border-white/10 bg-[#0B1026] p-8">
       <form className="space-y-5" onSubmit={handleSubmit}>
+        {/* TITLE */}
+        <div>
+          <label className="mb-2 block">Movie Title</label>
 
+          <input
+            className="w-full rounded-xl border border-white/10 bg-[#111936] p-3"
+            value={form.title}
+            onChange={(e) => {
+              setForm({
+                ...form,
+                title: e.target.value,
+              });
+            }}
+          />
 
-        
-     
-{/* TITLE */}
-<div>
-  <label className="block mb-2">
-    Movie Title
-  </label>
+          {errors.title && (
+            <p className="text-sm text-red-500">{errors.title}</p>
+          )}
 
-  <input
-    className="w-full bg-[#111936] border border-white/10 rounded-xl p-3"
-    value={form.title}
-    onChange={(e) => {
-      setForm({
-        ...form,
-        title: e.target.value,
-      });
-
-     
-    }}
-  />
-
-  {errors.title && (
-    <p className="text-red-500 text-sm">
-      {errors.title}
-    </p>
-  )}
-
-  {apiError && (
-    <p className="text-red-500 text-sm mt-1">
-      {apiError}
-    </p>
-  )}
-</div>
+          {apiError && <p className="mt-1 text-sm text-red-500">{apiError}</p>}
+        </div>
 
         {/* DESCRIPTION */}
         <div>
-          <label className="block mb-2">Description</label>
+          <label className="mb-2 block">Description</label>
           <textarea
             rows={4}
-            className="w-full bg-[#111936] border border-white/10 rounded-xl p-3"
+            className="w-full rounded-xl border border-white/10 bg-[#111936] p-3"
             value={form.description}
-            onChange={(e) =>
-              setForm({ ...form, description: e.target.value })
-            }
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
           />
           {errors.description && (
-            <p className="text-red-500 text-sm">{errors.description}</p>
+            <p className="text-sm text-red-500">{errors.description}</p>
           )}
         </div>
 
         {/* GENRE */}
         <div>
-          <label className="block mb-2">Genre</label>
-          <input
-            className="w-full bg-[#111936] border border-white/10 rounded-xl p-3"
+          <label className="mb-2 block text-sm text-slate-200">Genre</label>
+
+          <select
+            className={`w-full rounded-xl border bg-[#111936] p-3 text-white transition outline-none ${
+              errors.genre
+                ? "border-red-500"
+                : "border-white/10 focus:border-blue-500"
+            }`}
             value={form.genre}
-            onChange={(e) =>
-              setForm({ ...form, genre: e.target.value })
-            }
-          />
+            onChange={(e) => {
+              setForm({
+                ...form,
+                genre: e.target.value,
+              });
+
+              if (errors.genre) {
+                setErrors({
+                  ...errors,
+                  genre: "",
+                });
+              }
+            }}
+          >
+            <option value="" className="bg-[#111936]">
+              Select Genre
+            </option>
+
+            {GENRES.map((genre) => (
+              <option key={genre} value={genre} className="bg-[#111936]">
+                {genre}
+              </option>
+            ))}
+          </select>
 
           {errors.genre && (
-            <p className="text-red-500 text-sm">{errors.genre}</p>
+            <p className="mt-1 text-sm text-red-400">{errors.genre}</p>
           )}
         </div>
 
         {/* VIDEO */}
         {/* VIDEO */}
         <div>
-          <label className="block mb-2">Movie File</label>
+          <label className="mb-2 block">Movie File</label>
 
           <button
             type="button"
             onClick={openVideoPicker}
-            className="w-full bg-[#111936] border border-white/10 rounded-xl p-3 text-left"
+            className="w-full rounded-xl border border-white/10 bg-[#111936] p-3 text-left"
           >
             Choose Video File
           </button>
@@ -270,48 +272,39 @@ if (input && !input.files?.length) {
                 video: file,
               }));
 
-             const url = URL.createObjectURL(file);
+              const url = URL.createObjectURL(file);
 
-setVideoPreview(url);
+              setVideoPreview(url);
 
-onPreviewChange?.(
-  url,
-  thumbnailPreview
-);
+              onPreviewChange?.(url, thumbnailPreview);
             }}
           />
 
-          {form.video && (
-            <p className="text-sm mt-2">
-              {form.video.name}
-            </p>
-          )}
+          {form.video && <p className="mt-2 text-sm">{form.video.name}</p>}
 
           {errors.video && (
-            <p className="text-red-500 text-sm">
-              {errors.video}
-            </p>
+            <p className="text-sm text-red-500">{errors.video}</p>
           )}
 
           {/* VIDEO PREVIEW */}
           {showPreview && videoPreview && (
-  <video
-    src={videoPreview}
-    controls
-    className="mt-3 w-full rounded-lg border border-white/10"
-  />
-)}
+            <video
+              src={videoPreview}
+              controls
+              className="mt-3 w-full rounded-lg border border-white/10"
+            />
+          )}
         </div>
 
         {/* THUMBNAIL */}
         {/* THUMBNAIL */}
         <div>
-          <label className="block mb-2">Thumbnail</label>
+          <label className="mb-2 block">Thumbnail</label>
 
           <button
             type="button"
             onClick={openThumbnailPicker}
-            className="w-full bg-[#111936] border border-white/10 rounded-xl p-3 text-left"
+            className="w-full rounded-xl border border-white/10 bg-[#111936] p-3 text-left"
           >
             Choose Thumbnail File
           </button>
@@ -328,11 +321,7 @@ onPreviewChange?.(
                 return;
               }
 
-              const allowedTypes = [
-                "image/jpeg",
-                "image/png",
-                "image/webp",
-              ];
+              const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
 
               if (!allowedTypes.includes(file.type)) {
                 setErrors((p) => ({
@@ -354,56 +343,51 @@ onPreviewChange?.(
 
               const url = URL.createObjectURL(file);
 
-setThumbnailPreview(url);
+              setThumbnailPreview(url);
 
-onPreviewChange?.(
-  videoPreview,
-  url
-);
+              onPreviewChange?.(videoPreview, url);
             }}
           />
 
           {errors.thumbnail && (
-            <p className="text-red-500 text-sm">
-              {errors.thumbnail}
-            </p>
+            <p className="text-sm text-red-500">{errors.thumbnail}</p>
           )}
 
           {showPreview && thumbnailPreview && (
-  <Image
-    alt="Thumbnail Preview"
-    src={thumbnailPreview}
-    width={160}
-    height={96}
-    className="mt-3 w-40 h-24 object-cover rounded-lg border border-white/10"
-  />
-)}
+            <Image
+              alt="Thumbnail Preview"
+              src={thumbnailPreview}
+              width={160}
+              height={96}
+              className="mt-3 h-24 w-40 rounded-lg border border-white/10 object-cover"
+            />
+          )}
         </div>
 
         {/* RELEASE YEAR */}
         <div>
-          <label className="block mb-2">Release Year</label>
-         <input
-  type="text"
-  inputMode="numeric"
-  maxLength={4}
-  className="w-full bg-[#111936] border border-white/10 rounded-xl p-3"
-  value={form.releaseYear || ""}
-  placeholder="YYYY"
-  onChange={(e) => {
-    const value = e.target.value;
+          <label className="mb-2 block">Release Year</label>
+          <input
+            type="text"
+            inputMode="numeric"
+            maxLength={4}
+            className="w-full rounded-xl border border-white/10 bg-[#111936] p-3"
+            value={form.releaseYear || ""}
+            placeholder="YYYY"
+            onChange={(e) => {
+              const value = e.target.value;
 
-    // allow only 0-9 and max 4 digits
-    if (/^\d{0,4}$/.test(value)) {
-      setForm({
-        ...form,
-        releaseYear: value === "" ? 0 : Number(value),
-      });
-    }
-  }}
-/>
+              // allow only 0-9 and max 4 digits
+              if (/^\d{0,4}$/.test(value)) {
+                setForm({
+                  ...form,
+                  releaseYear: value === "" ? 0 : Number(value),
+                });
+              }
+            }}
+          />
           {errors.releaseYear && (
-            <p className="text-red-500 text-sm">{errors.releaseYear}</p>
+            <p className="text-sm text-red-500">{errors.releaseYear}</p>
           )}
         </div>
 
@@ -411,21 +395,19 @@ onPreviewChange?.(
         <div className="flex gap-4 pt-4">
           <button
             type="submit"
-            className="flex-1 bg-[#106EE9] py-3 rounded-xl font-bold"
+            className="flex-1 rounded-xl bg-[#106EE9] py-3 font-bold"
           >
             Save Movie
           </button>
-         
 
           <button
             type="button"
             onClick={() => router.push("/admin/movies")}
-            className="bg-[#F41010] px-6 py-3 rounded-xl font-bold"
+            className="rounded-xl bg-[#F41010] px-6 py-3 font-bold"
           >
             Cancel
           </button>
         </div>
-
       </form>
     </div>
   );
