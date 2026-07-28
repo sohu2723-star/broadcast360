@@ -30,7 +30,7 @@ export async function GET() {
       // streamUrl: primaryStream?.url ?? ""
 
       playbackUrl: channel.streamKey
-        ? `http://localhost:8888/live/${channel.streamKey}/index.m3u8`
+        ? `http://localhost:8888/channel/${channel.streamKey}/index.m3u8`
         : `http://localhost:3000/streams/channel-${channel.id}/index.m3u8`,
     }));
 

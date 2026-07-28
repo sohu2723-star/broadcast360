@@ -1,287 +1,132 @@
-import { spawn, ChildProcess } from "child_process";
+import { ChildProcess } from "child_process";
 
-type StreamMode = "VOD" | "LIVE" | "STOPPED";
+import { FFmpegManager } from "@/streaming/ffmpeg";
+
+type BroadcastMode = "STOPPED" | "VOD" | "LIVE";
 
 export class SwitchManager {
-  private processes = new Map<number, ChildProcess>();
+  private mode = new Map<number, BroadcastMode>();
 
-  private modes = new Map<number, StreamMode>();
+  private current = new Map<number, ChildProcess>();
 
-  private liveSources = new Map<number, string>();
-
-  private switching = new Map<number, boolean>();
+  constructor(private ffmpeg: FFmpegManager) {}
 
   /*
-  ==============================
-        MODE
-  ==============================
+  ==========================
+        STOP ROUTER
+  ==========================
   */
 
-  getMode(channelId: number): StreamMode {
-    return this.modes.get(channelId) ?? "STOPPED";
-  }
+  async stopCurrent(channelId: number) {
+    await this.ffmpeg.stop(channelId, "ROUTER");
 
-  isLIVE(channelId: number) {
-    return this.getMode(channelId) === "LIVE";
-  }
+    this.current.delete(channelId);
 
-  isVOD(channelId: number) {
-    return this.getMode(channelId) === "VOD";
+    this.mode.set(channelId, "STOPPED");
+
+    console.log("🛑 ROUTER STOPPED", channelId);
   }
 
   /*
-  ==============================
-        LOCK
-  ==============================
+  ==========================
+        SWITCH VOD
+  ==========================
   */
 
-  private async lock(channelId: number) {
-    while (this.switching.get(channelId)) {
-      await new Promise((r) => setTimeout(r, 200));
-    }
+  async switchToVOD(channelId: number, streamKey: string) {
+    await this.stopCurrent(channelId);
 
-    this.switching.set(channelId, true);
-  }
+    const input = `rtmp://127.0.0.1:1935/vod/${channelId}`;
 
-  private unlock(channelId: number) {
-    this.switching.delete(channelId);
-  }
+    const output = `rtmp://127.0.0.1:1935/channel/${streamKey}`;
 
-  /*
-  ==============================
-        START VOD
-  ==============================
-  */
+    const args = [
+      "-re",
 
-  async startVOD(
-    channelId: number,
-    filePath: string,
-    streamKey: string,
-    offset: number = 0,
-  ) {
-    await this.lock(channelId);
+      "-fflags",
+      "+genpts",
 
-    try {
-      await this.stopVOD(channelId);
+      "-i",
+      input,
 
-      const rtmp = `rtmp://127.0.0.1:1935/live/${streamKey}`;
+      "-c",
+      "copy",
 
-      const args = [
-        "-re",
+      "-f",
+      "flv",
 
-        ...(offset > 0 ? ["-ss", String(offset)] : []),
+      output,
+    ];
 
-        "-i",
-        filePath,
-
-        "-c:v",
-        "libx264",
-
-        "-preset",
-        "veryfast",
-
-        "-pix_fmt",
-        "yuv420p",
-
-        "-r",
-        "30",
-
-        "-g",
-        "60",
-
-        "-keyint_min",
-        "60",
-
-        "-sc_threshold",
-        "0",
-
-        "-c:a",
-        "aac",
-
-        "-ar",
-        "48000",
-
-        "-ac",
-        "2",
-
-        "-b:a",
-        "128k",
-
-        "-f",
-        "flv",
-
-        rtmp,
-      ];
-
-      console.log("🚀 VOD START", args.join(" "));
-
-      const ffmpeg = spawn("ffmpeg", args, {
-        windowsHide: true,
-      });
-
-      this.processes.set(channelId, ffmpeg);
-
-      this.modes.set(channelId, "VOD");
-
-      ffmpeg.stderr.on("data", (data) => {
-        console.log(`[VOD-${channelId}]`, data.toString());
-      });
-
-      ffmpeg.on("close", (code) => {
-        console.log("🎬 VOD END", {
-          channelId,
-          code,
-        });
-
-        if (this.processes.get(channelId) === ffmpeg) {
-          this.processes.delete(channelId);
-
-          this.modes.set(channelId, "STOPPED");
-        }
-      });
-
-      return ffmpeg;
-    } finally {
-      this.unlock(channelId);
-    }
-  }
-
-  /*
-  ==============================
-        STOP VOD
-  ==============================
-  */
-
-  async stopVOD(channelId: number) {
-    const process = this.processes.get(channelId);
-
-    if (!process) {
-      return;
-    }
-
-    console.log("🛑 STOP VOD", channelId);
-
-    return new Promise<void>((resolve) => {
-      let done = false;
-
-      const finish = () => {
-        if (done) return;
-
-        done = true;
-
-        this.processes.delete(channelId);
-
-        if (this.getMode(channelId) === "VOD") {
-          this.modes.set(channelId, "STOPPED");
-        }
-
-        resolve();
-      };
-
-      process.once("close", finish);
-
-      try {
-        process.kill("SIGTERM");
-      } catch {
-        finish();
-      }
-
-      setTimeout(() => {
-        if (!done) {
-          console.log("⚠ Force kill ffmpeg");
-
-          try {
-            process.kill("SIGKILL");
-          } catch {}
-        }
-      }, 3000);
+    console.log("🎬 ROUTE VOD", {
+      input,
+      output,
     });
+
+    const process = this.ffmpeg.start(channelId, "ROUTER", args);
+
+    this.current.set(channelId, process);
+
+    this.mode.set(channelId, "VOD");
   }
 
   /*
-  ==============================
-        LIVE
-  ==============================
+  ==========================
+        SWITCH LIVE
+  ==========================
   */
 
-  async startLIVE(channelId: number, source: string) {
-    await this.lock(channelId);
+  async switchToLIVE(channelId: number, streamKey: string) {
+    await this.stopCurrent(channelId);
 
-    try {
-      await this.stopVOD(channelId);
+    const input = `rtmp://127.0.0.1:1935/live/${streamKey}`;
 
-      console.log("🔴 LIVE START", {
-        channelId,
-        source,
-      });
+    const output = `rtmp://127.0.0.1:1935/channel/${streamKey}`;
 
-      this.liveSources.set(channelId, source);
+    const args = [
+      "-re",
 
-      this.modes.set(channelId, "LIVE");
+      "-fflags",
+      "+genpts",
 
-      return true;
-    } finally {
-      this.unlock(channelId);
-    }
-  }
+      "-i",
+      input,
 
-  async stopLIVEOnly(channelId: number) {
-    console.log("🔴 LIVE STOP", channelId);
+      "-c:v",
+      "copy",
 
-    this.liveSources.delete(channelId);
+      "-c:a",
+      "aac",
 
-    this.modes.set(channelId, "STOPPED");
-  }
+      "-f",
+      "flv",
 
-  /*
-  ==============================
-        LIVE CHECK
-  ==============================
-  */
+      output,
+    ];
 
-  async hasLivePublisher(channelId: number) {
-    const source = this.liveSources.get(channelId);
+    console.log("🔴 ROUTE LIVE", {
+      input,
+      output,
+    });
 
-    if (!source) {
-      return false;
-    }
+    const process = this.ffmpeg.start(channelId, "ROUTER", args);
 
-    try {
-      const path = source.split("/").pop();
+    this.current.set(channelId, process);
 
-      const response = await fetch(
-        `http://127.0.0.1:9997/v3/paths/get/live/${path}`,
-      );
-
-      if (!response.ok) {
-        return false;
-      }
-
-      const data = await response.json();
-
-      return Boolean(data?.source);
-    } catch (error) {
-      console.log("MediaMTX check error", error);
-
-      return false;
-    }
+    this.mode.set(channelId, "LIVE");
   }
 
   /*
-  ==============================
-        STOP ALL
-  ==============================
+  ==========================
+        STATUS
+  ==========================
   */
 
-  async stop(channelId: number) {
-    await this.lock(channelId);
+  getMode(channelId: number) {
+    return this.mode.get(channelId) ?? "STOPPED";
+  }
 
-    try {
-      await this.stopVOD(channelId);
-
-      await this.stopLIVEOnly(channelId);
-    } finally {
-      this.unlock(channelId);
-    }
+  isRunning(channelId: number) {
+    return this.ffmpeg.isRunning(channelId, "ROUTER");
   }
 }

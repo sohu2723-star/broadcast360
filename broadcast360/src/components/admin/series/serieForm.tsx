@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { SeriesFormData } from "@/types/serie";
 import ImageUploader from "@/components/ImageUploader";
+import { GENRES } from "@/lib/constants/genres";
 import {
   createSeriesSchema,
   editSeriesSchema,
@@ -132,21 +133,42 @@ export default function SeriesForm({
 
             {/* GENRE */}
             <div>
-              <label className="mb-2 block font-medium">Genre</label>
-              <input
-                value={form.genre}
-                onChange={(e) => {
-                  setForm({ ...form, genre: e.target.value });
-                  if (errors.genre) setErrors({ ...errors, genre: undefined });
-                }}
-                className={`w-full rounded-xl border bg-[#111936] p-3 text-white focus:outline-none ${
+              <label className="mb-2 block text-sm text-slate-200">Genre</label>
+
+              <select
+                className={`w-full rounded-xl border bg-[#111936] p-3 text-white transition outline-none ${
                   errors.genre
                     ? "border-red-500"
                     : "border-white/10 focus:border-blue-500"
                 }`}
-              />
+                value={form.genre}
+                onChange={(e) => {
+                  setForm({
+                    ...form,
+                    genre: e.target.value,
+                  });
+
+                  if (errors.genre) {
+                    setErrors({
+                      ...errors,
+                      genre: "",
+                    });
+                  }
+                }}
+              >
+                <option value="" className="bg-[#111936]">
+                  Select Genre
+                </option>
+
+                {GENRES.map((genre) => (
+                  <option key={genre} value={genre} className="bg-[#111936]">
+                    {genre}
+                  </option>
+                ))}
+              </select>
+
               {errors.genre && (
-                <p className="mt-1 text-sm text-red-500">{errors.genre}</p>
+                <p className="mt-1 text-sm text-red-400">{errors.genre}</p>
               )}
             </div>
 

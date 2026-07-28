@@ -1,53 +1,18 @@
 import { NextResponse } from "next/server";
 
-import { SchedulerManager } from "@/managers/scheduler.manager";
-import { BroadcastService } from "@/services/broadcast.service";
+import { scheduler } from "@/services/scheduler-container";
 
-/*
-================================
- SINGLETON ENGINE
-================================
-*/
-
-const broadcast = globalThis.broadcastService ?? new BroadcastService();
-
-const scheduler =
-  globalThis.schedulerManager ?? new SchedulerManager(broadcast);
-
-globalThis.broadcastService = broadcast;
-
-globalThis.schedulerManager = scheduler;
-
-/*
-================================
- PREVENT DOUBLE START
-================================
-*/
-
-const startingChannels = globalThis.startingBroadcasts ?? new Set<number>();
-
-globalThis.startingBroadcasts = startingChannels;
-
-/*
-================================
- POST
-================================
-*/
-
-export async function POST(req: Request) {
-  let channelId: number | null = null;
-
+export async function POST(request: Request) {
   try {
-    const body = await req.json();
+    const body = await request.json();
 
-    channelId = Number(body.channelId);
+    const channelId = Number(body.channelId);
 
-    if (!channelId || Number.isNaN(channelId)) {
+    if (!channelId) {
       return NextResponse.json(
         {
           error: "channelId required",
         },
-
         {
           status: 400,
         },
@@ -55,70 +20,27 @@ export async function POST(req: Request) {
     }
 
     /*
-================================
- DUPLICATE PROTECTION
-================================
-*/
+    ==========================
+        START SCHEDULER ONLY
+    ==========================
+    */
 
-    if (startingChannels.has(channelId)) {
-      return NextResponse.json(
-        {
-          error: "Broadcast is already starting",
-        },
-
-        {
-          status: 409,
-        },
-      );
-    }
-
-    startingChannels.add(channelId);
-
-    console.log("🚀 START BROADCAST", channelId);
-
-    /*
-================================
- START SCHEDULER
-================================
-
-Scheduler will:
-- find current schedule
-- load playlist
-- start broadcast
-- fallback if empty
-
-*/
-
-    if (!scheduler.isRunning(channelId)) {
-      scheduler.start(channelId);
-
-      console.log("⏰ Scheduler started", channelId);
-    } else {
-      console.log("⚠ Scheduler already running", channelId);
-    }
+    scheduler.start(channelId);
 
     return NextResponse.json({
       success: true,
-
       channelId,
-
-      message: "Broadcast scheduler started",
     });
   } catch (error) {
-    console.error("❌ Start broadcast error", error);
+    console.error("❌ Broadcast start failed", error);
 
     return NextResponse.json(
       {
-        error: "Internal server error",
+        error: "Broadcast start failed",
       },
-
       {
         status: 500,
       },
     );
-  } finally {
-    if (channelId) {
-      startingChannels.delete(channelId);
-    }
   }
 }

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { EntertainmentFormData } from "@/types/entertainment";
+import { GENRES } from "@/lib/constants/genres";
 import {
   createEntertainmentSchema,
   editEntertainmentSchema,
@@ -270,11 +271,12 @@ export default function EntertainmentForm({
             <div className="grid grid-cols-2 gap-4">
               {/* CATEGORY */}
               <div>
-                <label className="mb-2 block font-medium text-slate-200">
+                <label className="mb-2 block text-sm text-slate-200">
                   Category
                 </label>
-                <input
-                  className={`w-full rounded-xl border bg-[#111936] p-3 text-white transition-all focus:outline-none ${
+
+                <select
+                  className={`w-full rounded-lg border bg-[#111936] p-3 text-white transition outline-none ${
                     errors.category
                       ? "border-red-500"
                       : "border-white/10 focus:border-blue-500"
@@ -293,13 +295,20 @@ export default function EntertainmentForm({
                       });
                     }
                   }}
-                  placeholder="Drama, Action..."
-                />
+                >
+                  <option value="" className="bg-[#111936]">
+                    Select Category
+                  </option>
+
+                  {GENRES.map((genre) => (
+                    <option key={genre} value={genre} className="bg-[#111936]">
+                      {genre}
+                    </option>
+                  ))}
+                </select>
 
                 {errors.category && (
-                  <p className="mt-1 text-xs font-medium text-red-400">
-                    ⚠ {errors.category}
-                  </p>
+                  <p className="mt-1 text-xs text-red-400">{errors.category}</p>
                 )}
               </div>
 
