@@ -61,38 +61,21 @@ export async function GET() {
             include: {
 
 
-              items: {
+             items: {
 
+  include: {
 
-                where: {
+    entertainment: true,
 
+  },
 
-                  type: "ENTERTAINMENT",
+  orderBy: {
 
+    order: "asc",
 
-                },
+  },
 
-
-                include: {
-
-
-                  entertainment: true,
-
-
-                },
-
-
-                orderBy: {
-
-
-                  order: "asc",
-
-
-                },
-
-
-              },
-
+},
 
             },
 
@@ -125,131 +108,67 @@ export async function GET() {
 
 
 
-    const entertainments = schedules.flatMap(
-
-      (schedule) =>
-
-
-        schedule.playlist.items
-
-        .filter(
-
-          (item) =>
-
-            item.entertainment !== null
-
-        )
-
-
-        .map(
-
-          (item) => {
-
-
-            const entertainment =
-              item.entertainment!;
-
-
-
-            return {
-
-
-              id:
-              entertainment.id,
-
-
-              entertainmentKey:
-              `${entertainment.id}-${schedule.channel.id}-${schedule.id}`,
-
-
-
-              title:
-              entertainment.title,
-
-
-
-              description:
-              entertainment.description,
-
-
-
-              category:
-              entertainment.category,
-
-
-
-              thumbnail:
-              entertainment.thumbnail
-
-              ? `http://localhost:3000${entertainment.thumbnail}`
-
-              : null,
-
-
-
-              videoUrl:
-              entertainment.videoUrl
-
-              ? entertainment.videoUrl.startsWith("http")
-
-                ? entertainment.videoUrl
-
-                : `http://localhost:3000${entertainment.videoUrl}`
-
-              : null,
-
-
-
-              duration:
-              entertainment.duration,
-
-
-
-              releaseYear:
-              entertainment.releaseYear,
-
-
-
-              channelId:
-              schedule.channel.id,
-
-
-
-              channelName:
-              schedule.channel.name,
-
-
-
-              playlistId:
-              schedule.playlist.id,
-
-
-
-              scheduleId:
-              schedule.id,
-
-
-
-              scheduleStart:
-              schedule.startTime,
-
-
-
-              scheduleEnd:
-              schedule.endTime,
-
-
-            };
-
-
-          }
-
-
-        )
-
-
+  const entertainments = schedules
+.map((schedule) => {
+
+
+  const firstEntertainment =
+    schedule.playlist.items.find(
+      (item) =>
+        item.type === "ENTERTAINMENT" &&
+        item.entertainment !== null
     );
 
+
+  if (!firstEntertainment) {
+    return null;
+  }
+
+
+  const entertainment =
+    firstEntertainment.entertainment!;
+
+
+ return {
+
+  // Playback URL 
+  id:
+    schedule.playlist.id,
+
+  playlistId:
+    schedule.playlist.id,
+
+  playlistName:
+    schedule.playlist.name,
+
+  title:
+    schedule.playlist.name,
+
+  thumbnail:
+    entertainment.thumbnail
+      ? `http://localhost:3000${entertainment.thumbnail}`
+      : null,
+
+  channelId:
+    schedule.channel.id,
+
+  channelName:
+    schedule.channel.name,
+
+  scheduleId:
+    schedule.id,
+
+  scheduleStart:
+    schedule.startTime,
+
+  scheduleEnd:
+    schedule.endTime,
+
+};
+
+
+})
+.filter(Boolean);
 
 
 

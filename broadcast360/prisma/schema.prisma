@@ -64,18 +64,6 @@ model Movie {
   @@unique([title, releaseYear])
 }
 
-enum StreamProtocol {
-  RTSP
-  RTMP
-  HLS
-  WEBRTC
-}
-
-enum StreamStatus {
-  ONLINE
-  OFFLINE
-}
-
 // ============================
 // Stream INPUT
 // ============================
@@ -92,6 +80,7 @@ model Stream {
   channel       Channel        @relation(fields: [channelId], references: [id])
   playlistItems PlaylistItem[]
 }
+
 enum StreamProtocol {
   RTMP
   RTSP
@@ -104,6 +93,7 @@ enum StreamStatus {
   ONLINE
   OFFLINE
 }
+
 // =====================
 // SERIES
 // =====================
