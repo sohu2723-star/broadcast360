@@ -1,22 +1,12 @@
 import { NextResponse } from "next/server";
 
-import { broadcast } from "@/services/broadcast-container";
 import { scheduler } from "@/services/scheduler-container";
-import { ScheduleRepository } from "@/repositories/schedule.repository";
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-    /*
-    ==========================
-       GET CHANNEL ID
-    ==========================
-    */
-
-    const { channelId: rawChannelId } = body;
-
-    const channelId = Number(rawChannelId);
+    const channelId = Number(body.channelId);
 
     if (!channelId) {
       return NextResponse.json(
@@ -29,93 +19,27 @@ export async function POST(request: Request) {
       );
     }
 
-
     /*
     ==========================
-       CHECK CURRENT SCHEDULE
+        START SCHEDULER ONLY
     ==========================
     */
 
-    const now = new Date();
+    scheduler.start(channelId);
 
-    const schedule =
-      await ScheduleRepository.findLiveSchedule(
-        channelId,
-        now,
-      );
-
-
-    console.log(
-      "🔎 CURRENT SCHEDULE CHECK",
-      {
-        channelId,
-        scheduleId: schedule?.id ?? null,
-        time: now,
-      }
-    );
-
-
-    /*
-    ==========================
-       START BROADCAST
-    ==========================
-    */
-
-    await broadcast.start(
-      schedule,
+    return NextResponse.json({
+      success: true,
       channelId,
-    );
-
-
-    /*
-    ==========================
-       START SCHEDULER
-    ==========================
-    */
-
-    scheduler.start(
-      channelId,
-    );
-
-
-    /*
-    ==========================
-       RESPONSE
-    ==========================
-    */
+    });
+  } catch (error) {
+    console.error("❌ Broadcast start failed", error);
 
     return NextResponse.json(
       {
-        success: true,
-
-        channelId,
-
-        schedule:
-          schedule?.id ?? null,
-
-        mode:
-          schedule
-            ? "SCHEDULE"
-            : "FALLBACK",
-      }
-    );
-
-
-  } catch(error) {
-
-    console.error(
-      "❌ Broadcast start failed",
-      error,
-    );
-
-
-    return NextResponse.json(
-      {
-        error:
-          "Broadcast start failed",
+        error: "Broadcast start failed",
       },
       {
-        status:500,
+        status: 500,
       },
     );
   }

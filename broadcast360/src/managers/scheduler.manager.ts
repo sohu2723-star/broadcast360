@@ -72,7 +72,7 @@ export class SchedulerManager {
        first check immediately
     */
 
-    this.checkNow(channelId);
+    void this.checkNow(channelId);
 
     const timer = setInterval(async () => {
       try {

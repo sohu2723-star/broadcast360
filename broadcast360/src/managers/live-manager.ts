@@ -1,70 +1,68 @@
-import { spawn, ChildProcess } from "child_process";
+import { FFmpegManager } from "@/streaming/ffmpeg";
+import { ChildProcess } from "child_process";
 
 export class LiveManager {
-  private processes = new Map<number, ChildProcess>();
+  constructor(private ffmpeg: FFmpegManager) {}
 
   async start(
     channelId: number,
     inputUrl: string,
-    streamKey: string
+    streamKey: string,
   ): Promise<ChildProcess> {
-
-    const existing = this.processes.get(channelId);
+    const existing = this.ffmpeg.get(channelId, "LIVE");
 
     if (existing) {
       console.log("⚠ LIVE already running", channelId);
+
       return existing;
     }
 
-    const output = `rtmp://127.0.0.1:1935/camera/${channelId}`;
+    const output = `rtmp://127.0.0.1:1935/live/${streamKey}`;
 
     const args = [
       "-i",
       inputUrl,
 
-      "-c:v","libx264",
-      "-preset","veryfast",
-      "-tune","zerolatency",
-      "-pix_fmt","yuv420p",
+      "-c:v",
+      "libx264",
 
-      "-c:a","aac",
+      "-preset",
+      "veryfast",
 
-      "-f","flv",
+      "-tune",
+      "zerolatency",
 
-      output
+      "-pix_fmt",
+      "yuv420p",
+
+      "-c:a",
+      "aac",
+
+      "-ar",
+      "48000",
+
+      "-f",
+      "flv",
+
+      output,
     ];
 
-    const ffmpeg = spawn("ffmpeg", args, {
-      windowsHide: true,
+    console.log("🔴 START LIVE SOURCE", {
+      channelId,
+      inputUrl,
+      output,
     });
 
-    this.processes.set(channelId, ffmpeg);
-
-    ffmpeg.stderr.on("data", data=>{
-      console.log(data.toString());
-    });
-
-    ffmpeg.on("close", ()=>{
-      this.processes.delete(channelId);
-    });
-
-    return ffmpeg;
+    return this.ffmpeg.start(channelId, "LIVE", args);
   }
 
-  async stop(channelId:number): Promise<void> {
+  async stop(channelId: number) {
+    await this.ffmpeg.stop(channelId, "LIVE");
 
-    const process = this.processes.get(channelId);
-
-    if(!process){
-      return;
-    }
-
-    process.kill("SIGINT");
-
-    this.processes.delete(channelId);
+    console.log("🛑 LIVE SOURCE STOP", channelId);
   }
 
-  isRunning(channelId:number):boolean{
-    return this.processes.has(channelId);
+  isRunning(channelId: number) {
+    return this.ffmpeg.isRunning(channelId, "LIVE");
   }
 }

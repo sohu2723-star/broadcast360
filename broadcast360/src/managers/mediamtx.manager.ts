@@ -1,37 +1,67 @@
 export class MediaMTXManager {
-  async getPath(path: string) {
-    const res = await fetch(`http://localhost:9997/v3/paths/get/${path}`);
+  private api = "http://127.0.0.1:9997";
 
-    if (!res.ok) {
+  /*
+  ==========================
+       GET PATH
+  ==========================
+  */
+
+  async getPath(path: string) {
+    try {
+      const response = await fetch(`${this.api}/v3/paths/get/${path}`);
+
+      if (!response.ok) {
+        return null;
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.log("❌ MediaMTX API ERROR", error);
+
       return null;
     }
-
-    return res.json();
   }
 
-  async isOnline(path: string) {
+  /*
+  ==========================
+       CHECK PUBLISHER
+  ==========================
+  */
 
-  try {
-
+  async isOnline(path: string): Promise<boolean> {
     const data = await this.getPath(path);
 
-
-    if(!data){
+    if (!data) {
       return false;
     }
 
-
-    return (
-      data.source !== null &&
-      data.source !== undefined
-    );
-
-
-  } catch(error){
-
-    return false;
-
+    return data.source !== null && data.source !== undefined;
   }
 
-}
+  /*
+  ==========================
+       WAIT PUBLISHER
+  ==========================
+  */
+
+  async waitPublisher(path: string, timeout = 15000) {
+    console.log("⏳ WAIT MEDIA PATH", path);
+
+    const start = Date.now();
+
+    while (Date.now() - start < timeout) {
+      if (await this.isOnline(path)) {
+        console.log("✅ MEDIA PATH READY", path);
+
+        return true;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+
+    console.log("❌ MEDIA PATH TIMEOUT", path);
+
+    throw new Error(`MediaMTX timeout: ${path}`);
+  }
 }

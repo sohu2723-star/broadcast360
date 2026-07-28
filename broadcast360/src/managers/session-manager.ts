@@ -87,6 +87,12 @@ export class SessionManager {
   */
 
   async stop(channelId: number) {
+    const session = await this.get(channelId);
+
+    if (!session) {
+      return null;
+    }
+
     return prisma.broadcastSession.update({
       where: {
         channelId,
@@ -94,7 +100,6 @@ export class SessionManager {
 
       data: {
         status: "STOPPED",
-
         stoppedAt: new Date(),
       },
     });
