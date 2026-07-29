@@ -1,48 +1,78 @@
 import { ScheduleRepository } from "@/repositories/schedule.repository";
-import { BroadcastService } from "@/services/broadcast.service";
+import { broadcast } from "@/services/broadcast-container";
+
+type SchedulerMode = "SCHEDULE" | "FALLBACK" | "WAITING" | "COMPLETED";
 
 export class SchedulerManager {
   private timers = new Map<number, NodeJS.Timeout>();
 
   private currentSchedule = new Map<number, number | null>();
 
-  private mode = new Map<number, "SCHEDULE" | "FALLBACK">();
+  private mode = new Map<number, SchedulerMode>();
 
-  constructor(private broadcast: BroadcastService) {
+  private switching = new Map<number, boolean>();
+
+  private completedSchedule = new Map<number, number>();
+
+  constructor() {
     /*
- LIVE END CALLBACK
-*/
+    =========================
+       PLAYLIST FINISHED
+    =========================
+    */
 
-    this.broadcast.setLiveEndHandler(async (channelId: number) => {
-      console.log("🔴 LIVE ended");
+    broadcast.setPlaylistFinishedHandler(async ({ channelId, scheduleId }) => {
+      console.log("📺 PLAYLIST FINISHED", {
+        channelId,
+        scheduleId,
+      });
 
-      // Forget old schedule state
-      this.forceRefresh(channelId);
+      /*
+        =====================
+          SCHEDULE COMPLETE
+        =====================
+        */
 
-      // Let scheduler choose next content
+      if (scheduleId) {
+        await ScheduleRepository.updateStatus(scheduleId, "COMPLETED");
+
+        this.completedSchedule.set(channelId, scheduleId);
+
+        console.log("✅ SCHEDULE COMPLETED", scheduleId);
+      }
+
+      this.currentSchedule.set(channelId, null);
+
+      this.mode.set(channelId, "COMPLETED");
+
+      /*
+        check what should happen next
+        */
+
       await this.checkNow(channelId);
     });
   }
 
   /*
-=========================
- START
-=========================
-*/
+  =========================
+          START
+  =========================
+  */
 
   start(channelId: number) {
     if (this.timers.has(channelId)) {
+      console.log("⚠ Scheduler already running", channelId);
+
       return;
     }
 
     console.log("🕒 Scheduler started", channelId);
 
     /*
- immediate check
- after startup
-*/
+       first check immediately
+    */
 
-    this.checkNow(channelId);
+    void this.checkNow(channelId);
 
     const timer = setInterval(async () => {
       try {
@@ -56,20 +86,18 @@ export class SchedulerManager {
   }
 
   /*
-=========================
- CHECK
-=========================
-*/
+  =========================
+        MAIN CHECK
+  =========================
+  */
 
   async checkNow(channelId: number) {
     /*
-=====================
- LIVE RUNNING
-=====================
-*/
+    prevent double execution
+    */
 
-    if (this.broadcast.isLive(channelId)) {
-      console.log("🔴 LIVE active");
+    if (this.switching.get(channelId)) {
+      console.log("⏳ Scheduler switching", channelId);
 
       return;
     }
@@ -78,61 +106,159 @@ export class SchedulerManager {
 
     const schedule = await ScheduleRepository.findLiveSchedule(channelId, now);
 
+    console.log("🔎 Checking schedule", {
+      channelId,
+      now,
+    });
+
     /*
-=====================
- SCHEDULE FOUND
-=====================
-*/
+    =========================
+       ACTIVE SCHEDULE
+    =========================
+    */
 
     if (schedule) {
       const current = this.currentSchedule.get(channelId);
 
-      if (current !== schedule.id || !this.broadcast.isRunning(channelId)) {
-        console.log("📺 Start schedule", schedule.id);
+      /*
+      same schedule already running
+      */
 
+      if (current === schedule.id) {
+        console.log("⏭ SAME SCHEDULE", {
+          channelId,
+          scheduleId: schedule.id,
+        });
+
+        return;
+      }
+
+      /*
+      already completed
+      */
+
+      if (this.completedSchedule.get(channelId) === schedule.id) {
+        console.log("⏭ ALREADY COMPLETED", {
+          channelId,
+          scheduleId: schedule.id,
+        });
+
+        return;
+      }
+
+      console.log("📺 START SCHEDULE", {
+        channelId,
+        scheduleId: schedule.id,
+      });
+
+      this.switching.set(channelId, true);
+
+      try {
         this.currentSchedule.set(channelId, schedule.id);
+
+        this.completedSchedule.delete(channelId);
 
         this.mode.set(channelId, "SCHEDULE");
 
-        await this.broadcast.switchBroadcast(schedule, channelId);
+        await broadcast.switchBroadcast(schedule, channelId);
+
+        console.log("✅ SCHEDULE STARTED", {
+          channelId,
+          scheduleId: schedule.id,
+        });
+      } catch (error) {
+        console.log("⚠ SCHEDULE FAILED", error);
+
+        this.mode.set(channelId, "WAITING");
+      } finally {
+        this.switching.delete(channelId);
       }
+
+      return;
+    }
+    /*
+  =========================
+       NO ACTIVE SCHEDULE
+  =========================
+  */
+
+    console.log("🔁 NO ACTIVE SCHEDULE", channelId);
+
+    /*
+  =========================
+       CHECK NEXT SCHEDULE
+  =========================
+  */
+
+    const nextSchedule = await ScheduleRepository.findNextSchedule(
+      channelId,
+      now,
+    );
+
+    if (nextSchedule) {
+      console.log("⏳ WAITING NEXT SCHEDULE", {
+        channelId,
+        scheduleId: nextSchedule.id,
+        startTime: nextSchedule.startTime,
+      });
+
+      this.mode.set(channelId, "WAITING");
 
       return;
     }
 
     /*
-=====================
- NO SCHEDULE
-=====================
-*/
+  =========================
+          FALLBACK
+  =========================
+  */
 
-    console.log("🔁 No schedule");
+    const currentMode = this.mode.get(channelId);
 
-    if (
-      this.mode.get(channelId) === "FALLBACK" &&
-      this.broadcast.isRunning(channelId)
-    ) {
+    /*
+     Already playing fallback
+  */
+
+    if (currentMode === "FALLBACK" && broadcast.isRunning(channelId)) {
+      console.log("⏭ FALLBACK ALREADY RUNNING", channelId);
+
       return;
     }
 
-    console.log("🔁 Starting fallback");
+    console.log("🎬 START FALLBACK", channelId);
 
-    this.currentSchedule.set(channelId, null);
+    this.switching.set(channelId, true);
 
-    this.mode.set(channelId, "FALLBACK");
+    try {
+      this.mode.set(channelId, "FALLBACK");
 
-    await this.broadcast.switchBroadcast(null, channelId);
+      this.currentSchedule.set(channelId, null);
+
+      await broadcast.switchBroadcast(null, channelId);
+
+      console.log("✅ FALLBACK STARTED", channelId);
+    } catch (error) {
+      console.error("❌ FALLBACK FAILED", error);
+    } finally {
+      this.switching.delete(channelId);
+    }
   }
 
+  /*
+=========================
+       FORCE REFRESH
+=========================
+*/
+
   forceRefresh(channelId: number) {
-    console.log("🔄 Force scheduler refresh", channelId);
+    console.log("🔄 FORCE REFRESH", channelId);
 
     this.currentSchedule.delete(channelId);
   }
 
   /*
 =========================
- STOP
+          STOP
 =========================
 */
 
@@ -147,12 +273,26 @@ export class SchedulerManager {
 
     this.currentSchedule.delete(channelId);
 
+    this.completedSchedule.delete(channelId);
+
     this.mode.delete(channelId);
+
+    this.switching.delete(channelId);
 
     console.log("🛑 Scheduler stopped", channelId);
   }
 
+  /*
+=========================
+          STATUS
+=========================
+*/
+
   isRunning(channelId: number) {
     return this.timers.has(channelId);
+  }
+
+  getMode(channelId: number) {
+    return this.mode.get(channelId) ?? null;
   }
 }

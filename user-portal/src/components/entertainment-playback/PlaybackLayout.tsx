@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 import type { Entertainment } from "@/types/entertainment";
@@ -7,21 +8,107 @@ import type { Entertainment } from "@/types/entertainment";
 import VideoPlayer from "./VideoPlayer";
 import EntertainmentMetadata from "./EntertainmentMetadata";
 import RelatedEntertainments from "./RelatedEntertainments";
+import PlaylistParts from "./PlaylistParts";
 
 
 interface Props {
   entertainment: Entertainment;
+  playlistItems: Entertainment[];
   relatedEntertainments: Entertainment[];
 }
 
 
 export default function PlaybackLayout({
   entertainment,
+  playlistItems,
   relatedEntertainments,
 }: Props) {
 
+  const [currentEntertainment, setCurrentEntertainment] =
+    useState(entertainment);
+
+
+  const leftRef = useRef<HTMLDivElement>(null);
+  const playlistContentRef = useRef<HTMLDivElement>(null);
+
+
+  const [leftHeight, setLeftHeight] = useState(0);
+  const [playlistHeight, setPlaylistHeight] = useState(0);
+
+
+
+  // Measure left side (Video + Metadata)
+  useEffect(() => {
+
+    if (!leftRef.current) return;
+
+
+    const observer = new ResizeObserver(() => {
+
+      if (leftRef.current) {
+        setLeftHeight(
+          leftRef.current.offsetHeight
+        );
+      }
+
+    });
+
+
+    observer.observe(leftRef.current);
+
+
+    return () => observer.disconnect();
+
+
+  }, []);
+
+
+
+  // Measure playlist content
+  useEffect(() => {
+
+    if (!playlistContentRef.current) return;
+
+
+    const observer = new ResizeObserver(() => {
+
+      if (playlistContentRef.current) {
+
+        setPlaylistHeight(
+          playlistContentRef.current.offsetHeight
+        );
+
+      }
+
+    });
+
+
+    observer.observe(playlistContentRef.current);
+
+
+    return () => observer.disconnect();
+
+
+  }, [playlistItems]);
+
+
+
+  const needScroll =
+    playlistHeight > leftHeight;
+
+
+
+  const playlistBoxHeight =
+    needScroll
+      ? leftHeight
+      : "auto";
+
+
+
   return (
+
     <main className="min-h-screen bg-[#010312] text-white">
+
 
       <div className="mx-auto max-w-7xl px-6 py-8">
 
@@ -35,23 +122,41 @@ export default function PlaybackLayout({
 
 
 
+
         <div className="mt-6 grid items-start gap-6 lg:grid-cols-[2fr_1fr]">
 
 
-          {/* LEFT VIDEO */}
 
-          <div className="overflow-hidden rounded-xl border border-[#106EE9]/20 bg-[#0B1026] p-4">
+          {/* LEFT */}
 
+          <div
+            ref={leftRef}
+            className="
+              overflow-hidden
+              rounded-xl
+              border
+              border-[#106EE9]/20
+              bg-[#0B1026]
+              p-4
+            "
+          >
 
             <VideoPlayer
-              entertainment={entertainment}
+              entertainment={currentEntertainment}
             />
 
 
-            <div className="mt-5 border-t border-white/10 pt-5">
+            <div
+              className="
+                mt-5
+                border-t
+                border-white/10
+                pt-5
+              "
+            >
 
               <EntertainmentMetadata
-                entertainment={entertainment}
+                entertainment={currentEntertainment}
               />
 
             </div>
@@ -61,30 +166,72 @@ export default function PlaybackLayout({
 
 
 
-          {/* RIGHT RELATED */}
-
-          <div className="rounded-xl border border-[#106EE9]/20 bg-[#0B1026] p-4">
 
 
-            <h2 className="mb-4 text-lg font-bold">
-              👀 Related Entertainments
+          {/* PLAYLIST */}
+
+          <div
+            style={{
+              height: playlistBoxHeight,
+            }}
+            className="
+              flex
+              flex-col
+              overflow-hidden
+              rounded-xl
+              border
+              border-[#106EE9]/20
+              bg-[#0B1026]
+              p-4
+            "
+          >
+
+
+            <h2 className="mb-4 shrink-0 text-lg font-bold">
+              🎬 Playlist Parts
             </h2>
 
 
-            <RelatedEntertainments
-              entertainments={relatedEntertainments}
-            />
+
+            <div
+              className={
+                needScroll
+                  ? "min-h-0 flex-1 overflow-y-auto playlist-scroll"
+                  : ""
+              }
+            >
+
+              <div ref={playlistContentRef}>
+
+                <PlaylistParts
+                  entertainments={playlistItems}
+                  onSelect={setCurrentEntertainment}
+                />
+
+              </div>
+
+
+            </div>
 
 
           </div>
 
 
+
         </div>
+
+
+
+
+        <RelatedEntertainments
+          entertainments={relatedEntertainments}
+        />
 
 
       </div>
 
 
     </main>
+
   );
 }

@@ -50,9 +50,6 @@ export default function EntertainmentDetailPage() {
     type: "success" | "error";
   } | null>(null);
 
-
-
-
   useEffect(() => {
     async function loadEntertainment() {
       if (!id) return;
@@ -174,25 +171,18 @@ export default function EntertainmentDetailPage() {
       )}
 
       <div className="space-y-3">
-        <button
-          onClick={() => router.back()}
-          className="text-lg text-gray-400 hover:text-white"
-        >
-          ← Back to Entertainment
-        </button>
-
+        <div className="mb-6 flex items-center justify-between">
+          <button
+            onClick={() => router.push("/admin/entertainments")}
+            className="cursor-pointer rounded-xl bg-white/10 px-4 py-2 text-sm font-medium transition hover:bg-white/20"
+          >
+            ← Back
+          </button>
+        </div>
         <h1 className="text-3xl font-bold">{entertainment.title}</h1>
       </div>
 
-      {/* =========================
-        60 / 40 LAYOUT
-========================= */}
-
       <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[3fr_2fr]">
-        {/* =========================
-          VIDEO
-========================= */}
-
         <div className="h-[480px] overflow-hidden rounded-2xl border border-white/10 bg-zinc-900">
           {mediaMode === "thumbnail" ? (
             entertainment.thumbnail ? (
@@ -215,9 +205,7 @@ export default function EntertainmentDetailPage() {
           )}
         </div>
 
-        {/* =========================
-          DETAIL
-========================= */}
+        {/*  DETAIL*/}
 
         <div className="flex h-full flex-col rounded-2xl border border-white/10 bg-zinc-900 p-6">
           <h1 className="mb-6 text-3xl font-bold">{entertainment.title}</h1>
@@ -300,9 +288,7 @@ export default function EntertainmentDetailPage() {
         </div>
       </div>
 
-      {/* =========================
-        DESCRIPTION
-========================= */}
+      {/* DESCRIPTION*/}
 
       <div className="rounded-2xl border border-white/10 bg-zinc-900 p-6">
         <h2 className="mb-2 text-base font-semibold">Description</h2>

@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
+import Pagination from "@/components/admin/Pagination";
 
 type Episode = {
   id: number;
@@ -24,6 +25,8 @@ type Series = {
   releaseYear: number | null;
   createdAt: string;
   episodes: Episode[];
+  episodeCount?: number;
+  partCount?: number;
 };
 
 export default function SeriesDetailPage() {
@@ -35,40 +38,57 @@ export default function SeriesDetailPage() {
     return [hrs, mins, secs].map((v) => String(v).padStart(2, "0")).join(":");
   };
 
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
   const params = useParams();
+  const router = useRouter();
   const id = params?.id ? String(params.id) : null;
 
   const [series, setSeries] = useState<Series | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalEpisodes, setTotalEpisodes] = useState(0);
-
-  const limit = 5;
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 5,
+    total: 0,
+    totalPages: 1,
+  });
 
   const loadSeries = async (pageNum: number) => {
     setLoading(true);
 
     try {
       const res = await fetch(
-        `/api/series/${id}?page=${pageNum}&limit=${limit}`,
+        `/api/series/${id}?page=${pageNum}&limit=${pagination.limit}`,
       );
 
       const result = await res.json();
 
       setSeries(result.data || null);
-      setTotalPages(result.totalPages || 1);
-      setTotalEpisodes(result.total || 0);
+
+      setPagination((prev) => ({
+        ...prev,
+        page: pageNum,
+        totalPages: result.totalPages || 1,
+        total: result.total || 0,
+      }));
     } finally {
       setLoading(false);
     }
   };
+
   useEffect(() => {
     if (!id) return;
 
-    loadSeries(page);
-  }, [page]);
+    loadSeries(pagination.page);
+  }, [pagination.page]);
 
   const handleDelete = async (episodeId: number) => {
     if (!id) return;
@@ -85,8 +105,7 @@ export default function SeriesDetailPage() {
 
       if (!res.ok) throw new Error("Delete failed");
 
-      // IMPORTANT: reload AFTER delete (safe)
-      await loadSeries(page);
+      await loadSeries(pagination.page);
     } catch (error) {
       console.error(error);
       alert("Delete failed");
@@ -94,23 +113,40 @@ export default function SeriesDetailPage() {
   };
 
   if (!id) return <div className="p-6 text-white">Invalid series id</div>;
-  if (loading) return <div className="p-6 text-white">Loading...</div>;
+  if (loading && !series)
+    return <div className="p-6 text-white">Loading...</div>;
   if (!series) return <div className="p-6 text-white">No series found</div>;
+
+  const calculatedUniqueEpisodes = series?.episodes
+    ? new Set(series.episodes.map((ep) => ep.episodeNo)).size
+    : 0;
+
+  const uniqueEpCount = series.episodeCount ?? calculatedUniqueEpisodes;
+  const totalPartCount = series.partCount ?? pagination.total;
 
   return (
     <div className="p-6 text-white">
-      {/* SERIES DETAILS */}
+      {/* Back Button */}
+      <div className="mb-6 flex items-center justify-between">
+        <button
+          onClick={() => router.push("/admin/series")}
+          className="cursor-pointer rounded-xl bg-white/10 px-4 py-2 text-sm font-medium transition hover:bg-white/20"
+        >
+          ← Back
+        </button>
+      </div>
+
       {/* SERIES DETAILS */}
       <div className="w-full rounded-2xl border border-white/10 bg-[#0B1026] p-8">
         <div className="flex flex-row items-start gap-8">
           {/* Widescreen Thumbnail */}
-          <div className="h-87.5 w-112.5 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-gray-800 shadow-lg">
+          <div className="relative aspect-[2/3] w-72 shrink-0 overflow-hidden rounded-xl border border-white/10 bg-gray-800 shadow-lg">
             {series?.thumbnail ? (
               <Image
                 src={series.thumbnail}
                 alt={series.title}
-                width={450}
-                height={350}
+                width={600}
+                height={900}
                 className="h-full w-full object-cover"
               />
             ) : (
@@ -135,7 +171,9 @@ export default function SeriesDetailPage() {
                 <span>{series.releaseYear}</span>
               </div>
               <div className="flex items-center gap-2 rounded border border-blue-500/20 bg-blue-500/10 px-3 py-1 text-xs font-medium text-blue-400">
-                <span>{totalEpisodes} Episodes</span>
+                <span className="text-sm font-medium text-white">
+                  {uniqueEpCount} Episodes
+                </span>
               </div>
             </div>
 
@@ -145,7 +183,6 @@ export default function SeriesDetailPage() {
 
             <div className="mb-8 h-px w-full bg-white/10" />
 
-            {/* Metadata Grid */}
             {/* Metadata Grid */}
             <div className="grid grid-cols-4 gap-4">
               {/* Genre */}
@@ -213,7 +250,10 @@ export default function SeriesDetailPage() {
                   EPISODES
                 </span>
                 <span className="text-sm font-medium text-white">
-                  {totalEpisodes}
+                  {uniqueEpCount}{" "}
+                  <span className="text-xs font-normal text-gray-400">
+                    ({totalPartCount} Parts)
+                  </span>
                 </span>
               </div>
 
@@ -236,7 +276,7 @@ export default function SeriesDetailPage() {
                   CREATED
                 </span>
                 <span className="text-sm font-medium text-white">
-                  {new Date(series.createdAt).toLocaleDateString()}
+                  {formatDate(series.createdAt)}
                 </span>
               </div>
             </div>
@@ -244,7 +284,7 @@ export default function SeriesDetailPage() {
         </div>
       </div>
 
-      {/* EPISODES */}
+      {/* EPISODES HEADER */}
       <div className="mt-8 mb-4 flex items-center justify-between">
         <h2 className="text-2xl font-semibold">Episodes</h2>
 
@@ -256,6 +296,7 @@ export default function SeriesDetailPage() {
         </Link>
       </div>
 
+      {/* EPISODES TABLE */}
       <div className="overflow-hidden rounded-xl border border-white/10 bg-[#0B1026]">
         <table className="w-full">
           <thead>
@@ -273,13 +314,8 @@ export default function SeriesDetailPage() {
           <tbody>
             {series.episodes.map((ep) => (
               <tr key={ep.id} className="border-b border-white/10">
-                {/* Episode No */}
                 <td className="p-4">EP {ep.episodeNo}</td>
-
-                {/* Title */}
                 <td className="p-4">{ep.title}</td>
-
-                {/* Thumbnail */}
                 <td className="p-4">
                   {ep.thumbnailUrl ? (
                     <div className="flex flex-col gap-2">
@@ -304,32 +340,21 @@ export default function SeriesDetailPage() {
                     <span className="text-gray-400">No Thumbnail</span>
                   )}
                 </td>
-
-                {/* Duration */}
                 <td className="p-4">{formatDuration(ep.duration)}</td>
-
-                {/* Release Year (FROM SERIES) */}
-                <td className="p-4 text-gray-300">
+                <td className="p-10 text-gray-300">
                   {series.releaseYear || "-"}
                 </td>
-
-                {/* Created Date */}
                 <td className="p-4 text-gray-300">
-                  {new Date(ep.createdAt).toLocaleDateString()}
+                  {formatDate(ep.createdAt)}
                 </td>
-
-                {/* Actions */}
                 <td className="p-4">
                   <div className="flex gap-2">
-                    {/* EDIT */}
                     <Link
                       href={`/admin/series/${series.id}/episodes/edit/${ep.id}`}
                       className="inline-block rounded bg-green-600 px-3 py-1 text-white hover:bg-green-700"
                     >
                       Edit
                     </Link>
-
-                    {/* DELETE */}
                     <button
                       onClick={() => handleDelete(ep.id)}
                       className="rounded bg-red-600 px-3 py-1 text-white hover:bg-red-700"
@@ -352,28 +377,17 @@ export default function SeriesDetailPage() {
         </table>
       </div>
 
-      {/* PAGINATION */}
-      <div className="mt-6 flex justify-center gap-3">
-        <button
-          disabled={page === 1}
-          onClick={() => setPage((p) => p - 1)}
-          className="rounded bg-gray-700 px-4 py-2 disabled:opacity-50"
-        >
-          Prev
-        </button>
-
-        <span>
-          Page {page} of {totalPages}
-        </span>
-
-        <button
-          disabled={page === totalPages}
-          onClick={() => setPage((p) => p + 1)}
-          className="rounded bg-gray-700 px-4 py-2 disabled:opacity-50"
-        >
-          Next
-        </button>
-      </div>
+      {/* PAGINATION  */}
+      <Pagination
+        page={pagination.page}
+        totalPages={pagination.totalPages}
+        setPage={(newPage) => {
+          const nextPg =
+            typeof newPage === "function" ? newPage(pagination.page) : newPage;
+          setPagination((prev) => ({ ...prev, page: nextPg }));
+        }}
+        loading={loading}
+      />
     </div>
   );
 }

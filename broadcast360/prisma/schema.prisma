@@ -110,18 +110,18 @@ model Stream {
   playlistItems PlaylistItem[]
 }
 
-// enum StreamProtocol {
-//   RTMP
-//   RTSP
-//   HLS
-//   WEBRTC
-//   SRT
-// }
+enum StreamProtocol {
+  RTMP
+  RTSP
+  HLS
+  WEBRTC
+  SRT
+}
 
-// enum StreamStatus {
-//   ONLINE
-//   OFFLINE
-// }
+enum StreamStatus {
+  ONLINE
+  OFFLINE
+}
 
 // =====================
 // SERIES
@@ -320,7 +320,7 @@ enum BroadcastStatus {
 model BroadcastSession {
   id Int @id @default(autoincrement())
 
-  channelId  Int
+  channelId  Int  @unique
   scheduleId Int?
 
   status BroadcastStatus @default(STOPPED)

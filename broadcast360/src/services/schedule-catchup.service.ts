@@ -1,130 +1,98 @@
-import { ScheduleWithRelations } from "@/types/schedule.types";
-import { PlaylistItemWithRelations } from "@/types/playlist";
+import { ResolvedPlaylistItem } from "@/types/playlist";
 
-interface CatchupResult {
-
-  itemIndex:number;
-
-  offset:number;
-
+export interface CatchupResult {
+  itemIndex: number;
+  offset: number;
 }
 
-
 export class ScheduleCatchupService {
-
-
   calculate(
-    schedule:ScheduleWithRelations,
-    now:Date
-  ):CatchupResult {
-
-
-    if(!schedule.startTime){
+    items: ResolvedPlaylistItem[],
+    startTime: Date,
+    now: Date,
+  ): CatchupResult {
+    if (items.length === 0) {
       return {
-        itemIndex:0,
-        offset:0
+        itemIndex: 0,
+        offset: 0,
       };
     }
 
+    const elapsed = Math.floor((now.getTime() - startTime.getTime()) / 1000);
 
-    const elapsed =
-      Math.floor(
-        (now.getTime() -
-        schedule.startTime.getTime())
-        /
-        1000
-      );
-
-
-    console.log(
-      "⏱ Schedule elapsed:",
-      elapsed,
-      "seconds"
-    );
-
-
+    if (elapsed <= 0) {
+      return {
+        itemIndex: 0,
+        offset: 0,
+      };
+    }
 
     let currentTime = 0;
 
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
 
+      /*
+      ======================
+          LIVE STREAM
+      ======================
 
-    const items =
-      schedule.playlist?.items ?? [];
+      Live has no duration.
 
+      Once scheduler reaches it,
+      stay on live until another
+      schedule changes it.
 
+      */
 
-    for(
-      let i=0;
-      i<items.length;
-      i++
-    ){
-
-      const duration =
-        this.getDuration(items[i]);
-
-
-
-      if(
-        elapsed <
-        currentTime + duration
-      ){
-
+      if (item.type === "STREAM") {
         return {
-
-          itemIndex:i,
-
-          offset:
-            elapsed-currentTime
-
+          itemIndex: i,
+          offset: 0,
         };
-
       }
 
+      const duration = item.duration ?? 0;
+
+      if (duration <= 0) {
+        console.log("⚠ SKIP ITEM WITHOUT DURATION", item);
+
+        continue;
+      }
+
+      /*
+      ======================
+          CURRENT VOD ITEM
+      ======================
+      */
+
+      if (elapsed >= currentTime && elapsed < currentTime + duration) {
+        return {
+          itemIndex: i,
+
+          offset: elapsed - currentTime,
+        };
+      }
 
       currentTime += duration;
-
     }
 
+    /*
+    ======================
+       PLAYLIST FINISHED
+    ======================
 
+    Important:
+    Do not return items.length,
+    because BroadcastService will
+    get undefined.
 
-    // schedule already finished
+    */
 
     return {
+      itemIndex: items.length - 1,
 
-      itemIndex:
-        items.length-1,
-
-      offset:0
-
+      offset: 0,
     };
-
   }
-
-
-
-
-
-  private getDuration(item: PlaylistItemWithRelations) {
-
-
-    if(item.movie){
-      return item.movie.duration;
-    }
-
-
-    if(item.episode){
-      return item.episode.duration;
-    }
-
-
-    if(item.advertisement){
-      return item.advertisement.duration;
-    }
-
-
-    return 0;
-
-  }
-
-
 }

@@ -26,13 +26,31 @@ export default function AdvertisementDetailsPage({ params }: PageProps) {
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
+  const formatDuration = (seconds: number) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+
+    return [hrs, mins, secs].map((v) => String(v).padStart(2, "0")).join(":");
+  };
+
   useEffect(() => {
     const fetchAdDetails = async () => {
       try {
         setLoading(true);
         const res = await fetch(`/api/ads/${adId}`);
         if (!res.ok) {
-          if (res.status === 404) throw new Error("Advertisement data not found.");
+          if (res.status === 404)
+            throw new Error("Advertisement data not found.");
           throw new Error("Failed to communicate with database.");
         }
         const result = await res.json();
@@ -46,15 +64,13 @@ export default function AdvertisementDetailsPage({ params }: PageProps) {
     fetchAdDetails();
   }, [adId]);
 
-  
-
   if (loading) {
     return (
-      <div className="p-6 text-white space-y-8 max-w-5xl mx-auto animate-pulse">
-        <div className="h-12 bg-white/5 rounded-xl w-1/3" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="aspect-video bg-white/5 rounded-2xl" />
-          <div className="h-64 bg-white/5 rounded-2xl" />
+      <div className="mx-auto max-w-5xl animate-pulse space-y-8 p-6 text-white">
+        <div className="h-12 w-1/3 rounded-xl bg-white/5" />
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+          <div className="aspect-video rounded-2xl bg-white/5" />
+          <div className="h-64 rounded-2xl bg-white/5" />
         </div>
       </div>
     );
@@ -62,12 +78,12 @@ export default function AdvertisementDetailsPage({ params }: PageProps) {
 
   if (error || !ad) {
     return (
-      <div className="p-6 text-center text-slate-400 space-y-4 max-w-md mx-auto pt-20">
-        <div className="text-sm bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl">
+      <div className="mx-auto max-w-md space-y-4 p-6 pt-20 text-center text-slate-400">
+        <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400">
           {error || "Advertisement target identity missing."}
         </div>
         <button
-          onClick={() => router.push("/admin/advertisements")} //
+          onClick={() => router.push("/admin/advertisements")}
           className="text-xs font-semibold text-[#106EE9] hover:underline"
         >
           &larr; Back to Advertisements Registry
@@ -78,104 +94,120 @@ export default function AdvertisementDetailsPage({ params }: PageProps) {
 
   return (
     <div className="">
-      <div className="w-full flex items-center justify-start ">
-        <button 
-          onClick={() => router.push("/admin/ads")} //
-          className=" transition-all flex items-center gap-2"
+      <div className="flex w-full items-center justify-start">
+        <button
+          onClick={() => router.push("/admin/ads")}
+          className="cursor-pointer rounded-xl bg-white/10 px-4 py-2 text-sm font-medium transition hover:bg-white/20"
         >
-          <span className="text-2xl transition-transform group-hover:-translate-x-1">&larr;</span>
-          <span className="text-xl font-bold tracking-tight">Back</span>
+          ← Back
         </button>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start w-full">
-        
-        <div className="w-full mt-5">
-          <div className="bg-[#070B1E] border border-white/10 rounded-2xl overflow-hidden shadow-2xl aspect-video w-full flex items-center justify-center relative">
-            <video 
-              src={ad.videoUrl} 
-               width="500"
-               height="250"
+      <div className="grid w-full grid-cols-1 items-start gap-8 md:grid-cols-2">
+        <div className="mt-5 w-full">
+          <div className="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-[#070B1E] shadow-2xl">
+            <video
+              src={ad.videoUrl}
+              width="500"
+              height="250"
               controls
-              className=" object-contain bg-black rounded-xl"
+              className="rounded-xl bg-black object-contain"
               preload="metadata"
             />
           </div>
-          <p className="text-sm text-slate-500 mt-2 text-center italic">Preview Video</p>
+          <p className="mt-2 text-center text-sm text-slate-500 italic">
+            Preview Video
+          </p>
         </div>
 
         {/* Right Section: Video Information & Action Buttons */}
-        <div className="flex flex-col gap-6 w-full">
-          
+        <div className="flex w-full flex-col gap-6">
           {/* Metadata Card */}
-          <div className="bg-[#070B1E] border border-white/10 rounded-2xl p-6 shadow-2xl space-y-4">
-            <h2 className="text-xl font-semibold tracking-wider text-[#106EE9] uppercase border-b border-white/5 pb-2">
+          <div className="space-y-4 rounded-2xl border border-white/10 bg-[#070B1E] p-6 shadow-2xl">
+            <h2 className="border-b border-white/5 pb-2 text-xl font-semibold tracking-wider text-[#106EE9] uppercase">
               Details
             </h2>
-            
+
             <div className="divide-y divide-white/5 text-sm">
               {/* Title Identity */}
-              <div className="py-3 flex justify-between items-center gap-4">
-                <span className="text-base text-slate-400 font-medium">Title:</span>
-                <span className="text-slate-200 font-medium text-right truncate max-w-[250px]">{ad.title}</span>
+              <div className="flex items-center justify-between gap-4 py-3">
+                <span className="text-base font-medium text-slate-400">
+                  Title:
+                </span>
+                <span className="max-w-[250px] truncate text-right font-medium text-slate-200">
+                  {ad.title}
+                </span>
               </div>
 
               {/* Playtime Duration */}
-              <div className="py-3 flex justify-between items-center">
-                <span className="text-base text-slate-400 font-medium">Duration:</span>
-                <span className="text-slate-200 font-mono font-medium">{ad.duration} seconds</span>
+              <div className="flex items-center justify-between py-3">
+                <span className="text-base font-medium text-slate-400">
+                  Duration:
+                </span>
+                <span className="font-mono font-medium text-slate-200">
+                  {formatDuration(ad.duration)}
+                </span>
               </div>
 
               {/* Status Banner Badge */}
-              <div className="py-3 flex justify-between items-center">
-                <span className="text-base text-slate-400 font-medium">Status:</span>
-                <span className={`inline-flex items-center px-2.5 py-0.5  text-xs font-semibold ${
-                  ad.active 
-                    ? "bg-emerald-500/10 text-emerald-400 " 
-                    : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
-                }`}>
-                  <span className={`w-1.5 h-1.5  mr-1.5 ${ad.active ? "bg-emerald-400" : "bg-amber-400"}`} />
+              <div className="flex items-center justify-between py-3">
+                <span className="text-base font-medium text-slate-400">
+                  Status:
+                </span>
+                <span
+                  className={`inline-flex items-center px-2.5 py-0.5 text-xs font-semibold ${
+                    ad.active
+                      ? "bg-emerald-500/10 text-emerald-400"
+                      : "border border-amber-500/20 bg-amber-500/10 text-amber-400"
+                  }`}
+                >
+                  <span
+                    className={`mr-1.5 h-1.5 w-1.5 ${ad.active ? "bg-emerald-400" : "bg-amber-400"}`}
+                  />
                   {ad.active ? "Active" : "Inactive"}
                 </span>
               </div>
 
               {/* Video Target File Reference */}
-              <div className="py-3 flex justify-between items-center gap-4">
-                <span className="text-base text-slate-400 font-medium">File Context:</span>
-                <span className="text-slate-300 font-mono text-xs truncate max-w-[220px] bg-white/5 px-2 py-1 rounded">
+              <div className="flex items-center justify-between gap-4 py-3">
+                <span className="text-base font-medium text-slate-400">
+                  File Context:
+                </span>
+                <span className="max-w-[220px] truncate rounded bg-white/5 px-2 py-1 font-mono text-xs text-slate-300">
                   {ad.videoUrl.split("/").pop() || ad.videoUrl}
                 </span>
               </div>
 
               {/* Created Date */}
-              <div className="py-3 flex justify-between items-center">
-                <span className="text-base text-slate-400 font-medium">Created Date:</span>
-                <span className="text-slate-300 font-mono text-xs">{ad.createdAt}</span>
+              <div className="flex items-center justify-between py-3">
+                <span className="text-base font-medium text-slate-400">
+                  Created Date:
+                </span>
+                <span className="font-mono text-xs text-slate-300">
+                  {formatDate(ad.createdAt)}
+                </span>
               </div>
             </div>
           </div>
 
           {/* Solid Color Bright Action Buttons */}
-          <div className="flex items-center justify-end gap-4 w-full pt-2">
+          <div className="flex w-full items-center justify-end gap-4 pt-2">
             <button
-              onClick={() => router.push(`/admin/ads/edit/${ad.id}`)} 
-              style={{ backgroundColor: "#2b10f4" ,width:"200px"}}
-              className="px-6 py-2.5 rounded-xl bg-[#106EE9] hover:bg-[#106EE9]/90 text-white font-bold text-base transition-all shadow-lg active:scale-[0.98]"
+              onClick={() => router.push(`/admin/ads/edit/${ad.id}`)}
+              style={{ backgroundColor: "#2b10f4", width: "200px" }}
+              className="rounded-xl bg-[#106EE9] px-6 py-2.5 text-base font-bold text-white shadow-lg transition-all hover:bg-[#106EE9]/90 active:scale-[0.98]"
             >
               Edit
             </button>
             <button
               // onClick={() => handleDelete(ad.id)}
-             style={{ backgroundColor: "#F41010" ,width:"200px"}} 
-             className="text-white px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg hover:brightness-110 active:scale-[0.98] disabled:opacity-40"
+              style={{ backgroundColor: "#F41010", width: "200px" }}
+              className="rounded-xl px-6 py-2.5 text-sm font-bold text-white shadow-lg transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-40"
             >
               {isPending ? "Deleting..." : "Delete"}
             </button>
           </div>
-
         </div>
-
       </div>
-
     </div>
   );
 }

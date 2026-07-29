@@ -117,7 +117,7 @@ export class BroadcastService {
           return this.playNext(channelId, streamKey);
         }
 
-        await this.switcher.startLIVE(channelId, item.stream);
+        await this.switcher.startLIVE(channelId, item.stream.url);
 
         this.monitorLive(channelId, streamKey);
 

@@ -1,155 +1,312 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useRef, useState } from "react";
 
 import type { Entertainment } from "@/types/entertainment";
 
 
-function formatDuration(seconds:number){
-
-  if(!seconds || seconds <= 0)
-    return "-";
-
-
-  const minutes =
-    Math.floor(seconds / 60);
-
-  const sec =
-    seconds % 60;
-
-
-  return `${minutes}m ${sec}s`;
+interface Props {
+  entertainments: Entertainment[];
 }
-
-
 
 
 export default function RelatedEntertainments({
   entertainments,
-}:{
-  entertainments: Entertainment[];
-}){
+}: Props) {
 
 
-  const related =
-    Array.from(
-      new Map(
-        entertainments.map(
-          (item)=>[
-            item.id,
-            item
-          ]
-        )
-      ).values()
-    );
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const [isDragging, setIsDragging] = useState(false);
+
+  const startX = useRef(0);
+  const scrollLeft = useRef(0);
 
 
 
-  if(!related.length){
+  if (!entertainments.length) return null;
 
-    return (
 
-      <div className="rounded-xl border border-[#106EE9]/20 bg-[#0B1026] p-3 text-center text-xs text-gray-400">
 
-        No related entertainments found.
+  const handleScroll = (
+    direction: "left" | "right"
+  ) => {
 
-      </div>
+    if (!scrollRef.current) return;
 
-    );
 
-  }
+    scrollRef.current.scrollBy({
+
+      left: direction === "left" ? -500 : 500,
+
+      behavior: "smooth",
+
+    });
+
+  };
+
+
+
+  const handleMouseDown = (
+    e: React.MouseEvent<HTMLDivElement>
+  ) => {
+
+    if (!scrollRef.current) return;
+
+
+    setIsDragging(true);
+
+
+    startX.current =
+      e.pageX - scrollRef.current.offsetLeft;
+
+
+    scrollLeft.current =
+      scrollRef.current.scrollLeft;
+
+  };
+
+
+
+  const handleMouseMove = (
+    e: React.MouseEvent<HTMLDivElement>
+  ) => {
+
+    if (!isDragging || !scrollRef.current) return;
+
+
+    e.preventDefault();
+
+
+    const x =
+      e.pageX - scrollRef.current.offsetLeft;
+
+
+    const walk =
+      (x - startX.current) * 1.5;
+
+
+    scrollRef.current.scrollLeft =
+      scrollLeft.current - walk;
+
+  };
+
+
+
+  const stopDragging = () => {
+
+    setIsDragging(false);
+
+  };
 
 
 
   return (
 
-    <div className="space-y-2">
+    <section className="relative mt-12">
 
 
-      {related.map((item)=>(
-        
-
-        <Link
-
-          key={item.id}
-
-          href={`/entertainments/${item.entertainmentKey}`}
-
-          className="group flex h-[72px] gap-2 rounded-lg border border-white/10 bg-[#010312] p-2 hover:border-[#106EE9]"
-
-        >
+      <h2 className="mb-6 text-2xl font-bold text-white">
+        You may also like this
+      </h2>
 
 
-          <div className="relative h-14 w-20 overflow-hidden rounded-md bg-black">
+
+      {/* Left Arrow */}
+
+      <button
+        onClick={() => handleScroll("left")}
+        className="
+          absolute
+          left-0
+          top-1/2
+          z-10
+          -translate-y-1/2
+          rounded-full
+          bg-black/70
+          p-2
+          text-white
+          transition
+          hover:bg-black
+        "
+      >
+        <ChevronLeft size={30} />
+      </button>
 
 
-            {item.thumbnail ? (
+
+      {/* Right Arrow */}
+
+      <button
+        onClick={() => handleScroll("right")}
+        className="
+          absolute
+          right-0
+          top-1/2
+          z-10
+          -translate-y-1/2
+          rounded-full
+          bg-black/70
+          p-2
+          text-white
+          transition
+          hover:bg-black
+        "
+      >
+        <ChevronRight size={30} />
+      </button>
+
+
+
+
+      <div
+
+        ref={scrollRef}
+
+        onMouseDown={handleMouseDown}
+
+        onMouseMove={handleMouseMove}
+
+        onMouseUp={stopDragging}
+
+        onMouseLeave={stopDragging}
+
+        className={`
+          flex
+          gap-6
+          overflow-x-auto
+          scroll-smooth
+          px-10
+          select-none
+          [scrollbar-width:none]
+          [&::-webkit-scrollbar]:hidden
+          ${
+            isDragging
+              ? "cursor-grabbing"
+              : "cursor-grab"
+          }
+        `}
+
+      >
+
+
+
+        {entertainments.map((item) => (
+
+          <Link
+
+            key={item.id}
+
+            href={`/entertainments/${item.id}`}
+
+            className="
+              group
+              w-[260px]
+              shrink-0
+              overflow-hidden
+              rounded-2xl
+              bg-zinc-900
+              transition
+              hover:scale-[1.03]
+            "
+
+          >
+
+
+            <div className="relative aspect-[2/3]">
+
 
               <Image
 
-                src={item.thumbnail}
+                src={
+                  item.thumbnail ||
+                  "/images/no-image.png"
+                }
 
                 alt={item.title}
 
                 fill
 
-                className="object-cover"
-
                 unoptimized
+
+                className="
+                  object-cover
+                  transition
+                  duration-500
+                  group-hover:scale-105
+                "
 
               />
 
-            ):(
-              <div className="flex h-full items-center justify-center text-xs text-gray-500">
 
-                🎬
+
+              <div
+                className="
+                  absolute
+                  inset-0
+                  bg-gradient-to-t
+                  from-black
+                  via-black/40
+                  to-transparent
+                "
+              />
+
+
+
+              <div
+                className="
+                  absolute
+                  bottom-0
+                  left-0
+                  right-0
+                  p-5
+                "
+              >
+
+
+                <h3
+                  className="
+                    line-clamp-2
+                    text-xl
+                    font-bold
+                    text-white
+                  "
+                >
+                  {item.title}
+                </h3>
+
+
+
+                <p className="mt-3 text-sm text-gray-300">
+                  {item.category || "Entertainment"}
+                </p>
+
+
+
+                <p className="text-sm text-gray-400">
+                  {item.releaseYear ?? "-"}
+                </p>
+
 
               </div>
-            )}
 
 
-          </div>
+            </div>
 
 
+          </Link>
+
+        ))}
 
 
-          <div className="min-w-0 flex-1">
+      </div>
 
 
-            <h3 className="truncate text-xs font-bold">
-
-              {item.title}
-
-            </h3>
-
-
-
-            <p className="text-[10px] text-gray-400">
-
-              🎭 {item.category || "Entertainment"}
-
-            </p>
-
-
-
-            <p className="text-[10px] text-gray-500">
-
-              ⏱ {formatDuration(item.duration)}
-
-            </p>
-
-
-          </div>
-
-
-        </Link>
-
-
-      ))}
-
-
-    </div>
+    </section>
 
   );
+
 }
