@@ -383,6 +383,9 @@ export async function GET(
         category:
         entertainment.category,
 
+        releaseYear:
+        entertainment.releaseYear,
+
 
         thumbnail:
 
