@@ -1,32 +1,31 @@
-
 "use client";
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { MovieFormData } from "@/types/movie";
-import Image from "next/image";
+import { GENRES } from "@/lib/constants/genres";
 import {
   createMovieSchema,
   editMovieSchema,
 } from "@/lib/validators/movie.validator";
+import ImageUploader from "@/components/ImageUploader";
 
 type Props = {
   initialData?: MovieFormData;
   movieId?: number;
+  initialVideoUrl?: string | null;
+  initialThumbnailUrl?: string | null;
   apiError?: string;
   onSubmit: (data: MovieFormData) => Promise<void>;
-
   showPreview?: boolean;
-
-  onPreviewChange?: (
-    video: string | null,
-    thumbnail: string | null
-  ) => void;
+  onPreviewChange?: (video: string | null, thumbnail: string | null) => void;
 };
 
 export default function MovieForm({
   initialData,
   movieId,
+  initialVideoUrl,
+  initialThumbnailUrl,
   apiError,
   onSubmit,
   onPreviewChange,
@@ -42,19 +41,41 @@ export default function MovieForm({
       video: null,
       thumbnail: null,
       releaseYear: 0,
-    }
+    },
   );
 
+  const isEditMode = !!movieId;
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
-  const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  // THUMBNAIL & VIDEO PREVIEW STATES
+  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(
+    initialThumbnailUrl ?? null,
+  );
+
+  const [videoPreview, setVideoPreview] = useState<string | null>(
+    initialVideoUrl ?? null,
+  );
+
   const videoInputRef = useRef<HTMLInputElement>(null);
+  const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const filePickerOpened = useRef(false);
   const thumbnailPickerOpened = useRef(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (initialVideoUrl) {
+      setVideoPreview(initialVideoUrl);
+    }
+  }, [initialVideoUrl]);
+
+  useEffect(() => {
+    if (initialThumbnailUrl) {
+      setThumbnailPreview(initialThumbnailUrl);
+    }
+  }, [initialThumbnailUrl]);
+
   function openVideoPicker() {
     filePickerOpened.current = true;
-
     videoInputRef.current?.click();
   }
 
@@ -62,60 +83,48 @@ export default function MovieForm({
     thumbnailPickerOpened.current = true;
     thumbnailInputRef.current?.click();
   }
+
   useEffect(() => {
     function handleWindowFocus() {
       setTimeout(() => {
-
         // VIDEO CANCEL
         if (filePickerOpened.current) {
           const input = videoInputRef.current;
 
-        if (input && !input.files?.length) {
-  setForm((prev) => ({
-    ...prev,
-    video: null,
-  }));
+          if (input && !input.files?.length) {
+            if (!form.video) {
+              setVideoPreview(initialVideoUrl ?? null);
+            }
 
-  setVideoPreview(null);
-
-  onPreviewChange?.(null, null);
-
-  if (!movieId) {
-    setErrors((prev) => ({
-      ...prev,
-      video: "Movie file is required",
-    }));
-  }
-}
+            if (!movieId && !initialVideoUrl) {
+              setErrors((prev) => ({
+                ...prev,
+                video: "Movie file is required",
+              }));
+            }
+          }
 
           filePickerOpened.current = false;
         }
 
-
         // THUMBNAIL CANCEL
         if (thumbnailPickerOpened.current) {
           const input = thumbnailInputRef.current;
-if (input && !input.files?.length) {
-  setForm((prev) => ({
-    ...prev,
-    thumbnail: null,
-  }));
+          if (input && !input.files?.length) {
+            if (!form.thumbnail) {
+              setThumbnailPreview(initialThumbnailUrl ?? null);
+            }
 
-  setThumbnailPreview(null);
-
-  onPreviewChange?.(null, null);
-
-  if (!movieId) {
-    setErrors((prev) => ({
-      ...prev,
-      thumbnail: "Thumbnail is required",
-    }));
-  }
-}
+            if (!movieId && !initialThumbnailUrl) {
+              setErrors((prev) => ({
+                ...prev,
+                thumbnail: "Thumbnail is required",
+              }));
+            }
+          }
 
           thumbnailPickerOpened.current = false;
         }
-
       }, 300);
     }
 
@@ -124,9 +133,13 @@ if (input && !input.files?.length) {
     return () => {
       window.removeEventListener("focus", handleWindowFocus);
     };
-  }, [movieId]);
-  const thumbnailInputRef = useRef<HTMLInputElement>(null);
- 
+  }, [
+    movieId,
+    initialVideoUrl,
+    initialThumbnailUrl,
+    form.video,
+    form.thumbnail,
+  ]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -147,285 +160,255 @@ if (input && !input.files?.length) {
     }
 
     setErrors({});
-    await onSubmit(form);
+    setIsSubmitting(true);
+    try {
+      await onSubmit(form);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
-    <div className="bg-[#0B1026] border border-white/10 rounded-2xl p-8 max-w-3xl">
-      <form className="space-y-5" onSubmit={handleSubmit}>
+    <div className="max-w-6xl rounded-2xl border border-white/10 bg-[#0B1026] p-8 text-white">
+      <form className="space-y-6" onSubmit={handleSubmit}>
+        {/* LEFT & RIGHT GRID LAYOUT */}
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+          {/* LEFT SIDE: INPUT FIELDS & VIDEO */}
+          <div className="space-y-5">
+            {/* TITLE */}
+            <div>
+              <label className="mb-2 block font-medium">Movie Title</label>
+              <input
+                className="w-full rounded-xl border border-white/10 bg-[#111936] p-3 text-white focus:border-blue-500 focus:outline-none"
+                value={form.title}
+                onChange={(e) => {
+                  setForm({
+                    ...form,
+                    title: e.target.value,
+                  });
+                }}
+              />
+              {errors.title && (
+                <p className="mt-1 text-sm text-red-500">{errors.title}</p>
+              )}
+              {apiError && (
+                <p className="mt-1 text-sm text-red-500">{apiError}</p>
+              )}
+            </div>
 
+            {/* DESCRIPTION */}
+            <div>
+              <label className="mb-2 block font-medium">Description</label>
+              <textarea
+                rows={4}
+                className="w-full rounded-xl border border-white/10 bg-[#111936] p-3 text-white focus:border-blue-500 focus:outline-none"
+                value={form.description}
+                onChange={(e) =>
+                  setForm({ ...form, description: e.target.value })
+                }
+              />
+              {errors.description && (
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.description}
+                </p>
+              )}
+            </div>
 
-        
-     
-{/* TITLE */}
-<div>
-  <label className="block mb-2">
-    Movie Title
-  </label>
+            {/* GENRE */}
+            <div>
+              <label className="mb-2 block text-sm text-slate-200">Genre</label>
 
-  <input
-    className="w-full bg-[#111936] border border-white/10 rounded-xl p-3"
-    value={form.title}
-    onChange={(e) => {
-      setForm({
-        ...form,
-        title: e.target.value,
-      });
+              <select
+                className={`w-full rounded-xl border bg-[#111936] p-3 text-white transition outline-none ${
+                  errors.genre
+                    ? "border-red-500"
+                    : "border-white/10 focus:border-blue-500"
+                }`}
+                value={form.genre}
+                onChange={(e) => {
+                  setForm({
+                    ...form,
+                    genre: e.target.value,
+                  });
 
-     
-    }}
-  />
+                  if (errors.genre) {
+                    setErrors({
+                      ...errors,
+                      genre: "",
+                    });
+                  }
+                }}
+              >
+                <option value="">Select Genre</option>
 
-  {errors.title && (
-    <p className="text-red-500 text-sm">
-      {errors.title}
-    </p>
-  )}
+                {GENRES.map((genre) => (
+                  <option key={genre} value={genre} className="bg-[#111936]">
+                    {genre}
+                  </option>
+                ))}
+              </select>
 
-  {apiError && (
-    <p className="text-red-500 text-sm mt-1">
-      {apiError}
-    </p>
-  )}
-</div>
+              {errors.genre && (
+                <p className="mt-1 text-sm text-red-400">{errors.genre}</p>
+              )}
+            </div>
 
-        {/* DESCRIPTION */}
-        <div>
-          <label className="block mb-2">Description</label>
-          <textarea
-            rows={4}
-            className="w-full bg-[#111936] border border-white/10 rounded-xl p-3"
-            value={form.description}
-            onChange={(e) =>
-              setForm({ ...form, description: e.target.value })
-            }
-          />
-          {errors.description && (
-            <p className="text-red-500 text-sm">{errors.description}</p>
-          )}
-        </div>
+            {/* RELEASE YEAR */}
+            <div>
+              <label className="mb-2 block font-medium">Release Year</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                maxLength={4}
+                className="w-full rounded-xl border border-white/10 bg-[#111936] p-3 text-white focus:border-blue-500 focus:outline-none"
+                value={form.releaseYear || ""}
+                placeholder="2026"
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (/^\d{0,4}$/.test(value)) {
+                    setForm({
+                      ...form,
+                      releaseYear: value === "" ? 0 : Number(value),
+                    });
+                  }
+                }}
+              />
+              {errors.releaseYear && (
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.releaseYear}
+                </p>
+              )}
+            </div>
 
-        {/* GENRE */}
-        <div>
-          <label className="block mb-2">Genre</label>
-          <input
-            className="w-full bg-[#111936] border border-white/10 rounded-xl p-3"
-            value={form.genre}
-            onChange={(e) =>
-              setForm({ ...form, genre: e.target.value })
-            }
-          />
+            {/* VIDEO FILE */}
+            <div>
+              <label className="mb-2 block font-medium">Movie File</label>
+              <button
+                type="button"
+                onClick={openVideoPicker}
+                className="w-full cursor-pointer rounded-xl border border-white/10 bg-[#111936] p-3 text-left text-gray-300 transition hover:border-gray-500"
+              >
+                Choose Video File
+              </button>
 
-          {errors.genre && (
-            <p className="text-red-500 text-sm">{errors.genre}</p>
-          )}
-        </div>
+              <input
+                ref={videoInputRef}
+                type="file"
+                accept="video/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] ?? null;
+                  if (!file) return;
 
-        {/* VIDEO */}
-        {/* VIDEO */}
-        <div>
-          <label className="block mb-2">Movie File</label>
+                  const allowedTypes = [
+                    "video/mp4",
+                    "video/webm",
+                    "video/quicktime",
+                  ];
 
-          <button
-            type="button"
-            onClick={openVideoPicker}
-            className="w-full bg-[#111936] border border-white/10 rounded-xl p-3 text-left"
-          >
-            Choose Video File
-          </button>
+                  if (!allowedTypes.includes(file.type)) {
+                    setErrors((p) => ({
+                      ...p,
+                      video: "Invalid video format",
+                    }));
+                    return;
+                  }
 
-          <input
-            ref={videoInputRef}
-            type="file"
-            accept="video/*"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0] ?? null;
+                  setErrors((p) => ({
+                    ...p,
+                    video: "",
+                  }));
 
-              if (!file) {
-                return;
-              }
+                  setForm((prev) => ({
+                    ...prev,
+                    video: file,
+                  }));
 
-              const allowedTypes = [
-                "video/mp4",
-                "video/webm",
-                "video/quicktime",
-              ];
+                  const url = URL.createObjectURL(file);
+                  setVideoPreview(url);
+                  onPreviewChange?.(url, thumbnailPreview);
+                }}
+              />
 
-              if (!allowedTypes.includes(file.type)) {
-                setErrors((p) => ({
-                  ...p,
-                  video: "Invalid video format",
+              {form.video && (
+                <p className="mt-2 text-sm text-gray-300">
+                  📁 {form.video.name}
+                </p>
+              )}
+
+              {errors.video && (
+                <p className="mt-1 text-sm text-red-500">{errors.video}</p>
+              )}
+
+              {/* VIDEO PREVIEW - videoPreview  */}
+              {videoPreview && (
+                <div className="mt-3 overflow-hidden rounded-xl border border-white/10 bg-black/40">
+                  <video
+                    key={videoPreview}
+                    src={videoPreview}
+                    controls
+                    className="w-full rounded-lg"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* RIGHT SIDE: MOVIE POSTER UPLOADER */}
+          <div className="flex flex-col">
+            <ImageUploader
+              label="Movie Poster"
+              type="POSTER"
+              value={thumbnailPreview ?? undefined}
+              onChange={(file) => {
+                setErrors((prev) => ({
+                  ...prev,
+                  thumbnail: "",
                 }));
-                return;
-              }
 
-              setErrors((p) => ({
-                ...p,
-                video: "",
-              }));
-
-              setForm((prev) => ({
-                ...prev,
-                video: file,
-              }));
-
-             const url = URL.createObjectURL(file);
-
-setVideoPreview(url);
-
-onPreviewChange?.(
-  url,
-  thumbnailPreview
-);
-            }}
-          />
-
-          {form.video && (
-            <p className="text-sm mt-2">
-              {form.video.name}
-            </p>
-          )}
-
-          {errors.video && (
-            <p className="text-red-500 text-sm">
-              {errors.video}
-            </p>
-          )}
-
-          {/* VIDEO PREVIEW */}
-          {showPreview && videoPreview && (
-  <video
-    src={videoPreview}
-    controls
-    className="mt-3 w-full rounded-lg border border-white/10"
-  />
-)}
-        </div>
-
-        {/* THUMBNAIL */}
-        {/* THUMBNAIL */}
-        <div>
-          <label className="block mb-2">Thumbnail</label>
-
-          <button
-            type="button"
-            onClick={openThumbnailPicker}
-            className="w-full bg-[#111936] border border-white/10 rounded-xl p-3 text-left"
-          >
-            Choose Thumbnail File
-          </button>
-
-          <input
-            ref={thumbnailInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0] ?? null;
-
-              if (!file) {
-                return;
-              }
-
-              const allowedTypes = [
-                "image/jpeg",
-                "image/png",
-                "image/webp",
-              ];
-
-              if (!allowedTypes.includes(file.type)) {
-                setErrors((p) => ({
-                  ...p,
-                  thumbnail: "Invalid image format",
+                setForm((prev) => ({
+                  ...prev,
+                  thumbnail: file,
                 }));
-                return;
-              }
 
-              setErrors((p) => ({
-                ...p,
-                thumbnail: "",
-              }));
+                if (file) {
+                  const url = URL.createObjectURL(file);
+                  setThumbnailPreview(url);
+                  onPreviewChange?.(videoPreview, url);
+                } else {
+                  setThumbnailPreview(initialThumbnailUrl ?? "");
+                  onPreviewChange?.(videoPreview, initialThumbnailUrl ?? "");
+                }
+              }}
+            />
 
-              setForm((prev) => ({
-                ...prev,
-                thumbnail: file,
-              }));
-
-              const url = URL.createObjectURL(file);
-
-setThumbnailPreview(url);
-
-onPreviewChange?.(
-  videoPreview,
-  url
-);
-            }}
-          />
-
-          {errors.thumbnail && (
-            <p className="text-red-500 text-sm">
-              {errors.thumbnail}
-            </p>
-          )}
-
-          {showPreview && thumbnailPreview && (
-  <Image
-    alt="Thumbnail Preview"
-    src={thumbnailPreview}
-    width={160}
-    height={96}
-    className="mt-3 w-40 h-24 object-cover rounded-lg border border-white/10"
-  />
-)}
+            {errors.thumbnail && (
+              <p className="mt-2 text-sm text-red-500">{errors.thumbnail}</p>
+            )}
+          </div>
         </div>
 
-        {/* RELEASE YEAR */}
-        <div>
-          <label className="block mb-2">Release Year</label>
-         <input
-  type="text"
-  inputMode="numeric"
-  maxLength={4}
-  className="w-full bg-[#111936] border border-white/10 rounded-xl p-3"
-  value={form.releaseYear || ""}
-  placeholder="YYYY"
-  onChange={(e) => {
-    const value = e.target.value;
-
-    // allow only 0-9 and max 4 digits
-    if (/^\d{0,4}$/.test(value)) {
-      setForm({
-        ...form,
-        releaseYear: value === "" ? 0 : Number(value),
-      });
-    }
-  }}
-/>
-          {errors.releaseYear && (
-            <p className="text-red-500 text-sm">{errors.releaseYear}</p>
-          )}
-        </div>
-
-        {/* BUTTONS */}
-        <div className="flex gap-4 pt-4">
+        {/* BUTTONS (BOTTOM) */}
+        <div className="flex gap-4 border-t border-white/10 pt-4">
           <button
             type="submit"
-            className="flex-1 bg-[#106EE9] py-3 rounded-xl font-bold"
+            disabled={isSubmitting}
+            className="flex-1 cursor-pointer rounded-xl bg-[#106EE9] py-3 text-sm font-bold text-white transition-all hover:opacity-90 disabled:opacity-50"
           >
-            Save Movie
+            {isSubmitting
+              ? "Saving..."
+              : isEditMode
+                ? "Save Changes"
+                : "Create Movie"}
           </button>
-         
-
           <button
             type="button"
             onClick={() => router.push("/admin/movies")}
-            className="bg-[#F41010] px-6 py-3 rounded-xl font-bold"
+            className="cursor-pointer rounded-xl bg-[#F41010] px-6 py-3 font-bold text-white transition hover:opacity-80"
           >
             Cancel
           </button>
         </div>
-
       </form>
     </div>
   );

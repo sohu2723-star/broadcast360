@@ -14,96 +14,44 @@ interface Props {
   onSelect: (id: number) => void;
 }
 
-export default function EpisodeSelector({
-  seriesId,
-  value,
-  onSelect,
-}: Props) {
-
+export default function EpisodeSelector({ seriesId, value, onSelect }: Props) {
   const [episodes, setEpisodes] = useState<Episode[]>([]);
 
+  useEffect(() => {
+    async function loadEpisodes() {
+      if (!seriesId) {
+        return;
+      }
 
-  useEffect(()=>{
+      const res = await fetch(`/api/episodes?seriesId=${seriesId}`);
 
- async function loadEpisodes(){
+      const json = await res.json();
 
-   if(!seriesId){
-      return;
-   }
+      setEpisodes(json.data ?? []);
+    }
 
-
-   const res = await fetch(
-     `/api/episodes?seriesId=${seriesId}`
-   );
-
-
-   const json = await res.json();
-
-
-   setEpisodes(json.data ?? []);
-
- }
-
-
- loadEpisodes();
-
-
-},[seriesId]);
-
-
+    loadEpisodes();
+  }, [seriesId]);
 
   return (
-
     <div>
-
-      <label className="block text-white mb-2">
-        Select Episode
-      </label>
-
+      <label className="mb-2 block text-white">Select Episode</label>
 
       <select
-
         value={value ?? ""}
 
-        onChange={(e)=>
-          onSelect(Number(e.target.value))
-        }
+        onChange={(e) => onSelect(Number(e.target.value))}
 
-        className="
-          w-full
-          bg-[#0B1026]
-          text-white
-          border
-          border-gray-700
-          rounded-lg
-          p-3
-        "
-
+        className="w-full rounded-lg border border-gray-700 bg-[#0B1026] p-3 text-white"
       >
+        <option value="">Choose Episode</option>
 
-        <option value="">
-          Choose Episode
-        </option>
-
-
-        {episodes.map((episode)=>(
-
-          <option
-            key={episode.id}
-            value={episode.id}
-          >
-
+        {episodes.map((episode) => (
+          <option key={episode.id} value={episode.id}>
             Episode {episode.episodeNo} - {episode.title}
-
           </option>
-
         ))}
-
-
       </select>
-
-
     </div>
-
   );
 }

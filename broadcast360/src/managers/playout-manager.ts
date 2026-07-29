@@ -1,25 +1,32 @@
-import { spawn, ChildProcess } from "child_process";
+import { FFmpegManager } from "@/streaming/ffmpeg";
+import { ConcatManager } from "@/managers/concat-manager";
+import { ResolvedPlaylistItem } from "@/types/playlist";
 
 export class PlayoutManager {
-  private processes = new Map<number, ChildProcess>();
+  private stopping = new Map<number, boolean>();
+  constructor(
+    private ffmpeg: FFmpegManager,
+    private concat: ConcatManager,
+  ) {}
 
   async start(
     channelId: number,
-    concatFile: string,
-    streamKey: string,
-    offset: number = 0,
-    loop: boolean = false,
+    items: ResolvedPlaylistItem[],
+    offset: number,
+    onFinished: () => Promise<void>,
   ) {
-    await this.stop(channelId);
+    console.log("▶ START CONCAT PLAYOUT", {
+      channelId,
+      total: items.length,
+      offset,
+    });
 
-    const output = `rtmp://127.0.0.1:1935/live/${streamKey}`;
+    const concatFile = await this.concat.create(channelId, items);
+
+    const output = `rtmp://127.0.0.1:1935/vod/${channelId}`;
 
     const args = [
       "-re",
-
-      ...(offset > 0 ? ["-ss", String(offset)] : []),
-
-      ...(loop ? ["-stream_loop", "-1"] : []),
 
       "-f",
       "concat",
@@ -28,7 +35,9 @@ export class PlayoutManager {
       "0",
 
       "-i",
-      concatFile,
+      concatFile.replace(/\\/g, "/"),
+
+      ...(offset > 0 ? ["-ss", String(offset)] : []),
 
       "-c:v",
       "libx264",
@@ -36,17 +45,14 @@ export class PlayoutManager {
       "-preset",
       "veryfast",
 
+      "-tune",
+      "zerolatency",
+
       "-pix_fmt",
       "yuv420p",
 
       "-g",
-      "30",
-
-      "-keyint_min",
       "60",
-
-      "-sc_threshold",
-      "0",
 
       "-c:a",
       "aac",
@@ -60,49 +66,43 @@ export class PlayoutManager {
       "-f",
       "flv",
 
-      "-tune",
-"zerolatency",
-
       output,
     ];
 
-    console.log("🚀 CONTINUOUS PLAYOUT", args.join(" "));
+    const process = this.ffmpeg.start(channelId, "SOURCE", args);
 
-    const ffmpeg = spawn("ffmpeg", args, {
-      windowsHide: true,
-    });
+    process.once("close", async (code) => {
+      const isStopping = this.stopping.get(channelId);
 
-    this.processes.set(channelId, ffmpeg);
+      this.stopping.delete(channelId);
 
-    ffmpeg.stderr.on("data", (data) => {
-      console.log(`[PLAYOUT ${channelId}]`, data.toString());
-    });
+      if (isStopping) {
+        console.log("⏹ IGNORE CLOSE - MANUAL STOP", {
+          channelId,
+          code,
+        });
 
-    ffmpeg.on("close", (code) => {
-      console.log("PLAYOUT END", {
+        return;
+      }
+
+      console.log("✅ CONCAT FINISHED", {
         channelId,
         code,
       });
 
-      if (this.processes.get(channelId) === ffmpeg) {
-        this.processes.delete(channelId);
-      }
+      await onFinished();
     });
-
-    return ffmpeg;
   }
 
   async stop(channelId: number) {
-    const ffmpeg = this.processes.get(channelId);
+    this.stopping.set(channelId, true);
 
-    if (!ffmpeg) return;
+    await this.ffmpeg.stop(channelId, "SOURCE");
 
-    ffmpeg.kill("SIGTERM");
-
-    this.processes.delete(channelId);
+    console.log("🛑 PLAYOUT STOP", channelId);
   }
 
   isRunning(channelId: number) {
-    return this.processes.has(channelId);
+    return this.ffmpeg.isRunning(channelId, "SOURCE");
   }
 }
