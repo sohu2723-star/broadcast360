@@ -12,8 +12,10 @@ import PlaylistParts from "./PlaylistParts";
 
 
 interface Props {
+  
   entertainment: Entertainment;
   playlistItems: Entertainment[];
+  playlistName: string;
   relatedEntertainments: Entertainment[];
 }
 
@@ -21,9 +23,10 @@ interface Props {
 export default function PlaybackLayout({
   entertainment,
   playlistItems,
+  playlistName,
   relatedEntertainments,
 }: Props) {
-
+   console.log("playlistName:", playlistName);
   const [currentEntertainment, setCurrentEntertainment] =
     useState(entertainment);
 
@@ -106,13 +109,8 @@ export default function PlaybackLayout({
 
 
   return (
-
     <main className="min-h-screen bg-[#010312] text-white">
-
-
       <div className="mx-auto max-w-7xl px-6 py-8">
-
-
         <Link
           href="/entertainments"
           className="mb-5 inline-flex rounded-full border border-[#106EE9]/30 bg-[#0B1026] px-4 py-2 text-sm"
@@ -120,13 +118,7 @@ export default function PlaybackLayout({
           ← Back to Entertainments
         </Link>
 
-
-
-
         <div className="mt-6 grid items-start gap-6 lg:grid-cols-[2fr_1fr]">
-
-
-
           {/* LEFT */}
 
           <div
@@ -140,11 +132,7 @@ export default function PlaybackLayout({
               p-4
             "
           >
-
-            <VideoPlayer
-              entertainment={currentEntertainment}
-            />
-
+            <VideoPlayer entertainment={currentEntertainment} />
 
             <div
               className="
@@ -154,19 +142,9 @@ export default function PlaybackLayout({
                 pt-5
               "
             >
-
-              <EntertainmentMetadata
-                entertainment={currentEntertainment}
-              />
-
+              <EntertainmentMetadata entertainment={currentEntertainment} />
             </div>
-
-
           </div>
-
-
-
-
 
           {/* PLAYLIST */}
 
@@ -185,14 +163,7 @@ export default function PlaybackLayout({
               p-4
             "
           >
-
-
-            <h2 className="mb-4 shrink-0 text-lg font-bold">
-              🎬 Playlist Parts
-            </h2>
-
-
-
+            
             <div
               className={
                 needScroll
@@ -200,38 +171,20 @@ export default function PlaybackLayout({
                   : ""
               }
             >
-
               <div ref={playlistContentRef}>
-
                 <PlaylistParts
                   entertainments={playlistItems}
+                   playlistName={playlistName}
+                  selectedId={currentEntertainment.id}
                   onSelect={setCurrentEntertainment}
                 />
-
               </div>
-
-
             </div>
-
-
           </div>
-
-
-
         </div>
 
-
-
-
-        <RelatedEntertainments
-          entertainments={relatedEntertainments}
-        />
-
-
+        <RelatedEntertainments entertainments={relatedEntertainments} />
       </div>
-
-
     </main>
-
   );
 }

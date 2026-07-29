@@ -42,7 +42,6 @@ function formatDuration(seconds:number){
 export default function EntertainmentCard({
   entertainment,
 }:Props){
-  
 
 return (
 
@@ -77,33 +76,24 @@ unoptimized
 <div className="absolute bottom-0 left-0 right-0 p-5 text-white">
 
 
-<h3 className="mb-3 line-clamp-1 text-lg font-bold">
-
-{entertainment.title}
-
+<h3 className="mb-2 line-clamp-1 text-lg font-bold">
+  {entertainment.title}
 </h3>
 
-
+<p className="mb-2 line-clamp-1 text-sm text-gray-300">
+  {entertainment.channelName}
+</p>
 
 <div className="flex flex-wrap items-center gap-3 text-xs text-gray-400">
+  <span>{entertainment.category || "Entertainment"}</span>
 
+  <span>•</span>
 
-<span>
-🎭 {entertainment.category || "Entertainment"}
-</span>
+  <span>{entertainment.releaseYear ?? "-"}</span>
 
-
-<span>
-🎬 {entertainment.releaseYear ?? "-"}
-</span>
-
-
-<span>
-⏱ {formatDuration(entertainment.duration)}
-</span>
-
-
+  
 </div>
+
 
 
 </div>

@@ -152,6 +152,12 @@ export async function GET() {
   channelId:
     schedule.channel.id,
 
+  category:
+    entertainment.category,
+
+  releaseYear:
+    entertainment.releaseYear,
+
   channelName:
     schedule.channel.name,
 

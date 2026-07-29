@@ -142,6 +142,8 @@ export async function GET(
 
           item => ({
 
+            
+            
 
             id:
             item.entertainment!.id,
@@ -186,6 +188,16 @@ export async function GET(
             releaseYear:
             item.entertainment!.releaseYear,
 
+            channelName:
+            schedule?.channel.name ?? null,
+
+             channelLogo:
+          schedule?.channel.logo
+            ? `http://localhost:3000${schedule.channel.logo}`
+            : null,
+
+          scheduleStart:
+            schedule?.startTime ?? null,
 
           })
 
@@ -473,7 +485,14 @@ export async function GET(
 
         schedule?.channel.name ?? null,
 
+        channelLogo:
+        schedule?.channel.logo
+        ? `http://localhost:3000${schedule.channel.logo}`
+        : null,
 
+
+      airedAt:
+      schedule?.startTime ?? null,
       },
 
 
