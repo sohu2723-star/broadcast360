@@ -9,16 +9,33 @@ datasource db {
 
 enum Role {
   ADMIN
-  GUEST
+  USER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  BANNED
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  password  String
-  role      Role     @default(GUEST)
+  id Int @id @default(autoincrement())
+
+  name String
+
+  email String @unique
+
+  password String
+
+  role Role @default(USER)
+
+  status UserStatus @default(ACTIVE)
+
+  lastLoginAt DateTime?
+
   createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
 }
 
 // =====================
@@ -92,18 +109,20 @@ model Stream {
   channel       Channel        @relation(fields: [channelId], references: [id])
   playlistItems PlaylistItem[]
 }
-enum StreamProtocol {
-  RTMP
-  RTSP
-  HLS
-  WEBRTC
-  SRT
-}
 
-enum StreamStatus {
-  ONLINE
-  OFFLINE
-}
+// enum StreamProtocol {
+//   RTMP
+//   RTSP
+//   HLS
+//   WEBRTC
+//   SRT
+// }
+
+// enum StreamStatus {
+//   ONLINE
+//   OFFLINE
+// }
+
 // =====================
 // SERIES
 // =====================
