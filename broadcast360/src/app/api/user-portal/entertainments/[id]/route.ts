@@ -328,131 +328,142 @@ export async function GET(
 
 
 
-    const relatedEntertainments =
+  const relatedEntertainments =
 
-      schedules
+  schedules
 
-        .map((schedule) => {
+    .map((schedule) => {
 
 
+      const firstEntertainment =
+        schedule.playlist.items.find(
 
-          const firstEntertainment =
+          (item) =>
 
-            schedule.playlist.items.find(
+            item.type === "ENTERTAINMENT" &&
 
-              (item) =>
-
-                item.type === "ENTERTAINMENT" &&
-
-                item.entertainment !== null
-
-            );
-
-
-
-          if (!firstEntertainment) {
-
-
-            return null;
-
-
-          }
-
-
-
-
-
-          const entertainment =
-            firstEntertainment.entertainment!;
-
-
-
-
-          return {
-
-
-            // Important for Link /entertainments/[id]
-
-            id:
-            schedule.playlist.id,
-
-
-            playlistId:
-            schedule.playlist.id,
-
-
-            playlistName:
-            schedule.playlist.name,
-
-
-            title:
-            schedule.playlist.name,
-
-
-
-            thumbnail:
-
-            entertainment.thumbnail
-
-            ? `http://localhost:3000${entertainment.thumbnail}`
-
-            : null,
-
-
-
-            channelId:
-            schedule.channel.id,
-
-
-
-            channelName:
-            schedule.channel.name,
-
-
-
-            scheduleId:
-            schedule.id,
-
-
-
-            scheduleStart:
-            schedule.startTime,
-
-
-
-            scheduleEnd:
-            schedule.endTime,
-
-
-          };
-
-
-
-        })
-
-        .filter(
-
-          (
-            item
-          ): item is NonNullable<typeof item> =>
-
-            item !== null
-
-        )
-
-
-        // remove current playback playlist
-
-        .filter(
-
-          item =>
-
-            item.playlistId !== playlist.id
+            item.entertainment !== null
 
         );
 
 
+      if (!firstEntertainment) {
 
+        return null;
+
+      }
+
+
+
+      const entertainment =
+        firstEntertainment.entertainment!;
+
+
+
+      return {
+
+
+        // keep old playback flow
+        id:
+        schedule.playlist.id,
+
+
+        playlistId:
+        schedule.playlist.id,
+
+
+        playlistName:
+        schedule.playlist.name,
+
+
+        title:
+        schedule.playlist.name,
+
+
+        category:
+        entertainment.category,
+
+
+        thumbnail:
+
+        entertainment.thumbnail
+
+        ? `http://localhost:3000${entertainment.thumbnail}`
+
+        : null,
+
+
+        channelId:
+        schedule.channel.id,
+
+
+        channelName:
+        schedule.channel.name,
+
+
+        scheduleId:
+        schedule.id,
+
+
+        scheduleStart:
+        schedule.startTime,
+
+
+        scheduleEnd:
+        schedule.endTime,
+
+
+      };
+
+
+    })
+
+
+    .filter(
+
+      (
+        item
+      ): item is NonNullable<typeof item> =>
+
+        item !== null
+
+    )
+
+
+    // remove current playback playlist
+
+    .filter(
+
+      item =>
+
+        item.playlistId !== playlist.id
+
+    )
+
+
+    // same category
+
+    .filter(
+
+      item =>
+
+        item.category === items[0]?.category
+
+    )
+
+
+    // random
+
+    .sort(
+
+      () => Math.random() - 0.5
+
+    )
+
+
+    // only 10 cards
+
+    .slice(0, 10);
 
 
 
