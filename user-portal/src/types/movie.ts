@@ -17,17 +17,19 @@ export interface Movie {
 
   duration: number;
 
-
+  // Channel information
   channelId?: number | null;
 
   channelName?: string;
 
+  channelLogo?: string | null;
 
+  // Playlist information
   playlistId?: number;
 
   playlistName?: string;
 
-
+  // Schedule information
   scheduleId?: number;
 
   scheduleStart?: string | null;

@@ -4,44 +4,86 @@ import Image from "next/image";
 
 import type { Movie } from "@/types/movie";
 
-export default function Playlist({
-  movies,
-}: {
+interface Props {
   movies: Movie[];
-}) {
+  selectedId?: number;
+  onSelect: (movie: Movie) => void;
+}
+
+function formatDuration(seconds?: number | null) {
+  if (!seconds) return "00:00:00";
+
+  const hrs = Math.floor(seconds / 3600);
+
+  const mins = Math.floor((seconds % 3600) / 60);
+
+  const secs = seconds % 60;
+
+  return [hrs, mins, secs]
+    .map((value) => String(value).padStart(2, "0"))
+    .join(":");
+}
+
+export default function Playlist({ movies, selectedId, onSelect }: Props) {
   return (
-    <div className="max-h-[480px] space-y-3 overflow-y-auto pr-2 scrollbar-thin">
-      {movies.map((movie, index) => (
-        <div
-          key={movie.id}
-          className="group flex h-[90px] gap-3 rounded-xl border border-[#106EE9]/20 bg-[#010312] p-3 transition hover:border-[#106EE9]"
-        >
-          <div className="relative h-16 w-24 flex-shrink-0 overflow-hidden rounded-lg bg-black">
-            <Image
-              src={movie.thumbnail || "/images/no-image.png"}
-              alt={movie.title}
-              fill
-              sizes="96px"
-              className="object-cover transition duration-300 group-hover:scale-110"
-              unoptimized
-            />
-          </div>
+    <div>
+      <h2 className="mb-4 text-lg font-bold text-white">🎬 Playlist Parts</h2>
 
-          <div className="min-w-0 flex-1">
-            <h3 className="text-sm font-bold text-white">
-              Part {index + 1}
-            </h3>
+      <div className="max-h-[480px] space-y-3 overflow-y-auto pr-2 scrollbar-thin">
+        {movies.map((movie) => {
+          const isActive = selectedId === movie.id;
 
-            <p className="truncate text-xs text-gray-400">
-              {movie.title}
-            </p>
+          return (
+            <button
+              key={movie.id}
 
-            <p className="truncate text-xs text-gray-500">
-              🎬 Playlist
-            </p>
-          </div>
-        </div>
-      ))}
+              onClick={() => onSelect(movie)}
+
+              className={`flex w-full gap-3 rounded-xl border p-3 text-left transition ${
+                isActive
+                  ? "border-[#106EE9] bg-[#106EE9]/10"
+                  : "border-[#106EE9]/20 bg-[#010312] hover:border-[#106EE9]"
+              }`}
+            >
+              {/* Thumbnail */}
+
+              <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-lg bg-black">
+                <Image
+                  src={movie.thumbnail || "/images/no-image.png"}
+
+                  alt={movie.title}
+
+                  fill
+
+                  sizes="96px"
+
+                  unoptimized
+
+                  className="object-cover transition duration-300 group-hover:scale-110"
+                />
+              </div>
+
+              {/* Content */}
+
+              <div className="min-w-0 flex-1">
+
+
+                <p className="truncate text-sm text-gray-300">{movie.title}</p>
+
+                <p className="mt-1 text-xs text-gray-400">
+                  ⏱ {formatDuration(movie.duration)}
+                </p>
+
+                <p className="mt-2 flex items-center gap-1 text-[10px] font-medium uppercase text-[#106EE9]">
+                  <span>▶</span>
+
+                  <span>{isActive ? "Currently Playing" : "Play Now"}</span>
+                </p>
+              </div>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

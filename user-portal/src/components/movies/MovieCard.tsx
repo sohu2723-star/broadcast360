@@ -7,19 +7,6 @@ interface Props {
   movie: Movie;
 }
 
-function formatDuration(seconds: number) {
-  if (!seconds || seconds <= 0) return "-";
-
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`;
-  }
-
-  return `${minutes}m`;
-}
-
 export default function MovieCard({ movie }: Props) {
   return (
     <Link
@@ -43,15 +30,14 @@ export default function MovieCard({ movie }: Props) {
         </h3>
 
         <p className="mt-2 text-xs text-gray-300">
-          📺 {movie.channelName || "-"}
+           {movie.channelName || "-"}
         </p>
 
         <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-400">
-          <span>🎭 {movie.genre || "Movie"}</span>
+          <span> {movie.genre || "Movie"}</span>
 
-          <span>📅 {movie.releaseYear || "-"}</span>
+          <span> {movie.releaseYear || "-"}</span>
 
-          <span>⏱ {formatDuration(movie.duration)}</span>
         </div>
       </div>
     </Link>

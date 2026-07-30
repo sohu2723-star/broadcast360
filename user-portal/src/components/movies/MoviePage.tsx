@@ -118,8 +118,8 @@ export default function MoviePage() {
 
         {/* All Movies */}
 
-        <section className="mt-16">
-          <h2 className="mb-8 text-2xl font-bold">🎬 ALL MOVIES ARCHIVE</h2>
+        <section className="mb-16">
+          <h2 className="mb-6 text-2xl font-bold">🎬 ALL MOVIES ARCHIVE</h2>
 
           {loading ? (
             <div className="rounded-2xl  bg-black p-10 text-center text-gray-400">

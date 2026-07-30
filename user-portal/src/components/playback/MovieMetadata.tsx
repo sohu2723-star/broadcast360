@@ -1,33 +1,31 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 
 import type { Movie } from "@/types/movie";
 
-function formatDuration(seconds: number) {
-  if (!seconds || seconds <= 0) return "-";
+function formatScheduleDate(date?: string | null) {
+  if (!date) return "-";
 
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  const sec = seconds % 60;
+  const d = new Date(date);
 
-  if (hours > 0) {
-    return `${hours}h ${minutes}m ${sec}s`;
-  }
-
-  if (minutes > 0) {
-    return `${minutes}m ${sec}s`;
-  }
-
-  return `${sec}s`;
+  return `${d.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+  })} ${d.getFullYear()}, ${d.toLocaleString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  })}`;
 }
 
 export default function MovieMetadata({ movie }: { movie: Movie }) {
   const [showMore, setShowMore] = useState(false);
 
-  const description = movie.description || "No description available.";
+  const limit = 150;
 
-  const limit = 20;
+  const description = movie.description || "No description available.";
 
   const shortDescription =
     description.length > limit
@@ -36,34 +34,59 @@ export default function MovieMetadata({ movie }: { movie: Movie }) {
 
   return (
     <div className="w-full">
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-bold text-white">{movie.title}</h1>
+      {/* Title */}
 
-        <span className="rounded-full bg-[#106EE9] px-3 py-1 text-xs text-white">
-          🎭 {movie.genre || "Movie"}
-        </span>
+      <h1 className="text-2xl font-bold text-white">{movie.title}</h1>
 
-        <span className="rounded-full border border-[#106EE9]/30 bg-[#010312] px-3 py-1 text-xs text-gray-300">
-          📺 {movie.channelName || "-"}
-        </span>
+      {/* Channel */}
 
-        <span className="rounded-full border border-[#106EE9]/30 bg-[#010312] px-3 py-1 text-xs text-gray-300">
-          📅 {movie.releaseYear || "-"}
-        </span>
+      <div className="mt-3 flex items-center gap-3">
+        {movie.channelLogo && (
+          <div className="relative h-10 w-10 overflow-hidden rounded-full">
+            <Image
+              src={movie.channelLogo}
 
-        <span className="rounded-full border border-[#106EE9]/30 bg-[#010312] px-3 py-1 text-xs text-gray-300">
-          ⏱ {formatDuration(movie.duration)}
-        </span>
+              alt={movie.channelName || "Channel"}
+
+              fill
+
+              sizes="40px"
+
+              unoptimized
+
+              className="object-cover"
+            />
+          </div>
+        )}
+
+        <p className="text-base font-bold text-white">
+          {movie.channelName || "-"}
+        </p>
       </div>
 
+      {/* Metadata */}
+
+      <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-gray-400">
+        <span>{movie.genre || "Movie"}</span>
+
+        {movie.releaseYear && <span>{movie.releaseYear}</span>}
+
+        {movie.scheduleStart && (
+          <span>{formatScheduleDate(movie.scheduleStart)}</span>
+        )}
+      </div>
+
+      {/* Description */}
+
       <div className="mt-4 max-w-4xl break-words text-sm leading-6 text-gray-400">
-        <p className={!showMore ? "line-clamp-3" : ""}>
+        <p>
           {showMore ? description : shortDescription}
 
           {description.length > limit && (
             <button
               onClick={() => setShowMore(!showMore)}
-              className="ml-2 inline text-[#106EE9] hover:underline"
+
+              className="ml-2 text-[#106EE9] hover:underline"
             >
               {showMore ? "Show Less" : "More"}
             </button>
