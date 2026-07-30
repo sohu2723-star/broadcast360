@@ -10,42 +10,17 @@ interface Props {
 
 export default function EntertainmentGrid({
   entertainments,
-}:Props){
+}: Props) {
 
-return (
-
-<div
-
-className="
-grid
-grid-cols-1
-sm:grid-cols-2
-lg:grid-cols-3
-xl:grid-cols-5
-gap-x-12
-gap-y-14
-"
-
->
-
-
-{
-entertainments.map((item,index)=>(
-
-<EntertainmentCard
-
-key={`${item.id}-${index}`}
-
-entertainment={item}
-
-/>
-
-))
-}
-
-
-</div>
-
-);
+  return (
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+      {entertainments.map((item) => (
+        <EntertainmentCard
+          key={item.id}
+          entertainment={item}
+        />
+      ))}
+    </div>
+  );
 
 }

@@ -9,12 +9,16 @@ useState
 
 
 import type { Entertainment } from "@/types/entertainment";
+import type { Channel } from "@/types/channel";
 
 
 import {
 getEntertainments
 } from "@/services/entertainment.service";
 
+import {
+  channelService
+} from "@/services/channel.service";
 
 import EntertainmentSearch from "./EntertainmentSearch";
 
@@ -59,7 +63,7 @@ setSelectedChannel
 const [
 channels,
 setChannels
-] = useState([]);
+] = useState<Channel[]>([]);
 
 const [
 currentPage,
@@ -72,61 +76,82 @@ const entertainmentsPerPage = 10;
 
 
 
-useEffect(()=>{
+useEffect(() => {
+
+  async function loadData() {
+
+    try {
+
+      const [
+        entertainmentData,
+        channelData
+      ] = await Promise.all([
+        getEntertainments(),
+        channelService.getAllChannels(),
+      ]);
 
 
-async function loadData(){
-
-try{
-
-
-const data =
-await getEntertainments();
-
-console.log("PAGE DATA:", data);
-
-setEntertainments(data);
+      console.log(
+        "PAGE DATA:",
+        entertainmentData
+      );
 
 
-}catch(error){
-
-console.error(
-"Failed loading entertainments:",
-error
-);
+      console.log(
+        "CHANNEL DATA:",
+        channelData
+      );
 
 
-}finally{
-
-setLoading(false);
-
-}
-
-}
+      setEntertainments(
+        entertainmentData
+      );
 
 
-loadData();
+      setChannels(
+        channelData
+      );
 
 
-},[]);
+    } catch(error) {
+
+      console.error(
+        "Failed loading entertainments:",
+        error
+      );
 
 
+    } finally {
+
+      setLoading(false);
+
+    }
+
+  }
+
+
+  loadData();
+
+
+}, []);
 
 
 const filteredEntertainments =
-entertainments.filter((item)=>{
+  entertainments.filter((item) => {
+    const keyword = search.toLowerCase();
+
+    const matchSearch =
+      item.title.toLowerCase().includes(keyword) ||
+      item.category?.toLowerCase().includes(keyword);
+
+    const matchChannel =
+      selectedChannel === "" ||
+      item.channelId?.toString() === selectedChannel;
+
+    return matchSearch && matchChannel;
+  });
 
 
-return item.title
-
-.toLowerCase()
-
-.includes(
-search.toLowerCase()
-);
-
-
-});
 
 
 
@@ -158,10 +183,10 @@ entertainmentsPerPage
 
 return (
 
-<main className="min-h-screen bg-[#010312] text-white">
+<main className="min-h-screen bg-black text-white">
 
 
-<div className="mx-2 md:mx-4 lg:mx-6 max-w-7xl py-10">
+<div className="mx-auto max-w-7xl px-6 py-10">
 
 
 <h1 className="mb-8 text-4xl font-bold">
@@ -170,28 +195,24 @@ ENTERTAINMENTS
 
 
 
-<div className="mb-12 rounded-2xl border border-[#106EE9]/20 bg-[#0B1026] p-5">
+<div className="mb-8 flex gap-4">
 
-  <div className="grid gap-4 md:grid-cols-2">
+  <EntertainmentSearch
+    value={search}
+    onChange={(value)=>{
+      setSearch(value);
+      setCurrentPage(1);
+    }}
+  />
 
-    <EntertainmentSearch
-      value={search}
-      onChange={(value)=>{
-        setSearch(value);
-        setCurrentPage(1);
-      }}
-    />
-
-    <ChannelFilter
-      value={selectedChannel}
-      channels={channels}
-      onChange={(value)=>{
-        setSelectedChannel(value);
-        setCurrentPage(1);
-      }}
-    />
-
-  </div>
+  <ChannelFilter
+    value={selectedChannel}
+    channels={channels}
+    onChange={(value)=>{
+      setSelectedChannel(value);
+      setCurrentPage(1);
+    }}
+  />
 
 </div>
 

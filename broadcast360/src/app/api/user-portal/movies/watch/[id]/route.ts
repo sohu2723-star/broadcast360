@@ -7,13 +7,7 @@ interface Context {
   }>;
 }
 
-function imageUrl(path: string | null) {
-  if (!path) return null;
-
-  return path.startsWith("http") ? path : `http://localhost:3000${path}`;
-}
-
-function videoUrl(path: string | null) {
+function mediaUrl(path: string | null) {
   if (!path) return null;
 
   return path.startsWith("http") ? path : `http://localhost:3000${path}`;
@@ -75,6 +69,8 @@ export async function GET(request: NextRequest, context: Context) {
       );
     }
 
+    const schedule = playlist.schedules[0];
+
     const firstMovie = playlist.items[0]?.movie;
 
     if (!firstMovie) {
@@ -87,8 +83,6 @@ export async function GET(request: NextRequest, context: Context) {
         },
       );
     }
-
-    const schedule = playlist.schedules[0];
 
     /*
       MAIN MOVIE
@@ -109,44 +103,71 @@ export async function GET(request: NextRequest, context: Context) {
 
       genre: firstMovie.genre,
 
-      thumbnail: imageUrl(firstMovie.thumbnail),
+      releaseYear: firstMovie.releaseYear,
 
-      videoUrl: videoUrl(firstMovie.videoUrl),
+      thumbnail: mediaUrl(firstMovie.thumbnail),
+
+      videoUrl: mediaUrl(firstMovie.videoUrl),
 
       duration: firstMovie.duration,
 
-      releaseYear: firstMovie.releaseYear,
+      // Channel
 
       channelId: schedule?.channel?.id ?? null,
 
       channelName: schedule?.channel?.name ?? "-",
+
+      channelLogo: mediaUrl(schedule?.channel?.logo ?? null),
+
+      // Schedule
+
+      scheduleId: schedule?.id ?? null,
+
+      scheduleStart: schedule?.startTime ?? null,
+
+      scheduleEnd: schedule?.endTime ?? null,
     };
 
     /*
       PLAYLIST PARTS
-      Part 1, Part 2, Part 3
     */
 
     const playlistItems = playlist.items.map((item) => ({
-      id: item.id,
+      id: item.movie?.id ?? item.id,
 
-      movieId: item.movie?.id ?? 0,
+      movieKey: String(item.movie?.id ?? item.id),
 
-      part: item.order,
+      playlistId: playlist.id,
+
+      playlistName: playlist.name,
 
       title: item.movie?.title ?? "",
 
-      thumbnail: imageUrl(item.movie?.thumbnail ?? null),
+      description: item.movie?.description ?? null,
 
-      videoUrl: videoUrl(item.movie?.videoUrl ?? null),
+      genre: item.movie?.genre ?? null,
+
+      releaseYear: item.movie?.releaseYear ?? null,
+
+      thumbnail: mediaUrl(item.movie?.thumbnail ?? null),
+
+      videoUrl: mediaUrl(item.movie?.videoUrl ?? null),
+
+      duration: item.movie?.duration ?? 0,
+
+      channelId: schedule?.channel?.id ?? null,
+
+      channelName: schedule?.channel?.name ?? "-",
+
+      channelLogo: mediaUrl(schedule?.channel?.logo ?? null),
+
+      scheduleStart: schedule?.startTime ?? null,
+
+      scheduleEnd: schedule?.endTime ?? null,
     }));
 
     /*
       RELATED MOVIES
-
-      Same genre
-      Different channel
-      Random 10
     */
 
     const currentChannelId = schedule?.channel?.id;
@@ -196,9 +217,9 @@ export async function GET(request: NextRequest, context: Context) {
     const relatedMovies = relatedPlaylists
 
       .filter((item) => {
-        const relatedChannelId = item.schedules[0]?.channel?.id;
+        const channelId = item.schedules[0]?.channel?.id;
 
-        return relatedChannelId !== currentChannelId;
+        return channelId !== currentChannelId;
       })
 
       .sort(() => Math.random() - 0.5)
@@ -225,13 +246,15 @@ export async function GET(request: NextRequest, context: Context) {
 
           releaseYear: relatedMovie?.releaseYear ?? null,
 
-          duration: relatedMovie?.duration ?? 0,
+          thumbnail: mediaUrl(relatedMovie?.thumbnail ?? null),
 
-          thumbnail: imageUrl(relatedMovie?.thumbnail ?? null),
+          duration: relatedMovie?.duration ?? 0,
 
           channelId: relatedSchedule?.channel?.id ?? null,
 
           channelName: relatedSchedule?.channel?.name ?? "-",
+
+          channelLogo: mediaUrl(relatedSchedule?.channel?.logo ?? null),
         };
       });
 
@@ -249,7 +272,6 @@ export async function GET(request: NextRequest, context: Context) {
       {
         message: "Failed to load movie",
       },
-
       {
         status: 500,
       },
