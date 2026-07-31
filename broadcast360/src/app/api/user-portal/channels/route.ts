@@ -3,8 +3,10 @@ import { prisma } from "@/lib/prisma";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "http://localhost:3001",
+  "Access-Control-Allow-Credentials": "true",
   "Access-Control-Allow-Methods": "GET, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
+  "Content-Type": "application/json",
 };
 
 export async function GET() {
@@ -13,6 +15,7 @@ export async function GET() {
       include: {
         streams: true,
       },
+
       orderBy: {
         name: "asc",
       },
@@ -20,18 +23,25 @@ export async function GET() {
 
     const channels = dbChannels.map((channel) => ({
       id: channel.id.toString(),
-      name: channel.name,
-      description: channel.description ?? "",
-      logo: channel.logo,
-      country: channel.country,
 
-      // If you later store stream URLs in DB, you can use:
-      // const primaryStream = channel.streams?.[0];
-      // streamUrl: primaryStream?.url ?? ""
+      name: channel.name,
+
+      description: channel.description ?? "",
+
+      logo: channel.logo,
+
+      country: channel.country,
 
       playbackUrl: channel.streamKey
         ? `http://localhost:8888/channel/${channel.streamKey}/index.m3u8`
         : `http://localhost:3000/streams/channel-${channel.id}/index.m3u8`,
+
+      streamKey: channel.streamKey,
+
+      streams: channel.streams.map((stream) => ({
+        id: stream.id,
+        url: stream.url,
+      })),
     }));
 
     return NextResponse.json(channels, {
@@ -39,7 +49,7 @@ export async function GET() {
       headers: corsHeaders,
     });
   } catch (error) {
-    console.error("Prisma Fetch Error:", error);
+    console.error("PUBLIC CHANNEL API ERROR:", error);
 
     return NextResponse.json(
       {
@@ -48,14 +58,14 @@ export async function GET() {
       {
         status: 500,
         headers: corsHeaders,
-      }
+      },
     );
   }
 }
 
 export async function OPTIONS() {
   return new NextResponse(null, {
-    status: 200,
+    status: 204,
     headers: corsHeaders,
   });
 }

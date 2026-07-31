@@ -46,7 +46,8 @@ export default function ChannelSidebar({
 
         {!loading && !error && filteredChannels.length === 0 && (
           <div className="text-center text-gray-500 py-10 text-xs">
-            No channels found for "{searchQuery}"
+              No channels found for{" "}
+              <span className="font-medium">{searchQuery}</span>
           </div>
         )}
 
