@@ -315,6 +315,8 @@ export class BroadcastService {
 
     this.mode.delete(channelId);
 
+     this.switching.delete(channelId);
+
     console.log("🛑 BROADCAST STOP", channelId);
   }
 }

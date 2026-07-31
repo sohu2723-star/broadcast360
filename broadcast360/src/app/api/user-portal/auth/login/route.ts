@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { AuthService } from "@/services/auth.service";
+
 import { cors, optionsResponse } from "@/lib/cors";
 
 const authService = new AuthService();
@@ -17,14 +18,13 @@ export async function POST(request: NextRequest) {
 
     const response = NextResponse.json({
       success: true,
-
       user: result.user,
     });
 
     response.cookies.set("user_token", result.token, {
       httpOnly: true,
 
-      secure: process.env.NODE_ENV === "production",
+      secure: false,
 
       sameSite: "lax",
 
@@ -33,15 +33,15 @@ export async function POST(request: NextRequest) {
       path: "/",
     });
 
-    return cors(response);
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Login failed";
+    console.log("USER COOKIE CREATED");
 
+    return cors(response);
+  } catch (error) {
     return cors(
       NextResponse.json(
         {
           success: false,
-          message,
+          message: error instanceof Error ? error.message : "Login failed",
         },
         {
           status: 401,

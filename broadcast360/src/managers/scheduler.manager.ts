@@ -59,7 +59,7 @@ export class SchedulerManager {
   =========================
   */
 
-  start(channelId: number) {
+ async start(channelId: number) {
     if (this.timers.has(channelId)) {
       console.log("⚠ Scheduler already running", channelId);
 
