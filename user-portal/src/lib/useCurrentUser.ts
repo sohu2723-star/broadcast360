@@ -14,6 +14,7 @@ export function useCurrentUser() {
   useEffect(() => {
     async function loadUser() {
       try {
+          console.log("API URL:", process.env.NEXT_PUBLIC_API_URL);
         const res = await api.get("/api/user-portal/auth/me");
 
         setUser(res.data.user);

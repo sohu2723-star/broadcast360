@@ -6,13 +6,13 @@ import { verifyUserToken } from "@/lib/user-jwt";
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
+  const origin = request.headers.get("origin");
+
   /*
   =====================
         CORS
   =====================
   */
-
-  const origin = request.headers.get("origin");
 
   if (request.method === "OPTIONS") {
     const response = new NextResponse(null, {
@@ -29,47 +29,38 @@ export async function proxy(request: NextRequest) {
         "GET,POST,PUT,DELETE,OPTIONS",
       );
 
-      response.headers.set("Access-Control-Allow-Headers", "Content-Type");
+      response.headers.set(
+        "Access-Control-Allow-Headers",
+        "Content-Type, Authorization",
+      );
     }
 
     return response;
   }
 
   /*
-=====================
-       ROOT BLOCK
-=====================
-*/
+  =====================
+        ROOT
+  =====================
+  */
 
-if (pathname === "/") {
+  if (pathname === "/") {
+    const token = request.cookies.get("token")?.value;
 
-  const token = request.cookies.get("token")?.value;
-
-  if (!token) {
-    return NextResponse.redirect(
-      new URL("/login", request.url)
-    );
-  }
-
-  try {
-
-    const payload = await verifyToken(token);
-
-    if (payload.role === "ADMIN") {
-      return NextResponse.redirect(
-        new URL("/admin", request.url)
-      );
+    if (!token) {
+      return NextResponse.redirect(new URL("/login", request.url));
     }
 
-  } catch {
+    try {
+      const payload = await verifyToken(token);
 
-    return NextResponse.redirect(
-      new URL("/login", request.url)
-    );
-
+      if (payload.role === "ADMIN") {
+        return NextResponse.redirect(new URL("/admin", request.url));
+      }
+    } catch {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
   }
-}
-
 
   /*
   =====================
@@ -120,9 +111,29 @@ if (pathname === "/") {
   =====================
       USER PORTAL API
   =====================
+
+  Public:
+    /auth/login
+    /auth/register
+
+  Protected:
+    /auth/me
+    /profile
+    /change-password
+
+  =====================
   */
 
-  if (pathname.startsWith("/api/user-portal")) {
+  const publicUserRoutes = [
+    "/api/user-portal/auth/login",
+    "/api/user-portal/auth/register",
+  ];
+
+  const isUserPublicRoute = publicUserRoutes.some((route) =>
+    pathname.startsWith(route),
+  );
+
+  if (pathname.startsWith("/api/user-portal") && !isUserPublicRoute) {
     const token = request.cookies.get("user_token")?.value;
 
     if (!token) {
@@ -190,10 +201,9 @@ if (pathname === "/") {
 
 export const config = {
   matcher: [
+    "/",
     "/admin/:path*",
-    "/api/user-portal/profile",
-    "/api/user-portal/change-password",
+    // "/api/admin/:path*",
+    // "/api/user-portal/:path*",
   ],
 };
-
-
