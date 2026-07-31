@@ -4,17 +4,44 @@ import { hashPassword } from "@/lib/password";
 
 import type { CreateUserInput, UpdateUserInput } from "@/types/user";
 
+// Define the interface for query options
+export interface GetUsersQueryOptions {
+  page?: number;
+  limit?: number;
+  search?: string;
+  role?: string;
+  status?: string;
+}
+
 const repository = new UserRepository();
 
 export class UserService {
-  async getUsers() {
-    const users = await repository.findAll();
+  async getUsers(options: GetUsersQueryOptions = {}) {
+    const page = options.page || 1;
+    const limit = options.limit || 10;
+    const search = options.search || "";
+    const role = options.role || "";
+    const status = options.status || "";
 
-    return users.map((user) => {
+    // Delegate pagination and filtering to repository
+    const { users, total } = await repository.findAll({
+      page,
+      limit,
+      search,
+      role,
+      status,
+    });
+
+    // Strip passwords safely from result list
+    const safeUsers = users.map((user) => {
       const { password, ...safeUser } = user;
-
       return safeUser;
     });
+
+    return {
+      users: safeUsers,
+      total,
+    };
   }
 
   async getUser(id: number) {
@@ -40,17 +67,11 @@ export class UserService {
 
     const user = await repository.create({
       name: data.name,
-
       email: data.email,
-
       password,
-
       phone: data.phone ?? null,
-
       avatar: data.avatar ?? null,
-
       role: data.role ?? "USER",
-
       status: data.status ?? "ACTIVE",
     });
 
@@ -79,7 +100,6 @@ export class UserService {
     /*
       soft delete
     */
-
     return repository.update(id, {
       status: "INACTIVE",
     });

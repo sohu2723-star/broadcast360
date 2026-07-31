@@ -1,9 +1,18 @@
 export type UserRole = "ADMIN" | "USER";
 
-export type UserStatus =
-  | "ACTIVE"
-  | "INACTIVE"
-  | "BANNED";
+export interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  status?: string;
+  phone?: string | null;
+  avatar?: string | null;
+  avatarUrl?: string | null;
+  createdAt?: string;
+}
+
+export type UserStatus = "ACTIVE" | "INACTIVE" | "BANNED";
 
 export interface CreateUserInput {
   name: string;
