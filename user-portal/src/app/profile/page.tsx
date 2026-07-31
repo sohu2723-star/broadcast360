@@ -10,6 +10,7 @@ import EditProfileModal from "@/components/profile/EditProfileModal";
 import ChangePasswordModal from "@/components/profile/ChangePasswordModal";
 
 import { useCurrentUser } from "@/lib/useCurrentUser";
+import authApi from "@/lib/authapi";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -208,7 +209,7 @@ export default function ProfilePage() {
     try {
       setSaving(true);
 
-      await api.put("/api/user-portal/auth/profile", {
+      await authApi.put("/api/user-portal/auth/profile", {
         name,
         email,
         avatar,
@@ -231,35 +232,54 @@ export default function ProfilePage() {
   ======================
   */
 
-  async function changePassword() {
-    if (!validatePassword()) {
-      return;
-    }
+ async function changePassword() {
+  if (!validatePassword()) {
+    return;
+  }
 
-    try {
-      await api.put("/api/user-portal/auth/change-password", {
+  try {
+    await authApi.put(
+      "/api/user-portal/auth/change-password",
+      {
         currentPassword,
         newPassword,
+      }
+    );
+
+
+    await authApi.post(
+      "/api/user-portal/auth/logout"
+    );
+
+
+    alert(
+      "Password updated successfully. Please login again."
+    );
+
+
+    window.location.href = "/login";
+
+
+  } catch (error: unknown) {
+
+    if (axios.isAxiosError(error)) {
+
+      setPasswordErrors({
+        currentPassword:
+          error.response?.data?.message ??
+          "Password update failed",
       });
 
-      alert("Password updated successfully. Please login again.");
+    } else {
 
-      await api.post("/api/user-portal/auth/logout");
+      setPasswordErrors({
+        currentPassword:
+          "Password update failed",
+      });
 
-      window.location.href = "/profile";
-    } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        setPasswordErrors({
-          currentPassword:
-            error.response?.data?.message ?? "Password update failed",
-        });
-      } else {
-        setPasswordErrors({
-          currentPassword: "Password update failed",
-        });
-      }
     }
   }
+}
 
   /*
   ======================
@@ -269,7 +289,7 @@ export default function ProfilePage() {
 
   async function logout() {
     try {
-      await api.post("/api/user-portal/auth/logout");
+      await authApi.post("/api/user-portal/auth/logout");
 
       window.location.href = "/";
     } catch (error) {

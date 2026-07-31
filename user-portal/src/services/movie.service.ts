@@ -28,13 +28,8 @@ export async function getMovieByPlaylistItem(
   }
 }
 
-export async function getWatchMovie(id:string){
-
-  const response = await api.get(
-    `/api/user-portal/movies/watch/${id}`
-  );
-
+export async function getWatchMovie(id: string) {
+  const response = await api.get(`/api/user-portal/movies/watch/${id}`);
 
   return response.data;
-
 }

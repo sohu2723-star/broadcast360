@@ -8,7 +8,7 @@ import UserMenu from "@/components/user/UserMenu";
 import GuestMenu from "@/components/user/GuestMenu";
 
 import type { User } from "@/types/user";
-
+import authApi from "@/lib/authapi";
 const menus = [
   {
     name: "Live TV",
@@ -43,22 +43,15 @@ export default function Navbar() {
   useEffect(() => {
     async function loadUser() {
       try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/user-portal/auth/me`,
-          {
-            credentials: "include",
-          },
-        );
+        const response = await authApi.get("/api/user-portal/auth/me");
 
-        if (res.ok) {
-          const data = await res.json();
-
-          setUser(data.user);
+        if (response.data?.user) {
+          setUser(response.data.user);
         } else {
           setUser(null);
         }
       } catch (error) {
-        console.log(error);
+        console.log("Not authenticated");
 
         setUser(null);
       } finally {
