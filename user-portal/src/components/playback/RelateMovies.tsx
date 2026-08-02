@@ -79,7 +79,7 @@ export default function RelatedMovies({ movies, genre }: Props) {
 
   return (
     <section className="relative mt-12">
-      <h2 className="mb-6 text-2xl font-bold text-white">🎬 Related Movies</h2>
+      <h2 className="mb-6 text-2xl font-bold text-white">🎬 You may also like this</h2>
 
       <button
         onClick={() => handleScroll("left")}

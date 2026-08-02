@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import api from "@/lib/api";
+import authApi from "@/lib/authapi";
 import axios from "axios";
 
 interface LoginForm {
@@ -112,7 +112,7 @@ export default function LoginPage() {
     try {
       setLoading(true);
 
-      const response = await api.post("/api/user-portal/auth/login", form);
+      const response = await authApi.post("/api/user-portal/auth/login", form);
 
       const data = response.data;
 

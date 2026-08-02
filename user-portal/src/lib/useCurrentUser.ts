@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import api from "@/lib/api";
 
 import type { User } from "@/types/user";
+import authApi from "./authapi";
 
 export function useCurrentUser() {
   const [user, setUser] = useState<User | null>(null);
@@ -14,7 +15,8 @@ export function useCurrentUser() {
   useEffect(() => {
     async function loadUser() {
       try {
-        const res = await api.get("/api/user-portal/auth/me");
+          console.log("API URL:", process.env.NEXT_PUBLIC_API_URL);
+        const res = await authApi.get("/api/user-portal/auth/me");
 
         setUser(res.data.user);
       } catch (error) {
