@@ -21,9 +21,8 @@ export default function ChannelFilter({
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full rounded-xl bg-neutral-900 border border-neutral-800 px-4 py-3 text-white outline-none focus:border-red-500"
+      className="w-full rounded-xl bg-neutral-900 border border-neutral-800 px-4 py-3 text-white outline-none focus:border-blue-500"
     >
-      {" "}
       <option value="">All Channels</option>
       {channels.map((channel) => (
         <option key={channel.id} value={channel.id}>

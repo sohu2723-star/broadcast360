@@ -25,6 +25,8 @@ model User {
   name      String
   email     String   @unique
   password  String
+  avatar      String?
+  phone       String?
   role      Role     @default(USER)
   status    UserStatus @default(ACTIVE)
   lastLoginAt DateTime?
@@ -103,20 +105,6 @@ model Stream {
   channel       Channel        @relation(fields: [channelId], references: [id])
   playlistItems PlaylistItem[]
 }
-
-enum StreamProtocol {
-  RTMP
-  RTSP
-  HLS
-  WEBRTC
-  SRT
-}
-
-enum StreamStatus {
-  ONLINE
-  OFFLINE
-}
-
 // =====================
 // SERIES
 // =====================
@@ -127,7 +115,7 @@ model Series {
   description String?
   genre       String?
   releaseYear Int?
-  thumbnail   String?
+  thumbnail    String?
   episodes    Episode[]
   createdAt   DateTime  @default(now())
 }

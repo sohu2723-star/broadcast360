@@ -3,7 +3,19 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
+    const now = new Date();
+
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
     const schedules = await prisma.schedule.findMany({
+      where: {
+        endTime: {
+          lte: now,
+          gte: oneMonthAgo,
+        },
+      },
+
       include: {
         channel: true,
 
@@ -31,69 +43,72 @@ export async function GET() {
       },
     });
 
-    const movies = schedules.flatMap((schedule) =>
-      schedule.playlist.items
-        .filter((item) => item.movie !== null)
+    const movies = schedules
+      .filter((schedule) => schedule.playlist.items.length > 0)
 
-        .map((item) => {
-          const movie = item.movie!;
+      .map((schedule) => {
+        const partOne = schedule.playlist.items[0];
 
-          return {
-            id: movie.id,
+        const movie = partOne.movie;
 
-            // IMPORTANT
-            // unique per channel
-            movieKey: `${movie.id}-${schedule.channel.id}`,
+        return {
+          id: schedule.playlist.id,
 
-            title: movie.title,
+          movieKey: `${schedule.playlist.id}-${schedule.id}`,
 
-            description: movie.description,
+          // Playlist
+          playlistId: schedule.playlist.id,
 
-            genre: movie.genre,
+          playlistName: schedule.playlist.name,
 
-            thumbnail: movie.thumbnail
-              ? `http://localhost:3000${movie.thumbnail}`
-              : null,
+          title: schedule.playlist.name,
 
-            videoUrl: movie.videoUrl
-              ? movie.videoUrl.startsWith("http")
-                ? movie.videoUrl
-                : `http://localhost:3000${movie.videoUrl}`
-              : null,
+          description: movie?.description ?? null,
 
-            duration: movie.duration,
+          // Part 1 Thumbnail
+          thumbnail: movie?.thumbnail
+            ? `http://localhost:3000${movie.thumbnail}`
+            : null,
 
-            releaseYear: movie.releaseYear,
+          // Part 1 Information
+          genre: movie?.genre ?? "Movie",
 
-            channelId: schedule.channel.id,
+          releaseYear: movie?.releaseYear ?? null,
 
-            channelName: schedule.channel.name,
+          duration: movie?.duration ?? 0,
 
-            playlistId: item.playlistId,
+          // Channel
+          channelId: schedule.channel.id,
 
-            playlistItemId: item.id,
+          channelName: schedule.channel.name,
 
-            playlistOrder: item.order,
-          };
-        }),
-    );
-
-    // remove only exact duplicate
-    const uniqueMovies = Array.from(
-      new Map(
-        movies.map((movie) => [`${movie.id}-${movie.channelId}`, movie]),
-      ).values(),
-    );
-
-    return NextResponse.json({
-      movies: uniqueMovies,
-    });
-  } catch (error) {
-    console.error("MOVIE LIST ERROR", error);
+          // Schedule
+          scheduleEnd: schedule.endTime,
+        };
+      });
 
     return NextResponse.json(
       {
-        message: "Failed loading movies",
+        movies,
+      },
+      {
+        status: 200,
+
+        headers: {
+          "Access-Control-Allow-Origin": "http://localhost:3001",
+
+          "Access-Control-Allow-Methods": "GET, OPTIONS",
+
+          "Access-Control-Allow-Headers": "Content-Type",
+        },
+      },
+    );
+  } catch (error) {
+    console.error("MOVIE API ERROR:", error);
+
+    return NextResponse.json(
+      {
+        message: "Failed to fetch movies",
       },
       {
         status: 500,
