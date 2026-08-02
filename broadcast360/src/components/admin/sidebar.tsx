@@ -50,7 +50,7 @@ const menus = [
   },
   {
     name: "Users",
-    path: "/admin/user",
+    path: "/admin/users",
   },
 ];
 
