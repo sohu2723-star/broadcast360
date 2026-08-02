@@ -137,7 +137,7 @@ export default function ChangePasswordModal({
         <button
           onClick={changePassword}
 
-          className="flex-1 rounded-xl bg-gradient-to-r from-yellow-500 to-orange-500 py-3 font-semibold text-white transition hover:scale-[1.02]"
+          className="flex-1 rounded-xl bg-[#400FD3] py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#400FD3]/20 transition duration-200 hover:opacity-90"
         >
           Update Password
         </button>

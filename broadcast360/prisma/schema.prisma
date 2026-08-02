@@ -12,13 +12,11 @@ enum Role {
   USER
 }
 
-
 enum UserStatus {
   ACTIVE
   INACTIVE
   BANNED
 }
-
 
 model User {
   id        Int      @id @default(autoincrement())
@@ -30,8 +28,8 @@ model User {
   role      Role     @default(USER)
   status    UserStatus @default(ACTIVE)
   lastLoginAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 }
 
 // =====================
@@ -105,6 +103,10 @@ model Stream {
   channel       Channel        @relation(fields: [channelId], references: [id])
   playlistItems PlaylistItem[]
 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> 927bb7f98035599910cc36a074b9f96f9a3d975a
 // =====================
 // SERIES
 // =====================
@@ -302,8 +304,8 @@ enum BroadcastStatus {
 model BroadcastSession {
   id Int @id @default(autoincrement())
 
-  channelId   Int             @unique
-  scheduleId  Int?
+  channelId  Int  @unique
+  scheduleId Int?
 
   status BroadcastStatus @default(STOPPED)
 

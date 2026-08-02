@@ -12,7 +12,7 @@ const menus = [
     name: "Channels",
     path: "/admin/channels",
   },
-   {
+  {
     name: "Programs",
     path: "/admin/programs",
   },
@@ -58,8 +58,8 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 h-screen sticky top-0 bg-[#0B1026] border-r border-white/10 p-5 overflow-y-auto">
-      <h1 className="text-2xl font-bold mb-10">
+    <aside className="sticky top-0 h-screen w-64 overflow-y-auto border-r border-white/10 bg-[#0B1026] p-5">
+      <h1 className="mb-10 text-2xl font-bold">
         <span className="text-[#106EE9]">Broadcast</span>360
       </h1>
 
@@ -74,19 +74,11 @@ export default function Sidebar() {
             <Link
               key={menu.name}
               href={menu.path}
-              className={`
-                flex
-                items-center
-                gap-3
-                p-3
-                rounded-xl
-                transition
-                ${
-                  isActive
-                    ? "bg-[#106EE9] text-white"
-                    : "text-gray-300 hover:bg-[#106EE9]/40"
-                }
-              `}
+              className={`flex items-center gap-3 rounded-xl p-3 transition ${
+                isActive
+                  ? "bg-[#106EE9] text-white"
+                  : "text-gray-300 hover:bg-[#106EE9]/40"
+              } `}
             >
               <span>{menu.name}</span>
             </Link>
