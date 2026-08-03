@@ -22,7 +22,7 @@ export default function MovieSearch({
 
         placeholder="Search movies by title..."
 
-        className="w-full rounded-xl bg-neutral-900 border border-neutral-800 px-12 py-3 text-white outline-none focus:border-red-500"
+        className="w-full rounded-xl bg-neutral-900 border border-neutral-800 px-12 py-3 text-white outline-none focus:border-blue-500"
       />
     </div>
   );

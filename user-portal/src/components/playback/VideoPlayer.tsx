@@ -8,13 +8,17 @@ export default function VideoPlayer({ movie }: { movie: Movie }) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    if (!videoRef.current) return;
+    const video = videoRef.current;
 
-    if (!movie.videoUrl) return;
+    if (!video || !movie.videoUrl) {
+      return;
+    }
 
-    videoRef.current.src = movie.videoUrl;
+    video.pause();
 
-    videoRef.current.load();
+    video.src = movie.videoUrl;
+
+    video.load();
   }, [movie.videoUrl]);
 
   if (!movie.videoUrl) {
@@ -27,6 +31,8 @@ export default function VideoPlayer({ movie }: { movie: Movie }) {
 
   return (
     <video
+      key={movie.videoUrl}
+
       ref={videoRef}
 
       controls

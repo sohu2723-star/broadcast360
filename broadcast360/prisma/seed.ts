@@ -50,7 +50,7 @@ async function main() {
           name: `Staff Member ${i}`,
           email: `staff${i}@broadcast.tv`,
           password: `secure_hash_password_${i}`,
-          role: i <= 2 ? Role.ADMIN : Role.GUEST,
+          role: i <= 2 ? Role.ADMIN : Role.USER,
         },
       })
     );
