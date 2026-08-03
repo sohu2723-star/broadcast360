@@ -223,7 +223,7 @@ ENTERTAINMENTS
 
 <h2 className="mb-6 text-2xl font-bold">
 
-🔥 HOT ENTERTAINMENTS SHOWCASE
+🔥  HOTENTERTAINMENTS
 
 </h2>
 
