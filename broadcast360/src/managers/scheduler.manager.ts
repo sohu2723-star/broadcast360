@@ -59,7 +59,7 @@ export class SchedulerManager {
   =========================
   */
 
- async start(channelId: number) {
+  async start(channelId: number) {
     if (this.timers.has(channelId)) {
       console.log("⚠ Scheduler already running", channelId);
 
@@ -120,33 +120,23 @@ export class SchedulerManager {
     if (schedule) {
       const current = this.currentSchedule.get(channelId);
 
-      /*
-      same schedule already running
-      */
-
-      if (current === schedule.id) {
+      if (current === schedule.id && this.mode.get(channelId) === "SCHEDULE") {
         console.log("⏭ SAME SCHEDULE", {
           channelId,
           scheduleId: schedule.id,
         });
-
         return;
       }
-
-      /*
-      already completed
-      */
 
       if (this.completedSchedule.get(channelId) === schedule.id) {
         console.log("⏭ ALREADY COMPLETED", {
           channelId,
           scheduleId: schedule.id,
         });
-
         return;
       }
 
-      console.log("📺 START SCHEDULE", {
+      console.log("📺 SWITCH TO SCHEDULE", {
         channelId,
         scheduleId: schedule.id,
       });
@@ -154,21 +144,28 @@ export class SchedulerManager {
       this.switching.set(channelId, true);
 
       try {
-        this.currentSchedule.set(channelId, schedule.id);
+        // Stop fallback if it's currently running
+        if (broadcast.isRunning(channelId)) {
+          console.log("🛑 STOP FALLBACK", channelId);
+          await broadcast.stop(channelId);
+        }
 
-        this.completedSchedule.delete(channelId);
-
-        this.mode.set(channelId, "SCHEDULE");
-
+        // Start the scheduled playlist
         await broadcast.switchBroadcast(schedule, channelId);
+
+        // Only update state after success
+        this.currentSchedule.set(channelId, schedule.id);
+        this.completedSchedule.delete(channelId);
+        this.mode.set(channelId, "SCHEDULE");
 
         console.log("✅ SCHEDULE STARTED", {
           channelId,
           scheduleId: schedule.id,
         });
       } catch (error) {
-        console.log("⚠ SCHEDULE FAILED", error);
+        console.error("⚠ SCHEDULE FAILED", error);
 
+        this.currentSchedule.delete(channelId);
         this.mode.set(channelId, "WAITING");
       } finally {
         this.switching.delete(channelId);

@@ -11,11 +11,7 @@ export class FFmpegManager {
     return `${channelId}:${role}`;
   }
 
-  start(
-    channelId: number,
-    role: FFmpegRole,
-    args: string[],
-  ): ChildProcess {
+  start(channelId: number, role: FFmpegRole, args: string[]): ChildProcess {
     const key = this.key(channelId, role);
 
     const existing = this.processes.get(key);
@@ -37,6 +33,7 @@ export class FFmpegManager {
 
     const process = spawn("ffmpeg", args, {
       windowsHide: true,
+      stdio: ["ignore", "pipe", "pipe"],
     });
 
     this.processes.set(key, process);
@@ -96,10 +93,29 @@ export class FFmpegManager {
 
     this.manualStops.add(key);
 
-    process.kill("SIGINT");
+    return new Promise<void>((resolve) => {
+      const cleanup = () => {
+        resolve();
+      };
 
-    await new Promise<void>((resolve) => {
-      process.once("close", () => resolve());
+      process.once("close", cleanup);
+
+      try {
+        process.kill("SIGINT");
+      } catch {
+        resolve();
+      }
+
+      setTimeout(() => {
+        if (!process.killed) {
+          console.log("⚠ FORCE KILL", {
+            channelId,
+            role,
+          });
+
+          process.kill("SIGKILL");
+        }
+      }, 3000);
     });
   }
 
@@ -129,11 +145,7 @@ export class FFmpegManager {
     return this.processes.get(this.key(channelId, role)) ?? null;
   }
 
-  private remove(
-    channelId: number,
-    role: FFmpegRole,
-    process: ChildProcess,
-  ) {
+  private remove(channelId: number, role: FFmpegRole, process: ChildProcess) {
     const key = this.key(channelId, role);
 
     const current = this.processes.get(key);
