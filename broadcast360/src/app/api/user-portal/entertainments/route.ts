@@ -1,23 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 export async function GET() {
 
   try {
 
 
     // Get database time
-    const dbNowResult = await prisma.$queryRaw<
-      { db_now: Date }[]
-    >`
-
-      SELECT NOW() as db_now
-
-    `;
-
-
-    const now = dbNowResult[0].db_now;
+    const now = new Date();
 
 
     const oneMonthAgo = new Date(now);
@@ -36,17 +28,12 @@ export async function GET() {
     const schedules =
       await prisma.schedule.findMany({
 
-        where: {
-
-          endTime: {
-
-            lt: now,
-
-            gte: oneMonthAgo,
-
-          },
-
-        },
+      where: {
+  endTime: {
+    lte: now,
+    gte: oneMonthAgo,
+  },
+},
 
 
         include: {
@@ -97,6 +84,17 @@ export async function GET() {
 
       });
 
+      console.log("NOW:", now);
+
+console.log(
+  schedules.map((s) => ({
+    id: s.id,
+    start: s.startTime,
+    end: s.endTime,
+    playlist: s.playlist.name,
+  }))
+);
+
 
 
     console.log(
@@ -110,6 +108,16 @@ export async function GET() {
 
   const entertainments = schedules
 .map((schedule) => {
+
+  console.log(
+  "PLAYLIST ITEMS:",
+  schedule.playlist.name,
+  schedule.playlist.items.map(item => ({
+    type: item.type,
+    entertainmentId: item.entertainment?.id,
+    title: item.entertainment?.title,
+  }))
+);
 
 
   const firstEntertainment =
@@ -151,6 +159,12 @@ export async function GET() {
 
   channelId:
     schedule.channel.id,
+
+  category:
+    entertainment.category,
+
+  releaseYear:
+    entertainment.releaseYear,
 
   channelName:
     schedule.channel.name,

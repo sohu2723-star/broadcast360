@@ -15,6 +15,7 @@ interface AdminUser {
 const menus = [
   { name: "Dashboard", path: "/admin" },
   { name: "Channels", path: "/admin/channels" },
+  { name: "Broadcasts", path: "/admin/broadcasts" },
   { name: "Live Streams", path: "/admin/streams" },
   { name: "Movies", path: "/admin/movies" },
   { name: "Series", path: "/admin/series" },

@@ -1,14 +1,11 @@
 import { NextResponse } from "next/server";
 
-import { BroadcastService } from "@/services/broadcast.service";
+import { scheduler } from "@/services/scheduler-container";
+import { broadcast } from "@/services/broadcast-container";
 
-const broadcast = globalThis.broadcastService ?? new BroadcastService();
-
-globalThis.broadcastService = broadcast;
-
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
-    const body = await req.json();
+    const body = await request.json();
 
     const channelId = Number(body.channelId);
 
@@ -23,21 +20,33 @@ export async function POST(req: Request) {
       );
     }
 
+    /*
+    ==========================
+        STOP BROADCAST
+    ==========================
+    */
+
     await broadcast.stop(channelId);
+
+    /*
+    ==========================
+        STOP SCHEDULER TIMER
+    ==========================
+    */
+
+    scheduler.stop(channelId);
 
     return NextResponse.json({
       success: true,
 
-      message: "Broadcast stopped",
-
       channelId,
     });
   } catch (error) {
-    console.error(error);
+    console.error("❌ Broadcast stop failed", error);
 
     return NextResponse.json(
       {
-        error: "stop failed",
+        error: "Broadcast stop failed",
       },
       {
         status: 500,

@@ -14,6 +14,8 @@ import { PlayoutManager } from "@/managers/playout-manager";
 import { SessionManager } from "@/managers/session-manager";
 import { LiveManager } from "@/managers/live-manager";
 import { MediaMTXManager } from "@/managers/mediamtx.manager";
+import { RecordingManager } from "@/managers/recording-manager";
+import { RecordingService } from "./recording.service";
 
 type BroadcastMode = "SCHEDULE" | "FALLBACK";
 
@@ -43,6 +45,8 @@ export class BroadcastService {
     private live: LiveManager,
 
     private mediaMTX: MediaMTXManager,
+
+    private recordingService: RecordingService
   ) {}
 
   setPlaylistFinishedHandler(
@@ -82,6 +86,8 @@ export class BroadcastService {
           STOP CURRENT
       =========================
       */
+
+      await this.recordingService.stop(channelId);
 
       await this.playout.stop(channelId);
 
@@ -207,10 +213,21 @@ export class BroadcastService {
 
         await this.mediaMTX.waitPublisher(`live/${channel.streamKey}`);
 
+        // =========================
+        // START RECORDING HERE
+        // =========================
+
         await this.switcher.switchToLIVE(
           channelId,
 
           channel.streamKey,
+        );
+
+        
+          await this.recordingService.start(
+          channelId,
+          channel.streamKey,
+          current.title ?? "Live News",
         );
 
         await this.session.live(channelId);
@@ -248,6 +265,7 @@ export class BroadcastService {
         }
       };
 
+      const isFallback = schedule === null;
       await this.playout.start(
         channelId,
 
@@ -256,6 +274,8 @@ export class BroadcastService {
         offset,
 
         onFinished,
+
+        isFallback,
       );
 
       await this.mediaMTX.waitPublisher(`vod/${channelId}`);
@@ -305,6 +325,8 @@ export class BroadcastService {
   }
 
   async stop(channelId: number) {
+    await this.recordingService.stop(channelId);
+
     await this.playout.stop(channelId);
 
     await this.live.stop(channelId);
@@ -314,6 +336,8 @@ export class BroadcastService {
     await this.session.stop(channelId);
 
     this.mode.delete(channelId);
+
+    this.switching.delete(channelId);
 
     console.log("🛑 BROADCAST STOP", channelId);
   }

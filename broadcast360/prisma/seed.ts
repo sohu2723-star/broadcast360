@@ -279,18 +279,18 @@ async function main() {
   console.log('📡 Seeded 10 Broadcast Sessions');
 
   // 15. RECORDINGS
-  for (let i = 1; i <= 10; i++) {
-    await prisma.recording.create({
-      data: {
-        channelId: channels[i - 1].id,
-        title: `DVR Archive Recording Record #${i}`,
-        fileUrl: `videos/archive_channel_${i}.mp4`,
-        duration: 10800,
-        startedAt: new Date('2026-06-28T01:00:00Z'),
-        endedAt: new Date('2026-06-28T04:00:00Z'),
-      },
-    });
-  }
+  for (let i = 0; i < channels.length; i++) {
+  await prisma.recording.create({
+    data: {
+      channelId: channels[i].id,
+      title: `DVR Archive Recording Record #${i + 1}`,
+      fileUrl: `videos/archive_channel_${i + 1}.mp4`,
+      duration: 10800,
+      startedAt: new Date('2026-06-28T01:00:00Z'),
+      endedAt: new Date('2026-06-28T04:00:00Z'),
+    },
+  });
+}
 
   console.log('💾 Seeded 10 Recordings');
 

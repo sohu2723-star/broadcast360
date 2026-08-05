@@ -14,6 +14,7 @@ export class PlayoutManager {
     items: ResolvedPlaylistItem[],
     offset: number,
     onFinished: () => Promise<void>,
+    loop = false,
   ) {
     console.log("▶ START CONCAT PLAYOUT", {
       channelId,
@@ -28,6 +29,8 @@ export class PlayoutManager {
     const args = [
       "-re",
 
+      ...(loop ? ["-stream_loop", "-1"] : []),
+
       "-f",
       "concat",
 
@@ -36,8 +39,6 @@ export class PlayoutManager {
 
       "-i",
       concatFile.replace(/\\/g, "/"),
-
-      ...(offset > 0 ? ["-ss", String(offset)] : []),
 
       "-c:v",
       "libx264",
@@ -82,6 +83,11 @@ export class PlayoutManager {
           code,
         });
 
+        return;
+      }
+
+      if (loop) {
+        console.log("⏹ LOOP PLAYLIST STOPPED", channelId);
         return;
       }
 
