@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 
 import { getWatchMovie } from "@/services/movie.service";
 
-import PlaybackLayout from "@/components/movie-detail/playback/PlaybackLayout";
+import PlaybackLayout from "@/components/playback/PlaybackLayout";
 
 import type { Movie } from "@/types/movie";
 
@@ -25,11 +25,13 @@ export default async function WatchPage({ params }: PageProps) {
 
   const playlist: Movie[] = data.playlist ?? [];
 
+  const relatedMovies: Movie[] = data.relatedMovies ?? [];
+
   return (
     <PlaybackLayout
       movie={movie}
-
       playlist={playlist}
+      relatedMovies={relatedMovies}
     />
   );
 }

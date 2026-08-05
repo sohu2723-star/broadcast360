@@ -104,7 +104,6 @@ model Stream {
   channel       Channel        @relation(fields: [channelId], references: [id])
   playlistItems PlaylistItem[]
 }
-
 // =====================
 // SERIES
 // =====================
@@ -115,7 +114,7 @@ model Series {
   description String?
   genre       String?
   releaseYear Int?
-  thumbnail   String?
+  thumbnail    String?
   episodes    Episode[]
   createdAt   DateTime  @default(now())
 }
@@ -135,8 +134,6 @@ model Episode {
   series        Series         @relation(fields: [seriesId], references: [id])
   createdAt     DateTime       @default(now())
   playlistItems PlaylistItem[]
-
-  @@unique([seriesId, episodeNo])
 }
 
 // =====================
