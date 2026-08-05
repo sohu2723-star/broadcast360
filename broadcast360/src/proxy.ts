@@ -203,6 +203,7 @@ export const config = {
   matcher: [
     "/",
     "/admin/:path*",
+    
     // "/api/admin/:path*",
     // "/api/user-portal/:path*",
   ],

@@ -9,6 +9,10 @@ const menus = [
     path: "/admin",
   },
   {
+    name: "Broadcast",
+    path: "/admin/broadcast",
+  },
+  {
     name: "Channels",
     path: "/admin/channels",
   },
