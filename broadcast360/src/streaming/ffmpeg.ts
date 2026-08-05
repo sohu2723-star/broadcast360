@@ -1,6 +1,6 @@
 import { spawn, ChildProcess } from "child_process";
 
-export type FFmpegRole = "SOURCE" | "ROUTER" | "LIVE";
+export type FFmpegRole = "SOURCE" | "ROUTER" | "LIVE"  | "RECORD";
 
 export class FFmpegManager {
   private processes = new Map<string, ChildProcess>();
@@ -120,7 +120,7 @@ export class FFmpegManager {
   }
 
   async stopAll(channelId: number) {
-    for (const role of ["SOURCE", "ROUTER", "LIVE"] as FFmpegRole[]) {
+    for (const role of ["SOURCE", "ROUTER", "LIVE", "RECORD"] as FFmpegRole[]) {
       await this.stop(channelId, role);
     }
   }
@@ -137,7 +137,8 @@ export class FFmpegManager {
     return (
       this.has(channelId, "SOURCE") ||
       this.has(channelId, "ROUTER") ||
-      this.has(channelId, "LIVE")
+      this.has(channelId, "LIVE")  ||
+      this.has(channelId,"RECORD")
     );
   }
 

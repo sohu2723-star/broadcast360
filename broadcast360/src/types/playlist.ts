@@ -52,7 +52,6 @@ Database -> Resolver -> PlayoutManager
 
 export interface ResolvedPlaylistItem {
   id: number;
-
   type:
     | "MOVIE"
     | "EPISODE"
@@ -63,7 +62,11 @@ export interface ResolvedPlaylistItem {
 
   videoUrl?: string;
 
+  title?: string;
+
   streamUrl?: string;
+
+  streamName?: string;
 
   duration?: number | null;
 

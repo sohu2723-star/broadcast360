@@ -23,8 +23,8 @@ model User {
   name        String
   email       String     @unique
   password    String
-  avatar      String?    
-  phone       String?    
+  avatar      String?
+  phone       String?
   role        Role       @default(USER)
   status      UserStatus @default(ACTIVE)
   lastLoginAt DateTime?
@@ -53,7 +53,7 @@ model Channel {
 
   // 24/7 fallback playlist
   defaultPlaylistId Int?
-  defaultPlaylist   Playlist? @relation("ChannelDefaultPlaylist", fields: [defaultPlaylistId], references: [id])
+  defaultPlaylist   Playlist?          @relation("ChannelDefaultPlaylist", fields: [defaultPlaylistId], references: [id])
 }
 
 // =====================
@@ -90,6 +90,7 @@ enum StreamStatus {
 // ============================
 // Stream INPUT
 // ============================
+
 model Stream {
   id          Int            @id @default(autoincrement())
   channelId   Int
@@ -158,16 +159,25 @@ model Advertisement {
 // =====================
 
 model News {
-  id            Int            @id @default(autoincrement())
+  id            Int @id @default(autoincrement())
+
   channelId     Int?
+  recordingId   Int?
+
   title         String
   content       String?
   image         String?
   videoUrl      String?
+  duration      Int?
   type          String
-  channel       Channel?       @relation(fields: [channelId], references: [id])
+
+  channel       Channel? @relation(fields: [channelId], references: [id])
+
+  recording     Recording? @relation(fields: [recordingId], references: [id])
+
   playlistItems PlaylistItem[]
-  createdAt     DateTime       @default(now())
+
+  createdAt DateTime @default(now())
 }
 
 // =====================
@@ -254,11 +264,8 @@ model PlaylistItem {
   movie         Movie?         @relation(fields: [movieId], references: [id])
   episode       Episode?       @relation(fields: [episodeId], references: [id])
   advertisement Advertisement? @relation(fields: [advertisementId], references: [id])
-
-  news News? @relation(fields: [newsId], references: [id])
-
-  stream Stream? @relation(fields: [streamId], references: [id])
-
+  news          News?          @relation(fields: [newsId], references: [id])
+  stream        Stream?        @relation(fields: [streamId], references: [id])
   entertainment Entertainment? @relation(fields: [entertainmentId], references: [id])
 
   createdAt DateTime @default(now())
@@ -301,8 +308,8 @@ enum BroadcastStatus {
 model BroadcastSession {
   id Int @id @default(autoincrement())
 
-  channelId   Int             @unique
-  scheduleId  Int?
+  channelId  Int  @unique
+  scheduleId Int?
 
   status BroadcastStatus @default(STOPPED)
 
@@ -321,14 +328,23 @@ model BroadcastSession {
 }
 
 model Recording {
-  id        Int      @id @default(autoincrement())
-  channelId Int
-  title     String
-  fileUrl   String
-  duration  Int
-  startedAt DateTime
-  endedAt   DateTime
+  id        Int @id @default(autoincrement())
 
-  channel   Channel  @relation(fields: [channelId], references: [id])
+  channelId Int
+
+  title     String
+
+  fileUrl   String
+
+  duration  Int
+
+  startedAt DateTime
+
+  endedAt DateTime?
+
+  channel Channel @relation(fields:[channelId], references:[id])
+
+  news News[]
+
   createdAt DateTime @default(now())
 }
