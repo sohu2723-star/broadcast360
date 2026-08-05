@@ -126,10 +126,12 @@ CREATE TABLE "Advertisement" (
 CREATE TABLE "News" (
     "id" SERIAL NOT NULL,
     "channelId" INTEGER,
+    "recordingId" INTEGER,
     "title" TEXT NOT NULL,
     "content" TEXT,
     "image" TEXT,
     "videoUrl" TEXT,
+    "duration" INTEGER,
     "type" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -229,7 +231,7 @@ CREATE TABLE "Recording" (
     "fileUrl" TEXT NOT NULL,
     "duration" INTEGER NOT NULL,
     "startedAt" TIMESTAMP(3) NOT NULL,
-    "endedAt" TIMESTAMP(3) NOT NULL,
+    "endedAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Recording_pkey" PRIMARY KEY ("id")
@@ -248,9 +250,6 @@ CREATE UNIQUE INDEX "Channel_streamKey_key" ON "Channel"("streamKey");
 CREATE UNIQUE INDEX "Movie_title_releaseYear_key" ON "Movie"("title", "releaseYear");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Episode_seriesId_episodeNo_key" ON "Episode"("seriesId", "episodeNo");
-
--- CreateIndex
 CREATE UNIQUE INDEX "PlaylistItem_playlistId_order_key" ON "PlaylistItem"("playlistId", "order");
 
 -- CreateIndex
@@ -267,6 +266,9 @@ ALTER TABLE "Episode" ADD CONSTRAINT "Episode_seriesId_fkey" FOREIGN KEY ("serie
 
 -- AddForeignKey
 ALTER TABLE "News" ADD CONSTRAINT "News_channelId_fkey" FOREIGN KEY ("channelId") REFERENCES "Channel"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "News" ADD CONSTRAINT "News_recordingId_fkey" FOREIGN KEY ("recordingId") REFERENCES "Recording"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Program" ADD CONSTRAINT "Program_channelId_fkey" FOREIGN KEY ("channelId") REFERENCES "Channel"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

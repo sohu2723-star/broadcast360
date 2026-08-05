@@ -8,8 +8,10 @@ export interface ResolvedPlaylistItem {
 
   videoUrl?: string;
 
-  streamUrl?: string;
+  title? : string;
 
+  streamUrl?: string;
+  
   duration?: number | null;
 
   order: number;
@@ -57,6 +59,8 @@ export class PlaylistResolverService {
 
           type: "MOVIE",
 
+          title: item.movie.title,
+
           videoUrl: item.movie.videoUrl,
 
           duration: item.duration ?? item.movie.duration,
@@ -81,6 +85,8 @@ export class PlaylistResolverService {
           id: item.id,
 
           type: "EPISODE",
+
+          title: item.episode.title,
 
           videoUrl: item.episode.videoUrl,
 
@@ -107,6 +113,8 @@ export class PlaylistResolverService {
 
           type: "ADVERTISEMENT",
 
+          title: item.advertisement.title,
+
           videoUrl: item.advertisement.videoUrl,
 
           duration: item.duration ?? item.advertisement.duration,
@@ -131,6 +139,8 @@ export class PlaylistResolverService {
           id: item.id,
 
           type: "ENTERTAINMENT",
+
+          title: item.entertainment.title,
 
           videoUrl: item.entertainment.videoUrl,
 
@@ -157,11 +167,15 @@ export class PlaylistResolverService {
 
           type: "NEWS",
 
+          title: item.news.title,
+
           videoUrl: item.news.videoUrl,
 
           duration: item.duration ,
 
           order: item.order,
+
+          
         };
 
       /*
@@ -181,6 +195,8 @@ export class PlaylistResolverService {
           id: item.id,
 
           type: "STREAM",
+
+          title: item.stream.name,
 
           streamUrl: item.stream.url,
 

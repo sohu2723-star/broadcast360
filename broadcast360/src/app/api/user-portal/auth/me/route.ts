@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { cors, optionsResponse } from "@/lib/cors";
+
 import { verifyUserToken } from "@/lib/user-jwt";
 
 import { UserRepository } from "@/repositories/user.repository";
 
-import { cors, optionsResponse } from "@/lib/cors";
-
-const repository = new UserRepository();
+const userRepository = new UserRepository();
 
 export async function OPTIONS() {
   return optionsResponse();
@@ -16,11 +16,13 @@ export async function GET(request: NextRequest) {
   try {
     const token = request.cookies.get("user_token")?.value;
 
+    console.log("USER TOKEN:", token);
+
     if (!token) {
       return cors(
         NextResponse.json(
           {
-            user: null,
+            message: "Unauthorized",
           },
           {
             status: 401,
@@ -31,36 +33,21 @@ export async function GET(request: NextRequest) {
 
     const payload = await verifyUserToken(token);
 
-    const user = await repository.findById(Number(payload.id));
-
-    if (!user) {
-      return cors(
-        NextResponse.json(
-          {
-            user: null,
-          },
-          {
-            status: 404,
-          },
-        ),
-      );
-    }
+    const user = await userRepository.findById(Number(payload.id));
 
     return cors(
       NextResponse.json({
-        success: true,
-
         user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          phone: user.phone,
-          avatar: user.avatar,
-          role: user.role,
+          id: user?.id,
+          name: user?.name,
+          email: user?.email,
+          role: user?.role,
         },
       }),
     );
-  } catch {
+  } catch (error) {
+    console.error(error);
+
     return cors(
       NextResponse.json(
         {
