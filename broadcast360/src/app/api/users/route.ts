@@ -7,18 +7,37 @@ const userService = new UserService();
 
 /*
 =========================
-GET ALL USERS
+GET ALL USERS (PAGINATED & FILTERED)
 =========================
 */
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const users = await userService.getUsers();
+    const { searchParams } = new URL(request.url);
+
+    // Extract query parameters with defaults
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "10", 10);
+    const search = searchParams.get("search") || "";
+    const role = searchParams.get("role") || "";
+    const status = searchParams.get("status") || "";
+
+    // Call service with filters
+    const { users, total } = await userService.getUsers({
+      page,
+      limit,
+      search,
+      role,
+      status,
+    });
 
     return NextResponse.json(
       {
         success: true,
         users,
+        total,
+        page,
+        limit,
       },
       {
         status: 200,
@@ -55,9 +74,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-
           message: "Validation failed",
-
           errors: validation.error.flatten(),
         },
         {
@@ -69,14 +86,12 @@ export async function POST(request: NextRequest) {
     const user = await userService.createUser(validation.data);
 
     // Remove password before response
-
-    const { password, ...safeUser } = user;
+    // const { password, ...safeUser } = user;
 
     return NextResponse.json(
       {
         success: true,
-
-        user: safeUser,
+        user,
       },
       {
         status: 201,
@@ -91,7 +106,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-
         message: message,
       },
       {

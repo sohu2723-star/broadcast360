@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+
 interface AdminUser {
   id: number;
   name: string;
@@ -69,29 +70,23 @@ export default function Navbar() {
     <header className="flex h-20 items-center justify-between border-b border-white/10 bg-[#010312] px-8">
       <h1 className="text-3xl font-semibold text-white">{getTitle()}</h1>
 
-      <div className="flex items-center gap-3 rounded-xl bg-[#111936] px-4 py-2">
-        <Link
-          href="/admin/profile"
-          className="flex items-center gap-3 rounded-xl bg-[#111936] px-4 py-2 transition hover:bg-[#18224d]"
-        >
-          {user?.avatar ? (
-            <img
-              src={user.avatar}
-              className="h-10 w-10 rounded-full object-cover"
-            />
-          ) : (
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#400FD3] font-bold text-white">
-              {user?.name?.charAt(0) ?? "A"}
-            </div>
-          )}
-
-          <div>
-            <p className="font-semibold text-white">{user?.name ?? "Admin"}</p>
-
-            <p className="text-xs text-gray-400">{user?.role ?? "ADMIN"}</p>
+      {/* CIRCULAR PROFILE AVATAR ONLY */}
+      <Link
+        href="/admin/profile"
+        className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-white/20 bg-[#111936] transition duration-200 hover:scale-105 hover:border-white/40"
+      >
+        {user?.avatar ? (
+          <img
+            src={user.avatar}
+            alt={user.name || "Admin"}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-[#400FD3] text-sm font-bold text-white">
+            {user?.name ? user.name.charAt(0).toUpperCase() : "A"}
           </div>
-        </Link>
-      </div>
+        )}
+      </Link>
     </header>
   );
 }
