@@ -4,148 +4,93 @@ import { useState } from "react";
 
 import type { Entertainment } from "@/types/entertainment";
 
+function formatScheduleDate(date?: string | null) {
+  if (!date) return "-";
 
-function formatDuration(seconds:number){
+  const d = new Date(date);
 
-  if(!seconds || seconds <= 0)
-    return "-";
-
-
-  const hours = Math.floor(seconds / 3600);
-
-  const minutes = Math.floor(
-    (seconds % 3600) / 60
-  );
-
-  const sec = seconds % 60;
-
-
-  if(hours > 0){
-    return `${hours}h ${minutes}m ${sec}s`;
-  }
-
-
-  if(minutes > 0){
-    return `${minutes}m ${sec}s`;
-  }
-
-
-  return `${sec}s`;
+  return `${d.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+  })} ${d.getFullYear()}, ${d.toLocaleString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  })}`;
 }
-
-
-
-
 export default function EntertainmentMetadata({
   entertainment,
-}:{
+}: {
   entertainment: Entertainment;
-}){
+}) {
+  console.log("Entertainment Metadata:", entertainment);
 
+  const [showMore, setShowMore] = useState(false);
 
-  const [showMore,setShowMore] =
-    useState(false);
+  const limit = 150;
 
-
-  const limit = 50;
-
-
-  const description =
-    entertainment.description ||
-    "No description available.";
-
+  const description = entertainment.description || "No description available.";
 
   const shortDescription =
     description.length > limit
-    ? description.slice(0,limit) + "..."
-    : description;
-
-
+      ? description.slice(0, limit) + "..."
+      : description;
 
   return (
-
     <div className="w-full">
+      {/* Title */}
 
+      <h1 className="text-2xl font-bold text-white">{entertainment.title}</h1>
 
-      <div className="flex flex-wrap items-center gap-3">
+      {/* Channel */}
 
+      <div className="mt-3 flex items-center gap-3">
+        {entertainment.channelLogo && (
+          <img
+            src={entertainment.channelLogo}
+            alt={entertainment.channelName || "Channel"}
+            className="h-10 w-10 rounded-full object-cover"
+          />
+        )}
 
-        <h1 className="text-2xl font-bold text-white">
-
-          {entertainment.title}
-
-        </h1>
-
-
-
-        <span className="rounded-full bg-[#106EE9] px-3 py-1 text-xs text-white">
-
-          🎭 {entertainment.category || "Entertainment"}
-
-        </span>
-
-
-
-        <span className="rounded-full border border-[#106EE9]/30 bg-[#010312] px-3 py-1 text-xs text-gray-300">
-
-          📅 {entertainment.releaseYear || "-"}
-
-        </span>
-
-
-
-        <span className="rounded-full border border-[#106EE9]/30 bg-[#010312] px-3 py-1 text-xs text-gray-300">
-
-          ⏱ {formatDuration(entertainment.duration)}
-
-        </span>
-
-
+        <p className="text-base font-bold text-white">
+          {entertainment.channelName || "-"}
+        </p>
       </div>
 
+      {/* Metadata */}
 
+      <div className="mt-3 flex flex-wrap items-center gap-2 text-sm text-gray-400">
+        <span>
+          {entertainment.category || "Entertainment"}
 
+          {entertainment.releaseYear && ` (${entertainment.releaseYear})`}
+        </span>
 
-      <div className="mt-4 text-sm leading-6 text-gray-400 break-words">
+        {entertainment.scheduleStart && (
+          <>
 
+            <span>{formatScheduleDate(entertainment.scheduleStart)}</span>
+          </>
+        )}
+      </div>
 
+      {/* Description */}
+
+      <div className="mt-2 text-sm leading-6 text-gray-400 break-words">
         <p>
-
-
-          {showMore
-            ? description
-            : shortDescription}
-
-
+          {showMore ? description : shortDescription}
 
           {description.length > limit && (
-
             <button
-
-              onClick={() =>
-                setShowMore(!showMore)
-              }
-
+              onClick={() => setShowMore(!showMore)}
               className="ml-2 text-[#106EE9] hover:underline"
-
             >
-
-              {showMore
-                ? "Show Less"
-                : "More"}
-
+              {showMore ? "Show Less" : "More"}
             </button>
-
           )}
-
-
         </p>
-
-
       </div>
-
-
     </div>
-
   );
 }
