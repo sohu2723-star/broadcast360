@@ -49,10 +49,6 @@ const menus = [
     path: "/admin/ads",
   },
   {
-    name: "Recordings",
-    path: "/admin/recordings",
-  },
-  {
     name: "Users",
     path: "/admin/users",
   },

@@ -2,13 +2,14 @@ import { FFmpegManager } from "@/streaming/ffmpeg";
 import { ChildProcess } from "child_process";
 
 export class LiveManager {
-  constructor(private ffmpeg: FFmpegManager) {}
+  constructor(private ffmpeg: FFmpegManager) { }
 
   async start(
     channelId: number,
     inputUrl: string,
     streamKey: string,
   ): Promise<ChildProcess> {
+
     const existing = this.ffmpeg.get(channelId, "LIVE");
 
     if (existing) {
@@ -17,11 +18,48 @@ export class LiveManager {
       return existing;
     }
 
-    const output = `rtmp://127.0.0.1:1935/live/${streamKey}`;
+
+    /*
+    ==========================
+        NORMALIZE INPUT
+    ==========================
+    */
+
+    let normalizedInput = inputUrl.trim();
+
+
+    if (!normalizedInput.includes("/live/")) {
+
+      const parsed = new URL(normalizedInput);
+
+      const key = parsed.pathname
+        .split("/")
+        .filter(Boolean)
+        .pop();
+
+
+      if (!key) {
+        throw new Error(
+          `Invalid RTMP URL: ${inputUrl}`
+        );
+      }
+
+      normalizedInput =
+        `${parsed.protocol}//${parsed.host}/live/${key}`;
+    }
+
+
+    const output =
+      `rtmp://127.0.0.1:1935/source/${streamKey}`;
+
 
     const args = [
+
+      "-re",
+
       "-i",
-      inputUrl,
+      normalizedInput,
+
 
       "-c:v",
       "libx264",
@@ -35,11 +73,13 @@ export class LiveManager {
       "-pix_fmt",
       "yuv420p",
 
+
       "-c:a",
       "aac",
 
       "-ar",
       "48000",
+
 
       "-f",
       "flv",
@@ -47,22 +87,41 @@ export class LiveManager {
       output,
     ];
 
+
     console.log("🔴 START LIVE SOURCE", {
       channelId,
-      inputUrl,
+      input: normalizedInput,
       output,
     });
 
-    return this.ffmpeg.start(channelId, "LIVE", args);
+
+    return this.ffmpeg.start(
+      channelId,
+      "LIVE",
+      args
+    );
   }
+
 
   async stop(channelId: number) {
-    await this.ffmpeg.stop(channelId, "LIVE");
 
-    console.log("🛑 LIVE SOURCE STOP", channelId);
+    await this.ffmpeg.stop(
+      channelId,
+      "LIVE"
+    );
+
+    console.log(
+      "🛑 LIVE SOURCE STOP",
+      channelId
+    );
   }
 
+
   isRunning(channelId: number) {
-    return this.ffmpeg.isRunning(channelId, "LIVE");
+
+    return this.ffmpeg.isRunning(
+      channelId,
+      "LIVE"
+    );
   }
 }

@@ -44,7 +44,8 @@ export default function ChannelsPage() {
       }
     } catch (error) {
       console.log(error);
-    } finally {
+    } 
+    finally {
       setLoading(false);
     }
   }, []);
@@ -96,111 +97,118 @@ export default function ChannelsPage() {
   const totalPages = Math.ceil(pagination.total / pagination.limit);
 
   return (
-    <div>
-{/* Header Section */}
-<div className="flex justify-between items-center mb-8 gap-4">
+    <div className="p-4 sm:p-6 min-h-screen bg-[#010312] text-white">
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+        {/* Search Input */}
+        <div className="max-w-md w-full relative">
+          <input
+            type="text"
+            placeholder="Search channels by name or country..."
+            value={search}
+            onChange={handleSearchChange}
+            className="w-full bg-[#0B1026] text-white border border-white/10 rounded-xl px-4 py-2.5 placeholder-gray-500 focus:outline-none focus:border-[#106EE9] focus:ring-1 focus:ring-[#106EE9] transition text-sm shadow-sm"
+          />
+        </div>
 
-   {/* Search Input */}
-  <div className="max-w-md w-full">
-    <input
-      type="text"
-      placeholder="Search channels by name or country..."
-      value={search}
-      onChange={handleSearchChange}
-      className="w-full bg-[#0B1026] text-white border border-white/10 rounded-xl px-4 py-3 placeholder-gray-500 focus:outline-none focus:border-[#106EE9] transition text-sm"
-    />
-  </div>
+        {/* Add Button */}
+        <Link
+          href="/admin/channels/create"
+          className="w-full sm:w-auto bg-[#106EE9] hover:bg-[#0e5bc2] text-white px-5 py-2.5 rounded-xl font-medium text-sm text-center whitespace-nowrap transition shadow-lg shadow-[#106EE9]/20"
+        >
+          + Add Channel
+        </Link>
+      </div>
 
-  {/* Add Button */}
-  <Link
-    href="/admin/channels/create"
-    className="bg-[#106EE9] px-5 py-3 rounded-xl whitespace-nowrap"
-  >
-    + Add Channel
-  </Link>
-
- 
-
-</div>
-
-      {/* Main Data Table */}
-      <div className="bg-[#0B1026] rounded-2xl border border-white/10 overflow-hidden">
+      {/* Main Data Table Card */}
+      <div className="bg-[#0B1026] rounded-2xl border border-white/10 overflow-hidden shadow-xl">
         {loading ? (
-          <div className="p-10 text-center text-white">Loading channels...</div>
+          <div className="p-12 text-center text-zinc-400 text-sm font-mono animate-pulse">
+            Loading channels...
+          </div>
         ) : (
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-white/10 text-gray-400">
-                <th className="p-5 text-left w-20">Logo</th>
-                <th className="p-5 text-left">Name</th>
-                <th className="p-5 text-left">Country</th>
-                <th className="p-5 text-left">Action</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {channels.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={3}
-                    className="p-14 text-center text-gray-500 text-sm"
-                  >
-                    No channels found matching your search criteria.
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-white/10 text-xs font-semibold uppercase tracking-wider text-zinc-400 bg-white/[0.02]">
+                  <th className="p-4 pl-6 w-20">Logo</th>
+                  <th className="p-4">Name</th>
+                  <th className="p-4">Country</th>
+                  <th className="p-4 pr-6 text-right">Actions</th>
                 </tr>
-              ) : (
-                channels.map((channel) => (
-                  <tr key={channel.id} className="border-b border-white/10">
-                    <td className="p-5">
-                      {channel.logo ? (
-                        <Image
-                          src={channel.logo}
-                          alt={channel.name}
-                          width={48} // Matches your w-12
-                          height={48} // Matches your h-12
-                          className="w-12 h-12 object-cover rounded-xl bg-white/5 border border-white/10 shadow-md"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center text-[10px] text-gray-500 text-center p-1">
-                          No Logo
-                        </div>
-                      )}
-                    </td>
-                    <td className="p-5 font-medium">{channel.name}</td>
-                    <td className="p-5 text-gray-300">
-                      {channel.country ?? "-"}
-                    </td>
+              </thead>
 
-                    <td className="p-5 flex gap-3">
-                      <Link
-                        href={`/admin/channels/${channel.id}`}
-                        className="bg-[#106EE9] px-4 py-2 rounded-lg text-sm"
-                      >
-                        Details
-                      </Link>
-                      <Link
-                        href={`/admin/channels/edit/${channel.id}`}
-                        className="bg-[#400FD3] px-4 py-2 rounded-lg text-sm"
-                      >
-                        Edit
-                      </Link>
-                      <button
-                        onClick={() => handleDelete(channel.id)}
-                        className="bg-[#F41010] px-4 py-2 rounded-lg text-white text-sm"
-                      >
-                        Delete
-                      </button>
+              <tbody className="divide-y divide-white/5 text-sm">
+                {channels.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="p-12 text-center text-zinc-500 text-sm"
+                    >
+                      No channels found matching your search criteria.
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  channels.map((channel) => (
+                    <tr
+                      key={channel.id}
+                      className="hover:bg-white/[0.02] transition-colors"
+                    >
+                      <td className="p-4 pl-6">
+                        {channel.logo ? (
+                          <Image
+                            src={channel.logo}
+                            alt={channel.name}
+                            width={44}
+                            height={44}
+                            className="w-11 h-11 object-cover rounded-xl bg-white/5 border border-white/10 shadow-sm"
+                          />
+                        ) : (
+                          <div className="w-11 h-11 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center text-[10px] text-zinc-500 font-mono text-center p-1">
+                            No Logo
+                          </div>
+                        )}
+                      </td>
+                      <td className="p-4 font-semibold text-white">
+                        {channel.name}
+                      </td>
+                      <td className="p-4 text-zinc-400 font-mono text-xs">
+                        {channel.country ?? "—"}
+                      </td>
+
+                      <td className="p-4 pr-6">
+                        <div className="flex items-center justify-end gap-2">
+                          <Link
+                            href={`/admin/channels/${channel.id}`}
+                            className="bg-[#106EE9]/10 hover:bg-[#106EE9]/20 text-[#106EE9] border border-[#106EE9]/30 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition"
+                          >
+                            Details
+                          </Link>
+                          <Link
+                            href={`/admin/channels/edit/${channel.id}`}
+                            className="bg-[#400FD3]/10 hover:bg-[#400FD3]/20 text-[#8B5CF6] border border-[#400FD3]/30 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition"
+                          >
+                            Edit
+                          </Link>
+                          <button
+                            onClick={() => handleDelete(channel.id)}
+                            className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         )}
 
         {/* Pagination UI Controls */}
         {!loading && totalPages > 1 && (
-          <div className="p-5 flex justify-between items-center border-t border-white/10 text-sm text-gray-400">
+          <div className="p-4 px-6 flex justify-between items-center border-t border-white/10 text-xs text-zinc-400 bg-white/[0.01]">
             <div>
               Page{" "}
               <span className="text-white font-medium">{pagination.page}</span>{" "}
@@ -215,7 +223,7 @@ export default function ChannelsPage() {
                   }))
                 }
                 disabled={pagination.page === 1}
-                className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition"
+                className="px-3.5 py-1.5 bg-white/5 hover:bg-white/10 text-white rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition text-xs border border-white/5"
               >
                 Previous
               </button>
@@ -227,7 +235,7 @@ export default function ChannelsPage() {
                   }))
                 }
                 disabled={pagination.page === totalPages}
-                className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition"
+                className="px-3.5 py-1.5 bg-white/5 hover:bg-white/10 text-white rounded-lg disabled:opacity-30 disabled:cursor-not-allowed transition text-xs border border-white/5"
               >
                 Next
               </button>

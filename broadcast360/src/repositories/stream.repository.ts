@@ -107,8 +107,24 @@ export const StreamRepository = {
     protocol: StreamProtocol;
     description?: string | null;
   }) {
+    let url = data.url;
+
+    if (
+      data.protocol === StreamProtocol.RTMP &&
+      !url.includes("/live/")
+    ) {
+      const parsed = new URL(url);
+
+      const key = parsed.pathname.replace("/", "");
+
+      url = `${parsed.protocol}//${parsed.host}/live/${key}`;
+    }
+
     return prisma.stream.create({
-      data,
+      data: {
+        ...data,
+        url,
+      },
 
       include: {
         channel: true,
@@ -116,35 +132,50 @@ export const StreamRepository = {
     });
   },
 
+
   update(
-  id:number,
+    id: number,
 
-  data:{
-    channelId?:number;
-    name?:string;
-    url?:string;
-    protocol?:StreamProtocol;
-    status?:StreamStatus;
-    description?:string|null;
-  }
+    data: {
+      channelId?: number;
+      name?: string;
+      url?: string;
+      protocol?: StreamProtocol;
+      status?: StreamStatus;
+      description?: string | null;
+    }
+  ) {
 
-){
+    let url = data.url;
 
-  return prisma.stream.update({
+    if (
+      url &&
+      data.protocol === StreamProtocol.RTMP &&
+      !url.includes("/live/")
+    ) {
+      const parsed = new URL(url);
 
-    where:{
-      id
-    },
+      const key = parsed.pathname.replace("/", "");
 
-    data,
-
-    include:{
-      channel:true
+      url = `${parsed.protocol}//${parsed.host}/live/${key}`;
     }
 
-  });
 
-},
+    return prisma.stream.update({
+      where: {
+        id,
+      },
+
+      data: {
+        ...data,
+        ...(url && { url }),
+      },
+
+      include: {
+        channel: true,
+      },
+    });
+  },
   delete(id: number) {
     return prisma.stream.delete({
       where: {

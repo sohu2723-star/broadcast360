@@ -25,7 +25,6 @@ const menus = [
   { name: "Programs", path: "/admin/programs" },
   { name: "Playlists", path: "/admin/playlists" },
   { name: "Schedules", path: "/admin/schedules" },
-  { name: "Recordings", path: "/admin/recordings" },
 
   // FIX
   { name: "Users", path: "/admin/users" },
@@ -59,12 +58,17 @@ export default function Navbar() {
   }, []);
 
   function getTitle() {
-    if (pathname === "/admin") return "Dashboard";
+  // Sort by path length descending so longer/more specific paths match first
+  const menu = [...menus]
+    .sort((a, b) => b.path.length - a.path.length)
+    .find((item) => 
+      item.path === "/admin" 
+        ? pathname === "/admin" 
+        : pathname.startsWith(item.path)
+    );
 
-    const menu = menus.find((item) => pathname.startsWith(item.path));
-
-    return menu?.name ?? "Admin";
-  }
+  return menu?.name ?? "Admin";
+}
 
   return (
     <header className="flex h-20 items-center justify-between border-b border-white/10 bg-[#010312] px-8">

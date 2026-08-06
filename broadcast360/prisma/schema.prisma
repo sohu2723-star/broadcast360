@@ -104,10 +104,6 @@ model Stream {
   channel       Channel        @relation(fields: [channelId], references: [id])
   playlistItems PlaylistItem[]
 }
-<<<<<<< HEAD
-=======
-
->>>>>>> 927bb7f98035599910cc36a074b9f96f9a3d975a
 // =====================
 // SERIES
 // =====================
