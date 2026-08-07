@@ -1,3 +1,4 @@
-file 'C:/Users/Sandar Kyaw/broadcast360/broadcast360/public/videos/movies/1786001733944-AVA_Part1.mp4'
-file 'C:/Users/Sandar Kyaw/broadcast360/broadcast360/public/videos/ads/1786001802469-ad3.mp4'
-file 'C:/Users/Sandar Kyaw/broadcast360/broadcast360/public/videos/movies/1786001772313-AVA_Part2.mp4'
+file 'C:/Users/Sandar Kyaw/broadcast360/broadcast360/public/videos/series/HG_Episode1_Part1.mp4'
+file 'C:/Users/Sandar Kyaw/broadcast360/broadcast360/public/videos/ads/ad3.mp4'
+file 'C:/Users/Sandar Kyaw/broadcast360/broadcast360/public/videos/series/HG_Episode1_Part2.mp4'
+file 'C:/Users/Sandar Kyaw/broadcast360/broadcast360/public/videos/ads/ad1.mp4'
