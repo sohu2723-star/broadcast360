@@ -4,6 +4,7 @@ export interface Channel {
   description?: string;
   logo?: string;
   country?: string;
+  streamKey?: string;
 
   playbackUrl: string | null;
   createdAt?: string;

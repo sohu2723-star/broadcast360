@@ -2,9 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, User, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
+import UserMenu from "@/components/user/UserMenu";
+import GuestMenu from "@/components/user/GuestMenu";
+
+import type { User } from "@/types/user";
+import authApi from "@/lib/authapi";
 const menus = [
   {
     name: "Live TV",
@@ -14,111 +18,105 @@ const menus = [
   {
     name: "Series",
     href: "/series",
-    live: false,
   },
   {
     name: "Movies",
     href: "/movies",
-    live: false,
   },
   {
     name: "News",
     href: "/news",
-    live: false,
   },
   {
-    name: "Entertainments",
+    name: "Entertainment",
     href: "/entertainments",
-    live: false,
   },
 ];
 
 export default function Navbar() {
   const pathname = usePathname();
 
-  const [open, setOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadUser() {
+      try {
+        const response = await authApi.get("/api/user-portal/auth/me");
+
+        if (response.data?.user) {
+          setUser(response.data.user);
+        } else {
+          setUser(null);
+        }
+      } catch (error) {
+        console.log("Not authenticated");
+
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadUser();
+  }, []);
 
   return (
     <header className="bg-[#010312] border-b border-[#0B1026]">
-      <nav className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-        {/* Logo */}
+      <nav
+        className="
+max-w-7xl
+mx-auto
+px-6
+py-4
+flex
+items-center
+justify-between
+"
+      >
         <h1 className="text-2xl font-bold">
           <span className="text-[#106EE9]">Broadcast</span>
           360
         </h1>
 
-        {/* Desktop Navigation */}
-
-        <div className="hidden md:flex items-center gap-8">
+        <div className="hidden md:flex gap-8">
           {menus.map((menu) => (
             <Link
               key={menu.href}
+
               href={menu.href}
-              className={`relative flex items-center gap-2 text-white transition ${
-                pathname === menu.href
-                  ? "text-[#106EE9]"
-                  : "hover:text-[#106EE9]"
-              }`}
+
+              className={`
+text-white
+relative
+
+${pathname === menu.href ? "text-[#106EE9]" : "hover:text-[#106EE9]"}
+
+`}
             >
               {menu.live && (
-                <span className="w-2.5 h-2.5 rounded-full bg-[#F41010]"></span>
+                <span
+                  className="
+inline-block
+w-2
+h-2
+bg-red-500
+rounded-full
+mr-2
+"
+                />
               )}
 
               {menu.name}
-
-              {pathname === menu.href && (
-                <span className="absolute left-0 -bottom-2 w-full h-1 bg-[#106EE9] rounded" />
-              )}
             </Link>
           ))}
         </div>
 
-        {/* Profile Desktop */}
-
-        <div className="hidden md:flex">
-          <Link
-            href="/profile"
-            className="flex items-center gap-2 bg-[#0B1026] text-white px-4 py-2 rounded-lg hover:bg-[#106EE9]"
-          >
-            <User size={18} />
-            Profile
-          </Link>
+        <div>
+          {loading ? null : user ? <UserMenu user={user} /> : <GuestMenu />}
         </div>
-
-        {/* Mobile Button */}
-
-        <button className="md:hidden text-white" onClick={() => setOpen(!open)}>
-          {open ? <X /> : <Menu />}
-        </button>
       </nav>
-
-      {/* Mobile Menu */}
-
-      {open && (
-        <div className="md:hidden bg-[#0B1026] px-6 py-5">
-          {menus.map((menu) => (
-            <Link
-              key={menu.href}
-              href={menu.href}
-              onClick={() => setOpen(false)}
-              className={`block py-3 text-white ${
-                pathname === menu.href ? "text-[#106EE9]" : ""
-              }`}
-            >
-              {menu.name}
-            </Link>
-          ))}
-
-          <Link
-            href="/profile"
-            onClick={() => setOpen(false)}
-            className="flex items-center gap-2 py-3 text-white"
-          >
-            <User size={18} />
-            Profile
-          </Link>
-        </div>
-      )}
     </header>
   );
 }
