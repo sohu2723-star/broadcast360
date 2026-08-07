@@ -14,56 +14,65 @@ export class RecordingManager {
   constructor(private ffmpeg: FFmpegManager) {}
 
   async start(channelId: number, streamKey: string, title: string) {
-    const startedAt = new Date();
 
-    const input = `rtmp://127.0.0.1:1935/channel/${streamKey}`;
+  const startedAt = new Date();
 
-    const output = path.join(
-      process.cwd(),
-      "storage",
-      "recordings",
-      `${title}-${channelId}-${Date.now()}.mp4`,
-    );
+  const input =
+    `rtmp://127.0.0.1:1935/channel/${streamKey}`;
 
-    const args = [
-      "-i",
-      input,
 
-      "-c:v",
-      "copy",
+  const output = path.join(
+  process.cwd(),
+  "storage",
+  "recordings",
+  `${channelId}-${Date.now()}.mp4`
+);
 
-      "-c:a",
-      "aac",
+const args = [
+  "-i",
+  input,
 
-      "-movflags",
-      "+faststart",
+  // Copy raw streams to avoid wasting CPU
+  "-c",
+  "copy",
 
-      "-f",
-      "mp4",
+  // Enable fragmented MP4 writing for crash resilience
+  "-movflags",
+  "frag_keyframe+empty_moov",
 
-      output,
-    ];
+  "-f",
+  "mp4",
 
-    this.ffmpeg.start(channelId, "RECORD", args);
+  output,
+];
 
-    this.active.set(channelId, {
-      title,
-      output,
-      startedAt,
-    });
 
-    console.log("🔴 RECORDING STARTED", {
-      channelId,
-      title,
-      output,
-    });
+  this.ffmpeg.start(
+    channelId,
+    "RECORD",
+    args
+  );
 
-    return {
-      title,
-      output,
-      startedAt,
-    };
-  }
+
+  this.active.set(channelId,{
+    title,
+    output,
+    startedAt
+  });
+
+
+  console.log(
+    "🔴 RECORDING STARTED",
+    output
+  );
+
+
+  return {
+    title,
+    output,
+    startedAt
+  };
+}
 
   async stop(channelId: number) {
     const active = this.active.get(channelId);

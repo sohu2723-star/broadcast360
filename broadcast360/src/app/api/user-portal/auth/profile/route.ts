@@ -39,6 +39,7 @@ export async function PUT(request: NextRequest) {
       phone: body.phone,
       avatar: body.avatar,
     });
+    console.log("PROFILE UPDATE BODY:", user);
 
     return cors(
       NextResponse.json({
