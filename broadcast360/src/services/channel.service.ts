@@ -26,102 +26,78 @@ type UpdateChannelInput = {
 };
 
 
-
 export async function fetchChannels() {
   return getAllChannels();
 }
 
+export async function fetchChannelById(id: number) {
+  const channel = await prisma.channel.findUnique({
+    where: {
+      id,
+    },
+    include: {
+      defaultPlaylist: true,
 
-
-export async function fetchChannelById(id:number){
-
-  const channel =
-    await prisma.channel.findUnique({
-
-      where:{
-        id
+      programs: {
+        include: {
+          playlists: {
+            select: {
+              id: true,
+              name: true,
+              totalDuration: true,
+              createdAt: true,
+            },
+            orderBy: {
+              createdAt: "desc",
+            },
+          },
+        },
       },
+    },
+  });
 
-      include:{
-        defaultPlaylist:true
-      }
-
-    });
-
-
-
-  if(!channel){
+  if (!channel) {
     return null;
   }
 
+  // Get playlists from programs belonging to this channel
+  const playlists = channel.programs.flatMap(
+    (program) => program.playlists,
+  );
 
+  // Remove duplicates in case the same playlist appears more than once
+  const uniquePlaylists = Array.from(
+    new Map(
+      playlists.map((playlist) => [playlist.id, playlist]),
+    ).values(),
+  );
 
-  const playlists =
-    await prisma.playlist.findMany({
+  const playlistsWithDuration = await Promise.all(
+    uniquePlaylists.map(async (playlist) => {
+      const data = await PlaylistService.getPlaylistById(
+        playlist.id,
+      );
 
-      select:{
-        id:true,
-        name:true
-      },
-
-      orderBy:{
-        createdAt:"desc"
-      }
-
-    });
-
-
-
-  const playlistsWithDuration =
-    await Promise.all(
-
-      playlists.map(async(playlist)=>{
-
-
-        const data =
-          await PlaylistService.getPlaylistById(
-            playlist.id
-          );
-
-
-        return {
-
-          id:playlist.id,
-
-          name:playlist.name,
-
-          totalDuration:
-            data?.totalDuration ?? 0
-
-        };
-
-      })
-
-    );
-
-
+      return {
+        id: playlist.id,
+        name: playlist.name,
+        totalDuration: data?.totalDuration ?? 0,
+      };
+    }),
+  );
 
   return {
-
     ...channel,
 
+    playlists: playlistsWithDuration,
 
-    playlists:playlistsWithDuration,
-
-
-    defaultPlaylist:
-      channel.defaultPlaylist
+    defaultPlaylist: channel.defaultPlaylist
       ? await PlaylistService.getPlaylistById(
-          channel.defaultPlaylist.id
+          channel.defaultPlaylist.id,
         )
-      : null
-
+      : null,
   };
-
-
 }
-
-
 
 export async function updateDefaultPlaylist(
  id:number,

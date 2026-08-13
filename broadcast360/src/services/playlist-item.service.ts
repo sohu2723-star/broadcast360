@@ -4,98 +4,65 @@ import { PlaylistItemCreateInput } from "@/types/playlist-item";
 
 export const PlaylistItemService = {
 
+create: async (
+  playlistId: number,
+  data: PlaylistItemCreateInput,
+) => {
+  // Get the last item in this playlist
+  const lastItem =
+    await PlaylistItemRepository.getLastByPlaylistId(
+      playlistId,
+    );
 
-  create: async (
-    playlistId:number,
-    data:PlaylistItemCreateInput
-  ) => {
+  // Automatically assign the next order
+  const nextOrder = (lastItem?.order ?? 0) + 1;
 
+  const itemData = {
+    ...data,
+    order: nextOrder,
+  };
 
-    const exists =
-      await PlaylistItemRepository.findByOrder(
+  switch (data.type) {
+    case "MOVIE":
+      return PlaylistItemRepository.createMovie(
         playlistId,
-        data.order
+        itemData,
       );
 
-
-    if(exists){
-
-      throw new Error(
-        `Sequence ${data.order} already exists in this playlist`
+    case "SERIES":
+      return PlaylistItemRepository.createEpisode(
+        playlistId,
+        itemData,
       );
 
-    }
+    case "ADVERTISEMENT":
+      return PlaylistItemRepository.createAd(
+        playlistId,
+        itemData,
+      );
 
+    case "NEWS":
+      return PlaylistItemRepository.createNews(
+        playlistId,
+        itemData,
+      );
 
+    case "STREAM":
+      return PlaylistItemRepository.createStream(
+        playlistId,
+        itemData,
+      );
 
-    switch(data.type){
+    case "ENTERTAINMENT":
+      return PlaylistItemRepository.createEntertainment(
+        playlistId,
+        itemData,
+      );
 
-
-      case "MOVIE":
-
-        return PlaylistItemRepository.createMovie(
-          playlistId,
-          data
-        );
-
-
-
-      case "SERIES":
-
-        return PlaylistItemRepository.createEpisode(
-          playlistId,
-          data
-        );
-
-
-
-      case "ADVERTISEMENT":
-
-        return PlaylistItemRepository.createAd(
-          playlistId,
-          data
-        );
-
-
-
-      case "NEWS":
-
-        return PlaylistItemRepository.createNews(
-          playlistId,
-          data
-        );
-
-
-
-      case "STREAM":
-
-        return PlaylistItemRepository.createStream(
-          playlistId,
-          data
-        );
-
-
-
-      case "ENTERTAINMENT":
-
-        return PlaylistItemRepository.createEntertainment(
-          playlistId,
-          data
-        );
-
-
-      default:
-
-        throw new Error(
-          "Invalid playlist item type"
-        );
-
-    }
-
-  },
-
-
-
+    default:
+      throw new Error("Invalid playlist item type");
+  }
+},
 
   getByPlaylistId: async (playlistId: number) => {
   const items =

@@ -12,6 +12,12 @@ import {
 } from "@/lib/validators/stream.validation";
 
 export class StreamService {
+  /*
+   * ==========================================================
+   * GET ALL
+   * ==========================================================
+   */
+
   async getAll({
     page,
     limit,
@@ -28,6 +34,12 @@ export class StreamService {
     });
   }
 
+  /*
+   * ==========================================================
+   * GET BY ID
+   * ==========================================================
+   */
+
   async getById(id: number) {
     const stream = await StreamRepository.findById(id);
 
@@ -38,75 +50,216 @@ export class StreamService {
     return stream;
   }
 
+  /*
+   * ==========================================================
+   * GET BY CHANNEL
+   * ==========================================================
+   */
+
   async getByChannel(channelId: number) {
     return StreamRepository.findByChannel(channelId);
   }
 
-  async create(data: CreateStreamInput) {
-    const validated = createStreamSchema.parse(data);
+  /*
+   * ==========================================================
+   * GENERATE SOURCE URL
+   * ==========================================================
+   */
 
-    const channel = await prisma.channel.findUnique({
-      where: {
-        id: validated.channelId,
-      },
+  private generateSourceUrl(
+    protocol: string,
+    streamKey: string
+  ): string {
+    const host =
+      process.env.MEDIA_SERVER_HOST || "127.0.0.1";
+
+    switch (protocol) {
+      case "RTSP":
+        return `rtsp://${host}:8554/live/${streamKey}`;
+
+      case "RTMP":
+        return `rtmp://${host}:1935/live/${streamKey}`;
+
+      case "HLS":
+        return `http://${host}:8888/live/${streamKey}/index.m3u8`;
+
+      case "WEBRTC":
+        return `http://${host}:8889/live/${streamKey}/`;
+
+      default:
+        throw new Error(
+          `Unsupported stream protocol: ${protocol}`
+        );
+    }
+  }
+
+  /*
+   * ==========================================================
+   * CREATE
+   * ==========================================================
+   */
+
+  async create(data: CreateStreamInput) {
+    /*
+     * Validate frontend data.
+     */
+    const validated =
+      createStreamSchema.parse(data);
+
+    /*
+     * Find selected channel.
+     */
+    const channel =
+      await prisma.channel.findUnique({
+        where: {
+          id: validated.channelId,
+        },
+      });
+
+    if (!channel) {
+      throw new Error("Channel not found");
+    }
+
+    /*
+     * Channel must have a stream key.
+     */
+    if (!channel.streamKey) {
+      throw new Error(
+        "Channel stream key is missing"
+      );
+    }
+
+    /*
+     * Generate source URL automatically.
+     *
+     * RTSP:
+     * rtsp://SERVER:8554/live/streamKey
+     *
+     * RTMP:
+     * rtmp://SERVER:1935/live/streamKey
+     */
+    const url =
+      this.generateSourceUrl(
+        validated.protocol,
+        channel.streamKey
+      );
+
+    console.log("🎥 CREATE STREAM", {
+      channelId: channel.id,
+      channel: channel.name,
+      protocol: validated.protocol,
+      streamKey: channel.streamKey,
+      url,
     });
+
+    /*
+     * Save stream.
+     */
+    return StreamRepository.create({
+      channelId: validated.channelId,
+      name: validated.name,
+      protocol: validated.protocol,
+      description: validated.description,
+      url,
+    });
+  }
+
+  /*
+   * ==========================================================
+   * UPDATE
+   * ==========================================================
+   */
+
+  async update(
+    id: number,
+    data: UpdateStreamInput
+  ) {
+    /*
+     * Find existing stream.
+     */
+    const existing =
+      await StreamRepository.findById(id);
+
+    if (!existing) {
+      throw new Error("Stream not found");
+    }
+
+    /*
+     * Validate update data.
+     */
+    const validated =
+      updateStreamSchema.parse(data);
+
+    /*
+     * Determine which channel should be used.
+     */
+    const channelId =
+      validated.channelId ??
+      existing.channelId;
+
+    /*
+     * Find channel.
+     */
+    const channel =
+      await prisma.channel.findUnique({
+        where: {
+          id: channelId,
+        },
+      });
 
     if (!channel) {
       throw new Error("Channel not found");
     }
 
     if (!channel.streamKey) {
-      throw new Error("Channel stream key is missing");
+      throw new Error(
+        "Channel stream key is missing"
+      );
     }
 
-    const url = `rtmp://localhost:1935/${channel.streamKey}`;
-
-    return StreamRepository.create({
-      ...validated,
-      url,
-    });
-  }
-
-  async update(id: number, data: UpdateStreamInput) {
-    const existing = await StreamRepository.findById(id);
-
-    if (!existing) {
-      throw new Error("Stream not found");
-    }
-
-    const validated = updateStreamSchema.parse(data);
-
+    /*
+     * If protocol or channel changes,
+     * regenerate the source URL.
+     *
+     * Otherwise keep the existing URL.
+     */
     let url = existing.url;
 
     if (
-      validated.channelId &&
-      validated.channelId !== existing.channelId
+      validated.protocol !== undefined ||
+      validated.channelId !== undefined
     ) {
-      const channel = await prisma.channel.findUnique({
-        where: {
-          id: validated.channelId,
-        },
-      });
+      const protocol =
+        validated.protocol ??
+        existing.protocol;
 
-      if (!channel) {
-        throw new Error("Channel not found");
-      }
-
-      if (!channel.streamKey) {
-        throw new Error("Channel stream key is missing");
-      }
-
-      url = `rtmp://localhost:1935/${channel.streamKey}`;
+      url = this.generateSourceUrl(
+        protocol,
+        channel.streamKey
+      );
     }
 
-    return StreamRepository.update(id, {
-      ...validated,
-      url,
-    });
+    /*
+     * Update database.
+     */
+    return StreamRepository.update(
+      id,
+      {
+        ...validated,
+        url,
+      }
+    );
   }
 
+  /*
+   * ==========================================================
+   * DELETE
+   * ==========================================================
+   */
+
   async delete(id: number) {
-    const existing = await StreamRepository.findById(id);
+    const existing =
+      await StreamRepository.findById(id);
 
     if (!existing) {
       throw new Error("Stream not found");

@@ -1,34 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { StreamService } from "@/services/stream.service";
 
-
 const service = new StreamService();
 
-
+// ============================================
 // GET ALL STREAMS
+// ============================================
+
 export async function GET(request: Request) {
-
   try {
-
     const { searchParams } = new URL(request.url);
-
 
     const page = Math.max(
       1,
       Number(searchParams.get("page") ?? 1)
     );
 
-
     const limit = Math.max(
       1,
       Number(searchParams.get("limit") ?? 10)
     );
 
-
     const search =
       searchParams.get("search") ?? undefined;
-
-
 
     const streams = await service.getAll({
       page,
@@ -36,92 +30,65 @@ export async function GET(request: Request) {
       search,
     });
 
-
-
     return NextResponse.json({
-
-      success:true,
-
+      success: true,
       ...streams,
-
     });
-
-
-
-  } catch(error) {
-
-
-    console.error(
-      "GET streams error:",
-      error
-    );
-
+  } catch (error) {
+    console.error("GET streams error:", error);
 
     return NextResponse.json(
-
       {
-        success:false,
-        message:"Failed to fetch streams"
+        success: false,
+        message: "Failed to fetch streams",
       },
-
       {
-        status:500
+        status: 500,
       }
-
     );
-
   }
-
 }
 
-
-
+// ============================================
 // CREATE STREAM
-export async function POST(
-  req:NextRequest
-){
+// ============================================
 
+export async function POST(req: NextRequest) {
   try {
-
     const body = await req.json();
 
-
     const stream = await service.create({
-      channelId:Number(body.channelId),
-      name:body.name,
-      // url:body.url,
-      protocol:body.protocol,
-      description:body.description,
+      channelId: Number(body.channelId),
+      name: body.name,
+      protocol: body.protocol,
+      description: body.description ?? null,
     });
 
+    return NextResponse.json(
+      {
+        success: true,
+        data: stream,
+      },
+      {
+        status: 201,
+      }
+    );
+  } catch (error: unknown) {
+    console.error("POST streams error:", error);
 
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Failed to create stream";
 
     return NextResponse.json(
       {
-        success:true,
-        data:stream,
+        success: false,
+        message,
       },
       {
-        status:201
+        status: 400,
       }
     );
-
-
-  }catch(error:unknown){
-
-    console.error(error);
-
-
-    return NextResponse.json(
-      {
-        success:false,
-        message:error ?? "Create failed"
-      },
-      {
-        status:400
-      }
-    );
-
   }
-
 }
