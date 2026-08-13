@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 
 import type { Entertainment } from "@/types/entertainment";
 
@@ -25,55 +24,80 @@ export default function PlaybackLayout({
   relatedEntertainments,
 }: Props) {
   const [currentEntertainment, setCurrentEntertainment] =
-    useState(entertainment);
+    useState<Entertainment>(entertainment);
 
   const leftRef = useRef<HTMLDivElement>(null);
-
   const playlistContentRef = useRef<HTMLDivElement>(null);
 
   const [leftHeight, setLeftHeight] = useState(0);
-
   const [playlistHeight, setPlaylistHeight] = useState(0);
-
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Measure left side height
+  // =====================================
+  // UPDATE CURRENT ENTERTAINMENT
+  // =====================================
+
+  useEffect(() => {
+    setCurrentEntertainment(entertainment);
+  }, [entertainment]);
+
+  // =====================================
+  // MEASURE LEFT SIDE
+  // =====================================
+
   useEffect(() => {
     if (!leftRef.current) return;
 
-    const observer = new ResizeObserver(() => {
-      if (leftRef.current) {
-        setLeftHeight(leftRef.current.offsetHeight);
-      }
-    });
+    const element = leftRef.current;
 
-    observer.observe(leftRef.current);
+    const updateHeight = () => {
+      setLeftHeight(element.offsetHeight);
+    };
+
+    updateHeight();
+
+    const observer = new ResizeObserver(updateHeight);
+
+    observer.observe(element);
 
     return () => observer.disconnect();
-  }, []);
+  }, [currentEntertainment]);
 
-  // Measure playlist content height
+  // =====================================
+  // MEASURE PLAYLIST
+  // =====================================
+
   useEffect(() => {
     if (!playlistContentRef.current) return;
 
-    const observer = new ResizeObserver(() => {
-      if (playlistContentRef.current) {
-        setPlaylistHeight(playlistContentRef.current.offsetHeight);
-      }
-    });
+    const element = playlistContentRef.current;
 
-    observer.observe(playlistContentRef.current);
+    const updateHeight = () => {
+      setPlaylistHeight(element.offsetHeight);
+    };
+
+    updateHeight();
+
+    const observer = new ResizeObserver(updateHeight);
+
+    observer.observe(element);
 
     return () => observer.disconnect();
   }, [playlistItems]);
 
-  const needScroll = mounted && playlistHeight > leftHeight;
+  // =====================================
+  // PLAYLIST SCROLL
+  // =====================================
 
-  const playlistBoxHeight = needScroll ? leftHeight : "auto";
+  const needScroll =
+    mounted && playlistHeight > leftHeight;
+
+  const playlistBoxHeight =
+    needScroll ? leftHeight : "auto";
 
   return (
     <main className="min-h-screen bg-[#010312] text-white">
@@ -81,22 +105,30 @@ export default function PlaybackLayout({
         <BackButton />
 
         <div className="mt-6 grid items-start gap-6 lg:grid-cols-[2fr_1fr]">
-          {/* LEFT */}
+          {/* ============================
+              VIDEO + METADATA
+          ============================ */}
 
-          <div
+          <section
             ref={leftRef}
             className="overflow-hidden rounded-xl border border-[#106EE9]/20 bg-[#0B1026] p-4"
           >
-            <VideoPlayer entertainment={currentEntertainment} />
+            <VideoPlayer
+              entertainment={currentEntertainment}
+            />
 
             <div className="mt-5 border-t border-white/10 pt-5">
-              <EntertainmentMetadata entertainment={currentEntertainment} />
+              <EntertainmentMetadata
+                entertainment={currentEntertainment}
+              />
             </div>
-          </div>
+          </section>
 
-          {/* PLAYLIST */}
+          {/* ============================
+              PLAYLIST
+          ============================ */}
 
-          <div
+          <aside
             style={{
               height: playlistBoxHeight,
             }}
@@ -106,7 +138,7 @@ export default function PlaybackLayout({
               className={
                 needScroll
                   ? "min-h-0 flex-1 overflow-y-auto playlist-scroll"
-                  : undefined
+                  : ""
               }
             >
               <div ref={playlistContentRef}>
@@ -118,10 +150,18 @@ export default function PlaybackLayout({
                 />
               </div>
             </div>
-          </div>
+          </aside>
         </div>
 
-        <RelatedEntertainments entertainments={relatedEntertainments} />
+        {/* ============================
+            RELATED ENTERTAINMENTS
+        ============================ */}
+
+        <section className="mt-12">
+          <RelatedEntertainments
+            entertainments={relatedEntertainments}
+          />
+        </section>
       </div>
     </main>
   );

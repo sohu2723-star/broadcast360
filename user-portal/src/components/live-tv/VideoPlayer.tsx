@@ -69,7 +69,7 @@ export default function VideoPlayer({ channel }: Props) {
         video.load();
       }
     };
-  }, [streamUrl]); // Dependent strictly on the string URL, not the full channel object
+  }, [streamUrl]);
 
   return (
     <div className="flex-1 bg-black rounded-xl overflow-hidden">
@@ -78,9 +78,9 @@ export default function VideoPlayer({ channel }: Props) {
           ref={videoRef}
           controls
           autoPlay
-          muted
           playsInline
-          className="w-full h-full object-contain"
+          controlsList="nodownload noplaybackrate"
+          className="w-full h-full object-contain [&::-webkit-media-controls-timeline]:hidden [&::-webkit-media-controls-current-time-display]:hidden [&::-webkit-media-controls-time-remaining-display]:hidden"
         />
       ) : (
         <div className="flex items-center justify-center h-full text-gray-400">
