@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 
 import type { Movie } from "@/types/movie";
+import FavoriteButton from "../favorite/FavoriteButton";
 
 function formatScheduleDate(date?: string | null) {
   if (!date) return "-";
@@ -36,7 +37,17 @@ export default function MovieMetadata({ movie }: { movie: Movie }) {
     <div className="w-full">
       {/* Title */}
 
-      <h1 className="text-2xl font-bold text-white">{movie.title}</h1>
+      <div className="flex items-center justify-between gap-4">
+  <h1 className="text-2xl font-bold text-white">
+    {movie.title}
+  </h1>
+
+  <FavoriteButton
+    content={{
+      movieId: movie.id,
+    }}
+  />
+</div>
 
       {/* Channel */}
 

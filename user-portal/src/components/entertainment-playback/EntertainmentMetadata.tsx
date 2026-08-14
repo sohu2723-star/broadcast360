@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import type { Entertainment } from "@/types/entertainment";
+import FavoriteButton from "../favorite/FavoriteButton";
 
 function formatScheduleDate(date?: string | null) {
   if (!date) return "-";
@@ -40,7 +41,17 @@ export default function EntertainmentMetadata({
     <div className="w-full">
       {/* Title */}
 
-      <h1 className="text-2xl font-bold text-white">{entertainment.title}</h1>
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="text-2xl font-bold text-white">
+          {entertainment.title}
+        </h1>
+
+        <FavoriteButton
+          content={{
+            entertainmentId: entertainment.id,
+          }}
+        />
+      </div>
 
       {/* Channel */}
 

@@ -170,7 +170,7 @@ export default function UserNewsPage() {
   // =====================================================
 
   return (
-    <main className="min-h-screen bg-[#070d19] px-6 py-8 font-sans text-slate-100">
+    <main className="min-h-screen bg-dark px-6 py-8 font-sans text-slate-100">
       <div className="mx-auto max-w-7xl">
 
         {/* HEADER */}

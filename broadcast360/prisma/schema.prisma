@@ -65,6 +65,7 @@ model User {
 
   // NEW
   watchHistory WatchHistory[]
+   favorites Favorite[]
 
   // NEW
   subscriptions Subscription[]
@@ -97,6 +98,30 @@ model WatchHistory {
   @@unique([userId, newsId])
   @@index([userId])
   @@index([userId, watchedAt])
+}
+
+model Favorite {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+
+  movieId         Int?
+  episodeId       Int?
+  entertainmentId Int?
+  newsId          Int?
+
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  movie         Movie?        @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  episode       Episode?      @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  entertainment Entertainment? @relation(fields: [entertainmentId], references: [id], onDelete: Cascade)
+  news          News?         @relation(fields: [newsId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, movieId])
+  @@unique([userId, episodeId])
+  @@unique([userId, entertainmentId])
+  @@unique([userId, newsId])
+  @@index([userId])
 }
 
 // =====================
@@ -213,6 +238,7 @@ model Movie {
   accessType AccessType @default(FREE)
 
   playlistItems PlaylistItem[]
+  favorites Favorite[]
 
   @@unique([title, releaseYear])
 }
@@ -250,6 +276,7 @@ model Stream {
   channel Channel @relation(fields: [channelId], references: [id])
 
   playlistItems PlaylistItem[]
+
 }
 
 // =====================
@@ -286,6 +313,7 @@ model Episode {
   series Series @relation(fields: [seriesId], references: [id])
 
   playlistItems PlaylistItem[]
+   favorites Favorite[]
 
   createdAt DateTime @default(now())
 }
@@ -331,6 +359,7 @@ model News {
   playlistItems PlaylistItem[]
 
   watchHistories WatchHistory[]
+   favorites Favorite[]
 
   createdAt DateTime @default(now())
 }
@@ -354,6 +383,7 @@ model Entertainment {
   accessType AccessType @default(FREE)
 
   playlistItems PlaylistItem[]
+   favorites Favorite[]
 }
 
 // =====================

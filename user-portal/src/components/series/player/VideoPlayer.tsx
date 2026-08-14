@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 
 import type { EpisodePart } from "@/types/series-details";
 import authApi from "@/lib/authapi";
+import FavoriteButton from "@/components/favorite/FavoriteButton";
 
 interface Props {
   episode: EpisodePart;
@@ -30,7 +31,7 @@ export default function VideoPlayer({
 
     video.load();
 
-    video.play().catch(() => {});
+    video.play().catch(() => { });
 
     // =====================================
     // LOAD PREVIOUS WATCH PROGRESS
@@ -240,16 +241,27 @@ export default function VideoPlayer({
 
         Your browser does not support HTML5 video.
       </video>
-
-      <div className="flex items-center justify-between px-5 py-3">
-        <div>
-          <h2 className="text-lg font-semibold text-white">
+      <div className="flex items-start justify-between gap-4 px-5 py-3">
+        {/* Left: Title & Duration */}
+        <div className="min-w-0 flex-1">
+          <h1 className="text-2xl font-bold text-white leading-tight">
             {episode.title}
-          </h2>
+          </h1>
 
-          <p className="text-sm text-zinc-400">
-            {Math.floor(episode.duration / 60)} min
-          </p>
+          {episode.duration ? (
+            <p className="mt-1 text-sm text-zinc-400">
+              {Math.floor(episode.duration / 60)} min
+            </p>
+          ) : null}
+        </div>
+
+        {/* Right: Favorite Button */}
+        <div className="shrink-0 pt-0.5">
+          <FavoriteButton
+            content={{
+              episodeId: episode.id,
+            }}
+          />
         </div>
       </div>
     </div>

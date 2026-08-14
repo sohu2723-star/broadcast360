@@ -80,7 +80,7 @@ export default function EntertainmentPlaybackLayout({
   return (
     <main className="min-h-screen bg-[#010312] text-white">
       <div className="mx-auto max-w-7xl px-6 py-8">
-        <BackButton />
+        {/* <BackButton /> */}
 
         <div className="mt-6 grid items-start gap-6 lg:grid-cols-[2fr_1fr]">
           {/* VIDEO + METADATA */}

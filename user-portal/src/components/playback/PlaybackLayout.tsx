@@ -9,6 +9,7 @@ import VideoPlayer from "./VideoPlayer";
 import MovieMetadata from "./MovieMetadata";
 import Playlist from "./Playlist";
 import RelatedMovies from "./RelateMovies";
+import FavoriteButton from "../favorite/FavoriteButton";
 
 interface Props {
   movie: Movie;
@@ -64,12 +65,12 @@ export default function PlaybackLayout({
   return (
     <main className="min-h-screen bg-[#010312] text-white">
       <div className="mx-auto max-w-7xl px-6 py-8">
-        <Link
+        {/* <Link
           href="/movies"
           className="mb-5 inline-flex rounded-full border border-[#106EE9]/30 bg-[#0B1026] px-4 py-2 text-sm transition hover:bg-[#106EE9]/20"
         >
           ← Back to Movies
-        </Link>
+        </Link> */}
 
         <div className="mt-6 grid items-start gap-6 lg:grid-cols-[2fr_1fr]">
           {/* VIDEO + METADATA */}
@@ -81,7 +82,7 @@ export default function PlaybackLayout({
             <VideoPlayer movie={currentMovie} />
 
             <div className="mt-5 border-t border-white/10 pt-5">
-              <MovieMetadata movie={currentMovie} />
+               <MovieMetadata movie={currentMovie} />
             </div>
           </section>
 

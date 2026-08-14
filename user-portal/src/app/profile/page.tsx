@@ -515,7 +515,8 @@ export default function ProfilePage() {
 
           {/* FAVORITES */}
 
-          <div
+          <Link
+            href="/profile/favorites"
             className="
               group
               relative
@@ -543,7 +544,7 @@ export default function ProfilePage() {
                 </div>
 
                 <span className="rounded-full border border-purple-500/20 bg-purple-500/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-purple-400">
-                  Coming soon
+                  View Favorites →
                 </span>
 
               </div>
@@ -561,7 +562,7 @@ export default function ProfilePage() {
               </div>
 
             </div>
-          </div>
+          </Link>
 
         </section>
 

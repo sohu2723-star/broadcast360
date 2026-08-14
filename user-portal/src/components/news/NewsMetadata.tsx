@@ -1,6 +1,7 @@
 "use client";
 
 import type { NewsItem } from "@/services/news.service";
+import FavoriteButton from "../favorite/FavoriteButton";
 
 interface Props {
   news: NewsItem;
@@ -11,9 +12,17 @@ export default function NewsMetadata({
 }: Props) {
   return (
     <div>
-      <h1 className="text-2xl font-bold text-white">
-        {news.title}
-      </h1>
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="text-2xl font-bold text-white">
+          {news.title}
+        </h1>
+
+        <FavoriteButton
+          content={{
+            newsId: news.id,
+          }}
+        />
+      </div>
 
       <div className="mt-3 flex flex-wrap gap-3 text-sm text-zinc-400">
 
