@@ -43,12 +43,11 @@ export async function GET(request: NextRequest) {
       },
 
       include: {
-        // ==========================================
-        // MOVIE / EPISODE / ENTERTAINMENT
-        // ==========================================
-
         playlistItem: {
           include: {
+            // IMPORTANT
+            playlist: true,
+
             movie: true,
 
             episode: {
@@ -60,10 +59,6 @@ export async function GET(request: NextRequest) {
             entertainment: true,
           },
         },
-
-        // ==========================================
-        // NEWS
-        // ==========================================
 
         news: true,
       },
@@ -96,7 +91,6 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-
 // =====================================================
 // SAVE / UPDATE WATCH HISTORY
 // =====================================================
@@ -467,6 +461,72 @@ export async function POST(request: NextRequest) {
       error instanceof Error
         ? error.message
         : "Failed to save watch history";
+
+    return cors(
+      NextResponse.json(
+        {
+          success: false,
+          message,
+        },
+        {
+          status: 500,
+        }
+      )
+    );
+  }
+}
+
+// =====================================================
+// DELETE ALL WATCH HISTORY
+// =====================================================
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const token = request.cookies.get("user_token")?.value;
+
+    if (!token) {
+      return cors(
+        NextResponse.json(
+          {
+            success: false,
+            message: "Unauthorized",
+          },
+          {
+            status: 401,
+          }
+        )
+      );
+    }
+
+    const payload = await verifyUserToken(token);
+    const userId = Number(payload.id);
+
+    // Delete ONLY this user's history
+    const result = await prisma.watchHistory.deleteMany({
+      where: {
+        userId,
+      },
+    });
+
+    console.log("ALL WATCH HISTORY CLEARED:", {
+      userId,
+      deletedCount: result.count,
+    });
+
+    return cors(
+      NextResponse.json({
+        success: true,
+        message: "Watch history cleared successfully",
+        deletedCount: result.count,
+      })
+    );
+  } catch (error: unknown) {
+    console.error("CLEAR WATCH HISTORY ERROR:", error);
+
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Failed to clear watch history";
 
     return cors(
       NextResponse.json(

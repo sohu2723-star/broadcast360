@@ -10,14 +10,16 @@ interface PageProps {
   }>;
 }
 
-export default async function EntertainmentPlaybackPage({ params }: PageProps) {
+export default async function EntertainmentPlaybackPage({
+  params,
+}: PageProps) {
   const { id } = await params;
 
   const response = await fetch(
     `http://localhost:3000/api/user-portal/entertainments/${id}`,
     {
       cache: "no-store",
-    },
+    }
   );
 
   if (!response.ok) {
@@ -26,16 +28,48 @@ export default async function EntertainmentPlaybackPage({ params }: PageProps) {
 
   const data = await response.json();
 
-  console.log("API DATA:", data);
+  console.log("ENTERTAINMENT API DATA:", data);
 
-  const entertainment: Entertainment = data.currentItem;
+  // -----------------------------------------
+  // CURRENT ENTERTAINMENT
+  // -----------------------------------------
 
-  const playlistItems: Entertainment[] = data.items;
+  if (!data?.currentItem) {
+    console.error(
+      "Entertainment currentItem is missing:",
+      data
+    );
+
+    notFound();
+  }
+
+  const entertainment: Entertainment =
+    data.currentItem;
+
+  // -----------------------------------------
+  // PLAYLIST
+  // -----------------------------------------
+
+  const playlistItems: Entertainment[] =
+    Array.isArray(data.items)
+      ? data.items
+      : [];
+
+  // -----------------------------------------
+  // RELATED
+  // -----------------------------------------
 
   const relatedEntertainments: Entertainment[] =
-    data.relatedEntertainments || [];
+    Array.isArray(data.relatedEntertainments)
+      ? data.relatedEntertainments
+      : [];
 
-  const playlistName = data.playlist?.name || "Playlist";
+  // -----------------------------------------
+  // PLAYLIST NAME
+  // -----------------------------------------
+
+  const playlistName =
+    data.playlist?.name ?? "Playlist";
 
   return (
     <PlaybackLayout

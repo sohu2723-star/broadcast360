@@ -1,8 +1,7 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import api from "@/lib/api";
 import axios from "axios";
 
 import ProfileCard from "@/components/profile/ProfileCard";
@@ -13,8 +12,6 @@ import { useCurrentUser } from "@/lib/useCurrentUser";
 import authApi from "@/lib/authapi";
 
 export default function ProfilePage() {
-  const router = useRouter();
-
   const { user, loading } = useCurrentUser();
 
   /*
@@ -28,13 +25,10 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
 
   const [name, setName] = useState("");
-
   const [email, setEmail] = useState("");
-
   const [phone, setPhone] = useState("");
 
   const [avatar, setAvatar] = useState("");
-
   const [avatarPreview, setAvatarPreview] = useState("");
 
   const [profileErrors, setProfileErrors] = useState<{
@@ -52,9 +46,7 @@ export default function ProfilePage() {
   const [passwordOpen, setPasswordOpen] = useState(false);
 
   const [currentPassword, setCurrentPassword] = useState("");
-
   const [newPassword, setNewPassword] = useState("");
-
   const [confirmPassword, setConfirmPassword] = useState("");
 
   const [showPassword, setShowPassword] = useState(false);
@@ -75,17 +67,13 @@ export default function ProfilePage() {
     if (!user) return;
 
     setName(user.name ?? "");
-
     setEmail(user.email ?? "");
-
     setPhone(user.phone ?? "");
 
     setAvatar(user.avatar ?? "");
-
     setAvatarPreview(user.avatar ?? "");
 
     setProfileErrors({});
-
     setEditOpen(true);
   }
 
@@ -171,7 +159,9 @@ export default function ProfilePage() {
   ======================
   */
 
-  function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleAvatarChange(
+    e: React.ChangeEvent<HTMLInputElement>
+  ) {
     const file = e.target.files?.[0];
 
     if (!file) return;
@@ -190,7 +180,6 @@ export default function ProfilePage() {
       const result = reader.result as string;
 
       setAvatar(result);
-
       setAvatarPreview(result);
     };
 
@@ -209,18 +198,24 @@ export default function ProfilePage() {
     try {
       setSaving(true);
 
-      await authApi.put("/api/user-portal/auth/profile", {
-        name,
-        email,
-        avatar,
-        phone
-      });
+      await authApi.put(
+        "/api/user-portal/auth/profile",
+        {
+          name,
+          email,
+          avatar,
+          phone,
+        }
+      );
 
       setEditOpen(false);
 
       window.location.reload();
     } catch (error) {
-      console.error("Profile update failed:", error);
+      console.error(
+        "Profile update failed:",
+        error
+      );
     } finally {
       setSaving(false);
     }
@@ -232,54 +227,44 @@ export default function ProfilePage() {
   ======================
   */
 
- async function changePassword() {
-  if (!validatePassword()) {
-    return;
-  }
+  async function changePassword() {
+    if (!validatePassword()) {
+      return;
+    }
 
-  try {
-    await authApi.put(
-      "/api/user-portal/auth/change-password",
-      {
-        currentPassword,
-        newPassword,
+    try {
+      await authApi.put(
+        "/api/user-portal/auth/change-password",
+        {
+          currentPassword,
+          newPassword,
+        }
+      );
+
+      await authApi.post(
+        "/api/user-portal/auth/logout"
+      );
+
+      alert(
+        "Password updated successfully. Please login again."
+      );
+
+      window.location.href = "/login";
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        setPasswordErrors({
+          currentPassword:
+            error.response?.data?.message ??
+            "Password update failed",
+        });
+      } else {
+        setPasswordErrors({
+          currentPassword:
+            "Password update failed",
+        });
       }
-    );
-
-
-    await authApi.post(
-      "/api/user-portal/auth/logout"
-    );
-
-
-    alert(
-      "Password updated successfully. Please login again."
-    );
-
-
-    window.location.href = "/login";
-
-
-  } catch (error: unknown) {
-
-    if (axios.isAxiosError(error)) {
-
-      setPasswordErrors({
-        currentPassword:
-          error.response?.data?.message ??
-          "Password update failed",
-      });
-
-    } else {
-
-      setPasswordErrors({
-        currentPassword:
-          "Password update failed",
-      });
-
     }
   }
-}
 
   /*
   ======================
@@ -289,114 +274,468 @@ export default function ProfilePage() {
 
   async function logout() {
     try {
-      await authApi.post("/api/user-portal/auth/logout");
+      await authApi.post(
+        "/api/user-portal/auth/logout"
+      );
 
       window.location.href = "/";
     } catch (error) {
-      console.error("Logout failed:", error);
+      console.error(
+        "Logout failed:",
+        error
+      );
     }
   }
 
+  /*
+  ======================
+      LOADING
+  ======================
+  */
+
   if (loading) {
-    return <div className="p-8 text-white">Loading...</div>;
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#010312]">
+        <div className="text-sm text-zinc-400">
+          Loading profile...
+        </div>
+      </div>
+    );
   }
 
   if (!user) {
     return null;
   }
 
+  const baseUrl =
+    process.env.NEXT_PUBLIC_API_URL || "";
+
+  const avatarUrl = user.avatar
+    ? user.avatar.startsWith("http")
+      ? user.avatar
+      : `${baseUrl}${user.avatar}`
+    : null;
+
+  /*
+  ======================
+      PAGE
+  ======================
+  */
+
   return (
-    <div
-      className="
-      min-h-screen
-      bg-[#010312]
-      p-8
-    "
-    >
-      <div
-        className="
-        mx-auto
-        max-w-5xl
-        rounded-3xl
-        border
-        border-white/10
-        bg-[#111936]
-        p-8
-      "
-      >
-        <div
-          className="
-          mb-8
-          flex
-          justify-between
-          items-center
-        "
-        >
-          <h1
-            className="
-            text-3xl
-            font-bold
-            text-white
-          "
-          >
+    <div className="min-h-screen bg-[#010312] text-white">
+
+      {/* =================================
+          BACKGROUND GLOW
+      ================================= */}
+
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -left-40 -top-40 h-96 w-96 rounded-full bg-blue-600/10 blur-3xl" />
+
+        <div className="absolute -right-40 top-40 h-96 w-96 rounded-full bg-purple-600/10 blur-3xl" />
+      </div>
+
+      <main className="relative mx-auto max-w-6xl px-5 py-10 sm:px-8">
+
+        {/* =================================
+            HEADER
+        ================================= */}
+
+        <div className="mb-8">
+          <p className="mb-2 text-sm font-medium uppercase tracking-[0.2em] text-blue-400">
+            Account
+          </p>
+
+          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
             My Profile
           </h1>
+
+          <p className="mt-2 text-sm text-zinc-400">
+            Manage your account and continue watching your favorite content.
+          </p>
+        </div>
+
+        {/* =================================
+            PROFILE HERO
+        ================================= */}
+
+        <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#0d142c]">
+
+          {/* gradient */}
+
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 via-transparent to-purple-600/10" />
+
+          <div className="relative p-6 sm:p-8">
+
+            <div className="flex flex-col gap-7 md:flex-row md:items-center md:justify-between">
+
+              {/* USER */}
+
+              <div className="flex items-center gap-5">
+
+                {/* AVATAR */}
+
+                <div className="relative shrink-0">
+
+                  <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-[#111936] bg-gradient-to-br from-blue-500 to-purple-600 shadow-xl shadow-blue-900/20 sm:h-28 sm:w-28">
+
+                    {avatarUrl ? (
+                      <img
+                        src={avatarUrl}
+                        alt={user.name ?? "Profile"}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-3xl font-bold text-white">
+                        {(user.name?.[0] ?? "U").toUpperCase()}
+                      </div>
+                    )}
+
+                  </div>
+
+                  {/* ONLINE */}
+
+                  <span className="absolute bottom-1 right-1 h-5 w-5 rounded-full border-4 border-[#0d142c] bg-emerald-500" />
+                </div>
+
+                {/* DETAILS */}
+
+                <div className="min-w-0">
+
+                  <h2 className="truncate text-2xl font-bold text-white sm:text-3xl">
+                    {user.name}
+                  </h2>
+
+                  <p className="mt-1 truncate text-sm text-zinc-400">
+                    {user.email}
+                  </p>
+
+                  {user.phone && (
+                    <p className="mt-1 text-sm text-zinc-500">
+                      {user.phone}
+                    </p>
+                  )}
+
+                  <div className="mt-3 inline-flex items-center rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400">
+                    Active account
+                  </div>
+
+                </div>
+
+              </div>
+
+              {/* EDIT */}
+
+              <button
+                onClick={openEdit}
+                className="
+                  inline-flex
+                  items-center
+                  justify-center
+                  gap-2
+                  rounded-xl
+                  bg-blue-600
+                  px-6
+                  py-3
+                  text-sm
+                  font-semibold
+                  text-white
+                  shadow-lg
+                  shadow-blue-900/20
+                  transition
+                  hover:bg-blue-500
+                  active:scale-[0.98]
+                "
+              >
+                <span>✎</span>
+                Edit Profile
+              </button>
+
+            </div>
+
+          </div>
+        </section>
+
+        {/* =================================
+            QUICK ACTIONS
+        ================================= */}
+
+        <section className="mt-6 grid gap-5 md:grid-cols-2">
+
+          {/* WATCH HISTORY */}
+
+          <Link
+            href="/profile/history"
+            className="
+              group
+              relative
+              overflow-hidden
+              rounded-2xl
+              border
+              border-white/10
+              bg-[#0d142c]
+              p-6
+              transition
+              duration-300
+              hover:-translate-y-1
+              hover:border-blue-500/40
+            "
+          >
+
+            <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-blue-600/10 blur-2xl transition group-hover:bg-blue-600/20" />
+
+            <div className="relative">
+
+              <div className="mb-5 flex items-center justify-between">
+
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10 text-2xl">
+                  ▶
+                </div>
+
+                <span className="text-xl text-zinc-500 transition group-hover:translate-x-1 group-hover:text-blue-400">
+                  →
+                </span>
+
+              </div>
+
+              <h3 className="text-xl font-bold text-white">
+                Watch History
+              </h3>
+
+              <p className="mt-2 text-sm leading-6 text-zinc-400">
+                Continue watching movies, episodes, entertainment and news you have started.
+              </p>
+
+              <div className="mt-5 text-sm font-semibold text-blue-400">
+                View watch history →
+              </div>
+
+            </div>
+          </Link>
+
+          {/* FAVORITES */}
+
+          <div
+            className="
+              group
+              relative
+              overflow-hidden
+              rounded-2xl
+              border
+              border-white/10
+              bg-[#0d142c]
+              p-6
+              transition
+              duration-300
+              hover:-translate-y-1
+              hover:border-purple-500/40
+            "
+          >
+
+            <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-purple-600/10 blur-2xl" />
+
+            <div className="relative">
+
+              <div className="mb-5 flex items-center justify-between">
+
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-500/10 text-2xl">
+                  ♡
+                </div>
+
+                <span className="rounded-full border border-purple-500/20 bg-purple-500/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-purple-400">
+                  Coming soon
+                </span>
+
+              </div>
+
+              <h3 className="text-xl font-bold text-white">
+                Favorites
+              </h3>
+
+              <p className="mt-2 text-sm leading-6 text-zinc-400">
+                Save movies, news and shows you want to watch later.
+              </p>
+
+              <div className="mt-5 text-sm font-semibold text-purple-400">
+                Save your favorite videos
+              </div>
+
+            </div>
+          </div>
+
+        </section>
+
+        {/* =================================
+            ACCOUNT SETTINGS
+        ================================= */}
+
+        <section className="mt-8 overflow-hidden rounded-2xl border border-white/10 bg-[#0d142c]">
+
+          <div className="border-b border-white/10 px-6 py-5">
+
+            <h2 className="text-lg font-bold text-white">
+              Account Settings
+            </h2>
+
+            <p className="mt-1 text-sm text-zinc-500">
+              Manage your security and account access.
+            </p>
+
+          </div>
+
+          {/* PASSWORD */}
+
+          <button
+            onClick={() => {
+              setPasswordErrors({});
+              setPasswordOpen(true);
+            }}
+            className="
+              flex
+              w-full
+              items-center
+              justify-between
+              border-b
+              border-white/10
+              px-6
+              py-5
+              text-left
+              transition
+              hover:bg-white/[0.03]
+            "
+          >
+
+            <div className="flex items-center gap-4">
+
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-yellow-500/10 text-xl">
+                🔒
+              </div>
+
+              <div>
+                <p className="font-semibold text-white">
+                  Password
+                </p>
+
+                <p className="mt-1 text-xs text-zinc-500">
+                  Update your account password
+                </p>
+              </div>
+
+            </div>
+
+            <span className="text-zinc-500">
+              →
+            </span>
+
+          </button>
+
+          {/* PROFILE */}
+
+          <button
+            onClick={openEdit}
+            className="
+              flex
+              w-full
+              items-center
+              justify-between
+              border-b
+              border-white/10
+              px-6
+              py-5
+              text-left
+              transition
+              hover:bg-white/[0.03]
+            "
+          >
+
+            <div className="flex items-center gap-4">
+
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-500/10 text-xl">
+                👤
+              </div>
+
+              <div>
+                <p className="font-semibold text-white">
+                  Personal Information
+                </p>
+
+                <p className="mt-1 text-xs text-zinc-500">
+                  Update your name, email, phone and avatar
+                </p>
+              </div>
+
+            </div>
+
+            <span className="text-zinc-500">
+              →
+            </span>
+
+          </button>
+
+          {/* LOGOUT */}
 
           <button
             onClick={logout}
             className="
-              rounded-xl
-              bg-red-600
-              px-5
-              py-3
-              text-white
-              font-semibold
+              flex
+              w-full
+              items-center
+              justify-between
+              px-6
+              py-5
+              text-left
+              transition
+              hover:bg-red-500/[0.04]
             "
           >
-            Logout
+
+            <div className="flex items-center gap-4">
+
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-500/10 text-xl">
+                ↪
+              </div>
+
+              <div>
+                <p className="font-semibold text-red-400">
+                  Sign Out
+                </p>
+
+                <p className="mt-1 text-xs text-zinc-500">
+                  Sign out of your Broadcast360 account
+                </p>
+              </div>
+
+            </div>
+
+            <span className="text-zinc-500">
+              →
+            </span>
+
           </button>
+
+        </section>
+
+        {/* =================================
+            FOOTER
+        ================================= */}
+
+        <div className="mt-8 text-center">
+
+          <p className="text-xs text-zinc-600">
+            Broadcast360
+          </p>
+
+          <p className="mt-1 text-[11px] text-zinc-700">
+            Your personal streaming experience
+          </p>
+
         </div>
 
-        <ProfileCard user={user} />
+      </main>
 
-        <div
-          className="
-          mt-8
-          flex
-          gap-4
-        "
-        >
-          <button
-            onClick={openEdit}
-            className="
-              flex-1
-              rounded-xl
-              bg-blue-600
-              py-3
-              font-semibold
-              text-white
-            "
-          >
-            Edit Profile
-          </button>
-
-          <button
-            onClick={() => setPasswordOpen(true)}
-            className="
-              flex-1
-              rounded-xl
-              bg-gradient-to-r
-              from-yellow-500
-              to-orange-500
-              py-3
-              font-semibold
-              text-white
-            "
-          >
-            Change Password
-          </button>
-        </div>
-      </div>
+      {/* =================================
+          EDIT PROFILE MODAL
+      ================================= */}
 
       {editOpen && (
         <EditProfileModal
@@ -414,6 +753,10 @@ export default function ProfilePage() {
           close={() => setEditOpen(false)}
         />
       )}
+
+      {/* =================================
+          CHANGE PASSWORD MODAL
+      ================================= */}
 
       {passwordOpen && (
         <ChangePasswordModal

@@ -3,14 +3,29 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+
+function mediaUrl(path: string | null | undefined) {
+  if (!path) {
+    return null;
+  }
+
+  if (
+    path.startsWith("http://") ||
+    path.startsWith("https://")
+  ) {
+    return path;
+  }
+
+  return `http://localhost:3000${path}`;
+}
+
 export async function GET() {
-
   try {
+    // =====================================================
+    // DATE RANGE
+    // =====================================================
 
-
-    // Get database time
     const now = new Date();
-
 
     const oneMonthAgo = new Date(now);
 
@@ -18,229 +33,313 @@ export async function GET() {
       oneMonthAgo.getMonth() - 1
     );
 
-
-
     console.log("DATABASE NOW:", now);
     console.log("ONE MONTH AGO:", oneMonthAgo);
 
-
+    // =====================================================
+    // GET COMPLETED SCHEDULES
+    // =====================================================
 
     const schedules =
       await prisma.schedule.findMany({
-
-      where: {
-  endTime: {
-    lte: now,
-    gte: oneMonthAgo,
-  },
-},
-
+        where: {
+          endTime: {
+            lte: now,
+            gte: oneMonthAgo,
+          },
+        },
 
         include: {
-
-
           channel: true,
 
-
           playlist: {
-
-
             include: {
+              items: {
+                where: {
+                  type: "ENTERTAINMENT",
+                },
 
+                include: {
+                  entertainment: true,
+                },
 
-             items: {
-
-  include: {
-
-    entertainment: true,
-
-  },
-
-  orderBy: {
-
-    order: "asc",
-
-  },
-
-},
-
+                orderBy: {
+                  order: "asc",
+                },
+              },
             },
-
-
           },
-
-
         },
 
-
+        /*
+         * Latest schedule first.
+         *
+         * Therefore, when we remove duplicates below,
+         * the FIRST playlist/channel combination we see
+         * is the latest one.
+         */
         orderBy: {
-
-
           endTime: "desc",
-
-
         },
-
-
       });
-
-      console.log("NOW:", now);
-
-console.log(
-  schedules.map((s) => ({
-    id: s.id,
-    start: s.startTime,
-    end: s.endTime,
-    playlist: s.playlist.name,
-  }))
-);
-
-
 
     console.log(
       "SCHEDULE COUNT:",
       schedules.length
     );
 
+    // =====================================================
+    // REMOVE DUPLICATE PLAYLISTS PER CHANNEL
+    // =====================================================
 
+    /*
+     * Example:
+     *
+     * Channel 1 + Playlist 8
+     * Channel 1 + Playlist 8
+     * Channel 1 + Playlist 8
+     *
+     * Keep only the latest one.
+     *
+     * But:
+     *
+     * Channel 1 + Playlist 8
+     * Channel 2 + Playlist 8
+     *
+     * These are NOT duplicates.
+     */
 
+    const seen = new Set<string>();
 
+    // =====================================================
+    // BUILD ENTERTAINMENT RESPONSE
+    // =====================================================
 
-  const entertainments = schedules
-.map((schedule) => {
+    const entertainments = schedules
+      .filter((schedule) => {
+        // -------------------------------------------------
+        // CHANNEL
+        // -------------------------------------------------
 
-  console.log(
-  "PLAYLIST ITEMS:",
-  schedule.playlist.name,
-  schedule.playlist.items.map(item => ({
-    type: item.type,
-    entertainmentId: item.entertainment?.id,
-    title: item.entertainment?.title,
-  }))
-);
+        if (!schedule.channel) {
+          return false;
+        }
 
+        // -------------------------------------------------
+        // PLAYLIST
+        // -------------------------------------------------
 
-  const firstEntertainment =
-    schedule.playlist.items.find(
-      (item) =>
-        item.type === "ENTERTAINMENT" &&
-        item.entertainment !== null
-    );
+        if (!schedule.playlist) {
+          return false;
+        }
 
+        // -------------------------------------------------
+        // ENTERTAINMENT ITEM
+        // -------------------------------------------------
 
-  if (!firstEntertainment) {
-    return null;
-  }
+        if (
+          schedule.playlist.items.length === 0
+        ) {
+          return false;
+        }
 
+        return true;
+      })
 
-  const entertainment =
-    firstEntertainment.entertainment!;
+      .filter((schedule) => {
+        // -------------------------------------------------
+        // UNIQUE CHANNEL + PLAYLIST
+        // -------------------------------------------------
 
+        const key =
+          `${schedule.channel.id}-${schedule.playlist.id}`;
 
- return {
+        if (seen.has(key)) {
+          return false;
+        }
 
-  // Playback URL 
-  id:
-    schedule.playlist.id,
+        seen.add(key);
 
-  playlistId:
-    schedule.playlist.id,
+        return true;
+      })
 
-  playlistName:
-    schedule.playlist.name,
+      .map((schedule) => {
+        // =================================================
+        // FIRST ENTERTAINMENT
+        // =================================================
 
-  title:
-    schedule.playlist.name,
+        const firstItem =
+          schedule.playlist.items[0];
 
-  thumbnail:
-    entertainment.thumbnail
-      ? `http://localhost:3000${entertainment.thumbnail}`
-      : null,
+        const entertainment =
+          firstItem?.entertainment;
 
-  channelId:
-    schedule.channel.id,
+        if (!entertainment) {
+          return null;
+        }
 
-  category:
-    entertainment.category,
+        // =================================================
+        // RESPONSE
+        // =================================================
 
-  releaseYear:
-    entertainment.releaseYear,
+        return {
+          // ------------------------------------------------
+          // ID
+          // ------------------------------------------------
 
-  channelName:
-    schedule.channel.name,
+          /*
+           * IMPORTANT:
+           *
+           * The playback page is:
+           *
+           * /entertainments/[id]
+           *
+           * and your entertainment API expects the
+           * PLAYLIST ID.
+           *
+           * Therefore this must be playlist.id.
+           */
 
-  scheduleId:
-    schedule.id,
+          id: schedule.playlist.id,
 
-  scheduleStart:
-    schedule.startTime,
+          // ------------------------------------------------
+          // PLAYLIST
+          // ------------------------------------------------
 
-  scheduleEnd:
-    schedule.endTime,
+          playlistId:
+            schedule.playlist.id,
 
-};
+          playlistName:
+            schedule.playlist.name,
 
+          // ------------------------------------------------
+          // ENTERTAINMENT
+          // ------------------------------------------------
 
-})
-.filter(Boolean);
+          title:
+            entertainment.title ??
+            schedule.playlist.name,
 
+          description:
+            entertainment.description ??
+            null,
 
+          category:
+            entertainment.category ??
+            null,
+
+          releaseYear:
+            entertainment.releaseYear ??
+            null,
+
+          thumbnail:
+            mediaUrl(
+              entertainment.thumbnail
+            ),
+
+          videoUrl:
+            mediaUrl(
+              entertainment.videoUrl
+            ),
+
+          duration:
+            entertainment.duration ??
+            0,
+
+          // ------------------------------------------------
+          // CHANNEL
+          // ------------------------------------------------
+
+          channelId:
+            schedule.channel.id,
+
+          channelName:
+            schedule.channel.name,
+
+          channelLogo:
+            mediaUrl(
+              schedule.channel.logo
+            ),
+
+          // ------------------------------------------------
+          // SCHEDULE
+          // ------------------------------------------------
+
+          scheduleId:
+            schedule.id,
+
+          scheduleStart:
+            schedule.startTime,
+
+          scheduleEnd:
+            schedule.endTime,
+        };
+      })
+      .filter(
+        (
+          item
+        ): item is NonNullable<typeof item> =>
+          item !== null
+      );
+
+    // =====================================================
+    // LOG
+    // =====================================================
 
     console.log(
       "ENTERTAINMENT COUNT:",
       entertainments.length
     );
 
-
-
-    return NextResponse.json(
-
-      {
-
-        entertainments,
-
-      },
-
-
-      {
-
-        status: 200,
-
-      }
-
+    console.log(
+      "ENTERTAINMENTS:",
+      entertainments.map((item) => ({
+        id: item.id,
+        playlistId: item.playlistId,
+        channelId: item.channelId,
+        title: item.title,
+        scheduleId: item.scheduleId,
+        scheduleEnd: item.scheduleEnd,
+      }))
     );
 
+    // =====================================================
+    // RESPONSE
+    // =====================================================
 
+    return NextResponse.json(
+      {
+        entertainments,
+      },
+      {
+        status: 200,
 
-  } catch(error) {
+        headers: {
+          "Access-Control-Allow-Origin":
+            "http://localhost:3001",
 
+          "Access-Control-Allow-Methods":
+            "GET, OPTIONS",
 
+          "Access-Control-Allow-Headers":
+            "Content-Type",
+        },
+      }
+    );
+  } catch (error) {
     console.error(
       "USER ENTERTAINMENT API ERROR:",
       error
     );
 
-
-
     return NextResponse.json(
-
       {
-
         message:
-        "Failed to fetch entertainments",
-
+          "Failed to fetch entertainments",
       },
-
-
       {
-
         status: 500,
-
       }
-
     );
-
-
   }
-
 }

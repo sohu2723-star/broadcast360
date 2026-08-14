@@ -13,15 +13,15 @@ import BackButton from "@/components/common/BackButton";
 interface Props {
   entertainment: Entertainment;
   playlistItems: Entertainment[];
-  playlistName: string;
-  relatedEntertainments: Entertainment[];
+  playlistName?: string;
+  relatedEntertainments?: Entertainment[];
 }
 
-export default function PlaybackLayout({
+export default function EntertainmentPlaybackLayout({
   entertainment,
-  playlistItems,
-  playlistName,
-  relatedEntertainments,
+  playlistItems = [],
+  playlistName = "",
+  relatedEntertainments = [],
 }: Props) {
   const [currentEntertainment, setCurrentEntertainment] =
     useState<Entertainment>(entertainment);
@@ -31,28 +31,17 @@ export default function PlaybackLayout({
 
   const [leftHeight, setLeftHeight] = useState(0);
   const [playlistHeight, setPlaylistHeight] = useState(0);
-  const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // =====================================
-  // UPDATE CURRENT ENTERTAINMENT
-  // =====================================
-
+  // Keep current item synchronized with the server-provided item.
   useEffect(() => {
     setCurrentEntertainment(entertainment);
   }, [entertainment]);
 
-  // =====================================
-  // MEASURE LEFT SIDE
-  // =====================================
-
+  // Measure video/metadata side.
   useEffect(() => {
-    if (!leftRef.current) return;
-
     const element = leftRef.current;
+
+    if (!element) return;
 
     const updateHeight = () => {
       setLeftHeight(element.offsetHeight);
@@ -61,20 +50,16 @@ export default function PlaybackLayout({
     updateHeight();
 
     const observer = new ResizeObserver(updateHeight);
-
     observer.observe(element);
 
     return () => observer.disconnect();
   }, [currentEntertainment]);
 
-  // =====================================
-  // MEASURE PLAYLIST
-  // =====================================
-
+  // Measure playlist.
   useEffect(() => {
-    if (!playlistContentRef.current) return;
-
     const element = playlistContentRef.current;
+
+    if (!element) return;
 
     const updateHeight = () => {
       setPlaylistHeight(element.offsetHeight);
@@ -83,21 +68,14 @@ export default function PlaybackLayout({
     updateHeight();
 
     const observer = new ResizeObserver(updateHeight);
-
     observer.observe(element);
 
     return () => observer.disconnect();
   }, [playlistItems]);
 
-  // =====================================
-  // PLAYLIST SCROLL
-  // =====================================
-
   const needScroll =
-    mounted && playlistHeight > leftHeight;
-
-  const playlistBoxHeight =
-    needScroll ? leftHeight : "auto";
+    leftHeight > 0 &&
+    playlistHeight > leftHeight;
 
   return (
     <main className="min-h-screen bg-[#010312] text-white">
@@ -105,9 +83,7 @@ export default function PlaybackLayout({
         <BackButton />
 
         <div className="mt-6 grid items-start gap-6 lg:grid-cols-[2fr_1fr]">
-          {/* ============================
-              VIDEO + METADATA
-          ============================ */}
+          {/* VIDEO + METADATA */}
 
           <section
             ref={leftRef}
@@ -124,15 +100,13 @@ export default function PlaybackLayout({
             </div>
           </section>
 
-          {/* ============================
-              PLAYLIST
-          ============================ */}
+          {/* PLAYLIST */}
 
           <aside
-            style={{
-              height: playlistBoxHeight,
-            }}
             className="flex flex-col overflow-hidden rounded-xl border border-[#106EE9]/20 bg-[#0B1026] p-4"
+            style={{
+              height: needScroll ? leftHeight : "auto",
+            }}
           >
             <div
               className={
@@ -142,26 +116,32 @@ export default function PlaybackLayout({
               }
             >
               <div ref={playlistContentRef}>
-                <PlaylistParts
-                  entertainments={playlistItems}
-                  playlistName={playlistName}
-                  selectedId={currentEntertainment.id}
-                  onSelect={setCurrentEntertainment}
-                />
+                {playlistItems.length > 0 ? (
+                  <PlaylistParts
+                    entertainments={playlistItems}
+                    playlistName={playlistName}
+                    selectedId={currentEntertainment.id}
+                    onSelect={setCurrentEntertainment}
+                  />
+                ) : (
+                  <div className="py-8 text-center text-sm text-zinc-500">
+                    No playlist items
+                  </div>
+                )}
               </div>
             </div>
           </aside>
         </div>
 
-        {/* ============================
-            RELATED ENTERTAINMENTS
-        ============================ */}
+        {/* RELATED */}
 
-        <section className="mt-12">
-          <RelatedEntertainments
-            entertainments={relatedEntertainments}
-          />
-        </section>
+        {relatedEntertainments.length > 0 && (
+          <section className="mt-12">
+            <RelatedEntertainments
+              entertainments={relatedEntertainments}
+            />
+          </section>
+        )}
       </div>
     </main>
   );
