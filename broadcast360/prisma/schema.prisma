@@ -65,7 +65,7 @@ model User {
 
   // NEW
   watchHistory WatchHistory[]
-   favorites Favorite[]
+  favorites    Favorite[]
 
   // NEW
   subscriptions Subscription[]
@@ -79,12 +79,12 @@ model WatchHistory {
   id Int @id @default(autoincrement())
 
   userId         Int
-  newsId Int?
+  newsId         Int?
   playlistItemId Int?
 
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   playlistItem PlaylistItem? @relation(fields: [playlistItemId], references: [id], onDelete: Cascade)
-  news News? @relation( fields: [newsId], references: [id], onDelete: Cascade)
+  news         News?         @relation(fields: [newsId], references: [id], onDelete: Cascade)
 
   // For Continue Watching
   progressSeconds Int  @default(0)
@@ -101,19 +101,19 @@ model WatchHistory {
 }
 
 model Favorite {
-  id        Int      @id @default(autoincrement())
-  userId    Int
+  id     Int @id @default(autoincrement())
+  userId Int
 
   movieId         Int?
   episodeId       Int?
   entertainmentId Int?
   newsId          Int?
 
-  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  movie         Movie?        @relation(fields: [movieId], references: [id], onDelete: Cascade)
-  episode       Episode?      @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  movie         Movie?         @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  episode       Episode?       @relation(fields: [episodeId], references: [id], onDelete: Cascade)
   entertainment Entertainment? @relation(fields: [entertainmentId], references: [id], onDelete: Cascade)
-  news          News?         @relation(fields: [newsId], references: [id], onDelete: Cascade)
+  news          News?          @relation(fields: [newsId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
 
@@ -129,19 +129,36 @@ model Favorite {
 // =====================
 
 model SubscriptionPlan {
-  id Int @id @default(autoincrement())
-
-  name         String
-  price        Decimal
-  durationDays Int
-
+  id          Int     @id @default(autoincrement())
+  name        String
   description String?
   isActive    Boolean @default(true)
+
+  options SubscriptionOption[]
 
   subscriptions Subscription[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model SubscriptionOption {
+  id              Int     @id @default(autoincrement())
+  planId          Int
+  durationDays    Int
+  price           Decimal
+  discountPercent Decimal @default(0)
+  isActive        Boolean @default(true)
+
+  plan SubscriptionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  subscriptions Subscription[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([planId, durationDays])
+  @@index([planId])
 }
 
 // =====================
@@ -151,11 +168,13 @@ model SubscriptionPlan {
 model Subscription {
   id Int @id @default(autoincrement())
 
-  userId Int
-  planId Int
+  userId   Int
+  planId   Int
+  optionId Int
 
-  user User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  plan SubscriptionPlan @relation(fields: [planId], references: [id])
+  user   User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan   SubscriptionPlan   @relation(fields: [planId], references: [id])
+  option SubscriptionOption @relation(fields: [optionId], references: [id])
 
   status SubscriptionStatus @default(PENDING)
 
@@ -166,6 +185,9 @@ model Subscription {
   updatedAt DateTime @updatedAt
 
   payments Payment[]
+
+  @@index([userId])
+  @@index([status])
 }
 
 // =====================
@@ -184,8 +206,8 @@ model Payment {
 
   method PaymentMethod @default(KPAY)
 
-  transactionId String?
-  screenshotUrl String?
+  transactionId String? @unique
+  screenshotUrl String
 
   status PaymentStatus @default(PENDING)
 
@@ -238,7 +260,7 @@ model Movie {
   accessType AccessType @default(FREE)
 
   playlistItems PlaylistItem[]
-  favorites Favorite[]
+  favorites     Favorite[]
 
   @@unique([title, releaseYear])
 }
@@ -276,7 +298,6 @@ model Stream {
   channel Channel @relation(fields: [channelId], references: [id])
 
   playlistItems PlaylistItem[]
-
 }
 
 // =====================
@@ -313,7 +334,7 @@ model Episode {
   series Series @relation(fields: [seriesId], references: [id])
 
   playlistItems PlaylistItem[]
-   favorites Favorite[]
+  favorites     Favorite[]
 
   createdAt DateTime @default(now())
 }
@@ -359,7 +380,7 @@ model News {
   playlistItems PlaylistItem[]
 
   watchHistories WatchHistory[]
-   favorites Favorite[]
+  favorites      Favorite[]
 
   createdAt DateTime @default(now())
 }
@@ -383,7 +404,7 @@ model Entertainment {
   accessType AccessType @default(FREE)
 
   playlistItems PlaylistItem[]
-   favorites Favorite[]
+  favorites     Favorite[]
 }
 
 // =====================

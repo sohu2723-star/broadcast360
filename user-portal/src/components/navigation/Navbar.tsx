@@ -22,15 +22,18 @@ const menus = [
   {
     name: "Movies",
     href: "/movies",
+  },{
+    name: "Entertainment",
+    href: "/entertainments",
   },
   {
     name: "News",
     href: "/news",
+  },{
+    name: "Contact us",
+    href: "/contact",
   },
-  {
-    name: "Entertainment",
-    href: "/entertainments",
-  },
+  
 ];
 
 export default function Navbar() {
