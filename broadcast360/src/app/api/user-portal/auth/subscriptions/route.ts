@@ -17,7 +17,7 @@ export async function OPTIONS() {
 }
 
 // =====================================================
-// CREATE / REUSE SUBSCRIPTION
+// CREATE / REUSE / CHANGE SUBSCRIPTION
 // =====================================================
 
 export async function POST(
@@ -36,7 +36,7 @@ export async function POST(
         NextResponse.json(
           {
             success: false,
-            message: "Unauthorized",
+            message: "Unauthorized.",
           },
           {
             status: 401,
@@ -59,7 +59,7 @@ export async function POST(
         NextResponse.json(
           {
             success: false,
-            message: "Invalid user",
+            message: "Invalid user.",
           },
           {
             status: 401,
@@ -72,7 +72,8 @@ export async function POST(
     // REQUEST BODY
     // =================================================
 
-    const body = await request.json();
+    const body =
+      await request.json();
 
     const optionId =
       Number(body.optionId);
@@ -86,7 +87,7 @@ export async function POST(
           {
             success: false,
             message:
-              "Invalid subscription option",
+              "Invalid subscription option.",
           },
           {
             status: 400,
@@ -96,7 +97,7 @@ export async function POST(
     }
 
     // =================================================
-    // FIND ACTIVE OPTION
+    // FIND OPTION
     // =================================================
 
     const option =
@@ -117,7 +118,7 @@ export async function POST(
           {
             success: false,
             message:
-              "Subscription option not found or inactive",
+              "Subscription option not found or inactive.",
           },
           {
             status: 404,
@@ -127,7 +128,7 @@ export async function POST(
     }
 
     // =================================================
-    // CHECK EXISTING ACTIVE SUBSCRIPTION
+    // CHECK ACTIVE SUBSCRIPTION
     // =================================================
 
     const activeSubscription =
@@ -140,7 +141,16 @@ export async function POST(
         orderBy: {
           createdAt: "desc",
         },
+
+        include: {
+          plan: true,
+          option: true,
+        },
       });
+
+    // =================================================
+    // ALREADY SUBSCRIBED
+    // =================================================
 
     if (activeSubscription) {
       return cors(
@@ -148,15 +158,23 @@ export async function POST(
           {
             success: false,
 
+            alreadySubscribed: true,
+
             message:
-              "You already have an active subscription.",
+              "You are already subscribed to the Premium plan.",
 
             subscription: {
               id: activeSubscription.id,
-              userId: activeSubscription.userId,
-              planId: activeSubscription.planId,
-              optionId: activeSubscription.optionId,
-              status: activeSubscription.status,
+              userId:
+                activeSubscription.userId,
+              planId:
+                activeSubscription.planId,
+              optionId:
+                activeSubscription.optionId,
+              status:
+                activeSubscription.status,
+              planName:
+                activeSubscription.plan.name,
             },
           },
           {
@@ -167,8 +185,9 @@ export async function POST(
     }
 
     // =================================================
-    // CHECK EXISTING PENDING SUBSCRIPTION
+    // FIND EXISTING PENDING SUBSCRIPTION
     // =================================================
+
 
     const pendingSubscription =
       await prisma.subscription.findFirst({
@@ -184,74 +203,245 @@ export async function POST(
         include: {
           option: true,
           plan: true,
+
+          payments: {
+            orderBy: {
+              createdAt: "desc",
+            },
+          },
         },
       });
 
+    // =====================================================
+    // EXISTING PENDING SUBSCRIPTION
+    // =====================================================
+
     if (pendingSubscription) {
-      // ===============================================
-      // REUSE EXISTING PENDING SUBSCRIPTION
-      // ===============================================
 
-      const price =
-        Number(pendingSubscription.option.price);
+      const latestPayment =
+        pendingSubscription.payments?.[0] ?? null;
 
-      const discount =
-        Number(
-          pendingSubscription.option.discountPercent
+      // ===================================================
+      // PAYMENT ALREADY PENDING
+      // ===================================================
+      //
+      // IMPORTANT:
+      // Once payment is submitted, the subscription is
+      // LOCKED until admin reviews it.
+      //
+      // User cannot:
+      // - choose another option
+      // - create another subscription
+      // - create another payment
+      // - go back to payment and submit again
+      //
+      // ===================================================
+
+      if (
+        latestPayment?.status === "PENDING"
+      ) {
+        return cors(
+          NextResponse.json(
+            {
+              success: false,
+
+              paymentPending: true,
+
+              subscriptionLocked: true,
+
+              message:
+                "Your payment is already pending review. Please wait for the payment to be reviewed before choosing another subscription.",
+
+              subscription: {
+                id:
+                  pendingSubscription.id,
+
+                userId:
+                  pendingSubscription.userId,
+
+                planId:
+                  pendingSubscription.planId,
+
+                optionId:
+                  pendingSubscription.optionId,
+
+                status:
+                  pendingSubscription.status,
+              },
+
+              payment: {
+                id:
+                  latestPayment.id,
+
+                status:
+                  latestPayment.status,
+              },
+            },
+            {
+              status: 409,
+            }
+          )
         );
+      }
 
-      const discountAmount =
-        price * (discount / 100);
+      // ===================================================
+      // PAYMENT ALREADY PAID
+      // ===================================================
 
-      const finalPrice =
-        price - discountAmount;
+      if (
+        latestPayment?.status === "PAID"
+      ) {
+        return cors(
+          NextResponse.json(
+            {
+              success: false,
 
-      return cors(
-        NextResponse.json(
-          {
-            success: true,
+              paymentCompleted: true,
 
-            alreadyExists: true,
+              subscriptionLocked: true,
 
-            message:
-              "You already have a pending subscription. Continuing to payment.",
+              message:
+                "Your payment has already been submitted and is waiting for admin verification.",
 
-            subscriptionId:
-              pendingSubscription.id,
-
-            subscription: {
-              id:
+              subscriptionId:
                 pendingSubscription.id,
 
-              userId:
-                pendingSubscription.userId,
+              subscription: {
+                id:
+                  pendingSubscription.id,
 
-              planId:
-                pendingSubscription.planId,
+                userId:
+                  pendingSubscription.userId,
 
-              optionId:
-                pendingSubscription.optionId,
+                planId:
+                  pendingSubscription.planId,
 
-              status:
-                pendingSubscription.status,
+                optionId:
+                  pendingSubscription.optionId,
+
+                status:
+                  pendingSubscription.status,
+              },
             },
+            {
+              status: 409,
+            }
+          )
+        );
+      }
 
-            price: {
-              original: price,
-              discountPercent: discount,
-              discountAmount,
-              final: finalPrice,
-            },
-          },
-          {
-            status: 200,
+      // ===================================================
+      // NO PAYMENT OR PAYMENT REJECTED
+      // ===================================================
+      //
+      // Only NOW can the user change their option.
+      //
+      // ===================================================
+
+      if (
+        pendingSubscription.optionId !==
+        option.id
+      ) {
+
+        await prisma.$transaction(
+          async (tx) => {
+
+            await tx.payment.deleteMany({
+              where: {
+                subscriptionId:
+                  pendingSubscription.id,
+              },
+            });
+
+            await tx.subscription.delete({
+              where: {
+                id:
+                  pendingSubscription.id,
+              },
+            });
+
           }
-        )
-      );
-    }
+        );
 
+        // Continue below and create the new subscription.
+      }
+
+      // ===================================================
+      // SAME OPTION
+      // ===================================================
+
+      else {
+
+        const price =
+          Number(
+            pendingSubscription.option.price
+          );
+
+        const discount =
+          Number(
+            pendingSubscription.option.discountPercent
+          );
+
+        const discountAmount =
+          price * (discount / 100);
+
+        const finalPrice =
+          price - discountAmount;
+
+        return cors(
+          NextResponse.json(
+            {
+              success: true,
+
+              alreadyExists: true,
+
+              paymentRequired: true,
+
+              message:
+                "You already have a pending subscription. Please continue to payment.",
+
+              subscriptionId:
+                pendingSubscription.id,
+
+              subscription: {
+                id:
+                  pendingSubscription.id,
+
+                userId:
+                  pendingSubscription.userId,
+
+                planId:
+                  pendingSubscription.planId,
+
+                optionId:
+                  pendingSubscription.optionId,
+
+                status:
+                  pendingSubscription.status,
+              },
+
+              price: {
+                original:
+                  price,
+
+                discountPercent:
+                  discount,
+
+                discountAmount,
+
+                final:
+                  finalPrice,
+              },
+            },
+            {
+              status: 200,
+            }
+          )
+        );
+      }
+    }
     // =================================================
-    // CALCULATE PRICE
+    // CREATE NEW PENDING SUBSCRIPTION
     // =================================================
 
     const price =
@@ -265,10 +455,6 @@ export async function POST(
 
     const finalPrice =
       price - discountAmount;
-
-    // =================================================
-    // CREATE PENDING SUBSCRIPTION
-    // =================================================
 
     const subscription =
       await prisma.subscription.create({
@@ -297,8 +483,15 @@ export async function POST(
 
           alreadyExists: false,
 
+          changedPlan:
+            !!pendingSubscription,
+
+          paymentRequired: true,
+
           message:
-            "Subscription created successfully",
+            pendingSubscription
+              ? "Your subscription option has been changed."
+              : "Subscription created successfully.",
 
           subscriptionId:
             subscription.id,
@@ -321,10 +514,16 @@ export async function POST(
           },
 
           price: {
-            original: price,
-            discountPercent: discount,
+            original:
+              price,
+
+            discountPercent:
+              discount,
+
             discountAmount,
-            final: finalPrice,
+
+            final:
+              finalPrice,
           },
         },
         {
@@ -332,7 +531,9 @@ export async function POST(
         }
       )
     );
+
   } catch (error: unknown) {
+
     console.error(
       "CREATE SUBSCRIPTION ERROR:",
       error
@@ -346,7 +547,7 @@ export async function POST(
           message:
             error instanceof Error
               ? error.message
-              : "Failed to create subscription",
+              : "Failed to create subscription.",
         },
         {
           status: 500,

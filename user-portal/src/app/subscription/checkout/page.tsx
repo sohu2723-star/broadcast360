@@ -117,16 +117,60 @@ export default function CheckoutPage() {
     setSubmitting(true);
     setError("");
 
-    const response =
-      await authApi.post(
-        "/api/user-portal/auth/subscriptions",
-        {
-          optionId: option.id,
-        }
+    const response = await authApi.post(
+      "/api/user-portal/auth/subscriptions",
+      {
+        optionId: option.id,
+      }
+    );
+
+    const data = response.data;
+
+    // =================================================
+    // ALREADY ACTIVE / PREMIUM
+    // =================================================
+
+    if (data?.alreadySubscribed) {
+      setError(
+        data.message ||
+          "You are already subscribed to the Premium plan."
       );
 
+      return;
+    }
+
+    // =================================================
+    // PAYMENT ALREADY PENDING
+    // =================================================
+
+    if (data?.paymentPending) {
+      setError(
+        data.message ||
+          "Your payment is already pending review."
+      );
+
+      return;
+    }
+
+    // =================================================
+    // PAYMENT ALREADY COMPLETED
+    // =================================================
+
+    if (data?.paymentCompleted) {
+      setError(
+        data.message ||
+          "Your payment has already been submitted and is waiting for review."
+      );
+
+      return;
+    }
+
+    // =================================================
+    // SUBSCRIPTION ID
+    // =================================================
+
     const subscriptionId =
-      response.data.subscriptionId;
+      data?.subscriptionId;
 
     if (!subscriptionId) {
       throw new Error(
@@ -134,18 +178,97 @@ export default function CheckoutPage() {
       );
     }
 
-    window.location.href =
-      `/subscription/payment?subscriptionId=${subscriptionId}`;
+    // =================================================
+    // PAYMENT REQUIRED
+    // =================================================
+
+    if (
+      data?.paymentRequired === true
+    ) {
+      window.location.href =
+        `/subscription/payment?subscriptionId=${subscriptionId}`;
+
+      return;
+    }
+
+    // =================================================
+    // SAFETY FALLBACK
+    // =================================================
+
+    if (
+      data?.subscription?.status ===
+      "PENDING"
+    ) {
+      window.location.href =
+        `/subscription/payment?subscriptionId=${subscriptionId}`;
+
+      return;
+    }
+
+    setError(
+      "This subscription cannot proceed to payment."
+    );
+
   } catch (err: any) {
+
     console.error(
       "Subscription creation failed:",
       err
     );
 
+    // =================================================
+    // ALREADY PREMIUM
+    // =================================================
+
+    if (
+      err?.response?.status === 409 &&
+      err?.response?.data?.alreadySubscribed
+    ) {
+      setError(
+        err.response.data.message ||
+          "You are already subscribed to the Premium plan."
+      );
+
+      return;
+    }
+
+    // =================================================
+    // PAYMENT ALREADY PENDING
+    // =================================================
+
+    if (
+      err?.response?.status === 409 &&
+      err?.response?.data?.paymentPending
+    ) {
+      setError(
+        err.response.data.message ||
+          "Your payment is already pending review."
+      );
+
+      return;
+    }
+
+    // =================================================
+    // PAYMENT ALREADY COMPLETED
+    // =================================================
+
+    if (
+      err?.response?.status === 409 &&
+      err?.response?.data?.paymentCompleted
+    ) {
+      setError(
+        err.response.data.message ||
+          "Your payment has already been submitted."
+      );
+
+      return;
+    }
+
     setError(
-      err?.response?.data?.message ??
+      err?.response?.data?.message ||
         "Failed to create subscription."
     );
+
   } finally {
     setSubmitting(false);
   }

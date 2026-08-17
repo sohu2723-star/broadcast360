@@ -1,12 +1,14 @@
+
 "use client";
 
 import Link from "next/link";
 import { useState } from "react";
 import axios from "axios";
 
-import ProfileCard from "@/components/profile/ProfileCard";
+import Avatar from "@/components/ui/Avatar";
 import EditProfileModal from "@/components/profile/EditProfileModal";
 import ChangePasswordModal from "@/components/profile/ChangePasswordModal";
+import SubscriptionStatusCard from "@/components/profile/SubscriptionStatusCard";
 
 import { useCurrentUser } from "@/lib/useCurrentUser";
 import authApi from "@/lib/authapi";
@@ -14,14 +16,11 @@ import authApi from "@/lib/authapi";
 export default function ProfilePage() {
   const { user, loading } = useCurrentUser();
 
-  /*
-  ======================
-      EDIT PROFILE
-  ======================
-  */
+  /* =====================================================
+     EDIT PROFILE
+  ===================================================== */
 
   const [editOpen, setEditOpen] = useState(false);
-
   const [saving, setSaving] = useState(false);
 
   const [name, setName] = useState("");
@@ -37,11 +36,9 @@ export default function ProfilePage() {
     phone?: string;
   }>({});
 
-  /*
-  ======================
-      CHANGE PASSWORD
-  ======================
-  */
+  /* =====================================================
+     CHANGE PASSWORD
+  ===================================================== */
 
   const [passwordOpen, setPasswordOpen] = useState(false);
 
@@ -57,11 +54,9 @@ export default function ProfilePage() {
     confirmPassword?: string;
   }>({});
 
-  /*
-  ======================
-      OPEN EDIT
-  ======================
-  */
+  /* =====================================================
+     OPEN EDIT PROFILE
+  ===================================================== */
 
   function openEdit() {
     if (!user) return;
@@ -77,11 +72,9 @@ export default function ProfilePage() {
     setEditOpen(true);
   }
 
-  /*
-  ======================
-      PROFILE VALIDATION
-  ======================
-  */
+  /* =====================================================
+     PROFILE VALIDATION
+  ===================================================== */
 
   function validateProfile() {
     const errors: {
@@ -98,7 +91,7 @@ export default function ProfilePage() {
       errors.email = "Email is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       errors.email = "Invalid email format";
-    } else if (!email.endsWith("@gmail.com")) {
+    } else if (!email.toLowerCase().endsWith("@gmail.com")) {
       errors.email = "Only Gmail accounts allowed";
     }
 
@@ -113,11 +106,9 @@ export default function ProfilePage() {
     return Object.keys(errors).length === 0;
   }
 
-  /*
-  ======================
-      PASSWORD VALIDATION
-  ======================
-  */
+  /* =====================================================
+     PASSWORD VALIDATION
+  ===================================================== */
 
   function validatePassword() {
     const errors: {
@@ -144,7 +135,9 @@ export default function ProfilePage() {
       errors.newPassword = "Need special character";
     }
 
-    if (newPassword !== confirmPassword) {
+    if (!confirmPassword) {
+      errors.confirmPassword = "Please confirm your password";
+    } else if (newPassword !== confirmPassword) {
       errors.confirmPassword = "Password does not match";
     }
 
@@ -153,11 +146,9 @@ export default function ProfilePage() {
     return Object.keys(errors).length === 0;
   }
 
-  /*
-  ======================
-      AVATAR UPLOAD
-  ======================
-  */
+  /* =====================================================
+     AVATAR UPLOAD
+  ===================================================== */
 
   function handleAvatarChange(
     e: React.ChangeEvent<HTMLInputElement>
@@ -166,34 +157,58 @@ export default function ProfilePage() {
 
     if (!file) return;
 
+    /* Only images */
     if (!file.type.startsWith("image/")) {
+      console.error("Please select an image file.");
+      e.target.value = "";
       return;
     }
 
+    /* Maximum 2 MB */
     if (file.size > 2 * 1024 * 1024) {
+      console.error("Image must be smaller than 2 MB.");
+      e.target.value = "";
       return;
     }
 
     const reader = new FileReader();
 
     reader.onload = () => {
-      const result = reader.result as string;
+      if (typeof reader.result !== "string") {
+        console.error("Invalid image data.");
+        return;
+      }
 
-      setAvatar(result);
-      setAvatarPreview(result);
+      /*
+       * Store Base64 string.
+       *
+       * avatar       -> sent to backend
+       * avatarPreview -> displayed immediately
+       */
+      setAvatar(reader.result);
+      setAvatarPreview(reader.result);
+    };
+
+    reader.onerror = () => {
+      console.error("Failed to read avatar.");
     };
 
     reader.readAsDataURL(file);
+
+    /*
+     * Allows selecting the same image again.
+     */
+    e.target.value = "";
   }
 
-  /*
-  ======================
-      SAVE PROFILE
-  ======================
-  */
+  /* =====================================================
+     SAVE PROFILE
+  ===================================================== */
 
   async function saveProfile() {
-    if (!validateProfile()) return;
+    if (!validateProfile()) {
+      return;
+    }
 
     try {
       setSaving(true);
@@ -201,31 +216,39 @@ export default function ProfilePage() {
       await authApi.put(
         "/api/user-portal/auth/profile",
         {
-          name,
-          email,
+          name: name.trim(),
+          email: email.trim(),
+          phone: phone.trim(),
           avatar,
-          phone,
         }
       );
 
       setEditOpen(false);
 
+      /*
+       * Reload so:
+       * - useCurrentUser gets new avatar
+       * - Navbar gets new avatar
+       * - Profile page gets new avatar
+       */
       window.location.reload();
-    } catch (error) {
-      console.error(
-        "Profile update failed:",
-        error
-      );
+    } catch (error: unknown) {
+      console.error("Profile update failed:", error);
+
+      if (axios.isAxiosError(error)) {
+        console.error(
+          "Server response:",
+          error.response?.data
+        );
+      }
     } finally {
       setSaving(false);
     }
   }
 
-  /*
-  ======================
-      CHANGE PASSWORD
-  ======================
-  */
+  /* =====================================================
+     CHANGE PASSWORD
+  ===================================================== */
 
   async function changePassword() {
     if (!validatePassword()) {
@@ -266,11 +289,9 @@ export default function ProfilePage() {
     }
   }
 
-  /*
-  ======================
-      LOGOUT
-  ======================
-  */
+  /* =====================================================
+     LOGOUT
+  ===================================================== */
 
   async function logout() {
     try {
@@ -280,18 +301,13 @@ export default function ProfilePage() {
 
       window.location.href = "/";
     } catch (error) {
-      console.error(
-        "Logout failed:",
-        error
-      );
+      console.error("Logout failed:", error);
     }
   }
 
-  /*
-  ======================
-      LOADING
-  ======================
-  */
+  /* =====================================================
+     LOADING
+  ===================================================== */
 
   if (loading) {
     return (
@@ -307,27 +323,14 @@ export default function ProfilePage() {
     return null;
   }
 
-  const baseUrl =
-    process.env.NEXT_PUBLIC_API_URL || "";
-
-  const avatarUrl = user.avatar
-    ? user.avatar.startsWith("http")
-      ? user.avatar
-      : `${baseUrl}${user.avatar}`
-    : null;
-
-  /*
-  ======================
-      PAGE
-  ======================
-  */
+  /* =====================================================
+     PAGE
+  ===================================================== */
 
   return (
     <div className="min-h-screen bg-[#010312] text-white">
 
-      {/* =================================
-          BACKGROUND GLOW
-      ================================= */}
+      {/* BACKGROUND GLOW */}
 
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -left-40 -top-40 h-96 w-96 rounded-full bg-blue-600/10 blur-3xl" />
@@ -337,9 +340,7 @@ export default function ProfilePage() {
 
       <main className="relative mx-auto max-w-6xl px-5 py-10 sm:px-8">
 
-        {/* =================================
-            HEADER
-        ================================= */}
+        {/* HEADER */}
 
         <div className="mb-8">
           <p className="mb-2 text-sm font-medium uppercase tracking-[0.2em] text-blue-400">
@@ -355,13 +356,9 @@ export default function ProfilePage() {
           </p>
         </div>
 
-        {/* =================================
-            PROFILE HERO
-        ================================= */}
+        {/* PROFILE HERO */}
 
         <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#0d142c]">
-
-          {/* gradient */}
 
           <div className="absolute inset-0 bg-gradient-to-br from-blue-600/10 via-transparent to-purple-600/10" />
 
@@ -373,29 +370,27 @@ export default function ProfilePage() {
 
               <div className="flex items-center gap-5">
 
-                {/* AVATAR */}
+                {/* =================================================
+                    AVATAR
+                    USE THE SAME COMPONENT AS NAVBAR
+                ================================================= */}
 
                 <div className="relative shrink-0">
 
-                  <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-[#111936] bg-gradient-to-br from-blue-500 to-purple-600 shadow-xl shadow-blue-900/20 sm:h-28 sm:w-28">
+                  <div className="rounded-full border-4 border-[#111936] bg-[#111936] shadow-xl shadow-blue-900/20">
 
-                    {avatarUrl ? (
-                      <img
-                        src={avatarUrl}
-                        alt={user.name ?? "Profile"}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-3xl font-bold text-white">
-                        {(user.name?.[0] ?? "U").toUpperCase()}
-                      </div>
-                    )}
+                    <Avatar
+                      name={user.name}
+                      avatar={user.avatar ?? undefined}
+                      size={112}
+                    />
 
                   </div>
 
                   {/* ONLINE */}
 
                   <span className="absolute bottom-1 right-1 h-5 w-5 rounded-full border-4 border-[#0d142c] bg-emerald-500" />
+
                 </div>
 
                 {/* DETAILS */}
@@ -427,6 +422,7 @@ export default function ProfilePage() {
               {/* EDIT */}
 
               <button
+                type="button"
                 onClick={openEdit}
                 className="
                   inline-flex
@@ -456,9 +452,13 @@ export default function ProfilePage() {
           </div>
         </section>
 
-        {/* =================================
-            QUICK ACTIONS
-        ================================= */}
+        {/* SUBSCRIPTION */}
+
+        <div className="mt-6">
+          <SubscriptionStatusCard user={user} />
+        </div>
+
+        {/* QUICK ACTIONS */}
 
         <section className="mt-6 grid gap-5 md:grid-cols-2">
 
@@ -566,9 +566,7 @@ export default function ProfilePage() {
 
         </section>
 
-        {/* =================================
-            ACCOUNT SETTINGS
-        ================================= */}
+        {/* ACCOUNT SETTINGS */}
 
         <section className="mt-8 overflow-hidden rounded-2xl border border-white/10 bg-[#0d142c]">
 
@@ -587,6 +585,7 @@ export default function ProfilePage() {
           {/* PASSWORD */}
 
           <button
+            type="button"
             onClick={() => {
               setPasswordErrors({});
               setPasswordOpen(true);
@@ -613,6 +612,7 @@ export default function ProfilePage() {
               </div>
 
               <div>
+
                 <p className="font-semibold text-white">
                   Password
                 </p>
@@ -620,6 +620,7 @@ export default function ProfilePage() {
                 <p className="mt-1 text-xs text-zinc-500">
                   Update your account password
                 </p>
+
               </div>
 
             </div>
@@ -633,6 +634,7 @@ export default function ProfilePage() {
           {/* PROFILE */}
 
           <button
+            type="button"
             onClick={openEdit}
             className="
               flex
@@ -656,6 +658,7 @@ export default function ProfilePage() {
               </div>
 
               <div>
+
                 <p className="font-semibold text-white">
                   Personal Information
                 </p>
@@ -663,6 +666,7 @@ export default function ProfilePage() {
                 <p className="mt-1 text-xs text-zinc-500">
                   Update your name, email, phone and avatar
                 </p>
+
               </div>
 
             </div>
@@ -676,6 +680,7 @@ export default function ProfilePage() {
           {/* LOGOUT */}
 
           <button
+            type="button"
             onClick={logout}
             className="
               flex
@@ -697,6 +702,7 @@ export default function ProfilePage() {
               </div>
 
               <div>
+
                 <p className="font-semibold text-red-400">
                   Sign Out
                 </p>
@@ -704,6 +710,7 @@ export default function ProfilePage() {
                 <p className="mt-1 text-xs text-zinc-500">
                   Sign out of your Broadcast360 account
                 </p>
+
               </div>
 
             </div>
@@ -716,9 +723,7 @@ export default function ProfilePage() {
 
         </section>
 
-        {/* =================================
-            FOOTER
-        ================================= */}
+        {/* FOOTER */}
 
         <div className="mt-8 text-center">
 
@@ -734,9 +739,9 @@ export default function ProfilePage() {
 
       </main>
 
-      {/* =================================
+      {/* =====================================================
           EDIT PROFILE MODAL
-      ================================= */}
+      ===================================================== */}
 
       {editOpen && (
         <EditProfileModal
@@ -755,9 +760,9 @@ export default function ProfilePage() {
         />
       )}
 
-      {/* =================================
+      {/* =====================================================
           CHANGE PASSWORD MODAL
-      ================================= */}
+      ===================================================== */}
 
       {passwordOpen && (
         <ChangePasswordModal
@@ -773,11 +778,11 @@ export default function ProfilePage() {
           changePassword={changePassword}
           close={() => {
             setPasswordOpen(false);
-
             setPasswordErrors({});
           }}
         />
       )}
+
     </div>
   );
 }

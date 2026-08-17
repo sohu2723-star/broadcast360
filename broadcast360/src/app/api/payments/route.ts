@@ -20,6 +20,10 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
 
+    // =================================================
+    // PAGINATION
+    // =================================================
+
     const rawPage = Number(searchParams.get("page") ?? "1");
     const rawLimit = Number(searchParams.get("limit") ?? "10");
 
@@ -33,13 +37,17 @@ export async function GET(request: NextRequest) {
         ? Math.min(Math.floor(rawLimit), 100)
         : 10;
 
+    const skip = (page - 1) * limit;
+
+    // =================================================
+    // FILTERS
+    // =================================================
+
     const search =
       searchParams.get("search")?.trim() ?? "";
 
     const status =
       searchParams.get("status")?.trim() ?? "";
-
-    const skip = (page - 1) * limit;
 
     // =================================================
     // WHERE
@@ -47,15 +55,19 @@ export async function GET(request: NextRequest) {
 
     const where: Prisma.PaymentWhereInput = {};
 
-    // Your Prisma enum:
-    // PENDING | PAID | REJECTED | FAILED
+    // Actual PaymentStatus enum:
+    // PENDING
+    // PAID
+    // REJECTED
+    // FAILED
 
     if (
-      status &&
-      ["PENDING", "PAID", "REJECTED", "FAILED"].includes(status)
+      status === "PENDING" ||
+      status === "PAID" ||
+      status === "REJECTED" ||
+      status === "FAILED"
     ) {
-      where.status =
-        status as Prisma.PaymentWhereInput["status"];
+      where.status = status;
     }
 
     // =================================================
@@ -70,7 +82,6 @@ export async function GET(request: NextRequest) {
             mode: "insensitive",
           },
         },
-
         {
           subscription: {
             user: {
@@ -81,7 +92,6 @@ export async function GET(request: NextRequest) {
             },
           },
         },
-
         {
           subscription: {
             user: {
@@ -99,106 +109,180 @@ export async function GET(request: NextRequest) {
     // DATABASE
     // =================================================
 
-    const [payments, total] =
-      await prisma.$transaction([
-        prisma.payment.findMany({
-          where,
+    const [
+      payments,
+      total,
+      paidCount,
+      pendingCount,
+      rejectedCount,
+      failedCount,
+      revenue,
+    ] = await prisma.$transaction([
+      // -------------------------------------------------
+      // PAYMENTS
+      // -------------------------------------------------
 
-          include: {
-            subscription: {
-              include: {
-                user: {
-                  select: {
-                    id: true,
-                    name: true,
-                    email: true,
-                  },
+      prisma.payment.findMany({
+        where,
+
+        include: {
+          subscription: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
                 },
+              },
 
-                plan: {
-                  select: {
-                    id: true,
-                    name: true,
-                  },
+              plan: {
+                select: {
+                  id: true,
+                  name: true,
                 },
+              },
 
-                option: {
-                  select: {
-                    id: true,
-                    durationDays: true,
-                    price: true,
-                    discountPercent: true,
-                  },
+              option: {
+                select: {
+                  id: true,
+                  durationDays: true,
+                  price: true,
+                  discountPercent: true,
                 },
               },
             },
           },
+        },
 
-          orderBy: {
-            createdAt: "desc",
-          },
+        orderBy: {
+          createdAt: "desc",
+        },
 
-          skip,
-          take: limit,
-        }),
+        skip,
+        take: limit,
+      }),
 
-        prisma.payment.count({
-          where,
-        }),
-      ]);
+      // -------------------------------------------------
+      // FILTERED TOTAL
+      // -------------------------------------------------
+
+      prisma.payment.count({
+        where,
+      }),
+
+      // -------------------------------------------------
+      // PAID
+      // -------------------------------------------------
+
+      prisma.payment.count({
+        where: {
+          status: "PAID",
+        },
+      }),
+
+      // -------------------------------------------------
+      // PENDING
+      // -------------------------------------------------
+
+      prisma.payment.count({
+        where: {
+          status: "PENDING",
+        },
+      }),
+
+      // -------------------------------------------------
+      // REJECTED
+      // -------------------------------------------------
+
+      prisma.payment.count({
+        where: {
+          status: "REJECTED",
+        },
+      }),
+
+      // -------------------------------------------------
+      // FAILED
+      // -------------------------------------------------
+
+      prisma.payment.count({
+        where: {
+          status: "FAILED",
+        },
+      }),
+
+      // -------------------------------------------------
+      // TOTAL REVENUE
+      // ONLY PAID PAYMENTS
+      // -------------------------------------------------
+
+      prisma.payment.aggregate({
+        where: {
+          status: "PAID",
+        },
+
+        _sum: {
+          amount: true,
+        },
+      }),
+    ]);
 
     // =================================================
     // SERIALIZE DECIMAL
     // =================================================
 
-    const serializedPayments = payments.map(
-      (payment) => ({
-        ...payment,
+    const serializedPayments = payments.map((payment) => ({
+      ...payment,
 
-        amount: Number(payment.amount),
+      amount: payment.amount.toString(),
 
-        subscription: {
-          ...payment.subscription,
+      subscription: {
+        ...payment.subscription,
 
-          option: {
-            ...payment.subscription.option,
+        option: payment.subscription.option
+          ? {
+              ...payment.subscription.option,
 
-            price: Number(
-              payment.subscription.option.price
-            ),
+              price:
+                payment.subscription.option.price.toString(),
 
-            discountPercent: Number(
-              payment.subscription.option.discountPercent
-            ),
-          },
-        },
-      })
-    );
+              discountPercent:
+                payment.subscription.option.discountPercent.toString(),
+            }
+          : null,
+      },
+    }));
 
     // =================================================
     // RESPONSE
     // =================================================
 
     return cors(
-      NextResponse.json(
-        {
-          success: true,
+      NextResponse.json({
+        success: true,
 
-          data: serializedPayments,
+        data: serializedPayments,
 
-          pagination: {
-            page,
-            limit,
-            total,
+        summary: {
+          totalRevenue:
+            revenue._sum.amount?.toString() ?? "0",
 
-            totalPages:
-              Math.ceil(total / limit),
-          },
+          paidCount,
+
+          pendingCount,
+
+          rejectedCount,
+
+          failedCount,
         },
-        {
-          status: 200,
-        }
-      )
+
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      })
     );
   } catch (error) {
     console.error(

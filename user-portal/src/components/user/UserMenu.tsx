@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { ChevronDown, Gem, Heart, History, LogOut, Settings, UserRound } from "lucide-react";
 
 import Avatar from "@/components/ui/Avatar";
 import type { User } from "@/types/user";
@@ -15,7 +16,9 @@ export default function UserMenu({ user }: Props) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Close popup when clicking outside
+  const isPremium = user.subscription?.status === "ACTIVE";
+
+  // Close when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -36,7 +39,6 @@ export default function UserMenu({ user }: Props) {
   async function logout() {
     try {
       await authApi.post("/api/user-portal/auth/logout");
-
       window.location.href = "/";
     } catch (error) {
       console.error("Logout failed:", error);
@@ -45,9 +47,10 @@ export default function UserMenu({ user }: Props) {
 
   return (
     <div className="relative" ref={menuRef}>
-      {/* =========================
+      {/* =====================================================
           PROFILE BUTTON
-      ========================= */}
+      ===================================================== */}
+
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
@@ -56,41 +59,83 @@ export default function UserMenu({ user }: Props) {
           items-center
           gap-3
           rounded-xl
+          border
+          border-white/10
           bg-[#0B1026]
           px-3
           py-2
           transition
-          hover:bg-[#151d3d]
+          hover:border-white/15
+          hover:bg-[#111936]
         "
       >
-        <Avatar
-          name={user.name}
-          avatar={user.avatar}
-          size={36}
-        />
+        {/* Avatar */}
 
-        <div className="hidden text-left sm:block">
-          <p className="text-sm font-semibold text-white">
-            {user.name}
-          </p>
+        <div className="relative shrink-0">
+          <Avatar
+            name={user.name}
+            avatar={user.avatar ?? undefined}
+            size={36}
+          />
 
-          <p className="text-xs text-gray-400">
-            Account
+          {/* Premium indicator */}
+
+          {isPremium && (
+            <span
+              title="Premium Member"
+              className="
+                absolute
+                -right-1
+                -top-1
+                flex
+                h-5
+                w-5
+                items-center
+                justify-center
+                rounded-full
+                border
+                border-[#0B1026]
+                bg-amber-400
+                text-[#17120a]
+                shadow-sm
+              "
+            >
+              <Gem className="h-3 w-3" strokeWidth={2.5} />
+            </span>
+          )}
+        </div>
+
+        {/* User information */}
+
+        <div className="hidden min-w-0 text-left sm:block">
+          <div className="flex items-center gap-1.5">
+            <p className="max-w-[130px] truncate text-sm font-semibold text-white">
+              {user.name}
+            </p>
+
+
+          </div>
+
+          <p className="text-xs text-zinc-500">
+            {isPremium ? "Premium Member" : "Account"}
           </p>
         </div>
 
-        <span
-          className={`text-xs text-gray-400 transition-transform ${
-            open ? "rotate-180" : ""
-          }`}
-        >
-          ▼
-        </span>
+        <ChevronDown
+          className={`
+            h-4
+            w-4
+            text-zinc-500
+            transition-transform
+            ${open ? "rotate-180" : ""}
+          `}
+        />
       </button>
 
-      {/* =========================
-          POPUP
-      ========================= */}
+      {/* =====================================================
+          DROPDOWN
+      ===================================================== */}
+
       {open && (
         <div
           className="
@@ -109,169 +154,59 @@ export default function UserMenu({ user }: Props) {
             shadow-black/40
           "
         >
-          {/* USER HEADER */}
-          <div className="border-b border-white/10 p-4">
-            <div className="flex items-center gap-3">
-              <Avatar
-                name={user.name}
-                avatar={user.avatar}
-                size={48}
-              />
+          {/* =================================================
+              USER HEADER
+          ================================================= */}
 
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-white">
-                  {user.name}
-                </p>
 
-                <p className="truncate text-xs text-gray-400">
-                  {user.email}
-                </p>
-              </div>
-            </div>
-          </div>
 
-          {/* MENU */}
+          {/* =================================================
+              MENU
+          ================================================= */}
+
           <div className="p-2">
-
-            {/* PROFILE */}
-            <Link
+            <MenuItem
               href="/profile"
+              icon={<UserRound className="h-4 w-4" />}
+              label="My Profile"
               onClick={() => setOpen(false)}
-              className="
-                flex
-                items-center
-                gap-3
-                rounded-xl
-                px-3
-                py-3
-                text-sm
-                text-gray-200
-                transition
-                hover:bg-white/5
-                hover:text-white
-              "
-            >
-              <span className="w-6 text-center text-lg">
-                👤
-              </span>
+            />
 
-              <span>
-                My Profile
-              </span>
-            </Link>
-
-            {/* SUBSCRIPTION */}
-            <Link
+            <MenuItem
               href="/subscription"
+              icon={<Gem className="h-4 w-4" />}
+              label="Subscription"
               onClick={() => setOpen(false)}
-              className="
-                flex
-                items-center
-                gap-3
-                rounded-xl
-                px-3
-                py-3
-                text-sm
-                text-gray-200
-                transition
-                hover:bg-white/5
-                hover:text-white
-              "
-            >
-              <span className="w-6 text-center text-lg">
-                💎
-              </span>
+              premium={isPremium}
+            />
 
-              <span>
-                Subscription
-              </span>
-            </Link>
-
-            {/* HISTORY */}
-            <Link
+            <MenuItem
               href="/profile/history"
+              icon={<History className="h-4 w-4" />}
+              label="Watch History"
               onClick={() => setOpen(false)}
-              className="
-                flex
-                items-center
-                gap-3
-                rounded-xl
-                px-3
-                py-3
-                text-sm
-                text-gray-200
-                transition
-                hover:bg-white/5
-                hover:text-white
-              "
-            >
-              <span className="w-6 text-center text-lg">
-                🕘
-              </span>
+            />
 
-              <span>
-                Watch History
-              </span>
-            </Link>
-
-            {/* FAVORITES */}
-            <Link
+            <MenuItem
               href="/profile/favorites"
+              icon={<Heart className="h-4 w-4" />}
+              label="Favorites"
               onClick={() => setOpen(false)}
-              className="
-                flex
-                items-center
-                gap-3
-                rounded-xl
-                px-3
-                py-3
-                text-sm
-                text-gray-200
-                transition
-                hover:bg-white/5
-                hover:text-white
-              "
-            >
-              <span className="w-6 text-center text-lg">
-                ❤️
-              </span>
-
-              <span>
-                Favorites
-              </span>
-            </Link>
+            />
           </div>
 
-          {/* ACCOUNT */}
+          {/* =================================================
+              ACCOUNT
+          ================================================= */}
+
           <div className="border-t border-white/10 p-2">
-
-            <Link
+            <MenuItem
               href="/profile"
+              icon={<Settings className="h-4 w-4" />}
+              label="Account Settings"
               onClick={() => setOpen(false)}
-              className="
-                flex
-                items-center
-                gap-3
-                rounded-xl
-                px-3
-                py-3
-                text-sm
-                text-gray-200
-                transition
-                hover:bg-white/5
-                hover:text-white
-              "
-            >
-              <span className="w-6 text-center text-lg">
-                ⚙️
-              </span>
+            />
 
-              <span>
-                Account Settings
-              </span>
-            </Link>
-
-            {/* LOGOUT */}
             <button
               type="button"
               onClick={logout}
@@ -290,17 +225,68 @@ export default function UserMenu({ user }: Props) {
                 hover:bg-red-500/10
               "
             >
-              <span className="w-6 text-center text-lg">
-                ↪
+              <span className="flex h-6 w-6 items-center justify-center">
+                <LogOut className="h-4 w-4" />
               </span>
 
-              <span>
-                Sign Out
-              </span>
+              <span>Sign Out</span>
             </button>
           </div>
         </div>
       )}
     </div>
+  );
+}
+
+/* =========================================================
+   MENU ITEM
+========================================================= */
+
+interface MenuItemProps {
+  href: string;
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  premium?: boolean;
+}
+
+function MenuItem({
+  href,
+  icon,
+  label,
+  onClick,
+  premium,
+}: MenuItemProps) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className="
+        flex
+        items-center
+        gap-3
+        rounded-xl
+        px-3
+        py-3
+        text-sm
+        text-zinc-300
+        transition
+        hover:bg-white/[0.05]
+        hover:text-white
+      "
+    >
+      <span className="flex h-6 w-6 items-center justify-center text-zinc-500">
+        {icon}
+      </span>
+
+      <span>{label}</span>
+
+      {premium && (
+        <Gem
+          className="ml-auto h-3.5 w-3.5 text-amber-400"
+          strokeWidth={2.5}
+        />
+      )}
+    </Link>
   );
 }
