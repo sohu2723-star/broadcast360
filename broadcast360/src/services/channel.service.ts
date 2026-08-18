@@ -9,12 +9,14 @@ import {
 import { prisma } from "@/lib/prisma";
 import { PlaylistService } from "@/services/playlist.service";
 
+type ChannelAccessType = "FREE" | "PREMIUM";
 
 type CreateChannelInput = {
   name: string;
   description?: string;
   logo?: string;
   country?: string;
+  accessType: ChannelAccessType;
 };
 
 
@@ -23,6 +25,7 @@ type UpdateChannelInput = {
   description?: string;
   logo?: string;
   country?: string;
+  accessType: ChannelAccessType,
 };
 
 

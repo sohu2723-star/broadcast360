@@ -129,3 +129,9 @@ export async function createUserSubscription(
 
   return createPendingSubscription(userId, optionId);
 }
+
+export async function isUserPremium(userId: number) {
+  const subscription = await findActiveSubscriptionByUserId(userId);
+
+  return !!subscription;
+}

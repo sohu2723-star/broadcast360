@@ -32,11 +32,32 @@ export async function GET() {
 
       country: channel.country,
 
-      playbackUrl: channel.streamKey
-        ? `http://localhost:8888/channel/${channel.streamKey}/index.m3u8`
-        : `http://localhost:3000/streams/channel-${channel.id}/index.m3u8`,
+      accessType: channel.accessType,
 
-      streamKey: channel.streamKey,
+      /*
+       * IMPORTANT
+       *
+       * Do NOT expose the premium HLS URL here.
+       *
+       * FREE channels can be played directly.
+       * PREMIUM channels must go through:
+       *
+       * /api/user-portal/channels/[id]
+       *
+       * where login + subscription are checked.
+       */
+      playbackUrl:
+        channel.accessType === "FREE" && channel.streamKey
+          ? `http://localhost:8888/channel/${channel.streamKey}/index.m3u8`
+          : null,
+
+      /*
+       * Do not expose streamKey for premium channels.
+       */
+      streamKey:
+        channel.accessType === "FREE"
+          ? channel.streamKey
+          : null,
 
       streams: channel.streams.map((stream) => ({
         id: stream.id,

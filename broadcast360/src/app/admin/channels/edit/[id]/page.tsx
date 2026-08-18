@@ -29,6 +29,8 @@ export default async function EditChannelPage({
         country: channel.country ?? "",
         description: channel.description ?? "",
         logo: channel.logo ?? "",
+         accessType:
+          channel.accessType ?? "FREE",
       }}
     />
   );

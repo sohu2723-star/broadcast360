@@ -1,11 +1,20 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { isUserPremium } from "@/services/subscription.service";
+import { verifyUserToken } from "@/lib/user-jwt";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "http://localhost:3001",
-  "Access-Control-Allow-Credentials": "true",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
+  "Access-Control-Allow-Origin":
+    "http://localhost:3001",
+
+  "Access-Control-Allow-Credentials":
+    "true",
+
+  "Access-Control-Allow-Methods":
+    "GET, OPTIONS",
+
+  "Access-Control-Allow-Headers":
+    "Content-Type",
 };
 
 export async function GET(
@@ -21,15 +30,39 @@ export async function GET(
   try {
     const { id } = await params;
 
-    const channel = await prisma.channel.findUnique({
-      where: {
-        id: Number(id),
-      },
+    const channelId = Number(id);
 
-      include: {
-        streams: true,
-      },
-    });
+    if (
+      !Number.isInteger(channelId) ||
+      channelId <= 0
+    ) {
+      return NextResponse.json(
+        {
+          message: "Invalid channel id",
+        },
+        {
+          status: 400,
+          headers: corsHeaders,
+        },
+      );
+    }
+
+    /*
+     * ==========================================
+     * FIND CHANNEL
+     * ==========================================
+     */
+
+    const channel =
+      await prisma.channel.findUnique({
+        where: {
+          id: channelId,
+        },
+
+        include: {
+          streams: true,
+        },
+      });
 
     if (!channel) {
       return NextResponse.json(
@@ -43,45 +76,238 @@ export async function GET(
       );
     }
 
-    const result = {
-      id: channel.id.toString(),
+    /*
+     * ==========================================
+     * FREE CHANNEL
+     * ==========================================
+     *
+     * FREE channels are always allowed.
+     */
 
-      name: channel.name,
+    if (channel.accessType === "FREE") {
+      return NextResponse.json(
+        {
+          allowed: true,
 
-      description: channel.description ?? "",
+          id: channel.id.toString(),
 
-      logo: channel.logo,
+          name: channel.name,
 
-      country: channel.country,
+          description:
+            channel.description ?? "",
+
+          logo: channel.logo,
+
+          country: channel.country,
+
+          accessType: channel.accessType,
+
+          playbackUrl: channel.streamKey
+            ? `http://localhost:8888/channel/${channel.streamKey}/index.m3u8`
+            : null,
+
+          streamKey: channel.streamKey,
+
+          streams: channel.streams.map(
+            (stream) => ({
+              id: stream.id,
+              url: stream.url,
+            }),
+          ),
+        },
+        {
+          status: 200,
+          headers: corsHeaders,
+        },
+      );
+    }
+
+    /*
+     * ==========================================
+     * PREMIUM CHANNEL
+     * ==========================================
+     */
+
+    if (channel.accessType === "PREMIUM") {
+      /*
+       * IMPORTANT:
+       *
+       * Use the same cookie as the rest
+       * of your user portal authentication.
+       */
+
+      const cookieHeader =
+        request.headers.get("cookie");
+
+      let token: string | null = null;
+
+      if (cookieHeader) {
+        const tokenMatch = cookieHeader
+          .split(";")
+          .map((cookie) =>
+            cookie.trim(),
+          )
+          .find((cookie) =>
+            cookie.startsWith(
+              "user_token=",
+            ),
+          );
+
+        if (tokenMatch) {
+          token =
+            tokenMatch.substring(
+              "user_token=".length,
+            );
+        }
+      }
 
       /*
-      =====================
-        MEDIA MTX HLS
-      =====================
-      */
+       * ========================================
+       * NOT LOGGED IN
+       * ========================================
+       */
 
-      playbackUrl: channel.streamKey
-        ? `http://localhost:8888/channel/${channel.streamKey}/index.m3u8`
-        : `http://localhost:3000/streams/channel-${channel.id}/index.m3u8`,
+      if (!token) {
+        return NextResponse.json(
+          {
+            allowed: false,
 
-      streamKey: channel.streamKey,
+            accessType: "PREMIUM",
 
-      streams: channel.streams.map((stream) => ({
-        id: stream.id,
-        url: stream.url,
-      })),
-    };
+            message:
+              "Please login to watch this premium channel.",
+          },
+          {
+            status: 401,
+            headers: corsHeaders,
+          },
+        );
+      }
 
-    return NextResponse.json(result, {
-      status: 200,
-      headers: corsHeaders,
-    });
-  } catch (error) {
-    console.error("PUBLIC CHANNEL BY ID ERROR:", error);
+      /*
+       * ========================================
+       * VERIFY USER
+       * ========================================
+       */
+
+      let userId: number;
+
+      try {
+        const payload =
+          await verifyUserToken(token);
+
+        userId = Number(payload.id);
+
+        if (
+          !Number.isInteger(userId) ||
+          userId <= 0
+        ) {
+          throw new Error(
+            "Invalid user",
+          );
+        }
+      } catch (error) {
+        console.error(
+          "USER TOKEN VERIFICATION FAILED:",
+          error,
+        );
+
+        return NextResponse.json(
+          {
+            allowed: false,
+
+            accessType: "PREMIUM",
+
+            message:
+              "Please login again to watch this channel.",
+          },
+          {
+            status: 401,
+            headers: corsHeaders,
+          },
+        );
+      }
+
+      /*
+       * ========================================
+       * CHECK PREMIUM
+       * ========================================
+       */
+
+      const premium =
+        await isUserPremium(userId);
+
+      if (!premium) {
+        return NextResponse.json(
+          {
+            allowed: false,
+
+            accessType: "PREMIUM",
+
+            message:
+              "Premium subscription required to watch this channel.",
+          },
+          {
+            status: 403,
+            headers: corsHeaders,
+          },
+        );
+      }
+    }
+
+    /*
+     * ==========================================
+     * ACCESS GRANTED
+     * ==========================================
+     */
 
     return NextResponse.json(
       {
-        message: "Cannot fetch channel",
+        allowed: true,
+
+        id: channel.id.toString(),
+
+        name: channel.name,
+
+        description:
+          channel.description ?? "",
+
+        logo: channel.logo,
+
+        country: channel.country,
+
+        accessType:
+          channel.accessType,
+
+        playbackUrl: channel.streamKey
+          ? `http://localhost:8888/channel/${channel.streamKey}/index.m3u8`
+          : null,
+
+        streamKey: channel.streamKey,
+
+        streams: channel.streams.map(
+          (stream) => ({
+            id: stream.id,
+            url: stream.url,
+          }),
+        ),
+      },
+      {
+        status: 200,
+        headers: corsHeaders,
+      },
+    );
+  } catch (error) {
+    console.error(
+      "CHANNEL ACCESS API ERROR:",
+      error,
+    );
+
+    return NextResponse.json(
+      {
+        allowed: false,
+        message:
+          "Cannot access this channel",
       },
       {
         status: 500,

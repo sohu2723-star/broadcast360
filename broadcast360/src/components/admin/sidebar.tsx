@@ -36,7 +36,7 @@ const menus: MenuItem[] = [
     name: "TV Control",
     path: "/admin/tv",
   },
-    {
+  {
     name: "Channels",
     path: "/admin/channels",
   },
@@ -44,14 +44,18 @@ const menus: MenuItem[] = [
     name: "Schedules",
     path: "/admin/schedules",
   },
-   {
+  {
     name: "Programs",
     path: "/admin/programs",
   },
-   {
+  {
     name: "Live Streams",
     path: "/admin/streams",
   },
+
+  // =====================================================
+  // CONTENT
+  // =====================================================
 
   {
     name: "Content",
@@ -78,6 +82,11 @@ const menus: MenuItem[] = [
       },
     ],
   },
+
+  // =====================================================
+  // SUBSCRIPTIONS
+  // =====================================================
+
   {
     name: "Subscriptions",
     children: [
@@ -85,7 +94,7 @@ const menus: MenuItem[] = [
         name: "Subscriptions",
         path: "/admin/subscriptions",
       },
-       {
+      {
         name: "Plans",
         path: "/admin/subscription-plans",
       },
@@ -99,10 +108,30 @@ const menus: MenuItem[] = [
       },
     ],
   },
-    {
+
+  // =====================================================
+  // SUPPORT
+  // =====================================================
+
+  {
+    name: "Support",
+    children: [
+      {
+        name: "Contact Messages",
+        path: "/admin/support/contacts",
+      },
+      {
+        name: "Premium Chats",
+        path: "/admin/support/chats",
+      },
+    ],
+  },
+
+  {
     name: "Users",
     path: "/admin/users",
   },
+
   {
     name: "Settings",
     path: "/admin/settings",
@@ -113,7 +142,20 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   const [user, setUser] = useState<AdminUser | null>(null);
+
   const [openMenu, setOpenMenu] = useState<string | null>(null);
+
+  // =====================================================
+  // NOTIFICATION COUNTS
+  // =====================================================
+
+  const [pendingPaymentCount, setPendingPaymentCount] =
+    useState(0);
+
+  const [supportCount, setSupportCount] = useState({
+    contactMessages: 0,
+    premiumChats: 0,
+  });
 
   // =====================================================
   // LOAD ADMIN USER
@@ -124,6 +166,7 @@ export default function Sidebar() {
       try {
         const res = await fetch("/api/auth/me", {
           credentials: "include",
+          cache: "no-store",
         });
 
         const data = await res.json();
@@ -134,7 +177,7 @@ export default function Sidebar() {
       } catch (error) {
         console.error(
           "Failed to load admin user:",
-          error
+          error,
         );
       }
     }
@@ -143,15 +186,111 @@ export default function Sidebar() {
   }, []);
 
   // =====================================================
+  // LOAD NOTIFICATION COUNTS
+  // =====================================================
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadNotificationCounts() {
+      // ---------------------------------------------------
+      // PENDING PAYMENTS
+      // ---------------------------------------------------
+
+      try {
+        const res = await fetch(
+          "/api/payments/pending-count",
+          {
+            method: "GET",
+            credentials: "include",
+            cache: "no-store",
+          },
+        );
+
+        if (res.ok) {
+          const data = await res.json();
+
+          if (!cancelled) {
+            setPendingPaymentCount(
+              Number(data.count) || 0,
+            );
+          }
+        } else {
+          console.error(
+            "Failed to load pending payment count:",
+            res.status,
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Failed to load pending payment count:",
+          error,
+        );
+      }
+
+      // ---------------------------------------------------
+      // SUPPORT COUNTS
+      // ---------------------------------------------------
+
+      try {
+        const res = await fetch(
+          "/api/support/pending-count",
+          {
+            method: "GET",
+            credentials: "include",
+            cache: "no-store",
+          },
+        );
+
+        if (res.ok) {
+          const data = await res.json();
+
+          if (!cancelled) {
+            setSupportCount({
+              contactMessages:
+                Number(data.contactMessages) || 0,
+
+              premiumChats:
+                Number(data.premiumChats) || 0,
+            });
+          }
+        } else {
+          console.error(
+            "Failed to load support count:",
+            res.status,
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Failed to load support count:",
+          error,
+        );
+      }
+    }
+
+    loadNotificationCounts();
+
+    // Refresh every 30 seconds
+    const interval = setInterval(
+      loadNotificationCounts,
+      30000,
+    );
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
+
+  // =====================================================
   // AUTO OPEN ACTIVE GROUP
   // =====================================================
 
   useEffect(() => {
-    const activeGroup = menus.find(
-      (menu) =>
-        menu.children?.some((child) =>
-          pathname.startsWith(child.path)
-        )
+    const activeGroup = menus.find((menu) =>
+      menu.children?.some((child) =>
+        pathname.startsWith(child.path),
+      ),
     );
 
     if (activeGroup) {
@@ -176,11 +315,33 @@ export default function Sidebar() {
   // =====================================================
 
   function isGroupActive(
-    children: SubMenuItem[]
+    children: SubMenuItem[],
   ) {
     return children.some((child) =>
-      pathname.startsWith(child.path)
+      pathname.startsWith(child.path),
     );
+  }
+
+  // =====================================================
+  // GET BADGE COUNT
+  // =====================================================
+
+  function getBadgeCount(
+    childName: string,
+  ) {
+    switch (childName) {
+      case "Payments":
+        return pendingPaymentCount;
+
+      case "Contact Messages":
+        return supportCount.contactMessages;
+
+      case "Premium Chats":
+        return supportCount.premiumChats;
+
+      default:
+        return 0;
+    }
   }
 
   return (
@@ -231,6 +392,7 @@ export default function Sidebar() {
                 className={`
                   flex
                   items-center
+                  justify-between
                   rounded-xl
                   px-4
                   py-3
@@ -244,7 +406,7 @@ export default function Sidebar() {
                   }
                 `}
               >
-                {menu.name}
+                <span>{menu.name}</span>
               </Link>
             );
           }
@@ -254,18 +416,25 @@ export default function Sidebar() {
           // =================================================
 
           const children = menu.children ?? [];
+
           const active = isGroupActive(children);
-          const isOpen = openMenu === menu.name;
+
+          const isOpen =
+            openMenu === menu.name;
 
           return (
             <div key={menu.name}>
-              {/* GROUP BUTTON */}
+              {/* =================================================
+                  GROUP BUTTON
+              ================================================= */}
 
               <button
                 type="button"
                 onClick={() =>
                   setOpenMenu(
-                    isOpen ? null : menu.name
+                    isOpen
+                      ? null
+                      : menu.name,
                   )
                 }
                 className={`
@@ -303,7 +472,9 @@ export default function Sidebar() {
                 </span>
               </button>
 
-              {/* GROUP CHILDREN */}
+              {/* =================================================
+                  GROUP CHILDREN
+              ================================================= */}
 
               {isOpen && (
                 <div className="ml-3 mt-1 space-y-1 border-l border-white/10 pl-3">
@@ -311,12 +482,19 @@ export default function Sidebar() {
                     const childActive =
                       isActive(child.path);
 
+                    const badgeCount =
+                      getBadgeCount(
+                        child.name,
+                      );
+
                     return (
                       <Link
                         key={child.path}
                         href={child.path}
                         className={`
-                          block
+                          flex
+                          items-center
+                          justify-between
                           rounded-lg
                           px-3
                           py-2.5
@@ -329,7 +507,37 @@ export default function Sidebar() {
                           }
                         `}
                       >
-                        {child.name}
+                        <span>
+                          {child.name}
+                        </span>
+
+                        {/* =================================================
+                            NOTIFICATION BADGE
+                        ================================================= */}
+
+                        {badgeCount > 0 && (
+                          <span
+                            className="
+                              ml-2
+                              flex
+                              min-h-[20px]
+                              min-w-[20px]
+                              items-center
+                              justify-center
+                              rounded-full
+                              bg-red-500
+                              px-1.5
+                              text-[11px]
+                              font-bold
+                              leading-none
+                              text-white
+                            "
+                          >
+                            {badgeCount > 99
+                              ? "99+"
+                              : badgeCount}
+                          </span>
+                        )}
                       </Link>
                     );
                   })}
@@ -338,7 +546,7 @@ export default function Sidebar() {
             </div>
           );
         })}
-      </nav>   
+      </nav>
     </aside>
   );
 }

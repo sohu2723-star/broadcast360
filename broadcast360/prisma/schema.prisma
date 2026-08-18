@@ -68,7 +68,10 @@ model User {
   favorites    Favorite[]
 
   // NEW
-  subscriptions Subscription[]
+  subscriptions        Subscription[]
+  programReminders     ProgramReminder[]
+  contactMessages      ContactMessage[]
+  supportConversations SupportConversation[]
 }
 
 // =====================
@@ -227,6 +230,7 @@ model Channel {
   description       String?
   logo              String?
   country           String?
+  accessType        AccessType         @default(FREE)
   streams           Stream[]
   streamKey         String             @unique
   news              News[]
@@ -515,7 +519,8 @@ model Schedule {
   channel  Channel  @relation(fields: [channelId], references: [id])
   playlist Playlist @relation(fields: [playlistId], references: [id])
 
-  sessions BroadcastSession[]
+  sessions         BroadcastSession[]
+  programReminders ProgramReminder[]
 
   createdAt DateTime @default(now())
 }
@@ -578,4 +583,98 @@ model Recording {
   news News[]
 
   createdAt DateTime @default(now())
+}
+
+model ProgramReminder {
+  id         Int @id @default(autoincrement())
+  userId     Int
+  scheduleId Int
+
+  notifyAt DateTime
+  sentAt   DateTime?
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  schedule Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, scheduleId])
+  @@index([notifyAt, sentAt])
+}
+
+enum ContactMessageStatus {
+  NEW
+  READ
+  RESOLVED
+}
+
+enum SupportConversationStatus {
+  OPEN
+  CLOSED
+}
+
+enum SupportSenderRole {
+  USER
+  ADMIN
+}
+
+model ContactMessage {
+  id Int @id @default(autoincrement())
+
+  userId Int?
+  user   User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  name    String
+  email   String
+  subject String
+  message String
+
+  status ContactMessageStatus @default(NEW)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model SupportConversation {
+  id Int @id @default(autoincrement())
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  status SupportConversationStatus @default(OPEN)
+
+  messages SupportMessage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([updatedAt])
+}
+
+model SupportMessage {
+  id Int @id @default(autoincrement())
+
+  conversationId Int
+  conversation   SupportConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  senderId   Int
+  senderRole SupportSenderRole
+
+  message String
+
+  isRead Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([isRead])
+  @@index([createdAt])
 }

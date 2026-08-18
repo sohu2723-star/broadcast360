@@ -7,20 +7,20 @@ import { useParams } from "next/navigation";
 import {
   ArrowLeft,
   Tv,
-  Radio,
   ListVideo,
   Globe,
   Calendar,
-  Key,
   Save,
   Clock,
-  ShieldCheck,
   CheckCircle2,
   Copy,
   Check,
   Sliders,
   Activity,
   AlertTriangle,
+  Lock,
+  Unlock,
+  Shield,
 } from "lucide-react";
 
 type Playlist = {
@@ -29,12 +29,15 @@ type Playlist = {
   totalDuration: number | null;
 };
 
+type ChannelAccessType = "FREE" | "PREMIUM";
+
 type Channel = {
   id: number;
   name: string;
   streamKey: string;
   description: string | null;
   logo: string | null;
+  accessType: ChannelAccessType;
   country: string | null;
   createdAt: string;
   defaultPlaylistId: number | null;
@@ -60,7 +63,7 @@ export default function ChannelDetailPage() {
           throw new Error("Failed to fetch channel");
         }
 
-        const data = await res.json();
+        const data: Channel = await res.json();
         setChannel(data);
         if (data.defaultPlaylistId) {
           setSelectedPlaylist(data.defaultPlaylistId);
@@ -92,7 +95,14 @@ export default function ChannelDetailPage() {
         }),
       });
 
-      alert("Fallback playlist updated");
+      if (channel) {
+        setChannel({ ...channel, defaultPlaylistId: selectedPlaylist });
+      }
+
+      alert("Fallback playlist updated successfully.");
+    } catch (error) {
+      console.error(error);
+      alert("Failed to update fallback playlist.");
     } finally {
       setSaving(false);
     }
@@ -111,7 +121,7 @@ export default function ChannelDetailPage() {
       <div className="flex min-h-screen items-center justify-center bg-[#010312] font-mono text-xs text-[#106EE9]">
         <div className="flex items-center gap-2 rounded-xl border border-white/5 bg-[#0B1026] px-5 py-3 shadow-lg">
           <Activity size={16} className="animate-spin text-[#106EE9]" />
-          <span className="tracking-widest">CONNECTING TO CHANNEL NODE...</span>
+          <span className="tracking-widest">LOADING CHANNEL DETAILS...</span>
         </div>
       </div>
     );
@@ -123,7 +133,7 @@ export default function ChannelDetailPage() {
         <div className="rounded-2xl bg-red-500/10 p-4 border border-red-500/20 text-red-400 mb-4 shadow-lg">
           <Tv size={28} />
         </div>
-        <h2 className="text-lg font-bold">Node Communication Failed</h2>
+        <h2 className="text-lg font-bold">Channel Not Found</h2>
         <p className="mt-1 text-xs text-zinc-400 max-w-sm">
           The requested channel ID does not exist or has been decommissioned.
         </p>
@@ -140,6 +150,8 @@ export default function ChannelDetailPage() {
   const selectedPlaylistData = channel.playlists.find(
     (p) => p.id === selectedPlaylist
   );
+
+  const isPremium = channel.accessType === "PREMIUM";
 
   return (
     <div className="min-h-screen bg-[#010312] p-4 sm:p-6 text-white font-sans antialiased">
@@ -161,12 +173,23 @@ export default function ChannelDetailPage() {
                 <span className="rounded-md bg-[#106EE9]/10 border border-[#106EE9]/30 px-2 py-0.5 font-mono text-[11px] font-semibold text-[#106EE9]">
                   ID #{channel.id}
                 </span>
+                
+                {/* Access Type Read-Only Header Badge */}
+                <span
+                  className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border ${
+                    isPremium
+                      ? "bg-amber-500/10 border-amber-500/30 text-amber-400"
+                      : "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
+                  }`}
+                >
+                  {isPremium ? <Lock size={10} /> : <Unlock size={10} />}
+                  {channel.accessType}
+                </span>
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-3 self-end sm:self-auto">
-           
             <button
               onClick={saveChanges}
               disabled={saving}
@@ -216,14 +239,14 @@ export default function ChannelDetailPage() {
             <div className="w-full sm:w-auto bg-[#010312]/80 backdrop-blur-md border border-[#106EE9]/30 rounded-xl p-3.5 min-w-[280px]">
               <div className="flex items-center justify-between text-xs mb-2">
                 <span className="text-zinc-300 font-medium flex items-center gap-1.5">
-                 Stream Key
+                  Stream Key
                 </span>
               </div>
               <div className="flex items-center justify-between gap-3 bg-[#0B1026] px-3 py-2 rounded-lg border border-white/5 font-mono text-xs text-[#106EE9]">
                 <span className="truncate max-w-[180px] font-semibold">{channel.streamKey}</span>
                 <button
                   onClick={handleCopyKey}
-                  className="p-1 hover:bg-white/10 rounded-md text-zinc-400 hover:text-white transition-all active:scale-95"
+                  className="p-1 hover:bg-white/10 rounded-md text-zinc-400 hover:text-white transition-all active:scale-95 cursor-pointer"
                   title="Copy Stream Key"
                 >
                   {copied ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
@@ -233,10 +256,10 @@ export default function ChannelDetailPage() {
           </div>
         </div>
 
-        {/* Layout Grid */}
+        {/* Main Content Layout Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           
-          {/* Main Controls */}
+          {/* Main Controls Column */}
           <div className="lg:col-span-2 space-y-5">
             
             {/* Fallback Automation Card */}
@@ -256,7 +279,7 @@ export default function ChannelDetailPage() {
 
               <div className="space-y-2.5">
                 <label className="text-xs font-semibold text-zinc-300">
-                  Select Active Fallback
+                  Select Active Fallback Playlist
                 </label>
 
                 <select
@@ -301,7 +324,7 @@ export default function ChannelDetailPage() {
               </div>
             </div>
 
-            {/* Channel Description */}
+            {/* Channel Description Card */}
             <div className="rounded-2xl border border-white/10 bg-[#0B1026] p-5 space-y-3 shadow-lg">
               <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-400">
                 Channel Description
@@ -315,13 +338,41 @@ export default function ChannelDetailPage() {
 
           </div>
 
-          {/* Column 3: Sidebar Telemetry */}
+          {/* Sidebar Telemetry Column */}
           <div className="space-y-5">
             
+            {/* Read-Only Access Tier Banner */}
+            <div className="rounded-2xl border border-white/10 bg-[#0B1026] p-5 space-y-3 shadow-lg">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[#106EE9] flex items-center gap-2">
+                <Shield size={16} /> Access Tier
+              </h3>
+
+              <div
+                className={`flex items-center justify-between p-3.5 rounded-xl border ${
+                  isPremium
+                    ? "bg-amber-500/10 border-amber-500/20 text-amber-300"
+                    : "bg-emerald-500/10 border-emerald-500/20 text-emerald-300"
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  {isPremium ? <Lock size={16} /> : <Unlock size={16} />}
+                  <span className="text-xs font-bold uppercase tracking-wider font-mono">
+                    {channel.accessType} ACCESS
+                  </span>
+                </div>
+              </div>
+
+              <p className="text-[11px] text-zinc-400 leading-relaxed">
+                {isPremium
+                  ? "Exclusive content tier. Viewing requires verified subscription privileges."
+                  : "Public stream tier. Unrestricted viewing access across portals."}
+              </p>
+            </div>
+
             {/* Quick Stats Grid */}
             <div className="rounded-2xl border border-white/10 bg-[#0B1026] p-5 space-y-3 shadow-lg">
               <h3 className="text-xs font-bold uppercase tracking-wider text-[#106EE9] flex items-center gap-2">
-                <Sliders size={16} /> Channel Overview
+                <Sliders size={16} /> Overview Metrics
               </h3>
 
               <div className="space-y-2 text-xs font-mono">
@@ -334,26 +385,15 @@ export default function ChannelDetailPage() {
                   <span className="text-white font-bold">{channel.country || "GLOBAL"}</span>
                 </div>
                 <div className="flex justify-between items-center p-2.5 rounded-lg bg-[#010312] border border-white/5">
+                  <span className="text-zinc-500">Access Tier</span>
+                  <span className={`font-bold ${isPremium ? "text-amber-400" : "text-emerald-400"}`}>
+                    {channel.accessType}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center p-2.5 rounded-lg bg-[#010312] border border-white/5">
                   <span className="text-zinc-500">Bound Playlists</span>
                   <span className="text-[#106EE9] font-bold">{channel.playlists.length} Total</span>
                 </div>
-              </div>
-            </div>
-
-            {/* Health Status */}
-            <div className="rounded-2xl border border-white/10 bg-[#0B1026] p-5 space-y-3 shadow-lg">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-2">
-                <Radio size={16} /> Output Health
-              </h3>
-              <p className="text-xs text-zinc-400 leading-relaxed">
-                System telemetry automatically validates fallback loop integrity.
-              </p>
-              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300 font-mono flex items-center gap-2.5">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
-                <span>PLayout Ready • No Errors</span>
               </div>
             </div>
 

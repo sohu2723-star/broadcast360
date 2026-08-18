@@ -19,6 +19,8 @@ export const createChannelSchema = z.object({
     .trim()
     .min(1,"Description is required"),
 
+   accessType: z.enum(["FREE", "PREMIUM"]),
+
 });
 
 export const updateChannelSchema = z.object({
@@ -40,5 +42,7 @@ export const updateChannelSchema = z.object({
   description: z.string()
     .trim()
     .min(1,"Description is required"),
+
+  accessType: z.enum(["FREE", "PREMIUM"]).optional(),
 
 });

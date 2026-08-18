@@ -30,8 +30,11 @@ const menus = [
     name: "News",
     href: "/news",
   },{
-    name: "Contact us",
-    href: "/contact",
+    name: "Schedule",
+    href: "/schedule",
+  },{
+    name: "Contact Us",
+    href: "/support",
   },
   
 ];
