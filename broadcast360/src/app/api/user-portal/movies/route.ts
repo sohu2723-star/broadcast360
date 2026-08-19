@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { cors, optionsResponse } from "@/lib/cors";
 
-function mediaUrl(value: string | null | undefined) {
+function mediaUrl(value: string | null | undefined, origin: string) {
   if (!value) return null;
 
   if (
@@ -11,13 +12,12 @@ function mediaUrl(value: string | null | undefined) {
     return value;
   }
 
-  return `http://localhost:3000${
-    value.startsWith("/") ? value : `/${value}`
-  }`;
+  return new URL(value.startsWith("/") ? value : `/${value}`, origin).toString();
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    const requestOrigin = new URL(req.url).origin;
     const now = new Date();
 
     const oneMonthAgo = new Date();
@@ -183,10 +183,10 @@ export async function GET() {
             movie?.duration ?? 0,
 
           thumbnail:
-            mediaUrl(movie?.thumbnail),
+            mediaUrl(movie?.thumbnail, requestOrigin),
 
           videoUrl:
-            mediaUrl(movie?.videoUrl),
+            mediaUrl(movie?.videoUrl, requestOrigin),
 
           // =================================================
           // CHANNEL
@@ -199,7 +199,7 @@ export async function GET() {
             schedule.channel.name,
 
           channelLogo:
-            mediaUrl(schedule.channel.logo),
+            mediaUrl(schedule.channel.logo, requestOrigin),
 
           // =================================================
           // SCHEDULE
@@ -220,24 +220,16 @@ export async function GET() {
     // RESPONSE
     // =====================================================
 
-    return NextResponse.json(
-      {
-        movies,
-      },
-      {
-        status: 200,
-
-        headers: {
-          "Access-Control-Allow-Origin":
-            "http://localhost:3001",
-
-          "Access-Control-Allow-Methods":
-            "GET, OPTIONS",
-
-          "Access-Control-Allow-Headers":
-            "Content-Type",
+    return cors(
+      NextResponse.json(
+        { movies },
+        {
+          status: 200,
+          headers: {
+            "Cache-Control": "public, s-maxage=15, stale-while-revalidate=60",
+          },
         },
-      },
+      ),
     );
   } catch (error) {
     console.error(
@@ -245,14 +237,15 @@ export async function GET() {
       error,
     );
 
-    return NextResponse.json(
-      {
-        message:
-          "Failed to fetch movies",
-      },
-      {
-        status: 500,
-      },
+    return cors(
+      NextResponse.json(
+        { message: "Failed to fetch movies" },
+        { status: 500 },
+      ),
     );
   }
+}
+
+export function OPTIONS() {
+  return optionsResponse();
 }

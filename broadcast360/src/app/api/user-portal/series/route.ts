@@ -1,146 +1,134 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { ScheduleStatus } from "@/generated/prisma";
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "http://localhost:3001",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-};
+import { cors, optionsResponse } from "@/lib/cors";
 
-export async function GET(req: NextRequest) {
+function mediaUrl(value: string | null | undefined, origin: string) {
+  if (!value) return null;
+  if (value.startsWith("http://") || value.startsWith("https://")) return value;
+  return new URL(value.startsWith("/") ? value : `/${value}`, origin).toString();
+}
+
+function positiveInt(value: string | null, fallback: number, maximum: number) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.min(maximum, Math.max(1, Math.floor(parsed)));
+}
+
+export async function GET(req: Request) {
   try {
-    const { searchParams } = new URL(req.url);
-
-    const search = searchParams.get("search") || "";
-    const channelId = searchParams.get("channelId");
-    const type = searchParams.get("type");
-
-    const page = Number(searchParams.get("page") || 1);
-    const limit = Number(searchParams.get("limit") || 20);
-
+    const requestUrl = new URL(req.url);
+    const search = requestUrl.searchParams.get("search")?.trim() ?? "";
+    const channelIdValue = requestUrl.searchParams.get("channelId");
+    const channelId = channelIdValue ? Number(channelIdValue) : undefined;
+    const type = requestUrl.searchParams.get("type");
+    const page = positiveInt(requestUrl.searchParams.get("page"), 1, 10000);
+    const limit = positiveInt(requestUrl.searchParams.get("limit"), 20, 50);
     const skip = (page - 1) * limit;
+    const origin = requestUrl.origin;
 
-    /**
-     * Episode becomes available:
-     * schedule endTime + 1 hour
-     */
-    //const availableTime = new Date(Date.now() - 60 * 60 * 1000);
-    const availableTime = new Date(Date.now() - 1 * 60 * 1000);
-
-    /**
-     * Remove content older than one month
-     */
+    const availableTime = new Date(Date.now() - 60 * 1000);
     const oneMonthAgo = new Date();
     oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-    //const oneMonthAgo = new Date(Date.now() - 5 * 60 * 1000);
 
-    const episodes = await prisma.episode.findMany({
+    const schedules = await prisma.schedule.findMany({
       where: {
-        series: {
-          title: {
-            contains: search,
-            mode: "insensitive",
-          },
-        },
-
-        playlistItems: {
-          some: {},
-        },
-      },
-
-      include: {
-        series: true,
-
-        playlistItems: {
-          include: {
-            playlist: {
-              include: {
-                schedules: {
-                  where: {
-                    ...(channelId
-                      ? {
-                        channelId: Number(channelId),
-                      }
-                      : {}),
-
-                    endTime: {
-                      lte: availableTime,
-                      gte: oneMonthAgo,
-                    },
-                  },
-
-                  include: {
-                    channel: true,
-                  },
-
-                  orderBy: {
-                    endTime: "desc",
-                  },
-
-                  take: 1,
+        ...(Number.isFinite(channelId) ? { channelId } : {}),
+        endTime: { lte: availableTime, gte: oneMonthAgo },
+        playlist: {
+          items: {
+            some: {
+              type: "EPISODE",
+              episode: {
+                series: {
+                  title: { contains: search, mode: "insensitive" },
                 },
               },
             },
           },
         },
       },
-
-      orderBy: {
-        episodeNo: "desc",
+      select: {
+        id: true,
+        startTime: true,
+        endTime: true,
+        channel: { select: { id: true, name: true } },
+        playlist: {
+          select: {
+            items: {
+              where: { type: "EPISODE", episodeId: { not: null } },
+              orderBy: { order: "desc" },
+              select: {
+                episode: {
+                  select: {
+                    id: true,
+                    title: true,
+                    episodeNo: true,
+                    duration: true,
+                    videoUrl: true,
+                    series: {
+                      select: {
+                        id: true,
+                        title: true,
+                        description: true,
+                        genre: true,
+                        releaseYear: true,
+                        thumbnail: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
       },
+      orderBy: { endTime: "desc" },
     });
 
-    /*
-      Convert Episode[] into Series[]
-    */
-
-    const seriesMap = new Map<number, any>();
-
-    for (const episode of episodes) {
-      const schedule = episode.playlistItems
-        .flatMap((item) => item.playlist.schedules)
-        .sort(
-          (a, b) =>
-            new Date(b.endTime!).getTime() - new Date(a.endTime!).getTime(),
-        )[0];
-
-      if (!schedule) continue;
-
-      const series = episode.series;
-
-      const current = seriesMap.get(series.id);
-
-      const episodeData = {
-        id: episode.id,
-        title: episode.title,
-        episodeNo: episode.episodeNo,
-        duration: episode.duration,
-        videoUrl: episode.videoUrl,
+    const seriesMap = new Map<number, {
+      id: number;
+      title: string;
+      description: string | null;
+      genre: string | null;
+      releaseYear: number | null;
+      thumbnail: string | null;
+      latestEpisode: {
+        id: number;
+        title: string;
+        episodeNo: number;
+        duration: number;
+        videoUrl: string | null;
       };
+      channel: { id: number; name: string };
+      schedule: { id: number; startTime: Date; endTime: Date | null };
+    }>();
 
-      if (!current || episode.episodeNo > current.latestEpisode.episodeNo) {
-        seriesMap.set(series.id, {
-          id: series.id,
+    for (const schedule of schedules) {
+      for (const item of schedule.playlist.items) {
+        const episode = item.episode;
+        if (!episode?.series || !schedule.channel || !schedule.endTime) continue;
 
-          title: series.title,
+        const current = seriesMap.get(episode.series.id);
+        if (current && current.latestEpisode.episodeNo >= episode.episodeNo) continue;
 
-          description: series.description,
-
-          genre: series.genre,
-
-          releaseYear: series.releaseYear,
-
-          thumbnail: series.thumbnail
-            ? `http://localhost:3000${series.thumbnail}`
-            : null,
-
-          latestEpisode: episodeData,
-
+        seriesMap.set(episode.series.id, {
+          id: episode.series.id,
+          title: episode.series.title,
+          description: episode.series.description,
+          genre: episode.series.genre,
+          releaseYear: episode.series.releaseYear,
+          thumbnail: mediaUrl(episode.series.thumbnail, origin),
+          latestEpisode: {
+            id: episode.id,
+            title: episode.title,
+            episodeNo: episode.episodeNo,
+            duration: episode.duration,
+            videoUrl: mediaUrl(episode.videoUrl, origin),
+          },
           channel: {
             id: schedule.channel.id,
             name: schedule.channel.name,
           },
-
           schedule: {
             id: schedule.id,
             startTime: schedule.startTime,
@@ -150,32 +138,18 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    let result = Array.from(seriesMap.values());
-
-    result.sort(
-      (a, b) =>
-        new Date(b.schedule.endTime).getTime() -
-        new Date(a.schedule.endTime).getTime(),
+    let result = Array.from(seriesMap.values()).sort(
+      (a, b) => new Date(b.schedule.endTime ?? 0).getTime() - new Date(a.schedule.endTime ?? 0).getTime(),
     );
 
-    /*
-      Hot series
-    */
-
-    if (type === "hot") {
-      result = result.slice(0, 10);
-    }
-
+    if (type === "hot") result = result.slice(0, 10);
     const total = result.length;
-
     const data = type === "hot" ? result : result.slice(skip, skip + limit);
 
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         success: true,
-
         series: data,
-
         pagination: {
           page,
           limit,
@@ -183,33 +157,26 @@ export async function GET(req: NextRequest) {
           totalPages: Math.ceil(total / limit),
         },
       },
-
       {
         status: 200,
-        headers: corsHeaders,
+        headers: {
+          "Cache-Control": "public, s-maxage=20, stale-while-revalidate=120",
+        },
       },
     );
+
+    return cors(response);
   } catch (error) {
     console.error("SERIES LIST ERROR:", error);
-
-    return NextResponse.json(
-      {
-        success: false,
-        message: "Failed to fetch series",
-      },
-
-      {
-        status: 500,
-        headers: corsHeaders,
-      },
+    return cors(
+      NextResponse.json(
+        { success: false, message: "Failed to fetch series" },
+        { status: 500 },
+      ),
     );
   }
 }
 
-export async function OPTIONS() {
-  return new NextResponse(null, {
-    status: 200,
-
-    headers: corsHeaders,
-  });
+export function OPTIONS() {
+  return optionsResponse();
 }

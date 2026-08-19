@@ -265,13 +265,10 @@ export default function ProfilePage() {
         }
       );
 
-      await authApi.post(
-        "/api/user-portal/auth/logout"
-      );
+      await authApi.post("/api/user-portal/auth/logout");
+      clearGoogleAutoSelect();
 
-      alert(
-        "Password updated successfully. Please login again."
-      );
+      alert("Password updated successfully. Please login again.");
 
       window.location.href = "/login";
     } catch (error: unknown) {

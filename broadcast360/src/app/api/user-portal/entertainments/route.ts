@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { cors, optionsResponse } from "@/lib/cors";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-
-function mediaUrl(path: string | null | undefined) {
+function mediaUrl(path: string | null | undefined, origin: string) {
   if (!path) {
     return null;
   }
@@ -16,11 +14,12 @@ function mediaUrl(path: string | null | undefined) {
     return path;
   }
 
-  return `http://localhost:3000${path}`;
+  return new URL(path.startsWith("/") ? path : `/${path}`, origin).toString();
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const backendOrigin = new URL(request.url).origin;
     // =====================================================
     // DATE RANGE
     // =====================================================
@@ -81,6 +80,7 @@ export async function GET() {
         orderBy: {
           endTime: "desc",
         },
+        take: 100,
       });
 
     console.log(
@@ -234,12 +234,14 @@ export async function GET() {
 
           thumbnail:
             mediaUrl(
-              entertainment.thumbnail
+              entertainment.thumbnail,
+              backendOrigin,
             ),
 
           videoUrl:
             mediaUrl(
-              entertainment.videoUrl
+              entertainment.videoUrl,
+              backendOrigin,
             ),
 
           duration:
@@ -258,7 +260,8 @@ export async function GET() {
 
           channelLogo:
             mediaUrl(
-              schedule.channel.logo
+              schedule.channel.logo,
+              backendOrigin,
             ),
 
           // ------------------------------------------------
@@ -307,24 +310,16 @@ export async function GET() {
     // RESPONSE
     // =====================================================
 
-    return NextResponse.json(
-      {
-        entertainments,
-      },
-      {
-        status: 200,
-
-        headers: {
-          "Access-Control-Allow-Origin":
-            "http://localhost:3001",
-
-          "Access-Control-Allow-Methods":
-            "GET, OPTIONS",
-
-          "Access-Control-Allow-Headers":
-            "Content-Type",
+    return cors(
+      NextResponse.json(
+        { entertainments },
+        {
+          status: 200,
+          headers: {
+            "Cache-Control": "public, s-maxage=15, stale-while-revalidate=60",
+          },
         },
-      }
+      ),
     );
   } catch (error) {
     console.error(
@@ -332,14 +327,15 @@ export async function GET() {
       error
     );
 
-    return NextResponse.json(
-      {
-        message:
-          "Failed to fetch entertainments",
-      },
-      {
-        status: 500,
-      }
+    return cors(
+      NextResponse.json(
+        { message: "Failed to fetch entertainments" },
+        { status: 500 },
+      ),
     );
   }
+}
+
+export function OPTIONS() {
+  return optionsResponse();
 }

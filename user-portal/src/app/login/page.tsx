@@ -33,6 +33,7 @@ declare global {
             client_id: string;
             callback: (response: GoogleCredentialResponse) => void;
             ux_mode?: "popup" | "redirect";
+            auto_select?: boolean;
           }) => void;
           renderButton: (element: HTMLElement, options: Record<string, unknown>) => void;
         };
@@ -96,6 +97,7 @@ export default function LoginPage() {
     window.google.accounts.id.initialize({
       client_id: googleClientId,
       ux_mode: "popup",
+      auto_select: false,
       callback: async (response) => {
         try {
           setLoading(true);

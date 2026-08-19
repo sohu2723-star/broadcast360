@@ -1,11 +1,26 @@
 "use client";
 
-import Link from "next/link";
 import Script from "next/script";
+import { useEffect, useRef, useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+
+import {
+  AuthBackdrop,
+  AuthError,
+  AuthLabel,
+  AuthNotice,
+  FieldError,
+  GoogleButtonSlot,
+  GoogleDivider,
+  MoonSpinner,
+  authInputClass,
+} from "@/components/auth/AuthUi";
 
 type GoogleCredentialResponse = { credential: string };
+
+type LoginForm = { email: string; password: string };
+type LoginErrors = { email?: string; password?: string };
 
 declare global {
   interface Window {
@@ -16,6 +31,7 @@ declare global {
             client_id: string;
             callback: (response: GoogleCredentialResponse) => void;
             ux_mode?: "popup" | "redirect";
+            auto_select?: boolean;
           }) => void;
           renderButton: (element: HTMLElement, options: Record<string, unknown>) => void;
         };
@@ -24,51 +40,79 @@ declare global {
   }
 }
 
-type LoginForm = {
-  email: string;
-  password: string;
-};
-
-type Errors = {
-  email?: string;
-  password?: string;
-};
-
 export default function LoginPage() {
   const router = useRouter();
-
-  const [form, setForm] = useState<LoginForm>({
-    email: "",
-    password: "",
-  });
-
-  const [errors, setErrors] = useState<Errors>({});
+  const [form, setForm] = useState<LoginForm>({ email: "", password: "" });
+  const [errors, setErrors] = useState<LoginErrors>({});
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showWelcomeBack, setShowWelcomeBack] = useState(false);
   const googleButtonRef = useRef<HTMLDivElement>(null);
   const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+  useEffect(() => {
+    if (!showWelcomeBack) return;
+    const timer = window.setTimeout(() => router.push("/admin"), 1700);
+    return () => window.clearTimeout(timer);
+  }, [router, showWelcomeBack]);
+
+  function validateEmail(email: string) {
+    if (!email.trim()) return "Email is required";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return "Invalid email format";
+    if (!email.toLowerCase().endsWith("@gmail.com")) return "Only Gmail accounts are allowed";
+    return "";
+  }
+
+  function validatePassword(password: string) {
+    if (!password) return "Password is required";
+    if (password.length < 8) return "Password must contain at least 8 characters";
+    return "";
+  }
+
+  function validateAll() {
+    const nextErrors: LoginErrors = {};
+    const emailError = validateEmail(form.email);
+    const passwordError = validatePassword(form.password);
+    if (emailError) nextErrors.email = emailError;
+    if (passwordError) nextErrors.password = passwordError;
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  }
+
+  function updateField(field: keyof LoginForm, value: string) {
+    setForm((previous) => ({ ...previous, [field]: value }));
+    if (submitted) {
+      setErrors((previous) => ({
+        ...previous,
+        [field]: field === "email" ? validateEmail(value) : validatePassword(value),
+      }));
+    }
+  }
 
   function initializeGoogle() {
     if (!googleClientId || !googleButtonRef.current || !window.google) return;
     window.google.accounts.id.initialize({
       client_id: googleClientId,
       ux_mode: "popup",
+      auto_select: false,
       callback: async (response) => {
         try {
           setLoading(true);
           setServerError("");
-          const googleResponse = await fetch("/api/auth/google", {
+          const result = await fetch("/api/auth/google", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            credentials: "include",
             body: JSON.stringify({ credential: response.credential }),
           });
-          const data = await googleResponse.json();
-          if (!googleResponse.ok) {
+          const data = await result.json();
+          if (!result.ok) {
             setServerError(data.message ?? "Google admin login failed");
             return;
           }
-          router.push("/admin");
+          setShowWelcomeBack(true);
         } catch {
           setServerError("Google admin login failed");
         } finally {
@@ -79,223 +123,124 @@ export default function LoginPage() {
     window.google.accounts.id.renderButton(googleButtonRef.current, {
       theme: "outline",
       size: "large",
-      text: "signin_with",
+      text: "continue_with",
       shape: "pill",
       width: 360,
     });
   }
 
-  function validateEmail(email: string) {
-    if (!email.trim()) {
-      return "Email is required.";
-    }
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      return "Invalid email format.";
-    }
-
-    if (!email.toLowerCase().endsWith("@gmail.com")) {
-      return "Only Gmail accounts are allowed.";
-    }
-
-    return "";
-  }
-
-  function validatePassword(password: string) {
-    if (!password) {
-      return "Password is required.";
-    }
-
-    if (password.length < 8) {
-      return "Password must be at least 8 characters.";
-    }
-
-    return "";
-  }
-
-  function validateAll() {
-    const newErrors: Errors = {};
-
-    const emailError = validateEmail(form.email);
-    const passwordError = validatePassword(form.password);
-
-    if (emailError) {
-      newErrors.email = emailError;
-    }
-
-    if (passwordError) {
-      newErrors.password = passwordError;
-    }
-
-    setErrors(newErrors);
-
-    return Object.keys(newErrors).length === 0;
-  }
-
-  function handleChange(field: keyof LoginForm, value: string) {
-    const updated = {
-      ...form,
-      [field]: value,
-    };
-
-    setForm(updated);
-
-    if (!submitted) {
-      return;
-    }
-
-    setErrors((prev) => ({
-      ...prev,
-      [field]:
-        field === "email"
-          ? validateEmail(value)
-          : validatePassword(value),
-    }));
-  }
-
-  function handleBlur(field: keyof LoginForm) {
-    if (!submitted) {
-      return;
-    }
-
-    setErrors((prev) => ({
-      ...prev,
-      [field]:
-        field === "email"
-          ? validateEmail(form.email)
-          : validatePassword(form.password),
-    }));
-  }
-
   async function login() {
     setSubmitted(true);
     setServerError("");
-
-    if (!validateAll()) {
-      return;
-    }
+    if (!validateAll()) return;
 
     try {
       setLoading(true);
-
-      const res = await fetch("/api/auth/login", {
+      const response = await fetch("/api/auth/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(form),
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
+      const data = await response.json();
+      if (!response.ok) {
         setServerError(data.message ?? "Login failed");
         return;
       }
-
-      if (data.user?.role === "ADMIN") {
-        router.push("/admin");
-      } else {
-        router.push("/");
+      if (data.user?.role !== "ADMIN") {
+        setServerError("This account is not authorized for the admin portal");
+        return;
       }
-    } catch (error) {
-      console.error(error);
+      setShowWelcomeBack(true);
+    } catch {
       setServerError("Something went wrong");
     } finally {
       setLoading(false);
     }
   }
 
-  function inputClass(field: keyof LoginForm) {
-    if (!submitted) {
-      return "border-white/10";
-    }
-
-    if (errors[field]) {
-      return "border-red-500";
-    }
-
-    return "border-green-500";
-  }
-
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#010312] px-4">
-      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#111936] p-8 shadow-xl">
-        <h1 className="text-center text-3xl font-bold text-white">Login</h1>
-        <p className="mb-8 mt-2 text-center text-gray-400">
-          Welcome back to Broadcast360
-        </p>
+    <AuthBackdrop>
+      {showWelcomeBack ? (
+        <AuthNotice
+          title="Welcome back"
+          message="Your Broadcast360 admin account is ready. Taking you to the dashboard now."
+          onDone={() => router.push("/admin")}
+        />
+      ) : null}
 
-        {serverError && (
-          <div className="mb-5 rounded-lg bg-red-500/10 p-3 text-center text-red-400">
-            {serverError}
-          </div>
-        )}
+      <div className="mx-auto w-full max-w-[440px] rounded-[2rem] border border-blue-200/10 bg-[#16265b]/90 p-6 shadow-[0_30px_90px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:p-8">
+        <div className="mb-8 text-center">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-cyan-200/70">Broadcast360 Admin</p>
+          <h1 className="text-3xl font-bold tracking-tight text-white">Login</h1>
+          <p className="mt-2 text-sm text-slate-300">Welcome back to Broadcast360</p>
+        </div>
 
-        <div className="space-y-5">
+        {serverError ? <AuthError message={serverError} /> : null}
+
+        <div className="mt-6 space-y-5">
           <div>
-            <label className="mb-2 block text-sm text-gray-300">Email</label>
+            <AuthLabel>Email</AuthLabel>
             <input
               type="email"
               value={form.email}
-              onChange={(e) => handleChange("email", e.target.value)}
-              onBlur={() => handleBlur("email")}
-              className={`w-full rounded-xl border bg-[#0B1026] px-4 py-3 text-white outline-none ${inputClass("email")}`}
+              placeholder="example@gmail.com"
+              autoComplete="email"
+              onChange={(event) => updateField("email", event.target.value)}
+              className={authInputClass(Boolean(errors.email))}
             />
-            {errors.email && (
-              <p className="mt-2 text-sm text-red-400">{errors.email}</p>
-            )}
+            <FieldError message={errors.email} />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm text-gray-300">Password</label>
-            <input
-              type="password"
-              value={form.password}
-              onChange={(e) => handleChange("password", e.target.value)}
-              onBlur={() => handleBlur("password")}
-              className={`w-full rounded-xl border bg-[#0B1026] px-4 py-3 text-white outline-none ${inputClass("password")}`}
-            />
-            {errors.password && (
-              <p className="mt-2 text-sm text-red-400">{errors.password}</p>
-            )}
+            <div className="mb-2 flex items-center justify-between">
+              <AuthLabel>Password</AuthLabel>
+              <button
+                type="button"
+                onClick={() => setServerError("Please contact the system administrator to reset the admin password.")}
+                className="text-xs font-semibold text-cyan-200 transition hover:text-white"
+              >
+                Forgot password?
+              </button>
+            </div>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={form.password}
+                autoComplete="current-password"
+                onChange={(event) => updateField("password", event.target.value)}
+                className={`${authInputClass(Boolean(errors.password))} pr-12`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((value) => !value)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-white"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff size={19} /> : <Eye size={19} />}
+              </button>
+            </div>
+            <FieldError message={errors.password} />
           </div>
 
           <button
+            type="button"
             onClick={login}
             disabled={loading}
-            className="w-full rounded-xl bg-blue-600 py-3 font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+            className="w-full rounded-2xl bg-gradient-to-r from-blue-500 via-blue-500 to-cyan-400 py-3.5 text-sm font-bold text-slate-950 shadow-lg shadow-blue-950/30 transition hover:brightness-110 active:scale-[0.98] disabled:cursor-wait disabled:opacity-70"
           >
-            {loading ? "Logging in..." : "Login"}
+            {loading ? <MoonSpinner label="Authenticating" /> : "Login"}
           </button>
         </div>
 
-        {googleClientId && (
+        {googleClientId ? (
           <>
-            <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-[0.3em] text-gray-500">
-              <span className="h-px flex-1 bg-white/10" />
-              <span>or</span>
-              <span className="h-px flex-1 bg-white/10" />
-            </div>
-            <div ref={googleButtonRef} className="flex justify-center" />
-            <Script
-              src="https://accounts.google.com/gsi/client"
-              strategy="afterInteractive"
-              onLoad={initializeGoogle}
-            />
+            <GoogleDivider />
+            <GoogleButtonSlot googleButtonRef={googleButtonRef} />
+            <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" onLoad={initializeGoogle} />
           </>
-        )}
-
-        {/* <p className="mt-8 text-center text-sm text-gray-400">
-          {"Don't have an account? "}
-          <Link
-            href="/register"
-            className="font-semibold text-blue-400 hover:text-blue-300"
-          >
-            Register
-          </Link>
-        </p> */}
+        ) : null}
       </div>
-    </div>
+    </AuthBackdrop>
   );
 }

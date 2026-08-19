@@ -1,15 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { cors, optionsResponse } from "@/lib/cors";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "http://localhost:3001",
-  "Access-Control-Allow-Credentials": "true",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-  "Content-Type": "application/json",
-};
-
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const dbChannels = await prisma.channel.findMany({
       include: {
@@ -48,7 +41,7 @@ export async function GET() {
        */
       playbackUrl:
         channel.accessType === "FREE" && channel.streamKey
-          ? `http://localhost:8888/channel/${channel.streamKey}/index.m3u8`
+          ? `${(process.env.MEDIAMTX_PUBLIC_URL || "http://localhost:8888").replace(/\/$/, "")}/channel/${channel.streamKey}/index.m3u8`
           : null,
 
       /*
@@ -65,28 +58,26 @@ export async function GET() {
       })),
     }));
 
-    return NextResponse.json(channels, {
-      status: 200,
-      headers: corsHeaders,
-    });
+    return cors(
+      NextResponse.json(channels, {
+        status: 200,
+        headers: {
+          "Cache-Control": "public, s-maxage=15, stale-while-revalidate=60",
+        },
+      }),
+    );
   } catch (error) {
     console.error("PUBLIC CHANNEL API ERROR:", error);
 
-    return NextResponse.json(
-      {
-        message: "Cannot fetch channels",
-      },
-      {
-        status: 500,
-        headers: corsHeaders,
-      },
+    return cors(
+      NextResponse.json(
+        { message: "Cannot fetch channels" },
+        { status: 500 },
+      ),
     );
   }
 }
 
-export async function OPTIONS() {
-  return new NextResponse(null, {
-    status: 204,
-    headers: corsHeaders,
-  });
+export function OPTIONS() {
+  return optionsResponse();
 }

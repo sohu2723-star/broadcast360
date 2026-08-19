@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface AdminUser {
@@ -47,10 +48,6 @@ const menus: MenuItem[] = [
   {
     name: "Schedules",
     path: "/admin/schedules",
-  },
-  {
-    name: "Programs",
-    path: "/admin/programs",
   },
   {
     name: "Live Streams",
@@ -129,11 +126,6 @@ const menus: MenuItem[] = [
         path: "/admin/support/chats",
       },
     ],
-  },
-
-  {
-    name: "Users",
-    path: "/admin/users",
   },
 
   {
@@ -405,17 +397,48 @@ export default function Sidebar() {
             openMenu === menu.name;
 
           return (
-            <Link
-              key={menu.name}
-              href={menu.path ?? "#"}
-              className={`flex items-center gap-3 rounded-xl p-3 transition ${
-                active
-                  ? "bg-[#106EE9] text-white"
-                  : "text-gray-300 hover:bg-[#106EE9]/40"
-              } `}
-            >
-              <span>{menu.name}</span>
-            </Link>
+            <div key={menu.name} className="space-y-1">
+              <button
+                type="button"
+                onClick={() => setOpenMenu((current) => (current === menu.name ? null : menu.name))}
+                aria-expanded={isOpen}
+                className={`flex w-full items-center justify-between rounded-xl px-4 py-3 text-left text-sm font-medium transition ${
+                  active
+                    ? "bg-[#106EE9]/25 text-white"
+                    : "text-gray-300 hover:bg-[#106EE9]/20 hover:text-white"
+                }`}
+              >
+                <span>{menu.name}</span>
+                <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+              </button>
+
+              {isOpen ? (
+                <div className="ml-3 space-y-1 border-l border-white/10 pl-3">
+                  {children.map((child) => {
+                    const childActive = isActive(child.path);
+                    const badgeCount = getBadgeCount(child.name);
+                    return (
+                      <Link
+                        key={child.path}
+                        href={child.path}
+                        className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm transition ${
+                          childActive
+                            ? "bg-[#106EE9] text-white shadow-lg shadow-blue-900/20"
+                            : "text-gray-400 hover:bg-[#106EE9]/20 hover:text-white"
+                        }`}
+                      >
+                        <span>{child.name}</span>
+                        {badgeCount > 0 ? (
+                          <span className="rounded-full bg-rose-500 px-2 py-0.5 text-[11px] font-bold text-white">
+                            {badgeCount > 99 ? "99+" : badgeCount}
+                          </span>
+                        ) : null}
+                      </Link>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </div>
           );
         })}
       </nav>

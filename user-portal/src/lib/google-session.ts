@@ -3,6 +3,7 @@ type GoogleIdentityWindow = Window & {
     accounts?: {
       id?: {
         disableAutoSelect?: () => void;
+        cancel?: () => void;
       };
     };
   };
@@ -16,7 +17,9 @@ export function clearGoogleAutoSelect(): void {
   if (typeof window === "undefined") return;
 
   try {
-    (window as GoogleIdentityWindow).google?.accounts?.id?.disableAutoSelect?.();
+    const identity = (window as GoogleIdentityWindow).google?.accounts?.id;
+    identity?.disableAutoSelect?.();
+    identity?.cancel?.();
   } catch {
     // Google Identity Services may be unavailable during a fast navigation.
   }
