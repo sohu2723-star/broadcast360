@@ -32,6 +32,8 @@ declare global {
             callback: (response: GoogleCredentialResponse) => void;
             ux_mode?: "popup" | "redirect";
             auto_select?: boolean;
+            use_fedcm_for_button?: boolean;
+            button_auto_select?: boolean;
           }) => void;
                       renderButton: (element: HTMLElement, options: Record<string, unknown>) => void;
             prompt: () => void;
@@ -48,6 +50,8 @@ export default function LoginPage() {
   const [errors, setErrors] = useState<LoginErrors>({});
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleReady, setGoogleReady] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [serverError, setServerError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showWelcomeBack, setShowWelcomeBack] = useState(false);
@@ -100,9 +104,11 @@ export default function LoginPage() {
       client_id: googleClientId,
       ux_mode: "popup",
       auto_select: false,
+      use_fedcm_for_button: false,
+      button_auto_select: false,
       callback: async (response) => {
         try {
-          setLoading(true);
+          setGoogleLoading(true);
           setServerError("");
           const result = await fetch("/api/auth/google", {
             method: "POST",
@@ -119,7 +125,7 @@ export default function LoginPage() {
         } catch {
           setServerError("Google admin login failed");
         } finally {
-          setLoading(false);
+          setGoogleLoading(false);
         }
       },
     });
@@ -131,6 +137,7 @@ export default function LoginPage() {
       shape: "pill",
       width: 360,
     });
+    setGoogleReady(true);
   }
 
   function openGooglePrompt() {
@@ -140,9 +147,9 @@ export default function LoginPage() {
       return;
     }
     setServerError("");
-    setLoading(true);
+    setGoogleLoading(true);
     window.google.accounts.id.prompt();
-    window.setTimeout(() => setLoading(false), 1000);
+    window.setTimeout(() => setGoogleLoading(false), 1000);
   }
 
   useEffect(() => {
@@ -197,9 +204,9 @@ export default function LoginPage() {
         />
       ) : null}
 
-      <div className="mx-auto w-full max-w-[440px] rounded-[2rem] border border-blue-200/10 bg-[#16265b]/90 p-6 shadow-[0_30px_90px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:p-8">
+      <div className="mx-auto w-full max-w-[440px] rounded-[2rem] border border-[#7898bf]/15 bg-[#101a3a]/95 p-6 shadow-[0_30px_90px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:p-8">
         <div className="mb-8 text-center">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-cyan-200/70">Broadcast360 Admin</p>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-[#a9c0dd]/70">Broadcast360 Admin</p>
           <h1 className="text-3xl font-bold tracking-tight text-white">Login</h1>
           <p className="mt-2 text-sm text-slate-300">Welcome back to Broadcast360</p>
         </div>
@@ -226,7 +233,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setServerError("Please contact the system administrator to reset the admin password.")}
-                className="text-xs font-semibold text-cyan-200 transition hover:text-white"
+                className="text-xs font-semibold text-[#b7cbe4] transition hover:text-white"
               >
                 Forgot password?
               </button>
@@ -255,7 +262,7 @@ export default function LoginPage() {
             type="button"
             onClick={login}
             disabled={loading}
-            className="w-full rounded-2xl bg-gradient-to-r from-blue-500 via-blue-500 to-cyan-400 py-3.5 text-sm font-bold text-slate-950 shadow-lg shadow-blue-950/30 transition hover:brightness-110 active:scale-[0.98] disabled:cursor-wait disabled:opacity-70"
+            className="w-full rounded-2xl bg-[#284a78] py-3.5 text-sm font-bold text-slate-950 shadow-lg shadow-black/20 transition hover:brightness-110 active:scale-[0.98] disabled:cursor-wait disabled:opacity-70"
           >
             {loading ? <MoonSpinner label="Authenticating" /> : "Login"}
           </button>
@@ -264,7 +271,7 @@ export default function LoginPage() {
         {googleClientId ? (
           <>
             <GoogleDivider />
-            <GoogleButtonSlot googleButtonRef={googleButtonRef} onClick={openGooglePrompt} />
+            <GoogleButtonSlot googleButtonRef={googleButtonRef} onClick={openGooglePrompt} googleReady={googleReady} loading={googleLoading} />
             <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" onLoad={initializeGoogle} />
           </>
         ) : null}

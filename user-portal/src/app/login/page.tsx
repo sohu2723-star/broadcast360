@@ -8,6 +8,7 @@ import axios from "axios";
 
 import api from "@/lib/api";
 import authApi from "@/lib/authapi";
+import { clearCurrentUserCache } from "@/lib/current-user";
 import {
   AuthBackdrop,
   AuthError,
@@ -37,6 +38,8 @@ declare global {
             callback: (response: GoogleCredentialResponse) => void;
             ux_mode?: "popup" | "redirect";
             auto_select?: boolean;
+            use_fedcm_for_button?: boolean;
+            button_auto_select?: boolean;
           }) => void;
                       renderButton: (element: HTMLElement, options: Record<string, unknown>) => void;
             prompt: () => void;
@@ -52,6 +55,8 @@ export default function LoginPage() {
   const [errors, setErrors] = useState<LoginErrors>({});
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleReady, setGoogleReady] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [serverError, setServerError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showWelcomeBack, setShowWelcomeBack] = useState(false);
@@ -191,13 +196,16 @@ export default function LoginPage() {
       client_id: googleClientId,
       ux_mode: "popup",
       auto_select: false,
+      use_fedcm_for_button: false,
+      button_auto_select: false,
       callback: async (response) => {
         try {
-          setLoading(true);
+          setGoogleLoading(true);
           setServerError("");
           const result = await authApi.post("/api/user-portal/auth/google", {
             credential: response.credential,
           });
+          clearCurrentUserCache();
           await authApi.get("/api/user-portal/auth/me");
           if (result.data.isNewUser) {
             window.location.href = "/google-complete";
@@ -211,7 +219,7 @@ export default function LoginPage() {
               : "Google login failed",
           );
         } finally {
-          setLoading(false);
+          setGoogleLoading(false);
         }
       },
     });
@@ -223,6 +231,7 @@ export default function LoginPage() {
       shape: "pill",
       width: 360,
     });
+    setGoogleReady(true);
   }
 
   function openGooglePrompt() {
@@ -232,9 +241,9 @@ export default function LoginPage() {
       return;
     }
     setServerError("");
-    setLoading(true);
+    setGoogleLoading(true);
     window.google.accounts.id.prompt();
-    window.setTimeout(() => setLoading(false), 1000);
+    window.setTimeout(() => setGoogleLoading(false), 1000);
   }
 
   useEffect(() => {
@@ -257,6 +266,7 @@ export default function LoginPage() {
     try {
       setLoading(true);
       const response = await authApi.post("/api/user-portal/auth/login", form);
+      clearCurrentUserCache();
       await authApi.get("/api/user-portal/auth/me");
       if (response.data.user.role === "ADMIN") {
         setServerError("Admin accounts cannot login here");
@@ -290,7 +300,7 @@ export default function LoginPage() {
 
       {forgotOpen ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/80 px-4 py-8 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="forgot-password-title">
-          <div className="max-h-[92vh] w-full max-w-[460px] overflow-y-auto rounded-3xl border border-blue-200/15 bg-[#16265b] p-6 shadow-[0_30px_90px_rgba(0,0,0,0.5)] sm:p-8">
+          <div className="max-h-[92vh] w-full max-w-[460px] overflow-y-auto rounded-3xl border border-[#7898bf]/15 bg-[#101a3a] p-6 shadow-[0_30px_90px_rgba(0,0,0,0.5)] sm:p-8">
             <div className="mb-6 flex items-start justify-between gap-4">
               <div><h2 id="forgot-password-title" className="text-2xl font-bold text-white">Forgot password?</h2><p className="mt-2 text-sm leading-6 text-slate-300">Send a code to your Gmail and choose a new password.</p></div>
               <button type="button" onClick={() => setForgotOpen(false)} className="rounded-xl px-3 py-2 text-slate-300 hover:bg-white/10 hover:text-white" aria-label="Close forgot password">×</button>
@@ -298,7 +308,7 @@ export default function LoginPage() {
             {forgotServerError ? <AuthError message={forgotServerError} /> : null}
             <div className="space-y-4">
               <div><AuthLabel>Gmail</AuthLabel><input type="email" value={forgotForm.email} placeholder="example@gmail.com" onChange={(event) => updateForgot("email", event.target.value)} className={authInputClass(Boolean(forgotErrors.email))} /><FieldError message={forgotErrors.email} /></div>
-              <div><AuthLabel>Verification code</AuthLabel><div className="flex gap-2"><input value={forgotForm.verificationCode} inputMode="numeric" maxLength={6} placeholder="6-digit code" onChange={(event) => updateForgot("verificationCode", event.target.value.replace(/\D/g, ""))} className={`${authInputClass(Boolean(forgotErrors.verificationCode))} min-w-0 flex-1`} /><button type="button" onClick={sendForgotCode} disabled={forgotLoading || forgotCountdown > 0} className="min-w-[7.2rem] rounded-2xl border border-cyan-200/30 px-3 text-xs font-bold text-cyan-100 disabled:cursor-not-allowed disabled:opacity-60">{forgotLoading ? <MoonSpinner label="Sending" /> : forgotCountdown > 0 ? `Resend in ${forgotCountdown}s` : forgotCodeSent ? "Resend code" : "Send code"}</button></div><FieldError message={forgotErrors.verificationCode} /></div>
+              <div><AuthLabel>Verification code</AuthLabel><div className="flex gap-2"><input value={forgotForm.verificationCode} inputMode="numeric" maxLength={6} placeholder="6-digit code" onChange={(event) => updateForgot("verificationCode", event.target.value.replace(/\D/g, ""))} className={`${authInputClass(Boolean(forgotErrors.verificationCode))} min-w-0 flex-1`} /><button type="button" onClick={sendForgotCode} disabled={forgotLoading || forgotCountdown > 0} className="min-w-[7.2rem] rounded-2xl border border-[#7898bf]/25 bg-[#20385f]/30 px-3 text-xs font-bold text-[#c6d7ea] disabled:cursor-not-allowed disabled:opacity-60">{forgotLoading ? <MoonSpinner label="Sending" /> : forgotCountdown > 0 ? `Resend in ${forgotCountdown}s` : forgotCodeSent ? "Resend code" : "Send code"}</button></div><FieldError message={forgotErrors.verificationCode} /></div>
               <div><AuthLabel>New password</AuthLabel><div className="relative"><input type={showForgotPassword ? "text" : "password"} value={forgotForm.newPassword} onChange={(event) => updateForgot("newPassword", event.target.value)} className={`${authInputClass(Boolean(forgotErrors.newPassword))} pr-12`} /><button type="button" onClick={() => setShowForgotPassword((value) => !value)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white" aria-label="Toggle new password">{showForgotPassword ? <EyeOff size={19} /> : <Eye size={19} />}</button></div><FieldError message={forgotErrors.newPassword} /></div>
               <div><AuthLabel>Confirm password</AuthLabel><div className="relative"><input type={showForgotConfirm ? "text" : "password"} value={forgotForm.confirmPassword} onChange={(event) => updateForgot("confirmPassword", event.target.value)} className={`${authInputClass(Boolean(forgotErrors.confirmPassword))} pr-12`} /><button type="button" onClick={() => setShowForgotConfirm((value) => !value)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white" aria-label="Toggle password confirmation">{showForgotConfirm ? <EyeOff size={19} /> : <Eye size={19} />}</button></div><FieldError message={forgotErrors.confirmPassword} /></div>
               <button type="button" onClick={resetForgotPassword} disabled={forgotLoading} className="w-full rounded-2xl bg-gradient-to-r from-blue-500 to-cyan-400 py-3.5 text-sm font-bold text-slate-950 disabled:opacity-60">{forgotLoading ? <MoonSpinner label="Updating" /> : "Reset password"}</button>
@@ -315,9 +325,9 @@ export default function LoginPage() {
         />
       ) : null}
 
-      <div className="mx-auto w-full max-w-[440px] rounded-[2rem] border border-blue-200/10 bg-[#16265b]/90 p-6 shadow-[0_30px_90px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:p-8">
+      <div className="mx-auto w-full max-w-[440px] rounded-[2rem] border border-[#7898bf]/15 bg-[#101a3a]/95 p-6 shadow-[0_30px_90px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:p-8">
         <div className="mb-8 text-center">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-cyan-200/70">Broadcast360</p>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-[#a9c0dd]/70">Broadcast360</p>
           <h1 className="text-3xl font-bold tracking-tight text-white">Login</h1>
           <p className="mt-2 text-sm text-slate-300">Welcome back to Broadcast360</p>
         </div>
@@ -341,7 +351,7 @@ export default function LoginPage() {
           <div>
             <div className="mb-2 flex items-center justify-between">
               <AuthLabel>Password</AuthLabel>
-              <button type="button" onClick={openForgotPassword} className="text-xs font-semibold text-cyan-200 hover:text-white">Forgot password?</button>
+              <button type="button" onClick={openForgotPassword} className="text-xs font-semibold text-[#b7cbe4] hover:text-white">Forgot password?</button>
             </div>
             <div className="relative">
               <input
@@ -367,7 +377,7 @@ export default function LoginPage() {
             type="button"
             onClick={login}
             disabled={loading}
-            className="w-full rounded-2xl bg-gradient-to-r from-blue-500 via-blue-500 to-cyan-400 py-3.5 text-sm font-bold text-slate-950 shadow-lg shadow-blue-950/30 transition hover:brightness-110 active:scale-[0.98] disabled:cursor-wait disabled:opacity-70"
+            className="w-full rounded-2xl bg-[#284a78] py-3.5 text-sm font-bold text-slate-950 shadow-lg shadow-black/20 transition hover:brightness-110 active:scale-[0.98] disabled:cursor-wait disabled:opacity-70"
           >
             {loading ? <MoonSpinner label="Authenticating" /> : "Login"}
           </button>
@@ -376,14 +386,14 @@ export default function LoginPage() {
         {googleClientId ? (
           <>
             <GoogleDivider />
-            <GoogleButtonSlot googleButtonRef={googleButtonRef} onClick={openGooglePrompt} />
+            <GoogleButtonSlot googleButtonRef={googleButtonRef} onClick={openGooglePrompt} googleReady={googleReady} loading={googleLoading} />
             <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" onLoad={initializeGoogle} />
           </>
         ) : null}
 
         <p className="mt-8 text-center text-sm text-slate-400">
           Don&apos;t have an account?
-          <Link href="/register" className="ml-1.5 font-semibold text-cyan-200 transition hover:text-white">Sign up</Link>
+          <Link href="/register" className="ml-1.5 font-semibold text-[#b7cbe4] transition hover:text-white">Sign up</Link>
         </p>
       </div>
     </AuthBackdrop>

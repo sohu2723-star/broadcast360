@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 
-import api from "@/lib/api";
+
 
 import type { User } from "@/types/user";
-import authApi from "./authapi";
+import { getCurrentUser } from "@/lib/current-user";
 
 export function useCurrentUser() {
   const [user, setUser] = useState<User | null>(null);
@@ -17,9 +17,9 @@ export function useCurrentUser() {
 
     async function loadUser(attempt = 0): Promise<void> {
       try {
-        const res = await authApi.get("/api/user-portal/auth/me");
+        const currentUser = await getCurrentUser(attempt > 0);
         if (cancelled) return;
-        setUser(res.data.user ?? null);
+        setUser(currentUser);
         setLoading(false);
       } catch (error) {
         if (cancelled) return;

@@ -7,14 +7,14 @@ export default function GuestMenu() {
     <div className="flex items-center gap-3">
       <Link
         href="/login"
-        className="rounded-lg border border-[#106EE9] px-5 py-2 text-white hover:bg-[#106EE9]"
+        className="rounded-lg border border-[#4f6689] px-5 py-2 text-white hover:bg-[#4f6689]"
       >
         Login
       </Link>
 
       <Link
         href="/register"
-        className="rounded-lg bg-[#106EE9] px-5 py-2 text-white hover:bg-blue-700"
+        className="rounded-lg bg-[#4f6689] px-5 py-2 text-white hover:bg-[#7898bf]/30"
       >
         Register
       </Link>

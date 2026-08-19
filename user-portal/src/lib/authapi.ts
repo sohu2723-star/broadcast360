@@ -1,7 +1,9 @@
 import axios from "axios";
 
 const authApi = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  // Same-origin requests are rewritten to the backend by next.config.ts.
+  // This keeps user_token first-party on localhost:3001 and the Production portal.
+  baseURL: "",
   withCredentials: true,
   headers: {
     Accept: "application/json",

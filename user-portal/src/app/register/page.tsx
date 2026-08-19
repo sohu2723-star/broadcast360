@@ -8,6 +8,7 @@ import axios from "axios";
 
 import api from "@/lib/api";
 import authApi from "@/lib/authapi";
+import { clearCurrentUserCache } from "@/lib/current-user";
 import {
   AuthBackdrop,
   AuthError,
@@ -46,6 +47,8 @@ declare global {
             callback: (response: GoogleCredentialResponse) => void;
             ux_mode?: "popup" | "redirect";
             auto_select?: boolean;
+            use_fedcm_for_button?: boolean;
+            button_auto_select?: boolean;
           }) => void;
                       renderButton: (element: HTMLElement, options: Record<string, unknown>) => void;
             prompt: () => void;
@@ -69,6 +72,8 @@ export default function RegisterPage() {
   const [errors, setErrors] = useState<RegisterErrors>({});
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleReady, setGoogleReady] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [codeLoading, setCodeLoading] = useState(false);
   const [codeSent, setCodeSent] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(0);
@@ -175,13 +180,16 @@ export default function RegisterPage() {
       client_id: googleClientId,
       ux_mode: "popup",
       auto_select: false,
+      use_fedcm_for_button: false,
+      button_auto_select: false,
       callback: async (response) => {
         try {
-          setLoading(true);
+          setGoogleLoading(true);
           setServerError("");
           const result = await authApi.post("/api/user-portal/auth/google", {
             credential: response.credential,
           });
+          clearCurrentUserCache();
           await authApi.get("/api/user-portal/auth/me");
           if (result.data.isNewUser) {
             window.location.href = "/google-complete";
@@ -195,7 +203,7 @@ export default function RegisterPage() {
               : "Google signup failed",
           );
         } finally {
-          setLoading(false);
+          setGoogleLoading(false);
         }
       },
     });
@@ -207,6 +215,7 @@ export default function RegisterPage() {
       shape: "pill",
       width: 360,
     });
+    setGoogleReady(true);
   }
 
   function openGooglePrompt() {
@@ -216,9 +225,9 @@ export default function RegisterPage() {
       return;
     }
     setServerError("");
-    setLoading(true);
+    setGoogleLoading(true);
     window.google.accounts.id.prompt();
-    window.setTimeout(() => setLoading(false), 1000);
+    window.setTimeout(() => setGoogleLoading(false), 1000);
   }
 
   useEffect(() => {
@@ -252,6 +261,7 @@ export default function RegisterPage() {
         email: form.email.trim().toLowerCase(),
         password: form.password,
       });
+      clearCurrentUserCache();
       await authApi.get("/api/user-portal/auth/me");
       setWelcomeTitle("Welcome");
     } catch (error: unknown) {
@@ -285,9 +295,9 @@ export default function RegisterPage() {
         />
       ) : null}
 
-      <div className="mx-auto w-full max-w-[480px] rounded-[2rem] border border-blue-200/10 bg-[#16265b]/90 p-6 shadow-[0_30px_90px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:p-8">
+      <div className="mx-auto w-full max-w-[480px] rounded-[2rem] border border-[#7898bf]/15 bg-[#101a3a]/95 p-6 shadow-[0_30px_90px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:p-8">
         <div className="mb-7 text-center">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-cyan-200/70">Broadcast360</p>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-[#a9c0dd]/70">Broadcast360</p>
           <h1 className="text-3xl font-bold tracking-tight text-white">Create Account</h1>
           <p className="mt-2 text-sm text-slate-300">Register your Broadcast360 account</p>
         </div>
@@ -334,12 +344,12 @@ export default function RegisterPage() {
             <AuthLabel>Email verification code</AuthLabel>
             <div className="flex gap-2">
               <input value={form.verificationCode} inputMode="numeric" maxLength={6} placeholder="6-digit code" onChange={(event) => handleChange("verificationCode", event.target.value.replace(/\D/g, ""))} className={`${field("verificationCode")} min-w-0 flex-1`} />
-              <button type="button" onClick={sendCode} disabled={codeLoading || resendCountdown > 0} className="min-w-[7.4rem] rounded-2xl border border-cyan-200/30 px-3 text-xs font-bold text-cyan-100 transition hover:bg-cyan-200/10 disabled:cursor-not-allowed disabled:opacity-60">
+              <button type="button" onClick={sendCode} disabled={codeLoading || resendCountdown > 0} className="min-w-[7.4rem] rounded-2xl border border-[#7898bf]/25 bg-[#20385f]/30 px-3 text-xs font-bold text-[#c6d7ea] transition hover:bg-cyan-200/10 disabled:cursor-not-allowed disabled:opacity-60">
                 {codeLoading ? <MoonSpinner label="Sending" /> : resendCountdown > 0 ? `Resend in ${resendCountdown}s` : codeSent ? "Resend code" : "Send code"}
               </button>
             </div>
             <FieldError message={errors.verificationCode} />
-            {codeSent ? <p className="mt-2 text-xs text-cyan-200/80">Code sent. You can request another code when the timer reaches 0.</p> : null}
+            {codeSent ? <p className="mt-2 text-xs text-[#b7cbe4]/80">Code sent. You can request another code when the timer reaches 0.</p> : null}
           </div>
 
           <div>
@@ -364,7 +374,7 @@ export default function RegisterPage() {
             <FieldError message={errors.confirmPassword} />
           </div>
 
-          <button type="button" onClick={register} disabled={loading} className="w-full rounded-2xl bg-gradient-to-r from-blue-500 via-blue-500 to-cyan-400 py-3.5 text-sm font-bold text-slate-950 shadow-lg shadow-blue-950/30 transition hover:brightness-110 active:scale-[0.98] disabled:cursor-wait disabled:opacity-70">
+          <button type="button" onClick={register} disabled={loading} className="w-full rounded-2xl bg-[#284a78] py-3.5 text-sm font-bold text-slate-950 shadow-lg shadow-black/20 transition hover:brightness-110 active:scale-[0.98] disabled:cursor-wait disabled:opacity-70">
             {loading ? <MoonSpinner label="Creating account" /> : "Create Account"}
           </button>
         </div>
@@ -372,14 +382,14 @@ export default function RegisterPage() {
         {googleClientId ? (
           <>
             <GoogleDivider />
-            <GoogleButtonSlot googleButtonRef={googleButtonRef} onClick={openGooglePrompt} />
+            <GoogleButtonSlot googleButtonRef={googleButtonRef} onClick={openGooglePrompt} googleReady={googleReady} loading={googleLoading} />
             <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" onLoad={initializeGoogle} />
           </>
         ) : null}
 
         <p className="mt-8 text-center text-sm text-slate-400">
           Already have an account?
-          <Link href="/login" className="ml-1.5 font-semibold text-cyan-200 transition hover:text-white">Login</Link>
+          <Link href="/login" className="ml-1.5 font-semibold text-[#b7cbe4] transition hover:text-white">Login</Link>
         </p>
       </div>
     </AuthBackdrop>

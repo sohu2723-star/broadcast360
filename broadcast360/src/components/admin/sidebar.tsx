@@ -350,7 +350,7 @@ export default function Sidebar({
     <aside className={`fixed inset-y-0 left-0 z-50 h-screen w-72 overflow-y-auto border-r border-white/10 bg-[#0B1026] p-4 transition-transform duration-200 lg:sticky lg:z-auto lg:w-64 lg:translate-x-0 lg:p-5 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
       <div className="mb-6 flex items-center justify-between lg:mb-10">
         <h1 className="text-2xl font-bold">
-          <span className="text-[#106EE9]">Broadcast</span>360
+          <span className="text-[#4f6689]">Broadcast</span>360
         </h1>
         <button type="button" onClick={onClose} className="rounded-xl px-3 py-2 text-sm text-slate-300 hover:bg-white/10 lg:hidden" aria-label="Close admin navigation">Close</button>
       </div>
@@ -385,8 +385,8 @@ export default function Sidebar({
                   transition
                   ${
                     active
-                      ? "bg-[#106EE9] text-white shadow-lg shadow-blue-900/20"
-                      : "text-gray-300 hover:bg-[#106EE9]/20 hover:text-white"
+                      ? "bg-[#4f6689] text-white shadow-lg shadow-black/20"
+                      : "text-gray-300 hover:bg-[#7898bf]/12 hover:text-white"
                   }
                 `}
               >
@@ -414,8 +414,8 @@ export default function Sidebar({
                 aria-expanded={isOpen}
                 className={`flex w-full items-center justify-between rounded-xl px-4 py-3 text-left text-sm font-medium transition ${
                   active
-                    ? "bg-[#106EE9]/25 text-white"
-                    : "text-gray-300 hover:bg-[#106EE9]/20 hover:text-white"
+                    ? "bg-[#7898bf]/15 text-white"
+                    : "text-gray-300 hover:bg-[#7898bf]/12 hover:text-white"
                 }`}
               >
                 <span>{menu.name}</span>
@@ -434,8 +434,8 @@ export default function Sidebar({
                         onClick={onClose}
                         className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm transition ${
                           childActive
-                            ? "bg-[#106EE9] text-white shadow-lg shadow-blue-900/20"
-                            : "text-gray-400 hover:bg-[#106EE9]/20 hover:text-white"
+                            ? "bg-[#4f6689] text-white shadow-lg shadow-black/20"
+                            : "text-gray-400 hover:bg-[#7898bf]/12 hover:text-white"
                         }`}
                       >
                         <span>{child.name}</span>

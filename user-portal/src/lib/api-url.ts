@@ -5,11 +5,14 @@ export const API_ORIGIN = (
 ).replace(/\/$/, "");
 
 export function apiUrl(path: string) {
-  return `${API_ORIGIN}/${path.replace(/^\//, "")}`;
+  const normalizedPath = `/${path.replace(/^\//, "")}`;
+  return typeof window === "undefined"
+    ? `${API_ORIGIN}${normalizedPath}`
+    : normalizedPath;
 }
 
 export function mediaUrl(path: string | null | undefined) {
   if (!path) return null;
   if (/^https?:\/\//i.test(path)) return path;
-  return apiUrl(path);
+  return `${API_ORIGIN}/${path.replace(/^\//, "")}`;
 }

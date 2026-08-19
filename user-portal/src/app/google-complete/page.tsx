@@ -105,21 +105,21 @@ export default function GoogleCompletePage() {
         <AuthNotice title="Welcome" message="Your account is ready. Taking you to your Broadcast360 account now." />
       ) : null}
 
-      <div className="mx-auto w-full max-w-[480px] rounded-[2rem] border border-blue-200/10 bg-[#16265b]/90 p-6 shadow-[0_30px_90px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:p-8">
+      <div className="mx-auto w-full max-w-[480px] rounded-[2rem] border border-[#7898bf]/15 bg-[#101a3a]/95 p-6 shadow-[0_30px_90px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:p-8">
         <div className="mb-8 text-center">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-cyan-200/70">Broadcast360</p>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-[#a9c0dd]/70">Broadcast360</p>
           <h1 className="text-3xl font-bold tracking-tight text-white">Complete your profile</h1>
           <p className="mt-2 text-sm leading-6 text-slate-300">Just a few details before you enter your new account.</p>
         </div>
 
         {serverError ? <AuthError message={serverError} /> : null}
         {sessionExpired ? (
-          <Link href="/login" className="mt-5 block w-full rounded-2xl bg-gradient-to-r from-blue-500 to-cyan-400 py-3.5 text-center text-sm font-bold text-slate-950 transition hover:brightness-110">
+          <Link href="/login" className="mt-5 block w-full rounded-2xl bg-[#284a78] py-3.5 text-center text-sm font-bold text-slate-950 transition hover:brightness-110">
             Sign in with Google again
           </Link>
         ) : null}
         {loading ? (
-          <div className="flex justify-center py-10 text-sm text-cyan-100"><MoonSpinner label="Checking your Google account" /></div>
+          <div className="flex justify-center py-10 text-sm text-[#c6d7ea]"><MoonSpinner label="Checking your Google account" /></div>
         ) : sessionExpired ? null : (
           <div className="space-y-5">
             <div>
@@ -149,7 +149,7 @@ export default function GoogleCompletePage() {
                 <FieldError message={errors.gender} />
               </div>
             </div>
-            <button type="button" onClick={createAccount} disabled={saving} className="w-full rounded-2xl bg-gradient-to-r from-blue-500 via-blue-500 to-cyan-400 py-3.5 text-sm font-bold text-slate-950 shadow-lg shadow-blue-950/30 transition hover:brightness-110 active:scale-[0.98] disabled:cursor-wait disabled:opacity-70">
+            <button type="button" onClick={createAccount} disabled={saving} className="w-full rounded-2xl bg-[#284a78] py-3.5 text-sm font-bold text-slate-950 shadow-lg shadow-black/20 transition hover:brightness-110 active:scale-[0.98] disabled:cursor-wait disabled:opacity-70">
               {saving ? <MoonSpinner label="Creating account" /> : "Create Account"}
             </button>
           </div>

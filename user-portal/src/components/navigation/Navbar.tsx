@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 
 import GuestMenu from "@/components/user/GuestMenu";
 import UserMenu from "@/components/user/UserMenu";
-import authApi from "@/lib/authapi";
+import { getCurrentUser } from "@/lib/current-user";
 import type { User } from "@/types/user";
 
 const menus = [
@@ -30,9 +30,9 @@ export default function Navbar() {
 
     async function loadUser(attempt = 0): Promise<void> {
       try {
-        const response = await authApi.get("/api/user-portal/auth/me");
+        const currentUser = await getCurrentUser(attempt > 0);
         if (cancelled) return;
-        setUser(response.data?.user ?? null);
+        setUser(currentUser);
         setLoading(false);
       } catch (error) {
         if (cancelled) return;
@@ -67,7 +67,7 @@ export default function Navbar() {
     <header className="border-b border-[#0B1026] bg-[#010312]">
       <nav className="relative mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 sm:py-4">
         <Link href="/" className="shrink-0 text-2xl font-bold tracking-tight sm:text-3xl">
-          <span className="text-[#106EE9]">Broadcast</span>360
+          <span className="text-[#7898bf]">Broadcast</span>360
         </Link>
 
         <div className="hidden items-center gap-5 lg:gap-7 md:flex">
@@ -75,7 +75,7 @@ export default function Navbar() {
             <Link
               key={menu.href}
               href={menu.href}
-              className={`relative whitespace-nowrap text-sm text-white transition hover:text-[#106EE9] ${pathname === menu.href ? "text-[#106EE9]" : ""}`}
+              className={`relative whitespace-nowrap text-sm text-white transition hover:text-[#7898bf] ${pathname === menu.href ? "text-[#7898bf]" : ""}`}
             >
               {menu.live ? <span className="mr-2 inline-block h-2 w-2 rounded-full bg-red-500" /> : null}
               {menu.name}

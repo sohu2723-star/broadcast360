@@ -1,5 +1,5 @@
 
-import { ADMIN_API_URL } from "@/services/apiConfig";
+import { API_ORIGIN, apiUrl } from "@/lib/api-url";
 import type { Channel } from "@/types";
 
 export interface ChannelAccessResponse extends Channel {
@@ -52,10 +52,7 @@ function getLogoUrl(
   }
 
   // Backend-relative URL
-  return `${ADMIN_API_URL.replace(
-    /\/$/,
-    "",
-  )}/${logo.replace(/^\//, "")}`;
+  return `${API_ORIGIN}/${logo.replace(/^\//, "")}`;
 }
 
 export const channelService = {
@@ -66,11 +63,11 @@ export const channelService = {
    */
   async getAllChannels(): Promise<Channel[]> {
     const res = await fetch(
-      `${ADMIN_API_URL}/api/user-portal/channels`,
+      apiUrl("/api/user-portal/channels"),
       {
         method: "GET",
         credentials: "include",
-        cache: "no-store",
+        cache: "default",
       },
     );
 
@@ -89,11 +86,6 @@ export const channelService = {
     }
 
     const data = await res.json();
-
-    console.log(
-      "📺 CHANNEL API RESPONSE:",
-      data,
-    );
 
     return data.map(
       (channel: Channel) => ({
@@ -125,7 +117,7 @@ export const channelService = {
     id: string,
   ): Promise<Channel> {
     const res = await fetch(
-      `${ADMIN_API_URL}/api/user-portal/channels/${id}`,
+      apiUrl(`/api/user-portal/channels/${id}`),
       {
         method: "GET",
         credentials: "include",
@@ -166,7 +158,7 @@ export const channelService = {
     id: string | number,
   ): Promise<ChannelAccessResponse> {
     const res = await fetch(
-      `${ADMIN_API_URL}/api/user-portal/channels/${id}`,
+      apiUrl(`/api/user-portal/channels/${id}`),
       {
         method: "GET",
 
@@ -181,15 +173,6 @@ export const channelService = {
     );
 
     const data = await res.json();
-
-    console.log(
-      "🔐 CHANNEL ACCESS:",
-      {
-        id,
-        status: res.status,
-        data,
-      },
-    );
 
     if (!res.ok) {
       throw new ChannelAccessError(

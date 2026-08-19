@@ -1,51 +1,80 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #071029;
+  --foreground: #e6edf7;
+  --surface: #0d1838;
+  --surface-raised: #111f46;
+  --surface-input: #08122f;
+  --border-subtle: rgba(176, 201, 235, 0.14);
+  --accent: #78a6dc;
+  --accent-strong: #4e7fba;
+  --accent-soft: rgba(120, 166, 220, 0.14);
+  --muted: #91a0b9;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: Arial, Helvetica, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--background);
 }
 
 body {
+  margin: 0;
+  min-height: 100vh;
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+::selection {
+  background: rgba(120, 166, 220, 0.28);
+  color: #f5f8fc;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid rgba(150, 188, 232, 0.78);
+  outline-offset: 2px;
+}
+
 .custom-scrollbar::-webkit-scrollbar {
-  width: 8px;
+  width: 7px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: #0B1026;
+  background: #0b1634;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #3b82f6;
-  border-radius: 6px;
+  background: #4f6689;
+  border-radius: 999px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #2563eb;
+  background: #7898bf;
 }
 
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #3b82f6 #0B1026;
+  scrollbar-color: #4f6689 #0b1634;
 }
-
-
-
-
