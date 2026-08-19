@@ -7,6 +7,7 @@ import { ChevronDown, Gem, Heart, History, LogOut, Settings, UserRound } from "l
 import Avatar from "@/components/ui/Avatar";
 import type { User } from "@/types/user";
 import authApi from "@/lib/authapi";
+import { clearGoogleAutoSelect } from "@/lib/google-session";
 
 interface Props {
   user: User;
@@ -39,6 +40,7 @@ export default function UserMenu({ user }: Props) {
   async function logout() {
     try {
       await authApi.post("/api/user-portal/auth/logout");
+      clearGoogleAutoSelect();
       window.location.href = "/";
     } catch (error) {
       console.error("Logout failed:", error);

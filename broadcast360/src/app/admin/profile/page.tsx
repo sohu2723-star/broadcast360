@@ -15,6 +15,7 @@ import {
   validateConfirmPassword,
 } from "@/lib/validators/profile.validator";
 import { User } from "@/types/user";
+import { clearGoogleAutoSelect } from "@/lib/google-session";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -102,6 +103,7 @@ export default function ProfilePage() {
       method: "POST",
     });
 
+    clearGoogleAutoSelect();
     router.push("/login");
 
     router.refresh();

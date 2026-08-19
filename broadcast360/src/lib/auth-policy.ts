@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 
-const DEFAULT_ADMIN_EMAIL = "ohnmar@gmail.com";
+const DEFAULT_ADMIN_EMAIL = "copy2723@gmail.com";
 
 export function normalizeEmail(value: unknown): string {
   return typeof value === "string" ? value.trim().toLowerCase() : "";

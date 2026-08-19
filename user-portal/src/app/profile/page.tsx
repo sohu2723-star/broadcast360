@@ -12,6 +12,7 @@ import SubscriptionStatusCard from "@/components/profile/SubscriptionStatusCard"
 
 import { useCurrentUser } from "@/lib/useCurrentUser";
 import authApi from "@/lib/authapi";
+import { clearGoogleAutoSelect } from "@/lib/google-session";
 
 export default function ProfilePage() {
   const { user, loading } = useCurrentUser();
@@ -299,6 +300,7 @@ export default function ProfilePage() {
         "/api/user-portal/auth/logout"
       );
 
+      clearGoogleAutoSelect();
       window.location.href = "/";
     } catch (error) {
       console.error("Logout failed:", error);
