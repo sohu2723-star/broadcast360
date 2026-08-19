@@ -147,7 +147,20 @@ export function createSeries(data: {
     data,
   });
 }
-
+export async function findSeriesByTitle(title: string) {
+  return prisma.series.findFirst({
+    where: {
+      title: {
+        equals: title.trim(),
+        mode: "insensitive",
+      },
+    },
+    select: {
+      id: true,
+      title: true,
+    },
+  });
+}
 /* =========================
    UPDATE
 ========================= */
