@@ -146,7 +146,7 @@ export default function UserMenu({ user }: Props) {
             top-full
             z-50
             mt-3
-            w-72
+            w-[min(18rem,calc(100vw-2rem))]
             overflow-hidden
             rounded-2xl
             border

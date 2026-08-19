@@ -13,22 +13,30 @@ export function useCurrentUser() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadUser() {
+    let cancelled = false;
+
+    async function loadUser(attempt = 0): Promise<void> {
       try {
-          console.log("API URL:", process.env.NEXT_PUBLIC_API_URL);
         const res = await authApi.get("/api/user-portal/auth/me");
-
-        setUser(res.data.user);
+        if (cancelled) return;
+        setUser(res.data.user ?? null);
+        setLoading(false);
       } catch (error) {
-        console.error("Load user failed:", error);
-
+        if (cancelled) return;
+        if (attempt < 2) {
+          window.setTimeout(() => void loadUser(attempt + 1), 250);
+          return;
+        }
+        console.error("Load user failed after retries:", error);
         setUser(null);
-      } finally {
         setLoading(false);
       }
     }
 
-    loadUser();
+    void loadUser();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return {

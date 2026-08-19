@@ -134,7 +134,13 @@ const menus: MenuItem[] = [
   },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({
+  mobileOpen,
+  onClose,
+}: {
+  mobileOpen: boolean;
+  onClose: () => void;
+}) {
   const pathname = usePathname();
 
   const [user, setUser] = useState<AdminUser | null>(null);
@@ -341,10 +347,13 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="sticky top-0 h-screen w-64 overflow-y-auto border-r border-white/10 bg-[#0B1026] p-5">
-      <h1 className="mb-10 text-2xl font-bold">
-        <span className="text-[#106EE9]">Broadcast</span>360
-      </h1>
+    <aside className={`fixed inset-y-0 left-0 z-50 h-screen w-72 overflow-y-auto border-r border-white/10 bg-[#0B1026] p-4 transition-transform duration-200 lg:sticky lg:z-auto lg:w-64 lg:translate-x-0 lg:p-5 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
+      <div className="mb-6 flex items-center justify-between lg:mb-10">
+        <h1 className="text-2xl font-bold">
+          <span className="text-[#106EE9]">Broadcast</span>360
+        </h1>
+        <button type="button" onClick={onClose} className="rounded-xl px-3 py-2 text-sm text-slate-300 hover:bg-white/10 lg:hidden" aria-label="Close admin navigation">Close</button>
+      </div>
 
       {/* =================================================
           NAVIGATION
@@ -363,6 +372,7 @@ export default function Sidebar() {
               <Link
                 key={menu.path}
                 href={menu.path}
+                onClick={onClose}
                 className={`
                   flex
                   items-center
@@ -421,6 +431,7 @@ export default function Sidebar() {
                       <Link
                         key={child.path}
                         href={child.path}
+                        onClick={onClose}
                         className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm transition ${
                           childActive
                             ? "bg-[#106EE9] text-white shadow-lg shadow-blue-900/20"

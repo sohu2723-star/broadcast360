@@ -198,6 +198,7 @@ export default function LoginPage() {
           const result = await authApi.post("/api/user-portal/auth/google", {
             credential: response.credential,
           });
+          await authApi.get("/api/user-portal/auth/me");
           if (result.data.isNewUser) {
             window.location.href = "/google-complete";
             return;
@@ -256,6 +257,7 @@ export default function LoginPage() {
     try {
       setLoading(true);
       const response = await authApi.post("/api/user-portal/auth/login", form);
+      await authApi.get("/api/user-portal/auth/me");
       if (response.data.user.role === "ADMIN") {
         setServerError("Admin accounts cannot login here");
         return;

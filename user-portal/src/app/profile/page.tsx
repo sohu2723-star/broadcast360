@@ -3,6 +3,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { MoonSpinner } from "@/components/auth/AuthUi";
 import axios from "axios";
 
 import Avatar from "@/components/ui/Avatar";
@@ -310,16 +311,24 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#010312]">
-        <div className="text-sm text-zinc-400">
-          Loading profile...
+      <div className="flex min-h-[70vh] items-center justify-center bg-[#010312]">
+        <div className="rounded-3xl border border-white/10 bg-[#0d142c] px-6 py-5 text-sm text-zinc-300 shadow-xl">
+          <MoonSpinner label="Loading your account" />
         </div>
       </div>
     );
   }
 
   if (!user) {
-    return null;
+    return (
+      <div className="flex min-h-[70vh] items-center justify-center bg-[#010312] px-5 text-white">
+        <div className="w-full max-w-md rounded-3xl border border-white/10 bg-[#0d142c] p-7 text-center shadow-2xl">
+          <h1 className="text-2xl font-bold">Your session has expired</h1>
+          <p className="mt-3 text-sm leading-6 text-zinc-400">Please sign in again to open your Broadcast360 account.</p>
+          <Link href="/login" className="mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-blue-500 to-cyan-400 px-4 py-3 font-semibold text-slate-950 transition hover:brightness-110">Sign in again</Link>
+        </div>
+      </div>
+    );
   }
 
   /* =====================================================

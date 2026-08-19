@@ -182,6 +182,7 @@ export default function RegisterPage() {
           const result = await authApi.post("/api/user-portal/auth/google", {
             credential: response.credential,
           });
+          await authApi.get("/api/user-portal/auth/me");
           if (result.data.isNewUser) {
             window.location.href = "/google-complete";
             return;
@@ -251,6 +252,7 @@ export default function RegisterPage() {
         email: form.email.trim().toLowerCase(),
         password: form.password,
       });
+      await authApi.get("/api/user-portal/auth/me");
       setWelcomeTitle("Welcome");
     } catch (error: unknown) {
       setServerError(

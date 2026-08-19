@@ -65,28 +65,26 @@ export async function GET(request: NextRequest) {
     // FIND CURRENT SUBSCRIPTION
     // =====================================================
 
-    const subscription =
-      await prisma.subscription.findFirst({
+    let subscription = null;
+    try {
+      subscription = await prisma.subscription.findFirst({
         where: {
           userId,
-
           status: {
-            in: [
-              "ACTIVE",
-              "PENDING",
-            ],
+            in: ["ACTIVE", "PENDING"],
           },
         },
-
         orderBy: {
           createdAt: "desc",
         },
-
         include: {
           plan: true,
           option: true,
         },
       });
+    } catch (subscriptionError) {
+      console.error("GET CURRENT USER SUBSCRIPTION ERROR:", subscriptionError);
+    }
 
     // =====================================================
     // RESPONSE
