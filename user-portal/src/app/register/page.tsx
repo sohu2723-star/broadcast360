@@ -11,15 +11,21 @@ import api from "@/lib/api";
 interface RegisterForm {
   name: string;
   email: string;
-  password: string;
+    password: string;
   confirmPassword: string;
+  dateOfBirth: string;
+  gender: "MALE" | "FEMALE" | "OTHER" | "UNSPECIFIED";
+  verificationCode: string;
+
 }
 
 interface Errors {
   name?: string;
   email?: string;
   password?: string;
-  confirmPassword?: string;
+    confirmPassword?: string;
+  verificationCode?: string;
+
 }
 
 export default function RegisterPage() {
@@ -30,6 +36,9 @@ export default function RegisterPage() {
     email: "",
     password: "",
     confirmPassword: "",
+    dateOfBirth: "",
+    gender: "UNSPECIFIED",
+    verificationCode: "",
   });
 
   const [errors, setErrors] = useState<Errors>({});
@@ -42,9 +51,12 @@ export default function RegisterPage() {
 
   const [showPassword, setShowPassword] = useState(false);
 
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
+  const [codeLoading, setCodeLoading] = useState(false);
 
   function validateName(name: string) {
+
     if (!name.trim()) {
       return "Name is required";
     }
@@ -122,6 +134,9 @@ export default function RegisterPage() {
     if (form.password !== form.confirmPassword) {
       newErrors.confirmPassword = "Passwords do not match";
     }
+    if (!/^\d{6}$/.test(form.verificationCode)) {
+      newErrors.verificationCode = "Enter the 6-digit code sent to Gmail";
+    }
 
     setErrors(newErrors);
 
@@ -142,7 +157,30 @@ export default function RegisterPage() {
     }
   }
 
+    async function sendCode() {
+    const emailError = validateEmail(form.email);
+    if (emailError) {
+      setErrors((prev) => ({ ...prev, email: emailError }));
+      return;
+    }
+    try {
+      setCodeLoading(true);
+      setServerError("");
+      await api.post("/api/user-portal/auth/send-code", { email: form.email });
+      setCodeSent(true);
+    } catch (error: unknown) {
+      setServerError(
+        axios.isAxiosError(error)
+          ? error.response?.data?.message ?? "Could not send verification code"
+          : "Could not send verification code",
+      );
+    } finally {
+      setCodeLoading(false);
+    }
+  }
+
   async function register() {
+
     setSubmitted(true);
 
     setServerError("");
@@ -158,6 +196,9 @@ export default function RegisterPage() {
         name: form.name,
         email: form.email,
         password: form.password,
+        dateOfBirth: form.dateOfBirth || undefined,
+        gender: form.gender,
+        verificationCode: form.verificationCode,
       });
 
       router.push("/login");
@@ -210,7 +251,7 @@ export default function RegisterPage() {
             className={inputClass("name")}
           />
 
-          <Input
+                    <Input
             label="Email"
             value={form.email}
             onChange={(v) => handleChange("email", v)}
@@ -218,7 +259,55 @@ export default function RegisterPage() {
             className={inputClass("email")}
           />
 
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="Date of Birth"
+              type="date"
+              value={form.dateOfBirth}
+              onChange={(v) => handleChange("dateOfBirth", v)}
+              className="border-white/10"
+            />
+            <div>
+              <label className="mb-2 block text-sm text-gray-300">Gender</label>
+              <select
+                value={form.gender}
+                onChange={(e) => handleChange("gender", e.target.value)}
+                className="w-full rounded-xl border border-white/10 bg-[#0B1026] px-4 py-3 text-white outline-none"
+              >
+                <option value="UNSPECIFIED">Prefer not to say</option>
+                <option value="MALE">Male</option>
+                <option value="FEMALE">Female</option>
+                <option value="OTHER">Other</option>
+              </select>
+            </div>
+          </div>
+
           <div>
+            <label className="mb-2 block text-sm text-gray-300">Email verification code</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                inputMode="numeric"
+                maxLength={6}
+                value={form.verificationCode}
+                onChange={(e) => handleChange("verificationCode", e.target.value.replace(/\D/g, ""))}
+                className="min-w-0 flex-1 rounded-xl border border-white/10 bg-[#0B1026] px-4 py-3 text-white outline-none"
+                placeholder="6-digit code"
+              />
+              <button
+                type="button"
+                onClick={sendCode}
+                disabled={codeLoading}
+                className="rounded-xl border border-blue-400/40 px-4 py-3 text-sm font-semibold text-blue-300 disabled:opacity-50"
+              >
+                {codeLoading ? "Sending..." : codeSent ? "Resend" : "Send code"}
+              </button>
+            </div>
+            {errors.verificationCode && <p className="mt-1 text-sm text-red-400">{errors.verificationCode}</p>}
+          </div>
+
+          <div>
+
             <label className="mb-2 block text-sm text-gray-300">Password</label>
 
             <div className="relative">

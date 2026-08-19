@@ -1,8 +1,28 @@
 "use client";
 
 import Link from "next/link";
+import Script from "next/script";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
+
+type GoogleCredentialResponse = { credential: string };
+
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (options: {
+            client_id: string;
+            callback: (response: GoogleCredentialResponse) => void;
+            ux_mode?: "popup" | "redirect";
+          }) => void;
+          renderButton: (element: HTMLElement, options: Record<string, unknown>) => void;
+        };
+      };
+    };
+  }
+}
 
 type LoginForm = {
   email: string;
@@ -26,6 +46,44 @@ export default function LoginPage() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState("");
+  const googleButtonRef = useRef<HTMLDivElement>(null);
+  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+  function initializeGoogle() {
+    if (!googleClientId || !googleButtonRef.current || !window.google) return;
+    window.google.accounts.id.initialize({
+      client_id: googleClientId,
+      ux_mode: "popup",
+      callback: async (response) => {
+        try {
+          setLoading(true);
+          setServerError("");
+          const googleResponse = await fetch("/api/auth/google", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ credential: response.credential }),
+          });
+          const data = await googleResponse.json();
+          if (!googleResponse.ok) {
+            setServerError(data.message ?? "Google admin login failed");
+            return;
+          }
+          router.push("/admin");
+        } catch {
+          setServerError("Google admin login failed");
+        } finally {
+          setLoading(false);
+        }
+      },
+    });
+    window.google.accounts.id.renderButton(googleButtonRef.current, {
+      theme: "outline",
+      size: "large",
+      text: "signin_with",
+      shape: "pill",
+      width: 360,
+    });
+  }
 
   function validateEmail(email: string) {
     if (!email.trim()) {
@@ -211,6 +269,22 @@ export default function LoginPage() {
             {loading ? "Logging in..." : "Login"}
           </button>
         </div>
+
+        {googleClientId && (
+          <>
+            <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-[0.3em] text-gray-500">
+              <span className="h-px flex-1 bg-white/10" />
+              <span>or</span>
+              <span className="h-px flex-1 bg-white/10" />
+            </div>
+            <div ref={googleButtonRef} className="flex justify-center" />
+            <Script
+              src="https://accounts.google.com/gsi/client"
+              strategy="afterInteractive"
+              onLoad={initializeGoogle}
+            />
+          </>
+        )}
 
         {/* <p className="mt-8 text-center text-sm text-gray-400">
           {"Don't have an account? "}

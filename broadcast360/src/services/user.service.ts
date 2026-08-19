@@ -24,6 +24,10 @@ type CreateUserData = {
   password: string;
   phone?: string;
   avatar?: string;
+  dateOfBirth?: Date;
+  gender?: string;
+  emailVerifiedAt?: Date;
+  googleId?: string;
   role?: Role;
   status?: UserStatus;
 };
@@ -116,6 +120,10 @@ export class UserService {
       password: await hashPassword(data.password),
       phone: data.phone,
       avatar: data.avatar,
+      dateOfBirth: data.dateOfBirth,
+      gender: data.gender,
+      emailVerifiedAt: data.emailVerifiedAt,
+      googleId: data.googleId,
       role: data.role ?? Role.USER,
       status: data.status ?? UserStatus.ACTIVE,
     });
