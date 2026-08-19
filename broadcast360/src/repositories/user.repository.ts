@@ -1,149 +1,111 @@
 import { prisma } from "@/lib/prisma";
+import { Role, UserStatus, Prisma } from "@/generated/prisma";
 
-export interface FindAllOptions {
-  page?: number;
-  limit?: number;
-  search?: string;
-  role?: string;
-  status?: string;
+export async function getUsers() {
+  return prisma.user.findMany({
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      status: true,
+      lastLoginAt: true,
+      createdAt: true,
+    },
+    orderBy: { createdAt: "desc" },
+  });
 }
 
-export class UserRepository {
-  async findAll(options: FindAllOptions = {}) {
-    const page = options.page || 1;
-    const limit = options.limit || 10;
-    const skip = (page - 1) * limit;
+export async function getPaginatedUsers({
+  page = 1,
+  limit = 10,
+  search,
+  role,
+  status,
+}: {
+  page: number;
+  limit: number;
+  search?: string;
+  role?: Role | "ALL";
+  status?: UserStatus | "ALL";
+}) {
+  const skip = (page - 1) * limit;
 
-    // Build dynamic Prisma filter condition
-    const where: any = {};
+  const where: Prisma.UserWhereInput = {};
 
-    if (options.search) {
-      where.email = {
-        contains: options.search,
-        mode: "insensitive", // Case-insensitive email search
-      };
-    }
+  if (search) {
+    where.OR = [
+      { name: { contains: search, mode: "insensitive" } },
+      { email: { contains: search, mode: "insensitive" } },
+    ];
+  }
 
-    if (options.role && options.role !== "ALL") {
-      where.role = options.role;
-    }
+  if (role && role !== "ALL") {
+    where.role = role;
+  }
 
-    if (options.status && options.status !== "ALL") {
-      where.status = options.status;
-    }
+  if (status && status !== "ALL") {
+    where.status = status;
+  }
 
-    // Run query & count in parallel for best performance
-    const [users, total] = await Promise.all([
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
+
+  const [data, total, totalUsers, totalAdmins, activeUsers, newThisMonth] =
+    await prisma.$transaction([
       prisma.user.findMany({
         where,
         skip,
         take: limit,
-        orderBy: {
-          createdAt: "desc",
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          status: true,
+          lastLoginAt: true,
+          createdAt: true,
         },
       }),
       prisma.user.count({ where }),
+      prisma.user.count({ where: { role: Role.USER } }),
+      prisma.user.count({ where: { role: Role.ADMIN } }),
+      prisma.user.count({ where: { status: "ACTIVE", role: "USER" } }),
+      prisma.user.count({ where: { createdAt: { gte: startOfMonth } } }),
     ]);
 
-    return {
-      users,
-      total,
-    };
-  }
-
-  async findById(id: number) {
-    return prisma.user.findUnique({
-      where: {
-        id,
-      },
-    });
-  }
-
-  async findByEmail(email: string) {
-    return prisma.user.findUnique({
-      where: {
-        email,
-      },
-    });
-  }
-
-  async create(data: {
-    name: string;
-    email: string;
-    password: string;
-
-    phone?: string | null;
-
-    role?: "ADMIN" | "USER";
-
-    status?: "ACTIVE" | "INACTIVE" | "BANNED";
-
-    avatar?: string | null;
-  }) {
-    return prisma.user.create({
-      data: {
-        name: data.name,
-
-        email: data.email,
-
-        password: data.password,
-
-        phone: data.phone ?? null,
-
-        avatar: data.avatar ?? null,
-
-        role: data.role ?? "USER",
-
-        status: data.status ?? "ACTIVE",
-      },
-    });
-  }
-
-  async update(id: number, data: any) {
-    return prisma.user.update({
-      where: {
-        id,
-      },
-
-      data,
-    });
-  }
-
-  async delete(id: number) {
-    return prisma.user.delete({
-      where: {
-        id,
-      },
-    });
-  }
-
-  async updateLastLogin(id: number) {
-    return prisma.user.update({
-      where: {
-        id,
-      },
-
-      data: {
-        lastLoginAt: new Date(),
-      },
-    });
-  }
-
-  async updateProfile(
-    id: number,
-    data: {
-      name?: string;
-      email?: string;
-      phone?: string;
-      avatar?: string;
+  return {
+    data,
+    total,
+    stats: {
+      totalUsers,
+      totalAdmins,
+      activeUsers,
+      newThisMonth,
     },
-  ) {
-    return prisma.user.update({
-      where: {
-        id,
-      },
+  };
+}
 
-      data,
-    });
-  }
+export async function getUserById(id: number) {
+  return prisma.user.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      status: true,
+      lastLoginAt: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+}
+
+export async function deleteUser(id: number) {
+  return prisma.user.delete({
+    where: { id },
+  });
 }

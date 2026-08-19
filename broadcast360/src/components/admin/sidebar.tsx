@@ -41,6 +41,10 @@ const menus: MenuItem[] = [
     path: "/admin/channels",
   },
   {
+    name: "Programs",
+    path: "/admin/programs",
+  },
+  {
     name: "Schedules",
     path: "/admin/schedules",
   },
@@ -133,8 +137,8 @@ const menus: MenuItem[] = [
   },
 
   {
-    name: "Settings",
-    path: "/admin/settings",
+    name: "Users",
+    path: "/admin/users",
   },
 ];
 
@@ -345,32 +349,10 @@ export default function Sidebar() {
   }
 
   return (
-    <aside
-      className="
-        sticky
-        top-0
-        flex
-        h-screen
-        w-64
-        shrink-0
-        flex-col
-        border-r
-        border-white/10
-        bg-[#0B1026]
-      "
-    >
-      {/* =================================================
-          LOGO
-      ================================================= */}
-
-      <div className="px-5 pb-8 pt-6">
-        <h1 className="text-2xl font-bold">
-          <span className="text-[#106EE9]">
-            Broadcast
-          </span>
-          360
-        </h1>
-      </div>
+    <aside className="sticky top-0 h-screen w-64 overflow-y-auto border-r border-white/10 bg-[#0B1026] p-5">
+      <h1 className="mb-10 text-2xl font-bold">
+        <span className="text-[#106EE9]">Broadcast</span>360
+      </h1>
 
       {/* =================================================
           NAVIGATION
@@ -423,127 +405,17 @@ export default function Sidebar() {
             openMenu === menu.name;
 
           return (
-            <div key={menu.name}>
-              {/* =================================================
-                  GROUP BUTTON
-              ================================================= */}
-
-              <button
-                type="button"
-                onClick={() =>
-                  setOpenMenu(
-                    isOpen
-                      ? null
-                      : menu.name,
-                  )
-                }
-                className={`
-                  flex
-                  w-full
-                  items-center
-                  justify-between
-                  rounded-xl
-                  px-4
-                  py-3
-                  text-sm
-                  font-medium
-                  transition
-                  ${
-                    active
-                      ? "bg-[#106EE9]/20 text-white"
-                      : "text-gray-300 hover:bg-[#106EE9]/20 hover:text-white"
-                  }
-                `}
-              >
-                <span>{menu.name}</span>
-
-                <span
-                  className={`
-                    text-xs
-                    transition-transform
-                    ${
-                      isOpen
-                        ? "rotate-180"
-                        : ""
-                    }
-                  `}
-                >
-                  ▼
-                </span>
-              </button>
-
-              {/* =================================================
-                  GROUP CHILDREN
-              ================================================= */}
-
-              {isOpen && (
-                <div className="ml-3 mt-1 space-y-1 border-l border-white/10 pl-3">
-                  {children.map((child) => {
-                    const childActive =
-                      isActive(child.path);
-
-                    const badgeCount =
-                      getBadgeCount(
-                        child.name,
-                      );
-
-                    return (
-                      <Link
-                        key={child.path}
-                        href={child.path}
-                        className={`
-                          flex
-                          items-center
-                          justify-between
-                          rounded-lg
-                          px-3
-                          py-2.5
-                          text-sm
-                          transition
-                          ${
-                            childActive
-                              ? "bg-[#106EE9] text-white"
-                              : "text-gray-400 hover:bg-white/5 hover:text-white"
-                          }
-                        `}
-                      >
-                        <span>
-                          {child.name}
-                        </span>
-
-                        {/* =================================================
-                            NOTIFICATION BADGE
-                        ================================================= */}
-
-                        {badgeCount > 0 && (
-                          <span
-                            className="
-                              ml-2
-                              flex
-                              min-h-[20px]
-                              min-w-[20px]
-                              items-center
-                              justify-center
-                              rounded-full
-                              bg-red-500
-                              px-1.5
-                              text-[11px]
-                              font-bold
-                              leading-none
-                              text-white
-                            "
-                          >
-                            {badgeCount > 99
-                              ? "99+"
-                              : badgeCount}
-                          </span>
-                        )}
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+            <Link
+              key={menu.name}
+              href={menu.path}
+              className={`flex items-center gap-3 rounded-xl p-3 transition ${
+                isActive
+                  ? "bg-[#106EE9] text-white"
+                  : "text-gray-300 hover:bg-[#106EE9]/40"
+              } `}
+            >
+              <span>{menu.name}</span>
+            </Link>
           );
         })}
       </nav>

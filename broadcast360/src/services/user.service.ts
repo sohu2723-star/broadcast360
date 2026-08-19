@@ -1,107 +1,64 @@
-import { UserRepository } from "@/repositories/user.repository";
+import {
+  getUsers,
+  getPaginatedUsers,
+  getUserById,
+  deleteUser,
+} from "@/repositories/user.repository";
+import { Role, UserStatus } from "@/generated/prisma";
 
-import { hashPassword } from "@/lib/password";
-
-import type { CreateUserInput, UpdateUserInput } from "@/types/user";
-
-// Define the interface for query options
-export interface GetUsersQueryOptions {
-  page?: number;
-  limit?: number;
-  search?: string;
-  role?: string;
-  status?: string;
+/*  GET */
+export async function fetchUsers() {
+  return getUsers();
 }
 
-const repository = new UserRepository();
+/**
+ * Get paginated users list with search, filters, and summary metrics
+ */
+export async function fetchPaginatedUsers({
+  page,
+  limit,
+  search,
+  role,
+  status,
+}: {
+  page: number;
+  limit: number;
+  search?: string;
+  role?: Role | "ALL";
+  status?: UserStatus | "ALL";
+}) {
+  const validatedPage = Math.max(1, page);
+  const validatedLimit = Math.max(1, limit);
 
-export class UserService {
-  async getUsers(options: GetUsersQueryOptions = {}) {
-    const page = options.page || 1;
-    const limit = options.limit || 10;
-    const search = options.search || "";
-    const role = options.role || "";
-    const status = options.status || "";
+  const { data, total, stats } = await getPaginatedUsers({
+    page: validatedPage,
+    limit: validatedLimit,
+    search,
+    role,
+    status,
+  });
 
-    // Delegate pagination and filtering to repository
-    const { users, total } = await repository.findAll({
-      page,
-      limit,
-      search,
-      role,
-      status,
-    });
+  const totalPages = Math.ceil(total / validatedLimit) || 1;
 
-    // Strip passwords safely from result list
-    const safeUsers = users.map((user) => {
-      const { password, ...safeUser } = user;
-      return safeUser;
-    });
-
-    return {
-      users: safeUsers,
+  return {
+    data,
+    stats,
+    pagination: {
+      page: validatedPage,
+      limit: validatedLimit,
       total,
-    };
-  }
+      totalPages,
+    },
+  };
+}
 
-  async getUser(id: number) {
-    const user = await repository.findById(id);
+/**
+ * Get single user by ID (for View Action)
+ */
+export async function fetchUserById(id: number) {
+  return getUserById(id);
+}
 
-    if (!user) {
-      return null;
-    }
-
-    const { password, ...safeUser } = user;
-
-    return safeUser;
-  }
-
-  async createUser(data: CreateUserInput) {
-    const existing = await repository.findByEmail(data.email);
-
-    if (existing) {
-      throw new Error("Email already exists");
-    }
-
-    const password = await hashPassword(data.password);
-
-    const user = await repository.create({
-      name: data.name,
-      email: data.email,
-      password,
-      phone: data.phone ?? null,
-      avatar: data.avatar ?? null,
-      role: data.role ?? "USER",
-      status: data.status ?? "ACTIVE",
-    });
-
-    const { password: removed, ...safeUser } = user;
-
-    return safeUser;
-  }
-
-  async updateUser(id: number, data: UpdateUserInput) {
-    const updateData = {
-      ...data,
-    };
-
-    if (updateData.password) {
-      updateData.password = await hashPassword(updateData.password);
-    }
-
-    const user = await repository.update(id, updateData);
-
-    const { password, ...safeUser } = user;
-
-    return safeUser;
-  }
-
-  async deleteUser(id: number) {
-    /*
-      soft delete
-    */
-    return repository.update(id, {
-      status: "INACTIVE",
-    });
-  }
+/* =========================
+   DELETE
 }

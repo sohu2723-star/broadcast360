@@ -22,201 +22,23 @@ enum UserStatus {
   BANNED
 }
 
-enum SubscriptionStatus {
-  PENDING
-  ACTIVE
-  EXPIRED
-  CANCELLED
-}
-
-enum PaymentMethod {
-  KPAY
-}
-
-enum PaymentStatus {
-  PENDING
-  PAID
-  REJECTED
-  FAILED
-}
-
-// NEW: Free / Premium content
-enum AccessType {
-  FREE
-  PREMIUM
-}
-
-// =====================
-// USER
-// =====================
-
 model User {
-  id          Int        @id @default(autoincrement())
-  name        String
-  email       String     @unique
-  password    String
-  avatar      String?
-  phone       String?
-  role        Role       @default(USER)
-  status      UserStatus @default(ACTIVE)
+  id Int @id @default(autoincrement())
+
+  name String
+
+  email String @unique
+
+  password String
+
+  role Role @default(USER)
+
+  status UserStatus @default(ACTIVE)
+
   lastLoginAt DateTime?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-
-  // NEW
-  watchHistory WatchHistory[]
-  favorites    Favorite[]
-
-  // NEW
-  subscriptions        Subscription[]
-  programReminders     ProgramReminder[]
-  contactMessages      ContactMessage[]
-  supportConversations SupportConversation[]
-}
-
-// =====================
-// WATCH HISTORY
-// =====================
-
-model WatchHistory {
-  id Int @id @default(autoincrement())
-
-  userId         Int
-  newsId         Int?
-  playlistItemId Int?
-
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  playlistItem PlaylistItem? @relation(fields: [playlistItemId], references: [id], onDelete: Cascade)
-  news         News?         @relation(fields: [newsId], references: [id], onDelete: Cascade)
-
-  // For Continue Watching
-  progressSeconds Int  @default(0)
-  durationSeconds Int?
-
-  watchedAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // One user has one history record per playlist item
-  @@unique([userId, playlistItemId])
-  @@unique([userId, newsId])
-  @@index([userId])
-  @@index([userId, watchedAt])
-}
-
-model Favorite {
-  id     Int @id @default(autoincrement())
-  userId Int
-
-  movieId         Int?
-  episodeId       Int?
-  entertainmentId Int?
-  newsId          Int?
-
-  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  movie         Movie?         @relation(fields: [movieId], references: [id], onDelete: Cascade)
-  episode       Episode?       @relation(fields: [episodeId], references: [id], onDelete: Cascade)
-  entertainment Entertainment? @relation(fields: [entertainmentId], references: [id], onDelete: Cascade)
-  news          News?          @relation(fields: [newsId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
 
-  @@unique([userId, movieId])
-  @@unique([userId, episodeId])
-  @@unique([userId, entertainmentId])
-  @@unique([userId, newsId])
-  @@index([userId])
-}
-
-// =====================
-// SUBSCRIPTION PLAN
-// =====================
-
-model SubscriptionPlan {
-  id          Int     @id @default(autoincrement())
-  name        String
-  description String?
-  isActive    Boolean @default(true)
-
-  options SubscriptionOption[]
-
-  subscriptions Subscription[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model SubscriptionOption {
-  id              Int     @id @default(autoincrement())
-  planId          Int
-  durationDays    Int
-  price           Decimal
-  discountPercent Decimal @default(0)
-  isActive        Boolean @default(true)
-
-  plan SubscriptionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
-
-  subscriptions Subscription[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([planId, durationDays])
-  @@index([planId])
-}
-
-// =====================
-// SUBSCRIPTION
-// =====================
-
-model Subscription {
-  id Int @id @default(autoincrement())
-
-  userId   Int
-  planId   Int
-  optionId Int
-
-  user   User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  plan   SubscriptionPlan   @relation(fields: [planId], references: [id])
-  option SubscriptionOption @relation(fields: [optionId], references: [id])
-
-  status SubscriptionStatus @default(PENDING)
-
-  startDate DateTime?
-  endDate   DateTime?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  payments Payment[]
-
-  @@index([userId])
-  @@index([status])
-}
-
-// =====================
-// PAYMENT
-// =====================
-
-model Payment {
-  id Int @id @default(autoincrement())
-
-  subscriptionId Int
-
-  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
-
-  amount   Decimal
-  currency String  @default("MMK")
-
-  method PaymentMethod @default(KPAY)
-
-  transactionId String? @unique
-  screenshotUrl String
-
-  status PaymentStatus @default(PENDING)
-
-  paidAt DateTime?
-
-  createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
