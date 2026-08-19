@@ -44,26 +44,7 @@ export async function GET(req: NextRequest) {
         },
 
         playlistItems: {
-          some: {
-            playlist: {
-              schedules: {
-                some: {
-                  status: ScheduleStatus.COMPLETED,
-
-                  ...(channelId
-                    ? {
-                        channelId: Number(channelId),
-                      }
-                    : {}),
-
-                  endTime: {
-                    lte: availableTime,
-                    gte: oneMonthAgo,
-                  },
-                },
-              },
-            },
-          },
+          some: {},
         },
       },
 
@@ -76,12 +57,10 @@ export async function GET(req: NextRequest) {
               include: {
                 schedules: {
                   where: {
-                    status: ScheduleStatus.COMPLETED,
-
                     ...(channelId
                       ? {
-                          channelId: Number(channelId),
-                        }
+                        channelId: Number(channelId),
+                      }
                       : {}),
 
                     endTime: {

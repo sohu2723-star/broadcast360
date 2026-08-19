@@ -1,3 +1,4 @@
+import { prisma } from "@/lib/prisma";
 import fs from "fs/promises";
 import path from "path";
 import { Buffer } from "buffer";
@@ -5,31 +6,43 @@ import { Buffer } from "buffer";
 import {
   createSeries,
   deleteSeries,
-  updateSeries,
   getSeriesById,
   getPaginatedSeries,
   getSeries,
+  findSeriesByTitle,
 } from "@/repositories/serie.repository";
 
-/* =========================
-   GET
-========================= */
+/* =====================================================
+   GET ALL SERIES
+===================================================== */
+
 export async function fetchSeries() {
   return getSeries();
 }
 
-/**
- * Get paginated series list
- */
+/* =====================================================
+   GET PAGINATED SERIES
+===================================================== */
+
 export async function fetchPaginatedSeries(
   page: number,
   limit: number,
   search?: string,
 ) {
-  const validatedPage = Math.max(1, page);
-  const validatedLimit = Math.max(1, limit);
+  const validatedPage = Math.max(
+    1,
+    page,
+  );
 
-  const { data, total } = await getPaginatedSeries({
+  const validatedLimit = Math.max(
+    1,
+    limit,
+  );
+
+  const {
+    data,
+    total,
+  } = await getPaginatedSeries({
     page: validatedPage,
     limit: validatedLimit,
     search,
@@ -45,48 +58,113 @@ export async function fetchPaginatedSeries(
   };
 }
 
-/**
- * Get single series by ID
- */
+/* =====================================================
+   GET SERIES BY ID
+===================================================== */
+
 export function fetchSeriesById(
   id: number,
-  opts?: { skip: number; take: number },
+  opts?: {
+    skip: number;
+    take: number;
+  },
 ) {
-  return getSeriesById(id, opts);
+  return getSeriesById(
+    id,
+    opts,
+  );
 }
 
-/**
- * Delete series
- */
-export function removeSeries(id: number) {
+/* =====================================================
+   DELETE SERIES
+===================================================== */
+
+export function removeSeries(
+  id: number,
+) {
   return deleteSeries(id);
 }
 
-/* =========================
-   SAFE FILE UPLOAD (FIXED PATH)
-========================= */
-async function saveThumbnail(file: File) {
-  const bytes = await file.arrayBuffer();
-  const buffer = Buffer.from(bytes);
+/* =====================================================
+   SAVE THUMBNAIL
+===================================================== */
 
-  const filename = `${Date.now()}-${file.name}`;
+async function saveThumbnail(
+  file: File,
+) {
+  const bytes =
+    await file.arrayBuffer();
 
-  // ✅ FIXED ROOT PATH
-  const uploadDir = path.join(process.cwd(), "public", "thumbnails", "series");
+  const buffer =
+    Buffer.from(bytes);
 
-  const uploadPath = path.join(uploadDir, filename);
+  /*
+   * Remove unsafe characters from
+   * original filename.
+   */
 
-  // ✅ ALWAYS CREATE FOLDER
-  await fs.mkdir(uploadDir, { recursive: true });
+  const safeFilename =
+    file.name
+      .replace(/\s+/g, "-")
+      .replace(/[^a-zA-Z0-9._-]/g, "");
 
-  await fs.writeFile(uploadPath, buffer);
+  const filename =
+    `${Date.now()}-${safeFilename}`;
+
+  /*
+   * Physical path:
+   *
+   * project/
+   * └── public/
+   *     └── thumbnails/
+   *         └── series/
+   */
+
+  const uploadDir =
+    path.join(
+      process.cwd(),
+      "public",
+      "thumbnails",
+      "series",
+    );
+
+  const uploadPath =
+    path.join(
+      uploadDir,
+      filename,
+    );
+
+  /*
+   * Make sure directory exists.
+   */
+
+  await fs.mkdir(
+    uploadDir,
+    {
+      recursive: true,
+    },
+  );
+
+  /*
+   * Save file.
+   */
+
+  await fs.writeFile(
+    uploadPath,
+    buffer,
+  );
+
+  /*
+   * URL stored in database.
+   */
 
   return `/thumbnails/series/${filename}`;
 }
 
-/* =========================
+/* =====================================================
    EDIT SERIES
-========================= */
+===================================================== */
+
 export async function editSeries(
   id: number,
   data: {
@@ -94,50 +172,304 @@ export async function editSeries(
     description: string;
     genre: string;
     releaseYear: number;
-    thumbnail?: File | null;
+    thumbnail: File | null;
   },
 ) {
-  let thumbnailUrl: string | undefined;
+  /* ===================================================
+     VALIDATE ID
+  =================================================== */
 
-  if (data.thumbnail instanceof File && data.thumbnail.size > 0) {
-    thumbnailUrl = await saveThumbnail(data.thumbnail);
+  if (
+    !Number.isInteger(id) ||
+    id < 1
+  ) {
+    throw new Error(
+      "Invalid series ID",
+    );
   }
 
-  return updateSeries(id, {
-    title: data.title,
-    description: data.description,
-    genre: data.genre,
-    releaseYear: data.releaseYear,
-    ...(thumbnailUrl && { thumbnail: thumbnailUrl }),
+  /* ===================================================
+     VALIDATE TITLE
+  =================================================== */
+
+  const title =
+    data.title.trim();
+
+  if (!title) {
+    throw new Error(
+      "Series name is required",
+    );
+  }
+
+  /* ===================================================
+     CHECK CURRENT SERIES
+  =================================================== */
+
+  const currentSeries =
+    await prisma.series.findUnique({
+      where: {
+        id,
+      },
+    });
+
+  if (!currentSeries) {
+    throw new Error(
+      "Series not found",
+    );
+  }
+
+  /* ===================================================
+     CHECK DUPLICATE SERIES NAME
+     
+     Current series ID is excluded.
+     
+     Example:
+     
+     Series 1 = One Piece
+     
+     Editing Series 1:
+     One Piece -> allowed
+     
+     Series 2 = One Piece:
+     Not allowed
+  =================================================== */
+
+  const existingSeries =
+    await prisma.series.findFirst({
+      where: {
+        title: {
+          equals: title,
+          mode: "insensitive",
+        },
+
+        NOT: {
+          id,
+        },
+      },
+
+      select: {
+        id: true,
+        title: true,
+      },
+    });
+
+  if (existingSeries) {
+    throw new Error(
+      "Series name already exists",
+    );
+  }
+
+  /* ===================================================
+     VALIDATE OTHER DATA
+  =================================================== */
+
+  if (
+    !data.description.trim()
+  ) {
+    throw new Error(
+      "Description is required",
+    );
+  }
+
+  if (!data.genre.trim()) {
+    throw new Error(
+      "Genre is required",
+    );
+  }
+
+  if (
+    !Number.isInteger(
+      data.releaseYear,
+    )
+  ) {
+    throw new Error(
+      "Invalid release year",
+    );
+  }
+
+  /* ===================================================
+     THUMBNAIL
+     
+     No new image:
+     Keep old thumbnail.
+     
+     New image:
+     Save new thumbnail.
+  =================================================== */
+
+  let thumbnailUrl:
+    | string
+    | undefined;
+
+  if (
+    data.thumbnail instanceof File &&
+    data.thumbnail.size > 0
+  ) {
+    thumbnailUrl =
+      await saveThumbnail(
+        data.thumbnail,
+      );
+  }
+
+  /* ===================================================
+     UPDATE DATA
+  =================================================== */
+
+  const updateData: {
+    title: string;
+    description: string;
+    genre: string;
+    releaseYear: number;
+    thumbnail?: string;
+  } = {
+    title,
+    description:
+      data.description.trim(),
+    genre:
+      data.genre.trim(),
+    releaseYear:
+      data.releaseYear,
+  };
+
+  /*
+   * Only replace thumbnail when
+   * a new thumbnail was uploaded.
+   */
+
+  if (thumbnailUrl) {
+    updateData.thumbnail =
+      thumbnailUrl;
+  }
+
+  /* ===================================================
+     UPDATE DATABASE
+  =================================================== */
+
+  return prisma.series.update({
+    where: {
+      id,
+    },
+
+    data: updateData,
   });
 }
 
-/* =========================
+/* =====================================================
    ADD SERIES
-========================= */
-export async function addSeries(formData: FormData) {
-  const title = String(formData.get("title") || "");
-  const description = String(formData.get("description") || "");
-  const genre = String(formData.get("genre") || "");
-  const releaseYear = Number(formData.get("releaseYear"));
-  const thumbnail = formData.get("thumbnail") as File | null;
+===================================================== */
 
-  // ❗ SAFETY CHECK (prevents Prisma crash)
-  if (!title || !description || !genre || isNaN(releaseYear)) {
-    throw new Error("Missing required fields");
+export async function addSeries(
+  formData: FormData,
+) {
+  /* ===================================================
+     GET FORM DATA
+  =================================================== */
+
+  const title =
+    String(
+      formData.get("title") || "",
+    ).trim();
+
+  const description =
+    String(
+      formData.get("description") || "",
+    ).trim();
+
+  const genre =
+    String(
+      formData.get("genre") || "",
+    ).trim();
+
+  const releaseYear =
+    Number(
+      formData.get(
+        "releaseYear",
+      ),
+    );
+
+  const thumbnailValue =
+    formData.get(
+      "thumbnail",
+    );
+
+  const thumbnail =
+    thumbnailValue instanceof File
+      ? thumbnailValue
+      : null;
+
+  /* ===================================================
+     VALIDATION
+  =================================================== */
+
+  if (!title) {
+    throw new Error(
+      "Series name is required",
+    );
   }
+
+  if (!description) {
+    throw new Error(
+      "Description is required",
+    );
+  }
+
+  if (!genre) {
+    throw new Error(
+      "Genre is required",
+    );
+  }
+
+  if (
+    !Number.isInteger(
+      releaseYear,
+    )
+  ) {
+    throw new Error(
+      "Invalid release year",
+    );
+  }
+
+  /* ===================================================
+     CHECK DUPLICATE SERIES NAME
+  =================================================== */
+
+  const existingSeries =
+    await findSeriesByTitle(
+      title,
+    );
+
+  if (existingSeries) {
+    throw new Error(
+      "Series name already exists",
+    );
+  }
+
+  /* ===================================================
+     THUMBNAIL
+  =================================================== */
 
   let thumbnailUrl = "";
 
-  if (thumbnail instanceof File && thumbnail.size > 0) {
-    thumbnailUrl = await saveThumbnail(thumbnail);
+  if (
+    thumbnail instanceof File &&
+    thumbnail.size > 0
+  ) {
+    thumbnailUrl =
+      await saveThumbnail(
+        thumbnail,
+      );
   }
+
+  /* ===================================================
+     CREATE SERIES
+  =================================================== */
 
   return createSeries({
     title,
     description,
     genre,
     releaseYear,
-    thumbnail: thumbnailUrl,
+    thumbnail:
+      thumbnailUrl,
   });
 }

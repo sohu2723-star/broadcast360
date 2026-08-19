@@ -4,12 +4,18 @@ import { FFmpegManager } from "@/streaming/ffmpeg";
 
 type BroadcastMode = "STOPPED" | "VOD" | "LIVE";
 
+
 export class SwitchManager {
+
   private mode = new Map<number, BroadcastMode>();
 
   private current = new Map<number, ChildProcess>();
 
-  constructor(private ffmpeg: FFmpegManager) {}
+
+  constructor(
+    private ffmpeg: FFmpegManager
+  ) { }
+
 
   /*
   ==========================
@@ -18,14 +24,48 @@ export class SwitchManager {
   */
 
   async stopCurrent(channelId: number) {
-    await this.ffmpeg.stop(channelId, "ROUTER");
+
+    try {
+
+      await Promise.race([
+
+        this.ffmpeg.stop(
+          channelId,
+          "ROUTER"
+        ),
+
+        new Promise(resolve =>
+          setTimeout(resolve, 3000)
+        )
+
+      ]);
+
+    } catch (error) {
+
+      console.error(
+        "❌ ROUTER STOP ERROR",
+        error
+      );
+
+    }
+
 
     this.current.delete(channelId);
 
-    this.mode.set(channelId, "STOPPED");
 
-    console.log("🛑 ROUTER STOPPED", channelId);
+    this.mode.set(
+      channelId,
+      "STOPPED"
+    );
+
+
+    console.log(
+      "🛑 ROUTER STOPPED",
+      channelId
+    );
   }
+
+
 
   /*
   ==========================
@@ -33,42 +73,108 @@ export class SwitchManager {
   ==========================
   */
 
-  async switchToVOD(channelId: number, streamKey: string) {
+
+  async switchToVOD(
+    channelId: number,
+    streamKey: string
+  ) {
+
+
     await this.stopCurrent(channelId);
 
-    const input = `rtmp://127.0.0.1:1935/vod/${channelId}`;
 
-    const output = `rtmp://127.0.0.1:1935/channel/${streamKey}`;
+
+    const input =
+      `rtmp://127.0.0.1:1935/vod/${channelId}`;
+
+
+
+    const output =
+      `rtmp://127.0.0.1:1935/channel/${streamKey}`;
+
 
     const args = [
+
       "-re",
+
 
       "-fflags",
       "+genpts",
 
+
       "-i",
       input,
 
-      "-c",
+
+      "-map",
+      "0:v:0",
+
+
+      "-map",
+      "0:a:0?",
+
+
+      "-c:v",
       "copy",
+
+
+      "-c:a",
+      "aac",
+
+
+      "-ar",
+      "48000",
+
+
+      "-b:a",
+      "128k",
+
 
       "-f",
       "flv",
 
-      output,
+
+      output
+
     ];
 
-    console.log("🎬 ROUTE VOD", {
-      input,
-      output,
-    });
 
-    const process = this.ffmpeg.start(channelId, "ROUTER", args);
 
-    this.current.set(channelId, process);
+    console.log(
+      "🎬 ROUTE VOD",
+      {
+        input,
+        output
+      }
+    );
 
-    this.mode.set(channelId, "VOD");
+
+
+    const process =
+      this.ffmpeg.start(
+        channelId,
+        "ROUTER",
+        args
+      );
+
+
+
+    this.current.set(
+      channelId,
+      process
+    );
+
+
+    this.mode.set(
+      channelId,
+      "VOD"
+    );
+
   }
+
+
+
+
 
   /*
   ==========================
@@ -76,45 +182,118 @@ export class SwitchManager {
   ==========================
   */
 
-  async switchToLIVE(channelId: number, streamKey: string) {
+
+  async switchToLIVE(
+    channelId: number,
+    streamKey: string
+  ) {
+
+
     await this.stopCurrent(channelId);
 
-    const input = `rtmp://127.0.0.1:1935/live/${streamKey}`;
 
-    const output = `rtmp://127.0.0.1:1935/channel/${streamKey}`;
+
+    const input =
+      `rtmp://127.0.0.1:1935/source/${streamKey}`;
+
+
+
+    const output =
+      `rtmp://127.0.0.1:1935/channel/${streamKey}`;
+
+
 
     const args = [
+
+
       "-re",
+
 
       "-fflags",
       "+genpts",
 
+
       "-i",
       input,
+
+
+      "-map",
+      "0:v:0",
+
+
+      "-map",
+      "0:a:0?",
+
+
+
+      /*
+        keep video,
+        encode audio
+      */
 
       "-c:v",
       "copy",
 
+
       "-c:a",
       "aac",
+
+
+      "-ar",
+      "48000",
+
+
+      "-b:a",
+      "128k",
+
+
 
       "-f",
       "flv",
 
-      output,
+
+      output
+
     ];
 
-    console.log("🔴 ROUTE LIVE", {
-      input,
-      output,
-    });
 
-    const process = this.ffmpeg.start(channelId, "ROUTER", args);
 
-    this.current.set(channelId, process);
+    console.log(
+      "🔴 ROUTE LIVE",
+      {
+        input,
+        output
+      }
+    );
 
-    this.mode.set(channelId, "LIVE");
+
+
+    const process =
+      this.ffmpeg.start(
+        channelId,
+        "ROUTER",
+        args
+      );
+
+
+
+    this.current.set(
+      channelId,
+      process
+    );
+
+
+
+    this.mode.set(
+      channelId,
+      "LIVE"
+    );
+
   }
+
+
+
+
 
   /*
   ==========================
@@ -122,11 +301,26 @@ export class SwitchManager {
   ==========================
   */
 
+
   getMode(channelId: number) {
-    return this.mode.get(channelId) ?? "STOPPED";
+
+    return (
+      this.mode.get(channelId)
+      ??
+      "STOPPED"
+    );
+
   }
 
+
+
   isRunning(channelId: number) {
-    return this.ffmpeg.isRunning(channelId, "ROUTER");
+
+    return this.ffmpeg.isRunning(
+      channelId,
+      "ROUTER"
+    );
+
   }
+
 }

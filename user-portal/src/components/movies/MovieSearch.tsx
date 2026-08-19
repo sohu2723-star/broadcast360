@@ -12,7 +12,7 @@ export default function MovieSearch({
   onChange,
 }: Props) {
   return (
-    <div className="relative">
+    <div className="relative w-full">
       <input
         type="search"
 
@@ -22,7 +22,7 @@ export default function MovieSearch({
 
         placeholder="Search movies by title..."
 
-        className="w-full rounded-xl bg-neutral-900 border border-neutral-800 px-12 py-3 text-white outline-none focus:border-red-500"
+       className="w-full rounded-xl border border-zinc-700 bg-zinc-900 px-12 py-3 text-white outline-none focus:border-[#106EE9]"
       />
     </div>
   );

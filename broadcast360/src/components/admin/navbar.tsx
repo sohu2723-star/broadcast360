@@ -1,10 +1,21 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
+
+interface AdminUser {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  avatar?: string | null;
+}
 
 const menus = [
   { name: "Dashboard", path: "/admin" },
   { name: "Channels", path: "/admin/channels" },
+  { name: "Broadcasts", path: "/admin/broadcasts" },
   { name: "Live Streams", path: "/admin/streams" },
   { name: "Movies", path: "/admin/movies" },
   { name: "Series", path: "/admin/series" },
@@ -14,44 +25,126 @@ const menus = [
   { name: "Programs", path: "/admin/programs" },
   { name: "Playlists", path: "/admin/playlists" },
   { name: "Schedules", path: "/admin/schedules" },
-  { name: "Recordings", path: "/admin/recordings" },
-  { name: "Users", path: "/admin/user" },
+
+  // FIX
+  { name: "Users", path: "/admin/users" },
+
   { name: "Settings", path: "/admin/settings" },
 ];
 
 export default function Navbar() {
   const pathname = usePathname();
 
-  const getActiveMenu = () => {
-    // exact dashboard match
-    if (pathname === "/admin") return "Dashboard";
+  const [user, setUser] = useState<AdminUser | null>(null);
 
-    // nested routes handling (important fix)
-    const matched = menus
-      .filter((m) => m.path !== "/admin")
-      .find((m) => pathname.startsWith(m.path));
+  useEffect(() => {
+    async function loadUser() {
+      try {
+        const res = await fetch("/api/auth/me", {
+          credentials: "include",
+        });
 
-    return matched?.name;
-  };
+        const data = await res.json();
 
-  const currentMenuName = getActiveMenu();
+        if (res.ok) {
+          setUser(data.user);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    }
+
+    loadUser();
+  }, []);
+
+  function getTitle() {
+  // Sort by path length descending so longer/more specific paths match first
+  const menu = [...menus]
+    .sort((a, b) => b.path.length - a.path.length)
+    .find((item) => 
+      item.path === "/admin" 
+        ? pathname === "/admin" 
+        : pathname.startsWith(item.path)
+    );
+
+  return menu?.name ?? "Admin";
+}
 
   return (
-    <header className="h-20 bg-[#010312] border-b border-white/10 flex items-center justify-between px-8 sticky top-0 z-50">
-      
-      {/* Page Title */}
-      <h1 className="text-3xl font-semibold text-white">
-        {currentMenuName || "Admin"}
-      </h1>
+    <header className="flex h-20 items-center justify-between border-b border-white/10 bg-[#010312] px-8">
+      <h1 className="text-3xl font-semibold text-white">{getTitle()}</h1>
 
-      {/* Admin Info */}
-      <div className="flex items-center gap-6">
-        <div className="flex gap-3 items-center">
-          <div className="w-10 h-10 rounded-full bg-[#400FD3] flex items-center justify-center text-white">
-            A
+      {/* =================================================
+          PROFILE
+      ================================================= */}
+
+      <div className="border-t border-white/10 p-4">
+        <Link
+          href="/admin/profile"
+          className="
+            flex
+            items-center
+            gap-3
+            rounded-xl
+            p-2
+            transition
+            hover:bg-white/5
+          "
+        >
+          <div
+            className="
+              flex
+              h-10
+              w-10
+              shrink-0
+              items-center
+              justify-center
+              overflow-hidden
+              rounded-full
+              border
+              border-white/20
+              bg-[#111936]
+            "
+          >
+            {user?.avatar ? (
+              <img
+                src={user.avatar}
+                alt={user.name || "Admin"}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div
+                className="
+                  flex
+                  h-full
+                  w-full
+                  items-center
+                  justify-center
+                  bg-[#400FD3]
+                  text-sm
+                  font-bold
+                  text-white
+                "
+              >
+                {user?.name
+                  ? user.name
+                      .charAt(0)
+                      .toUpperCase()
+                  : "A"}
+              </div>
+            )}
           </div>
-          <div className="text-white">Admin</div>
-        </div>
+
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-white">
+              {user?.name || "Admin"}
+            </p>
+
+            <p className="truncate text-xs text-gray-500">
+              {user?.role || "Administrator"}
+            </p>
+          </div>
+        </Link>
       </div>
     </header>
   );

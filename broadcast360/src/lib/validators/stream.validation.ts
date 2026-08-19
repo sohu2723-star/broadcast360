@@ -1,5 +1,10 @@
 import { z } from "zod";
 
+import {
+  StreamProtocol,
+  StreamStatus,
+} from "@/generated/prisma/client";
+
 export const createStreamSchema = z.object({
   channelId: z
     .number({
@@ -12,29 +17,48 @@ export const createStreamSchema = z.object({
     .string({
       message: "Stream name is required",
     })
-    .min(2, "Stream name must be at least 2 characters"),
+    .trim()
+    .min(
+      2,
+      "Stream name must be at least 2 characters"
+    ),
 
-  // url: z
-  //   .string({
-  //     message: "Stream URL is required",
-  //   })
-  //   .min(5, "Invalid stream URL"),
+  protocol: z.enum(StreamProtocol),
 
-  protocol: z.enum(["RTSP", "RTMP", "HLS", "WEBRTC", "SRT"]),
-
-  description: z.string().max(255).nullable().optional(),
+  description: z
+    .string()
+    .max(255)
+    .nullable()
+    .optional(),
 });
 
 export const updateStreamSchema = z.object({
-  name: z.string().min(2).optional(),
+  channelId: z
+    .number()
+    .int()
+    .positive()
+    .optional(),
 
-  channelId:z.number().optional(),
+  name: z
+    .string()
+    .trim()
+    .min(
+      2,
+      "Stream name must be at least 2 characters"
+    )
+    .optional(),
 
-  // url: z.string().min(5).optional(),
+  protocol: z
+    .enum(StreamProtocol)
+    .optional(),
 
-  protocol: z.enum(["RTSP", "RTMP", "HLS", "WEBRTC", "SRT"]).optional(),
+  status: z
+    .enum(StreamStatus)
+    .optional(),
 
-  status: z.enum(["ONLINE", "OFFLINE", "ERROR"]).optional(),
-
-  description: z.string().max(255).nullable().optional(),
+  description: z
+    .string()
+    .max(255)
+    .nullable()
+    .optional(),
 });

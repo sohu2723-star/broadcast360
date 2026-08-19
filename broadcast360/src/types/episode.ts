@@ -1,10 +1,10 @@
 export type EpisodeFormData = {
   title: string;
   episodeNo: number;
+
   videoFile: File | null;
   thumbnailFile: File | null;
 };
-
 export type Episode = {
   id: number;
   seriesId: number;

@@ -1,11 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
 
+type ChannelAccessType = "FREE" | "PREMIUM";
+
 type CreateChannelInput = {
   name: string;
   description?: string;
   logo?: string;
   country?: string;
+  accessType: ChannelAccessType;
 };
 
 type UpdateChannelInput = {

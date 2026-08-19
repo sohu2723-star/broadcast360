@@ -14,6 +14,8 @@ import { PlayoutManager } from "@/managers/playout-manager";
 import { SessionManager } from "@/managers/session-manager";
 import { LiveManager } from "@/managers/live-manager";
 import { MediaMTXManager } from "@/managers/mediamtx.manager";
+import { RecordingManager } from "@/managers/recording-manager";
+import { RecordingService } from "./recording.service";
 
 type BroadcastMode = "SCHEDULE" | "FALLBACK";
 
@@ -30,9 +32,9 @@ export class BroadcastService {
 
   private finishHandler:
     | ((data: {
-        channelId: number;
-        scheduleId: number | null;
-      }) => Promise<void>)
+      channelId: number;
+      scheduleId: number | null;
+    }) => Promise<void>)
     | null = null;
 
   constructor(
@@ -43,7 +45,9 @@ export class BroadcastService {
     private live: LiveManager,
 
     private mediaMTX: MediaMTXManager,
-  ) {}
+
+    private recordingService: RecordingService
+  ) { }
 
   setPlaylistFinishedHandler(
     callback: (data: {
@@ -82,6 +86,8 @@ export class BroadcastService {
           STOP CURRENT
       =========================
       */
+
+      await this.recordingService.stop(channelId);
 
       await this.playout.stop(channelId);
 
@@ -185,35 +191,85 @@ export class BroadcastService {
       console.log("🎯 CURRENT ITEM", current);
 
       /*
-      =========================
-              LIVE
-      =========================
-      */
+=========================
+        LIVE
+=========================
+*/
 
       if (current?.type === "STREAM") {
+
         if (!current.streamUrl) {
-          throw new Error("STREAM URL MISSING");
+          throw new Error(
+            "STREAM URL MISSING"
+          );
         }
 
-        console.log("🔴 START LIVE", current.streamUrl);
+
+        console.log(
+          "🔴 START LIVE",
+          current.streamUrl
+        );
+
+
 
         await this.live.start(
           channelId,
-
           current.streamUrl,
-
           channel.streamKey,
         );
 
-        await this.mediaMTX.waitPublisher(`live/${channel.streamKey}`);
+
+
+        await this.mediaMTX.waitPublisher(
+          `source/${channel.streamKey}`,
+        );
+
+
+        await new Promise(
+          resolve => setTimeout(resolve, 1000)
+        );
+
+
 
         await this.switcher.switchToLIVE(
           channelId,
-
           channel.streamKey,
         );
 
+
+
+        await this.mediaMTX.waitPublisher(
+          `channel/${channel.streamKey}`,
+        );
+
+
+        await new Promise(
+          resolve => setTimeout(resolve, 1000)
+        );
+
+
+
+        try {
+
+          await this.recordingService.start(
+            channelId,
+            channel.streamKey,
+            current.title ?? "Live News",
+          );
+
+        } catch (error) {
+
+          console.error(
+            "⚠ RECORDING FAILED",
+            error
+          );
+
+        }
+
+
+
         await this.session.live(channelId);
+
 
         return;
       }
@@ -248,6 +304,7 @@ export class BroadcastService {
         }
       };
 
+      const isFallback = schedule === null;
       await this.playout.start(
         channelId,
 
@@ -256,9 +313,15 @@ export class BroadcastService {
         offset,
 
         onFinished,
+
+        isFallback,
       );
 
       await this.mediaMTX.waitPublisher(`vod/${channelId}`);
+
+      await new Promise(
+        resolve => setTimeout(resolve, 1000)
+      );
 
       await this.switcher.switchToVOD(
         channelId,
@@ -305,6 +368,8 @@ export class BroadcastService {
   }
 
   async stop(channelId: number) {
+    await this.recordingService.stop(channelId);
+
     await this.playout.stop(channelId);
 
     await this.live.stop(channelId);
@@ -314,6 +379,8 @@ export class BroadcastService {
     await this.session.stop(channelId);
 
     this.mode.delete(channelId);
+
+    this.switching.delete(channelId);
 
     console.log("🛑 BROADCAST STOP", channelId);
   }

@@ -1,0 +1,4 @@
+file 'C:/Users/Sandar Kyaw/broadcast360/broadcast360/public/videos/series/HG_Episode1_Part1.mp4'
+file 'C:/Users/Sandar Kyaw/broadcast360/broadcast360/public/videos/ads/ad3.mp4'
+file 'C:/Users/Sandar Kyaw/broadcast360/broadcast360/public/videos/series/HG_Episode1_Part2.mp4'
+file 'C:/Users/Sandar Kyaw/broadcast360/broadcast360/public/videos/ads/ad1.mp4'

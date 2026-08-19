@@ -1,7 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import {
+  useParams,
+  useRouter,
+} from "next/navigation";
+
 import EpisodeForm from "@/components/admin/episode/EpisodeForm";
 
 type Episode = {
@@ -15,39 +23,142 @@ type Episode = {
   createdAt: string;
 };
 
+type Series = {
+  id: number;
+  name: string;
+};
+
 export default function EditEpisodePage() {
-  const params = useParams();
-  const router = useRouter();
+  const params =
+    useParams();
 
-  const episodeId = Number(params.episodeId);
-  const seriesId = Number(params.id);
+  const router =
+    useRouter();
 
-  const [episode, setEpisode] = useState<Episode | null>(null);
+  const episodeId =
+    Number(
+      params.episodeId,
+    );
+
+  const seriesId =
+    Number(params.id);
+
+  const [
+    episode,
+    setEpisode,
+  ] = useState<Episode | null>(
+    null,
+  );
+
+  const [
+    series,
+    setSeries,
+  ] = useState<Series | null>(
+    null,
+  );
+
+  // =====================================================
+  // LOAD EPISODE
+  // =====================================================
 
   useEffect(() => {
     async function loadEpisode() {
       try {
-        const res = await fetch(
-          `/api/series/${seriesId}/episodes/${episodeId}`,
-        );
+        const res =
+          await fetch(
+            `/api/series/${seriesId}/episodes/${episodeId}`,
+            {
+              cache: "no-store",
+            },
+          );
 
         if (!res.ok) {
-          throw new Error("Episode not found");
+          throw new Error(
+            "Episode not found",
+          );
         }
 
-        const data: Episode = await res.json();
+        const data: Episode =
+          await res.json();
+
         setEpisode(data);
-      } catch (err) {
-        console.log(err);
+      } catch (error) {
+        console.error(error);
       }
     }
 
-    if (episodeId) {
-      loadEpisode();
+    if (
+      Number.isInteger(
+        episodeId,
+      ) &&
+      episodeId > 0 &&
+      Number.isInteger(
+        seriesId,
+      ) &&
+      seriesId > 0
+    ) {
+      void loadEpisode();
     }
-  }, [episodeId, seriesId]);
+  }, [
+    episodeId,
+    seriesId,
+  ]);
 
-  if (!episode) {
+  // =====================================================
+  // LOAD SERIES
+  // =====================================================
+
+  useEffect(() => {
+    async function loadSeries() {
+      try {
+        const res =
+          await fetch(
+            `/api/series/${seriesId}`,
+            {
+              cache: "no-store",
+            },
+          );
+
+        if (!res.ok) {
+          throw new Error(
+            "Series not found",
+          );
+        }
+
+        const result =
+          await res.json();
+
+        const data =
+          result.data ??
+          result;
+
+        setSeries({
+          id: data.id,
+          name:
+            data.name ??
+            data.title ??
+            "",
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    if (
+      Number.isInteger(
+        seriesId,
+      ) &&
+      seriesId > 0
+    ) {
+      void loadSeries();
+    }
+  }, [seriesId]);
+
+  // =====================================================
+  // LOADING
+  // =====================================================
+
+  if (!episode || !series) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
         <p className="animate-pulse text-sm font-medium text-slate-400">
@@ -57,42 +168,111 @@ export default function EditEpisodePage() {
     );
   }
 
+  // =====================================================
+  // INITIAL DATA
+  // =====================================================
+
   const initialData = {
-    title: episode.title,
-    episodeNo: episode.episodeNo,
-    videoUrl: episode.videoUrl ?? undefined,
-    thumbnailUrl: episode.thumbnailUrl ?? undefined,
+    title:
+      episode.title,
+
+    episodeNo:
+      episode.episodeNo,
+
+    videoUrl:
+      episode.videoUrl ??
+      undefined,
+
+    thumbnailUrl:
+      episode.thumbnailUrl ??
+      undefined,
   };
+
+  // =====================================================
+  // UI
+  // =====================================================
 
   return (
     <div className="mx-auto max-w-6xl p-4 text-slate-100 sm:p-6 lg:p-8">
-      {/* HEADER SECTION */}
+
+      {/* HEADER */}
+
       <div className="mb-8 border-b border-slate-800/60 pb-5">
         <h1 className="mt-1 text-2xl font-bold tracking-tight text-white sm:text-3xl">
           Edit Episode
         </h1>
       </div>
 
-      {/* FORM SECTION (WITHOUT RIGHT PANEL) */}
+      {/* FORM */}
+
       <EpisodeForm
         isEdit={true}
-        defaultValues={initialData}
-        onSubmit={async (data) => {
-          try {
-            const formData = new FormData();
+        episodeId={
+          episode.id
+        }
+        seriesId={
+          seriesId
+        }
+        seriesTitle={
+          series.name
+        }
+        defaultValues={
+          initialData
+        }
+        onSubmit={async (
+          data,
+        ) => {
+          const formData =
+            new FormData();
 
-            formData.append("title", data.title);
-            formData.append("episodeNo", String(data.episodeNo));
+          // =================================================
+          // TITLE
+          // =================================================
 
-            if (data.videoFile) {
-              formData.append("video", data.videoFile);
-            }
+          formData.append(
+            "title",
+            data.title.trim(),
+          );
 
-            if (data.thumbnailFile) {
-              formData.append("thumbnail", data.thumbnailFile);
-            }
+          // =================================================
+          // EPISODE NUMBER
+          // =================================================
 
-            const res = await fetch(
+          formData.append(
+            "episodeNo",
+            String(
+              data.episodeNo,
+            ),
+          );
+
+          // =================================================
+          // VIDEO
+          // =================================================
+
+          if (
+            data.videoFile
+          ) {
+            formData.append(
+              "video",
+              data.videoFile,
+            );
+          }
+
+          // =================================================
+          // THUMBNAIL
+          // =================================================
+
+          if (
+            data.thumbnailFile
+          ) {
+            formData.append(
+              "thumbnail",
+              data.thumbnailFile,
+            );
+          }
+
+          const res =
+            await fetch(
               `/api/series/${seriesId}/episodes/${episode.id}`,
               {
                 method: "PUT",
@@ -100,23 +280,33 @@ export default function EditEpisodePage() {
               },
             );
 
-            const result = await res.json();
+          let result: {
+            message?: string;
+          } = {};
 
-            if (!res.ok) {
-              throw new Error(result.message || "Update failed");
-            }
-
-            alert("Episode updated successfully");
-
-            router.push(`/admin/series/${seriesId}`);
-            router.refresh();
-          } catch (error: unknown) {
-            if (error instanceof Error) {
-              alert(error.message);
-            } else {
-              alert("Something went wrong");
-            }
+          try {
+            result =
+              await res.json();
+          } catch {
+            result = {};
           }
+
+          if (!res.ok) {
+            throw new Error(
+              result.message ||
+                "Update failed",
+            );
+          }
+
+          alert(
+            "Episode updated successfully",
+          );
+
+          router.push(
+            `/admin/series/${seriesId}`,
+          );
+
+          router.refresh();
         }}
       />
     </div>

@@ -61,7 +61,4 @@ export async function fetchUserById(id: number) {
 
 /* =========================
    DELETE
-========================= */
-export async function removeUser(id: number) {
-  return deleteUser(id);
 }

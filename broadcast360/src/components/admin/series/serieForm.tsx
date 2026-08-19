@@ -91,6 +91,7 @@ export default function SeriesForm({
             <div>
               <label className="mb-2 block font-medium">Series Title</label>
               <input
+                maxLength={100}
                 value={form.title}
                 onChange={(e) => {
                   setForm({ ...form, title: e.target.value });
@@ -112,6 +113,7 @@ export default function SeriesForm({
               <label className="mb-2 block font-medium">Description</label>
               <textarea
                 rows={4}
+                maxLength={1000}
                 value={form.description}
                 onChange={(e) => {
                   setForm({ ...form, description: e.target.value });
@@ -129,6 +131,9 @@ export default function SeriesForm({
                   {errors.description}
                 </p>
               )}
+              <div className="mt-1 flex justify-end text-xs text-gray-400">
+                {form.description.length}/1000
+              </div>
             </div>
 
             {/* GENRE */}

@@ -2,25 +2,28 @@ import { prisma } from "@/lib/prisma";
 import { PlaylistItemCreateInput } from "@/types/playlist-item";
 
 export const PlaylistItemRepository = {
-  
+
   findByOrder: (
-  playlistId:number,
-  order:number
-) => {
+    playlistId: number,
+    order: number
+  ) => {
 
-  return prisma.playlistItem.findFirst({
+    return prisma.playlistItem.findFirst({
 
-    where:{
+      where: {
 
-      playlistId,
+        playlistId,
 
-      order
+        order
 
-    }
+      }
 
-  });
+    });
 
-},
+  },
+
+  // Get the last item in a playlist
+  getLastByPlaylistId: (playlistId: number) => { return prisma.playlistItem.findFirst({ where: { playlistId, }, orderBy: { order: "desc", }, select: { order: true, }, }); },
 
   createMovie: (playlistId: number, data: PlaylistItemCreateInput) => {
     return prisma.playlistItem.create({
@@ -91,7 +94,7 @@ export const PlaylistItemRepository = {
     });
   },
 
-   getByPlaylistId: (playlistId: number) => {
+  getByPlaylistId: (playlistId: number) => {
     return prisma.playlistItem.findMany({
       where: { playlistId },
       orderBy: { order: "asc" },
@@ -107,10 +110,10 @@ export const PlaylistItemRepository = {
   },
 
   deleteItem: (id: number) => {
-  return prisma.playlistItem.delete({
-    where: {
-      id,
-    },
-  });
-},
+    return prisma.playlistItem.delete({
+      where: {
+        id,
+      },
+    });
+  },
 };

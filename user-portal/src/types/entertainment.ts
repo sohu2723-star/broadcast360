@@ -29,6 +29,7 @@ export interface Entertainment {
   channelId?: number;
 
   channelName?: string;
+  channelLogo?: string;
 
 
   // Schedule information

@@ -1,6 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
 import { useRouter } from "next/navigation";
 
 import {
@@ -8,10 +13,27 @@ import {
   editEpisodeSchema,
 } from "@/lib/validators/episode.validator";
 
-import type { EpisodeFormData } from "@/types/episode";
+import type {
+  EpisodeFormData,
+} from "@/types/episode";
+
 import ImageUploader from "@/components/ImageUploader";
 
+// =====================================================
+// TYPES
+// =====================================================
+
+type EpisodeFromAPI = {
+  id: number;
+  title: string;
+  episodeNo: number;
+};
+
 type Props = {
+  seriesTitle?: string;
+  seriesId?: number;
+  episodeId?: number;
+
   defaultValues?: {
     title?: string;
     episodeNo?: number;
@@ -21,159 +43,806 @@ type Props = {
 
   isEdit?: boolean;
 
-  onSubmit: (data: EpisodeFormData) => Promise<void>;
+  onSubmit: (
+    data: EpisodeFormData,
+  ) => Promise<void>;
 };
 
+// =====================================================
+// GET PART NUMBER
+// =====================================================
+
+function getPartFromTitle(
+  title: string,
+): number {
+  const match = title.match(
+    /-\s*Part\s+(\d+)\s*$/i,
+  );
+
+  if (!match) {
+    return 0;
+  }
+
+  const part = Number(match[1]);
+
+  if (
+    !Number.isInteger(part) ||
+    part < 1
+  ) {
+    return 0;
+  }
+
+  return part;
+}
+
+// =====================================================
+// COMPONENT
+// =====================================================
+
 export default function EpisodeForm({
+  seriesTitle = "",
+  seriesId,
+  episodeId,
   defaultValues,
   isEdit = false,
   onSubmit,
 }: Props) {
   const router = useRouter();
 
-  const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(
+  // ===================================================
+  // VIDEO PREVIEW
+  // ===================================================
+
+  const [
+    videoPreviewUrl,
+    setVideoPreviewUrl,
+  ] = useState<string | null>(
     defaultValues?.videoUrl ?? null,
   );
 
-  const [form, setForm] = useState<EpisodeFormData>({
-    title: defaultValues?.title ?? "",
-    episodeNo: defaultValues?.episodeNo ?? 1,
-    videoFile: null,
-    thumbnailFile: null,
-  });
+  // ===================================================
+  // FORM STATE
+  // ===================================================
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [
+    form,
+    setForm,
+  ] = useState<EpisodeFormData>(() => ({
+    title:
+      defaultValues?.title?.trim() ||
+      "",
+
+    episodeNo:
+      defaultValues?.episodeNo ?? 1,
+
+    videoFile: null,
+
+    thumbnailFile: null,
+  }));
+
+  // ===================================================
+  // TITLE MANUALLY EDITED
+  // ===================================================
+
+  const [
+    titleManuallyEdited,
+    setTitleManuallyEdited,
+  ] = useState<boolean>(() =>
+    Boolean(
+      defaultValues?.title?.trim(),
+    ),
+  );
+
+  // ===================================================
+  // ERRORS
+  // ===================================================
+
+  const [
+    errors,
+    setErrors,
+  ] = useState<
+    Record<string, string>
+  >({});
+
+  // ===================================================
+  // EPISODES
+  // ===================================================
+
+  const [
+    episodes,
+    setEpisodes,
+  ] = useState<EpisodeFromAPI[]>(
+    [],
+  );
+
+  const [
+    loadingEpisodes,
+    setLoadingEpisodes,
+  ] = useState(false);
+
+  // ===================================================
+  // LOAD EPISODES
+  // ===================================================
+
+  useEffect(() => {
+    if (
+      !seriesId ||
+      seriesId < 1
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadEpisodes() {
+      setLoadingEpisodes(true);
+
+      try {
+        const response =
+          await fetch(
+            `/api/series/${seriesId}/episodes`,
+            {
+              cache: "no-store",
+            },
+          );
+
+        if (!response.ok) {
+          throw new Error(
+            "Failed to fetch episodes",
+          );
+        }
+
+        const data =
+          await response.json();
+
+        if (cancelled) {
+          return;
+        }
+
+        if (Array.isArray(data)) {
+          setEpisodes(
+            data as EpisodeFromAPI[],
+          );
+        } else {
+          setEpisodes([]);
+        }
+      } catch (error) {
+        console.error(
+          "Load episodes error:",
+          error,
+        );
+
+        if (!cancelled) {
+          setEpisodes([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingEpisodes(false);
+        }
+      }
+    }
+
+    void loadEpisodes();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [seriesId]);
+
+  // ===================================================
+  // AUTO PART NUMBER
+  // ===================================================
+
+  const previewPartNumber =
+    useMemo(() => {
+      const targetEpisodeNo =
+        Number(form.episodeNo);
+
+      if (
+        !Number.isInteger(
+          targetEpisodeNo,
+        ) ||
+        targetEpisodeNo < 1
+      ) {
+        return 1;
+      }
+
+      // -------------------------------------------------
+      // EDIT
+      //
+      // Same episode number:
+      // Keep current part.
+      // -------------------------------------------------
+
+      if (
+        isEdit &&
+        episodeId &&
+        defaultValues?.episodeNo ===
+          targetEpisodeNo
+      ) {
+        const currentPart =
+          getPartFromTitle(
+            defaultValues?.title ?? "",
+          );
+
+        if (currentPart > 0) {
+          return currentPart;
+        }
+      }
+
+      // -------------------------------------------------
+      // Find same episode number
+      // -------------------------------------------------
+
+      const targetEpisodes =
+        episodes.filter(
+          (episode) =>
+            Number(
+              episode.episodeNo,
+            ) === targetEpisodeNo,
+        );
+
+      // -------------------------------------------------
+      // Remove current episode
+      // -------------------------------------------------
+
+      const otherEpisodes =
+        isEdit && episodeId
+          ? targetEpisodes.filter(
+              (episode) =>
+                Number(
+                  episode.id,
+                ) !==
+                Number(episodeId),
+            )
+          : targetEpisodes;
+
+      // -------------------------------------------------
+      // Used parts
+      // -------------------------------------------------
+
+      const usedParts =
+        new Set<number>();
+
+      for (
+        const episode of otherEpisodes
+      ) {
+        const part =
+          getPartFromTitle(
+            episode.title,
+          );
+
+        if (part > 0) {
+          usedParts.add(part);
+        }
+      }
+
+      // -------------------------------------------------
+      // Find first available part
+      //
+      // []       -> 1
+      // [1]      -> 2
+      // [1,2]    -> 3
+      // [1,3]    -> 2
+      // -------------------------------------------------
+
+      let nextPart = 1;
+
+      while (
+        usedParts.has(nextPart)
+      ) {
+        nextPart++;
+      }
+
+      return nextPart;
+    }, [
+      episodes,
+      form.episodeNo,
+      isEdit,
+      episodeId,
+      defaultValues?.title,
+      defaultValues?.episodeNo,
+    ]);
+
+  // ===================================================
+  // AUTO TITLE
+  // ===================================================
+
+  const autoTitle =
+    useMemo(() => {
+      if (!seriesTitle) {
+        return `Part ${previewPartNumber}`;
+      }
+
+      return `${seriesTitle} - Part ${previewPartNumber}`;
+    }, [
+      seriesTitle,
+      previewPartNumber,
+    ]);
+
+  // ===================================================
+  // DISPLAY TITLE
+  //
+  // IMPORTANT:
+  //
+  // We DON'T call setForm() from useEffect.
+  //
+  // Auto title is calculated during render.
+  // ===================================================
+
+  const displayTitle =
+    titleManuallyEdited
+      ? form.title
+      : form.title.trim()
+        ? form.title
+        : autoTitle;
+
+  // ===================================================
+  // VIDEO PREVIEW CLEANUP
+  // ===================================================
 
   useEffect(() => {
     return () => {
-      if (videoPreviewUrl && videoPreviewUrl.startsWith("blob:")) {
-        URL.revokeObjectURL(videoPreviewUrl);
+      if (
+        videoPreviewUrl &&
+        videoPreviewUrl.startsWith(
+          "blob:",
+        )
+      ) {
+        URL.revokeObjectURL(
+          videoPreviewUrl,
+        );
       }
     };
   }, [videoPreviewUrl]);
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  // ===================================================
+  // TITLE CHANGE
+  // ===================================================
 
-    const schema = isEdit ? editEpisodeSchema : createEpisodeSchema;
+  function handleTitleChange(
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) {
+    const value =
+      e.target.value;
 
-    const result = schema.safeParse(form);
+    setTitleManuallyEdited(true);
 
-    if (!result.success) {
-      const fieldErrors: Record<string, string> = {};
+    setForm(
+      (prev) => ({
+        ...prev,
+        title: value,
+      }),
+    );
 
-      result.error.issues.forEach((issue) => {
-        const field = issue.path[0];
-        if (typeof field === "string") {
-          fieldErrors[field] = issue.message;
-        }
-      });
+    if (errors.title) {
+      setErrors(
+        (prev) => {
+          const next = {
+            ...prev,
+          };
 
-      setErrors(fieldErrors);
-      return;
+          delete next.title;
+
+          return next;
+        },
+      );
     }
-
-    setErrors({});
-
-    await onSubmit(result.data as EpisodeFormData);
   }
 
-  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] ?? null;
+  // ===================================================
+  // EPISODE NUMBER CHANGE
+  // ===================================================
 
-    setForm({
-      ...form,
-      videoFile: file,
-    });
+  function handleEpisodeNumberChange(
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) {
+    const rawValue =
+      e.target.value;
 
-    if (videoPreviewUrl && videoPreviewUrl.startsWith("blob:")) {
-      URL.revokeObjectURL(videoPreviewUrl);
+    const value =
+      rawValue === ""
+        ? 1
+        : Number(rawValue);
+
+    const nextEpisodeNo =
+      Number.isFinite(value)
+        ? value
+        : 1;
+
+    setForm(
+      (prev) => ({
+        ...prev,
+        episodeNo:
+          nextEpisodeNo,
+      }),
+    );
+
+    // -------------------------------------------------
+    // CREATE MODE
+    //
+    // If title was automatically generated,
+    // allow displayTitle to use the new auto title.
+    //
+    // We DON'T set title here.
+    // -------------------------------------------------
+
+    if (
+      !isEdit &&
+      !titleManuallyEdited
+    ) {
+      setForm(
+        (prev) => ({
+          ...prev,
+          episodeNo:
+            nextEpisodeNo,
+          title: "",
+        }),
+      );
+    }
+
+    if (errors.episodeNo) {
+      setErrors(
+        (prev) => {
+          const next = {
+            ...prev,
+          };
+
+          delete next.episodeNo;
+
+          return next;
+        },
+      );
+    }
+  }
+
+  // ===================================================
+  // VIDEO CHANGE
+  // ===================================================
+
+  function handleVideoChange(
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) {
+    const file =
+      e.target.files?.[0] ??
+      null;
+
+    setForm(
+      (prev) => ({
+        ...prev,
+        videoFile: file,
+      }),
+    );
+
+    if (
+      videoPreviewUrl &&
+      videoPreviewUrl.startsWith(
+        "blob:",
+      )
+    ) {
+      URL.revokeObjectURL(
+        videoPreviewUrl,
+      );
     }
 
     if (file) {
-      const url = URL.createObjectURL(file);
-      setVideoPreviewUrl(url);
+      const url =
+        URL.createObjectURL(
+          file,
+        );
+
+      setVideoPreviewUrl(
+        url,
+      );
     } else {
-      setVideoPreviewUrl(defaultValues?.videoUrl ?? null);
+      setVideoPreviewUrl(
+        defaultValues?.videoUrl ??
+          null,
+      );
     }
 
     if (errors.videoFile) {
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors.videoFile;
-        return newErrors;
-      });
+      setErrors(
+        (prev) => {
+          const next = {
+            ...prev,
+          };
+
+          delete next.videoFile;
+
+          return next;
+        },
+      );
     }
-  };
+  }
+
+  // ===================================================
+  // DUPLICATE TITLE
+  // ===================================================
+
+  function findDuplicateTitle(
+    title: string,
+    episodeNo: number,
+  ) {
+    const normalizedTitle =
+      title
+        .trim()
+        .toLowerCase();
+
+    if (!normalizedTitle) {
+      return null;
+    }
+
+    return episodes.find(
+      (episode) => {
+        const sameTitle =
+          episode.title
+            .trim()
+            .toLowerCase() ===
+          normalizedTitle;
+
+        const sameEpisodeNo =
+          Number(
+            episode.episodeNo,
+          ) === episodeNo;
+
+        const isCurrentEpisode =
+          isEdit &&
+          episodeId &&
+          Number(
+            episode.id,
+          ) ===
+            Number(episodeId);
+
+        return (
+          sameTitle &&
+          sameEpisodeNo &&
+          !isCurrentEpisode
+        );
+      },
+    );
+  }
+
+  // ===================================================
+  // SUBMIT
+  // ===================================================
+
+  async function handleSubmit(
+    e: React.FormEvent<HTMLFormElement>,
+  ) {
+    e.preventDefault();
+
+    // -------------------------------------------------
+    // TITLE
+    //
+    // User title if provided.
+    // Otherwise auto title.
+    // -------------------------------------------------
+
+    const cleanTitle =
+      form.title.trim() ||
+      autoTitle;
+
+    const submitForm: EpisodeFormData = {
+      ...form,
+      title: cleanTitle,
+    };
+
+    // -------------------------------------------------
+    // VALIDATION
+    // -------------------------------------------------
+
+    const schema =
+      isEdit
+        ? editEpisodeSchema
+        : createEpisodeSchema;
+
+    const result =
+      schema.safeParse(
+        submitForm,
+      );
+
+    if (!result.success) {
+      const fieldErrors: Record<
+        string,
+        string
+      > = {};
+
+      for (
+        const issue of result.error.issues
+      ) {
+        const field =
+          issue.path[0];
+
+        if (
+          typeof field ===
+          "string"
+        ) {
+          fieldErrors[field] =
+            issue.message;
+        }
+      }
+
+      setErrors(
+        fieldErrors,
+      );
+
+      return;
+    }
+
+    // -------------------------------------------------
+    // WAIT
+    // -------------------------------------------------
+
+    if (loadingEpisodes) {
+      setErrors({
+        title:
+          "Please wait while episode titles are being checked.",
+      });
+
+      return;
+    }
+
+    // -------------------------------------------------
+    // DUPLICATE
+    // -------------------------------------------------
+
+    const duplicate =
+      findDuplicateTitle(
+        cleanTitle,
+        form.episodeNo,
+      );
+
+    if (duplicate) {
+      setErrors({
+        title:
+          "This episode title already exists.",
+      });
+
+      return;
+    }
+
+    // -------------------------------------------------
+    // CLEAR ERRORS
+    // -------------------------------------------------
+
+    setErrors({});
+
+    // -------------------------------------------------
+    // SUBMIT
+    // -------------------------------------------------
+
+    await onSubmit(
+      result.data as EpisodeFormData,
+    );
+  }
+
+  // ===================================================
+  // RETURN
+  // ===================================================
 
   return (
     <div className="w-full rounded-2xl border border-white/10 bg-[#0B1026] p-8 text-white">
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* LEFT AND RIGHT GRID LAYOUT */}
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-6"
+      >
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-          {/* LEFT SIDE: INPUTS & VIDEO PREVIEW UNDER INPUT */}
+
+          {/* =================================================
+              LEFT
+          ================================================= */}
+
           <div className="space-y-5">
+
             {/* TITLE */}
+
             <div>
-              <label className="mb-2 block font-medium">Episode Title</label>
+              <label className="mb-2 block font-medium">
+                Episode Title
+              </label>
+
               <input
-                value={form.title}
-                placeholder="Enter title"
+                type="text"
+                value={displayTitle}
+                onChange={
+                  handleTitleChange
+                }
+                placeholder={
+                  autoTitle
+                }
                 className="w-full rounded-xl border border-white/10 bg-[#111936] p-3 text-white focus:border-blue-500 focus:outline-none"
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
               />
+
+              <p className="mt-1 text-xs text-slate-500">
+                Episode title is generated automatically, but you can edit it.
+              </p>
+
+              {loadingEpisodes && (
+                <p className="mt-1 text-xs text-blue-400">
+                  Checking available part...
+                </p>
+              )}
+
               {errors.title && (
-                <p className="mt-1 text-sm text-red-500">{errors.title}</p>
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.title}
+                </p>
               )}
             </div>
 
-            {/* EPISODE NO */}
+            {/* EPISODE NUMBER */}
+
             <div>
-              <label className="mb-2 block font-medium">Episode Number</label>
+              <label className="mb-2 block font-medium">
+                Episode Number
+              </label>
+
               <input
                 type="number"
                 min={1}
-                value={form.episodeNo}
-                className="w-full rounded-xl border border-white/10 bg-[#111936] p-3 text-white focus:border-blue-500 focus:outline-none"
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    episodeNo: Number(e.target.value) || 1,
-                  })
+                value={
+                  form.episodeNo
                 }
+                onChange={
+                  handleEpisodeNumberChange
+                }
+                className="w-full rounded-xl border border-white/10 bg-[#111936] p-3 text-white focus:border-blue-500 focus:outline-none"
               />
+
               {errors.episodeNo && (
-                <p className="mt-1 text-sm text-red-500">{errors.episodeNo}</p>
+                <p className="mt-1 text-sm text-red-500">
+                  {
+                    errors.episodeNo
+                  }
+                </p>
               )}
             </div>
 
-            {/* VIDEO FILE W/ PREVIEW UNDERNEATH */}
+            {/* VIDEO */}
+
             <div>
-              <label className="mb-2 block font-medium">Video File</label>
+              <label className="mb-2 block font-medium">
+                Video File
+              </label>
+
               <input
                 type="file"
                 accept="video/*"
+                onChange={
+                  handleVideoChange
+                }
                 className="w-full rounded-xl border border-white/10 bg-[#111936] p-3 text-white file:mr-4 file:rounded-lg file:border-0 file:bg-white/10 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-white hover:file:bg-white/20 focus:border-blue-500 focus:outline-none"
-                onChange={handleVideoChange}
               />
+
               {errors.videoFile && (
-                <p className="mt-1 text-sm text-red-500">{errors.videoFile}</p>
+                <p className="mt-1 text-sm text-red-500">
+                  {
+                    errors.videoFile
+                  }
+                </p>
               )}
 
-              {/* VIDEO PREVIEW AREA (SHOWS UNDER VIDEO FILE INPUT) */}
               {videoPreviewUrl && (
                 <div className="mt-4 overflow-hidden rounded-xl border border-white/10 bg-[#111936] p-2">
                   <p className="mb-2 text-xs font-semibold text-gray-400">
                     Video Preview
                   </p>
+
                   <video
-                    src={videoPreviewUrl}
+                    src={
+                      videoPreviewUrl
+                    }
                     controls
                     className="aspect-video w-full rounded-lg object-contain"
                   />
+
                   {form.videoFile && (
                     <p className="mt-2 truncate px-2 text-center text-xs text-gray-400">
-                      {form.videoFile.name}
+                      {
+                        form.videoFile
+                          .name
+                      }
                     </p>
                   )}
                 </div>
@@ -181,47 +850,71 @@ export default function EpisodeForm({
             </div>
           </div>
 
-          {/* RIGHT SIDE: THUMBNAIL UPLOADER */}
+          {/* =================================================
+              RIGHT
+          ================================================= */}
+
           <div className="flex flex-col">
             <ImageUploader
               label="Thumbnail Image"
               type="LANDSCAPE"
-              value={defaultValues?.thumbnailUrl}
+              value={
+                defaultValues?.thumbnailUrl
+              }
               onChange={(file) => {
-                setForm({
-                  ...form,
-                  thumbnailFile: file,
-                });
+                setForm(
+                  (prev) => ({
+                    ...prev,
+                    thumbnailFile:
+                      file,
+                  }),
+                );
 
-                if (errors.thumbnailFile) {
-                  setErrors((prev) => {
-                    const newErrors = { ...prev };
-                    delete newErrors.thumbnailFile;
-                    return newErrors;
-                  });
+                if (
+                  errors.thumbnailFile
+                ) {
+                  setErrors(
+                    (prev) => {
+                      const next = {
+                        ...prev,
+                      };
+
+                      delete next.thumbnailFile;
+
+                      return next;
+                    },
+                  );
                 }
               }}
             />
+
             {errors.thumbnailFile && (
               <p className="mt-2 text-sm text-red-500">
-                {errors.thumbnailFile}
+                {
+                  errors.thumbnailFile
+                }
               </p>
             )}
           </div>
         </div>
 
-        {/* BUTTONS (BOTTOM) */}
+        {/* BUTTONS */}
+
         <div className="flex gap-4 border-t border-white/10 pt-4">
           <button
             type="submit"
             className="flex-1 rounded-xl bg-[#106EE9] py-3 font-bold text-white transition hover:opacity-80"
           >
-            {isEdit ? "Update Episode" : "Save Episode"}
+            {isEdit
+              ? "Update Episode"
+              : "Save Episode"}
           </button>
 
           <button
             type="button"
-            onClick={() => router.back()}
+            onClick={() =>
+              router.back()
+            }
             className="rounded-xl bg-[#F41010] px-6 py-3 font-bold text-white transition hover:opacity-80"
           >
             Cancel

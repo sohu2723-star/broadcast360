@@ -10,4 +10,6 @@ export type ChannelFormData = {
 
   logo?: string;
 
+  accessType: "FREE" | "PREMIUM";
+
 };

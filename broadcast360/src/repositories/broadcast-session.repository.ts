@@ -22,7 +22,8 @@ export class BroadcastSessionRepository {
 
   static updateStatus(
     id: number,
-    status: "STARTING" | "LIVE" | "SWITCHING" | "STOPPED" | "ERROR",
+    status:
+      "STARTING" | "LIVE" | "SWITCHING" | "STOPPING" | "STOPPED" | "ERROR",
   ) {
     return prisma.broadcastSession.update({
       where: {
@@ -45,6 +46,54 @@ export class BroadcastSessionRepository {
         status: "STOPPED",
 
         stoppedAt: new Date(),
+      },
+    });
+  }
+
+  static findAll() {
+    return prisma.broadcastSession.findMany({
+      include: {
+        channel: {
+          select: {
+            id: true,
+            name: true,
+            streamKey: true,
+          },
+        },
+
+        schedule: {
+          include: {
+            playlist: true,
+          },
+        },
+      },
+
+      orderBy: {
+        channelId: "asc",
+      },
+    });
+  }
+
+  static findByChannel(channelId: number) {
+    return prisma.broadcastSession.findUnique({
+      where: {
+        channelId,
+      },
+
+      include: {
+        channel: {
+          select: {
+            id: true,
+            name: true,
+            streamKey: true,
+          },
+        },
+
+        schedule: {
+          include: {
+            playlist: true,
+          },
+        },
       },
     });
   }

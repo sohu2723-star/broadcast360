@@ -7,6 +7,10 @@ datasource db {
   provider = "postgresql"
 }
 
+// =====================
+// ENUMS
+// =====================
+
 enum Role {
   ADMIN
   USER
@@ -48,6 +52,7 @@ model Channel {
   description       String?
   logo              String?
   country           String?
+  accessType        AccessType         @default(FREE)
   streams           Stream[]
   streamKey         String             @unique
   news              News[]
@@ -67,19 +72,28 @@ model Channel {
 // =====================
 
 model Movie {
-  id            Int            @id @default(autoincrement())
-  title         String
-  description   String?
-  genre         String?
-  thumbnail     String?
-  videoUrl      String?
-  duration      Int
-  releaseYear   Int?
-  createdAt     DateTime       @default(now())
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  genre       String?
+  thumbnail   String?
+  videoUrl    String?
+  duration    Int
+  releaseYear Int?
+  createdAt   DateTime @default(now())
+
+  // NEW
+  accessType AccessType @default(FREE)
+
   playlistItems PlaylistItem[]
+  favorites     Favorite[]
 
   @@unique([title, releaseYear])
 }
+
+// =====================
+// STREAM PROTOCOL
+// =====================
 
 enum StreamProtocol {
   RTSP
@@ -94,8 +108,9 @@ enum StreamStatus {
 }
 
 // ============================
-// Stream INPUT
+// STREAM INPUT
 // ============================
+
 model Stream {
   id          Int            @id @default(autoincrement())
   channelId   Int
@@ -106,21 +121,9 @@ model Stream {
   description String?
   createdAt   DateTime       @default(now())
 
-  channel       Channel        @relation(fields: [channelId], references: [id])
+  channel Channel @relation(fields: [channelId], references: [id])
+
   playlistItems PlaylistItem[]
-}
-
-enum StreamProtocol {
-  RTMP
-  RTSP
-  HLS
-  WEBRTC
-  SRT
-}
-
-enum StreamStatus {
-  ONLINE
-  OFFLINE
 }
 
 // =====================
@@ -143,18 +146,23 @@ model Series {
 // =====================
 
 model Episode {
-  id            Int            @id @default(autoincrement())
-  seriesId      Int
-  title         String
-  episodeNo     Int
-  duration      Int
-  videoUrl      String?
-  thumbnailUrl  String?
-  series        Series         @relation(fields: [seriesId], references: [id])
-  createdAt     DateTime       @default(now())
-  playlistItems PlaylistItem[]
+  id           Int     @id @default(autoincrement())
+  seriesId     Int
+  title        String
+  episodeNo    Int
+  duration     Int
+  videoUrl     String?
+  thumbnailUrl String?
 
-  @@unique([seriesId, episodeNo])
+  // NEW
+  accessType AccessType @default(FREE)
+
+  series Series @relation(fields: [seriesId], references: [id])
+
+  playlistItems PlaylistItem[]
+  favorites     Favorite[]
+
+  createdAt DateTime @default(now())
 }
 
 // =====================
@@ -162,13 +170,14 @@ model Episode {
 // =====================
 
 model Advertisement {
-  id            Int            @id @default(autoincrement())
-  title         String
-  videoUrl      String
-  thumbnailUrl  String?
-  duration      Int
-  active        Boolean        @default(true)
-  createdAt     DateTime       @default(now())
+  id           Int      @id @default(autoincrement())
+  title        String
+  videoUrl     String
+  thumbnailUrl String?
+  duration     Int
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
   playlistItems PlaylistItem[]
 }
 
@@ -177,16 +186,29 @@ model Advertisement {
 // =====================
 
 model News {
-  id            Int            @id @default(autoincrement())
-  channelId     Int?
-  title         String
-  content       String?
-  image         String?
-  videoUrl      String?
-  type          String
-  channel       Channel?       @relation(fields: [channelId], references: [id])
+  id Int @id @default(autoincrement())
+
+  channelId   Int?
+  recordingId Int?
+
+  title    String
+  content  String?
+  image    String?
+  videoUrl String?
+  duration Int?
+  type     String
+
+  accessType AccessType @default(FREE)
+
+  channel   Channel?   @relation(fields: [channelId], references: [id])
+  recording Recording? @relation(fields: [recordingId], references: [id])
+
   playlistItems PlaylistItem[]
-  createdAt     DateTime       @default(now())
+
+  watchHistories WatchHistory[]
+  favorites      Favorite[]
+
+  createdAt DateTime @default(now())
 }
 
 // =====================
@@ -194,16 +216,21 @@ model News {
 // =====================
 
 model Entertainment {
-  id            Int            @id @default(autoincrement())
-  title         String
-  description   String?
-  category      String?
-  thumbnail     String?
-  videoUrl      String
-  duration      Int
-  releaseYear   Int?
-  createdAt     DateTime       @default(now())
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  category    String?
+  thumbnail   String?
+  videoUrl    String
+  duration    Int
+  releaseYear Int?
+  createdAt   DateTime @default(now())
+
+  // NEW
+  accessType AccessType @default(FREE)
+
   playlistItems PlaylistItem[]
+  favorites     Favorite[]
 }
 
 // =====================
@@ -234,18 +261,25 @@ model Program {
 // =====================
 
 model Playlist {
-  id            Int            @id @default(autoincrement())
+  id            Int    @id @default(autoincrement())
   name          String
   programId     Int
   totalDuration Int?
-  program       Program        @relation(fields: [programId], references: [id])
-  items         PlaylistItem[]
-  schedules     Schedule[]
-  createdAt     DateTime       @default(now())
 
-  // FIXED: Back-relation for the Channel fallback playlist
+  program Program @relation(fields: [programId], references: [id])
+
+  items     PlaylistItem[]
+  schedules Schedule[]
+
+  createdAt DateTime @default(now())
+
+  // Existing relation - unchanged
   defaultForChannels Channel[] @relation("ChannelDefaultPlaylist")
 }
+
+// =====================
+// PLAYLIST ITEM
+// =====================
 
 enum PlaylistItemType {
   MOVIE
@@ -273,17 +307,21 @@ model PlaylistItem {
   movie         Movie?         @relation(fields: [movieId], references: [id])
   episode       Episode?       @relation(fields: [episodeId], references: [id])
   advertisement Advertisement? @relation(fields: [advertisementId], references: [id])
-
-  news News? @relation(fields: [newsId], references: [id])
-
-  stream Stream? @relation(fields: [streamId], references: [id])
-
+  news          News?          @relation(fields: [newsId], references: [id])
+  stream        Stream?        @relation(fields: [streamId], references: [id])
   entertainment Entertainment? @relation(fields: [entertainmentId], references: [id])
+
+  // NEW
+  watchHistory WatchHistory[]
 
   createdAt DateTime @default(now())
 
   @@unique([playlistId, order])
 }
+
+// =====================
+// SCHEDULE
+// =====================
 
 enum ScheduleStatus {
   SCHEDULED
@@ -303,10 +341,15 @@ model Schedule {
   channel  Channel  @relation(fields: [channelId], references: [id])
   playlist Playlist @relation(fields: [playlistId], references: [id])
 
-  sessions BroadcastSession[]
+  sessions         BroadcastSession[]
+  programReminders ProgramReminder[]
 
   createdAt DateTime @default(now())
 }
+
+// =====================
+// BROADCAST SESSION
+// =====================
 
 enum BroadcastStatus {
   STARTING
@@ -339,15 +382,121 @@ model BroadcastSession {
   updatedAt DateTime @updatedAt
 }
 
-model Recording {
-  id        Int      @id @default(autoincrement())
-  channelId Int
-  title     String
-  fileUrl   String
-  duration  Int
-  startedAt DateTime
-  endedAt   DateTime
+// =====================
+// RECORDING
+// =====================
 
-  channel   Channel  @relation(fields: [channelId], references: [id])
+model Recording {
+  id Int @id @default(autoincrement())
+
+  channelId Int
+
+  title String
+
+  fileUrl String
+
+  duration Int
+
+  startedAt DateTime
+  endedAt   DateTime?
+
+  channel Channel @relation(fields: [channelId], references: [id])
+
+  news News[]
+
   createdAt DateTime @default(now())
+}
+
+model ProgramReminder {
+  id         Int @id @default(autoincrement())
+  userId     Int
+  scheduleId Int
+
+  notifyAt DateTime
+  sentAt   DateTime?
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  schedule Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, scheduleId])
+  @@index([notifyAt, sentAt])
+}
+
+enum ContactMessageStatus {
+  NEW
+  READ
+  RESOLVED
+}
+
+enum SupportConversationStatus {
+  OPEN
+  CLOSED
+}
+
+enum SupportSenderRole {
+  USER
+  ADMIN
+}
+
+model ContactMessage {
+  id Int @id @default(autoincrement())
+
+  userId Int?
+  user   User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  name    String
+  email   String
+  subject String
+  message String
+
+  status ContactMessageStatus @default(NEW)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model SupportConversation {
+  id Int @id @default(autoincrement())
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  status SupportConversationStatus @default(OPEN)
+
+  messages SupportMessage[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([updatedAt])
+}
+
+model SupportMessage {
+  id Int @id @default(autoincrement())
+
+  conversationId Int
+  conversation   SupportConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  senderId   Int
+  senderRole SupportSenderRole
+
+  message String
+
+  isRead Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([isRead])
+  @@index([createdAt])
 }

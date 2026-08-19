@@ -1,9 +1,12 @@
 import { prisma } from "@/lib/prisma";
+import { MediaMTXManager } from "@/managers/mediamtx.manager"; // Adjust path as needed
+
+const mediaMTX = new MediaMTXManager();
 
 export class SessionManager {
   /*
   ===============================
-       CREATE / START SESSION
+        CREATE / START SESSION
   ===============================
   */
 
@@ -46,7 +49,7 @@ export class SessionManager {
 
   /*
   ===============================
-       CHANGE LIVE
+        CHANGE LIVE
   ===============================
   */
 
@@ -64,7 +67,7 @@ export class SessionManager {
 
   /*
   ===============================
-       SWITCHING
+        SWITCHING
   ===============================
   */
 
@@ -82,7 +85,7 @@ export class SessionManager {
 
   /*
   ===============================
-       STOP
+        STOP
   ===============================
   */
 
@@ -107,7 +110,7 @@ export class SessionManager {
 
   /*
   ===============================
-       ERROR
+        ERROR
   ===============================
   */
 
@@ -127,7 +130,7 @@ export class SessionManager {
 
   /*
   ===============================
-       GET SESSION
+        GET SESSION
   ===============================
   */
 
@@ -141,7 +144,7 @@ export class SessionManager {
 
   /*
   ===============================
-       CHECK LIVE
+        CHECK LIVE
   ===============================
   */
 
@@ -149,5 +152,33 @@ export class SessionManager {
     const session = await this.get(channelId);
 
     return session?.status === "LIVE";
+  }
+
+  /*
+  ===============================
+        GET SESSION WITH HEALTH (ADDITION)
+  ===============================
+  */
+
+  async getWithHealth(channelId: number) {
+    const session = await this.get(channelId);
+
+    if (!session) {
+      return null;
+    }
+
+    // Query path metrics from MediaMTX
+    const mtxHealth = await mediaMTX.getStreamHealth(`channel-${channelId}`);
+
+    return {
+      ...session,
+      health: {
+        ffmpeg: session.status === "LIVE" ? "Running" : "Stopped",
+        mediaMTX: mtxHealth.mediaMTX,
+        rtmp: mtxHealth.rtmp,
+        hls: mtxHealth.hls,
+        readersCount: mtxHealth.readersCount,
+      },
+    };
   }
 }

@@ -1,8 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
 import Link from "next/link";
 import { useParams } from "next/navigation";
+
+// =====================================================
+// TYPES
+// =====================================================
 
 type Episode = {
   id: number;
@@ -19,123 +28,374 @@ type Series = {
   episodes: Episode[];
 };
 
-function formatDuration(seconds: number) {
-  const hrs = Math.floor(seconds / 3600);
-  const mins = Math.floor((seconds % 3600) / 60);
-  const secs = seconds % 60;
+// =====================================================
+// GET PART NUMBER FROM TITLE
+// =====================================================
 
-  const hh = String(hrs).padStart(2, "0");
-  const mm = String(mins).padStart(2, "0");
-  const ss = String(secs).padStart(2, "0");
+function getPartNumber(title: string): number {
+  const match = title.match(
+    /-\s*Part\s+(\d+)\s*$/i,
+  );
+
+  if (!match) {
+    return 0;
+  }
+
+  const part = Number(match[1]);
+
+  if (
+    !Number.isInteger(part) ||
+    part < 1
+  ) {
+    return 0;
+  }
+
+  return part;
+}
+
+// =====================================================
+// SORT EPISODES
+// =====================================================
+
+function sortEpisodes(
+  episodes: Episode[],
+): Episode[] {
+  return [...episodes].sort((a, b) => {
+    // 1. Episode Number
+    if (a.episodeNo !== b.episodeNo) {
+      return a.episodeNo - b.episodeNo;
+    }
+
+    // 2. Part Number
+    const partA = getPartNumber(a.title);
+    const partB = getPartNumber(b.title);
+
+    if (partA !== partB) {
+      return partA - partB;
+    }
+
+    // 3. Created Date
+    const createdA = new Date(
+      a.createdAt,
+    ).getTime();
+
+    const createdB = new Date(
+      b.createdAt,
+    ).getTime();
+
+    if (createdA !== createdB) {
+      return createdA - createdB;
+    }
+
+    // 4. ID
+    return a.id - b.id;
+  });
+}
+
+// =====================================================
+// FORMAT DURATION
+// =====================================================
+
+function formatDuration(
+  seconds: number,
+): string {
+  const hrs = Math.floor(
+    seconds / 3600,
+  );
+
+  const mins = Math.floor(
+    (seconds % 3600) / 60,
+  );
+
+  const secs = Math.floor(
+    seconds % 60,
+  );
+
+  const hh = String(hrs).padStart(
+    2,
+    "0",
+  );
+
+  const mm = String(mins).padStart(
+    2,
+    "0",
+  );
+
+  const ss = String(secs).padStart(
+    2,
+    "0",
+  );
 
   return `${hh}:${mm}:${ss}`;
 }
 
+// =====================================================
+// PAGE
+// =====================================================
+
 export default function EpisodePlayerPage() {
   const params = useParams();
 
-  const seriesId = params?.id as string;
-  const episodeId = params?.episodeId as string;
+  const seriesId =
+    params?.id as string;
 
-  const [series, setSeries] = useState<Series | null>(null);
-  const [episode, setEpisode] = useState<Episode | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [duration, setDuration] = useState("");
+  const episodeId =
+    params?.episodeId as string;
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
+  // ===================================================
+  // STATE
+  // ===================================================
 
-      const res = await fetch(`/api/series/${seriesId}`);
+  const [series, setSeries] =
+    useState<Series | null>(null);
 
-      if (!res.ok) {
-        throw new Error("Failed to fetch series");
-      }
+  const [episode, setEpisode] =
+    useState<Episode | null>(null);
 
-      const data = await res.json();
-      const foundSeries = data.data;
+  const [loading, setLoading] =
+    useState(true);
 
-      setSeries(foundSeries);
+  const [duration, setDuration] =
+    useState("");
 
-      const foundEpisode = foundSeries.episodes.find(
-        (ep: Episode) => ep.id === Number(episodeId)
-      );
-
-      setEpisode(foundEpisode || null);
-    } catch (error) {
-      console.error(error);
-      setSeries(null);
-      setEpisode(null);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // ===================================================
+  // LOAD DATA
+  // ===================================================
 
   useEffect(() => {
-    if (!seriesId || !episodeId) return;
-    loadData();
-  }, [seriesId, episodeId]);
+    if (
+      !seriesId ||
+      !episodeId
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadData() {
+      try {
+        const res = await fetch(
+          `/api/series/${seriesId}`,
+        );
+
+        if (!res.ok) {
+          throw new Error(
+            "Failed to fetch series",
+          );
+        }
+
+        const data =
+          await res.json();
+
+        const foundSeries =
+          data.data;
+
+        if (!foundSeries) {
+          throw new Error(
+            "Series not found",
+          );
+        }
+
+        const sortedEpisodes =
+          sortEpisodes(
+            foundSeries.episodes ?? [],
+          );
+
+        const sortedSeries: Series = {
+          ...foundSeries,
+          episodes:
+            sortedEpisodes,
+        };
+
+        const foundEpisode =
+          sortedEpisodes.find(
+            (ep: Episode) =>
+              Number(ep.id) ===
+              Number(episodeId),
+          );
+
+        if (cancelled) {
+          return;
+        }
+
+        setSeries(sortedSeries);
+
+        setEpisode(
+          foundEpisode ?? null,
+        );
+      } catch (error) {
+        if (cancelled) {
+          return;
+        }
+
+        console.error(error);
+
+        setSeries(null);
+        setEpisode(null);
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void loadData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    seriesId,
+    episodeId,
+  ]);
+
+  // ===================================================
+  // SORTED EPISODES
+  // ===================================================
+
+  const sortedEpisodes =
+    useMemo(() => {
+      return sortEpisodes(
+        series?.episodes ?? [],
+      );
+    }, [series]);
+
+  // ===================================================
+  // CURRENT INDEX
+  // ===================================================
+
+  const currentIndex =
+    sortedEpisodes.findIndex(
+      (ep) =>
+        ep.id === episode?.id,
+    );
+
+  // ===================================================
+  // PREVIOUS EPISODE
+  // ===================================================
+
+  const previousEpisode =
+    currentIndex > 0
+      ? sortedEpisodes[
+          currentIndex - 1
+        ]
+      : null;
+
+  // ===================================================
+  // NEXT EPISODE
+  // ===================================================
+
+  const nextEpisode =
+    currentIndex >= 0 &&
+    currentIndex <
+      sortedEpisodes.length - 1
+      ? sortedEpisodes[
+          currentIndex + 1
+        ]
+      : null;
+
+  // ===================================================
+  // LOADING
+  // ===================================================
 
   if (loading) {
-    return <div className="text-white p-6">Loading...</div>;
+    return (
+      <div className="text-white p-6">
+        Loading...
+      </div>
+    );
   }
 
-  if (!series || !episode) {
-    return <div className="text-white p-6">Episode not found</div>;
+  // ===================================================
+  // NOT FOUND
+  // ===================================================
+
+  if (
+    !series ||
+    !episode
+  ) {
+    return (
+      <div className="text-white p-6">
+        Episode not found
+      </div>
+    );
   }
+
+  // ===================================================
+  // UI
+  // ===================================================
 
   return (
     <div className="flex h-screen overflow-hidden bg-black text-white">
 
-      {/* SIDEBAR */}
+      {/* =================================================
+          SIDEBAR
+      ================================================= */}
+
       <div className="w-80 bg-[#0B1026] border-r border-white/10 flex flex-col h-screen min-h-0">
 
-        {/* Header (fixed) */}
-        <div className="p-4 shrink-0">
-          {/* <Link
-            href={`/admin/series/${series.id}`}
-            className="text-blue-400 text-sm"
-          >
-            ← Back to Series
-          </Link> */}
+        {/* HEADER */}
 
+        <div className="p-4 shrink-0">
           <h2 className="text-xl font-bold mt-4 mb-4">
             {series.title}
           </h2>
         </div>
 
-        {/* Scrollable Episode List */}
-       <div className="max-h-[500px] overflow-y-auto px-4 pb-4 custom-scrollbar">
-  <div className="space-y-2">
-    {series.episodes.map((ep) => (
-      <Link
-        key={ep.id}
-        href={`/admin/series/${series.id}/episodes/${ep.id}`}
-        className={`block p-3 rounded-lg ${
-          ep.id === episode.id
-            ? "bg-blue-600"
-            : "bg-white/5 hover:bg-white/10"
-        }`}
-      >
-        <div className="font-semibold">
-          EP {ep.episodeNo}
+        {/* EPISODE LIST */}
+
+        <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-4 custom-scrollbar">
+
+          <div className="space-y-2">
+
+            {sortedEpisodes.map(
+              (ep) => (
+                <Link
+                  key={ep.id}
+                  href={`/admin/series/${series.id}/episodes/${ep.id}`}
+                  className={`block p-3 rounded-lg ${
+                    ep.id === episode.id
+                      ? "bg-blue-600"
+                      : "bg-white/5 hover:bg-white/10"
+                  }`}
+                >
+                  {/* EPISODE NUMBER */}
+
+                  <div className="font-semibold">
+                    EP{" "}
+                    {ep.episodeNo}
+                  </div>
+
+                  {/* EPISODE TITLE */}
+
+                  <div className="text-sm text-gray-300">
+                    {ep.title}
+                  </div>
+                </Link>
+              ),
+            )}
+
+          </div>
+
         </div>
 
-        <div className="text-sm text-gray-300">
-          {ep.title}
-        </div>
-      </Link>
-    ))}
-  </div>
-</div>
       </div>
 
-      {/* MAIN CONTENT */}
-     <div className="flex-1 flex flex-col min-h-0">
+      {/* =================================================
+          MAIN CONTENT
+      ================================================= */}
 
-        {/* TOP BAR */}
-        <div className="h-16 border-b border-white/10 bg-[#0B1026] flex items-center justify-between px-6">
-          <h1 className="font-bold">{series.title}</h1>
+      <div className="flex-1 flex flex-col min-h-0">
+
+        {/* =================================================
+            TOP BAR
+        ================================================= */}
+
+        <div className="h-16 border-b border-white/10 bg-[#0B1026] flex items-center justify-between px-6 shrink-0">
+
+          <h1 className="font-bold">
+            {series.title}
+          </h1>
 
           <Link
             href={`/admin/series/${series.id}`}
@@ -143,60 +403,106 @@ export default function EpisodePlayerPage() {
           >
             Back
           </Link>
+
         </div>
 
-        {/* PLAYER */}
-      <div className="flex-1 p-6 flex flex-col gap-4">
-          <div className="max-w-6xl mx-auto">
+        {/* =================================================
+            PLAYER
+        ================================================= */}
 
-            <video
-              src={episode.videoUrl}
-              controls
-              autoPlay
-               className="w-full max-h-[55vh] rounded-xl bg-black"
-              onLoadedMetadata={(e) => {
-                const totalSeconds = Math.floor(e.currentTarget.duration);
-                setDuration(formatDuration(totalSeconds));
-              }}
-            />
+        <div className="flex-1 p-6 flex flex-col gap-4 overflow-y-auto">
+
+          <div className="max-w-6xl mx-auto w-full">
+
+            {/* VIDEO */}
+
+            <div className="w-full overflow-hidden rounded-xl bg-black">
+
+              <video
+                src={episode.videoUrl}
+                controls
+                autoPlay
+                controlsList="nodownload noremoteplayback"
+                disablePictureInPicture
+                playsInline
+                className="block w-full max-h-[55vh] rounded-xl bg-black"
+                onContextMenu={(event) => {
+                  event.preventDefault();
+                }}
+                onLoadedMetadata={(event) => {
+                  const totalSeconds =
+                    Math.floor(
+                      event.currentTarget
+                        .duration,
+                    );
+
+                  setDuration(
+                    formatDuration(
+                      totalSeconds,
+                    ),
+                  );
+                }}
+              />
+
+            </div>
+
+            {/* =================================================
+                EPISODE INFORMATION
+            ================================================= */}
 
             <div className="mt-6">
+
+              {/* SERIES */}
+
               <p className="text-blue-400 text-sm">
                 {series.title}
               </p>
 
+              {/* TITLE */}
+
               <h2 className="text-3xl font-bold mt-1">
-                Episode {episode.episodeNo}: {episode.title}
+                Episode{" "}
+                {episode.episodeNo}:{" "}
+                {episode.title}
               </h2>
 
-              {/* Episode Details */}
+              {/* =================================================
+                  DETAILS
+              ================================================= */}
+
               <div className="flex items-center gap-6 mt-4 text-gray-300">
+
                 <span className="bg-white/5 px-3 py-1 rounded-full">
-                  🎬 Ep {episode.episodeNo}
+                  🎬 Ep{" "}
+                  {episode.episodeNo}
                 </span>
 
                 <span className="bg-white/5 px-3 py-1 rounded-full">
-                  ⏱ {duration ?? "Loading..."}
+                  ⏱{" "}
+                  {duration ||
+                    "Loading..."}
                 </span>
 
                 <span className="bg-white/5 px-3 py-1 rounded-full">
-                  📅 {new Date(episode.createdAt).toLocaleDateString()}
+                  📅{" "}
+                  {new Date(
+                    episode.createdAt,
+                  ).toLocaleDateString()}
                 </span>
+
               </div>
 
-              {/* Season Info */}
-              <div className="mt-4 text-gray-300">
-                Season 1 • Episode {episode.episodeNo} of {series.episodes.length}
-              </div>
+              {/* =================================================
+                  NAVIGATION
+              ================================================= */}
 
-              {/* Navigation */}
-              <div className="flex justify-between mt-auto pt-6">
-                {series.episodes.findIndex((ep) => ep.id === episode.id) > 0 ? (
+              <div className="flex justify-between pt-6 pb-6">
+
+                {/* PREVIOUS */}
+
+                {previousEpisode ? (
                   <Link
-                    href={`/admin/series/${series.id}/episodes/${series.episodes[
-                      series.episodes.findIndex((ep) => ep.id === episode.id) - 1
-                    ].id
-                      }`}
+                    href={`/admin/series/${series.id}/episodes/${previousEpisode.id}`}
                     className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10"
                   >
                     ◀ Previous Episode
@@ -205,13 +511,11 @@ export default function EpisodePlayerPage() {
                   <div />
                 )}
 
-                {series.episodes.findIndex((ep) => ep.id === episode.id) <
-                  series.episodes.length - 1 ? (
+                {/* NEXT */}
+
+                {nextEpisode ? (
                   <Link
-                    href={`/admin/series/${series.id}/episodes/${series.episodes[
-                      series.episodes.findIndex((ep) => ep.id === episode.id) + 1
-                    ].id
-                      }`}
+                    href={`/admin/series/${series.id}/episodes/${nextEpisode.id}`}
                     className="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-500"
                   >
                     Next Episode ▶
@@ -219,14 +523,17 @@ export default function EpisodePlayerPage() {
                 ) : (
                   <div />
                 )}
+
               </div>
+
             </div>
 
-
           </div>
+
         </div>
 
       </div>
+
     </div>
   );
 }

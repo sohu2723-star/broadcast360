@@ -28,7 +28,7 @@ export default function ChannelFilter({
 
   async function loadChannels() {
     try {
-      const response = await api.get("/api/user-portal/channel");
+      const response = await api.get("/api/user-portal/channels");
 
       setChannels(response.data);
     } catch (error) {

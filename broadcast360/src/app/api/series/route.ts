@@ -25,15 +25,26 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("GET /api/series error:", error);
+  console.error("POST /api/series error:", error);
 
+  if (
+    error instanceof Error &&
+    error.message === "Series name already exists"
+  ) {
     return NextResponse.json(
-      { message: "Failed to fetch series" },
-      { status: 500 }
+      { message: "Series name already exists" },
+      { status: 400 }
     );
   }
+
+  return NextResponse.json(
+    { message: "Create error" },
+    { status: 500 }
+  );
+}
 }
 
+/* ================= POST ================= */
 /* ================= POST ================= */
 export async function POST(req: NextRequest) {
   try {
@@ -62,6 +73,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(series, { status: 201 });
   } catch (error) {
     console.error("POST /api/series error:", error);
+
+    // DUPLICATE SERIES NAME
+    if (
+      error instanceof Error &&
+      error.message === "Series name already exists"
+    ) {
+      return NextResponse.json(
+        { message: "Series name already exists" },
+        { status: 400 }
+      );
+    }
 
     return NextResponse.json(
       { message: "Create error" },

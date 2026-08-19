@@ -10,7 +10,6 @@ import { channelService } from "@/services/channel.service";
 
 import MovieSearch from "./MovieSearch";
 import ChannelFilter from "./ChannelFilter";
-import HotMovieSection from "./HotMovieSection";
 import MovieGrid from "./MovieGrid";
 
 export default function MoviePage() {
@@ -56,7 +55,9 @@ export default function MoviePage() {
     return matchSearch && matchChannel;
   });
 
-  const hotMovies = filteredMovies.slice(0, 5);
+ const hotMovies = [...filteredMovies]
+  .sort(() => Math.random() - 0.5)
+  .slice(0, 8);
 
   // Pagination
 
@@ -78,48 +79,51 @@ export default function MoviePage() {
   }
 
   return (
-    <main className="min-h-screen bg-black text-white">
-      <div className="mx-2 md:mx-4 lg:mx-6 max-w-7xl py-10">
+    <main className="min-h-screen bg-black px-6 py-10 text-white">
+  <div className="mx-auto max-w-7xl">
         <h1 className="mb-8 text-4xl font-bold">MOVIES</h1>
 
         {/* Search + Channel Filter */}
 
-        <div className="mb-12 flex flex-col gap-4 md:flex-row md:items-center">
-          <div className="flex-1">
-            <MovieSearch value={search} onChange={changeSearch} />
-          </div>
+       <div className="mb-8 flex gap-4">
 
-          <div className="w-full md:w-72">
-            <ChannelFilter
-              value={channel}
-              channels={channels}
-              onChange={changeChannel}
-            />
-          </div>
-        </div>
+  <MovieSearch
+    value={search}
+    onChange={changeSearch}
+  />
+
+  <ChannelFilter
+    value={channel}
+    channels={channels}
+    onChange={changeChannel}
+  />
+
+</div>
 
         {/* Hot Movies */}
 
         <section className="mb-16">
-          <h2 className="mb-6 text-2xl font-bold">🔥 HOT MOVIES SHOWCASE</h2>
-
-          {loading ? (
-            <div className="rounded-2xl  bg-black p-10 text-center text-gray-400">
-              Loading movies...
-            </div>
-          ) : filteredMovies.length === 0 ? (
-            <div className="rounded-2xl  bg-black p-10 text-center text-gray-400">
-              No movies found.
-            </div>
-          ) : (
-            <HotMovieSection movies={hotMovies} />
-          )}
-        </section>
+  {loading ? (
+    <div>
+      Loading movies...
+    </div>
+  ) : filteredMovies.length === 0 ? (
+    <div>
+      No movies found.
+    </div>
+  ) : (
+    <MovieGrid
+      title="🔥 HOT MOVIES"
+      movies={hotMovies}
+      horizontal
+    />
+  )}
+</section>
 
         {/* All Movies */}
 
-        <section className="mt-16">
-          <h2 className="mb-8 text-2xl font-bold">🎬 ALL MOVIES ARCHIVE</h2>
+        <section className="mb-16">
+          <h2 className="mb-6 text-2xl font-bold">🎬 ALL MOVIES ARCHIVE</h2>
 
           {loading ? (
             <div className="rounded-2xl  bg-black p-10 text-center text-gray-400">
