@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { apiUrl } from "@/lib/api-url";
 
 import PlaybackLayout from "@/components/entertainment-playback/PlaybackLayout";
 
@@ -16,7 +17,7 @@ export default async function EntertainmentPlaybackPage({
   const { id } = await params;
 
   const response = await fetch(
-    `http://localhost:3000/api/user-portal/entertainments/${id}`,
+    apiUrl(`/api/user-portal/entertainments/${id}`),
     {
       cache: "no-store",
     }

@@ -24,8 +24,9 @@ export class PlaylistResolverService {
   ==================================
   */
 
-  resolve(items: PlaylistItemWithRelations[]): ResolvedPlaylistItem[] {
-    return items
+  resolve(items: readonly unknown[]): ResolvedPlaylistItem[] {
+    const typedItems = [...items] as PlaylistItemWithRelations[];
+    return typedItems
       .sort((a, b) => a.order - b.order)
       .map((item) => this.resolveItem(item))
       .filter((item): item is ResolvedPlaylistItem => item !== null);

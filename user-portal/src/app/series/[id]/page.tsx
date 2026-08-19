@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import SeriesDetailContent from "@/components/series/SeriesDetailContent";
+import { apiUrl } from "@/lib/api-url";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -7,7 +8,7 @@ interface PageProps {
 
 async function getSeriesDetails(id: string) {
   const res = await fetch(
-    `http://localhost:3000/api/user-portal/series/${id}`,
+    apiUrl(`/api/user-portal/series/${id}`),
     {
       cache: "no-store",
     },
@@ -18,7 +19,7 @@ async function getSeriesDetails(id: string) {
 
 async function getRelatedSeries(id: string) {
   const res = await fetch(
-    `http://localhost:3000/api/user-portal/series/${id}/related`,
+    apiUrl(`/api/user-portal/series/${id}/related`),
     {
       cache: "no-store",
     },

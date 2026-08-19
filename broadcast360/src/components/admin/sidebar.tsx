@@ -407,9 +407,9 @@ export default function Sidebar() {
           return (
             <Link
               key={menu.name}
-              href={menu.path}
+              href={menu.path ?? "#"}
               className={`flex items-center gap-3 rounded-xl p-3 transition ${
-                isActive
+                active
                   ? "bg-[#106EE9] text-white"
                   : "text-gray-300 hover:bg-[#106EE9]/40"
               } `}

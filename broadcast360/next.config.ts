@@ -1,5 +1,8 @@
 import type { NextConfig } from "next";
 
+const userPortalOrigin = process.env.USER_PORTAL_ORIGIN || "http://localhost:3001";
+const streamOrigin = process.env.PUBLIC_STREAM_ORIGIN || "*";
+
 const nextConfig: NextConfig = {
   async headers() {
     return [
@@ -8,7 +11,7 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: "Access-Control-Allow-Origin",
-            value: "*",
+            value: streamOrigin,
           },
         ],
       },
@@ -17,11 +20,15 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: "Access-Control-Allow-Origin",
-            value: "http://localhost:3001",
+            value: userPortalOrigin,
+          },
+          {
+            key: "Access-Control-Allow-Credentials",
+            value: "true",
           },
           {
             key: "Access-Control-Allow-Methods",
-            value: "GET, OPTIONS, POST, PUT, DELETE",
+            value: "GET, OPTIONS, POST, PUT, PATCH, DELETE",
           },
           {
             key: "Access-Control-Allow-Headers",

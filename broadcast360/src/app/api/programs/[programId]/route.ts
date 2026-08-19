@@ -8,13 +8,13 @@ export async function PUT(
   {
     params,
   }: {
-    params: Promise<{ id: string }>;
+    params: Promise<{ programId: string }>;
   },
 ) {
   try {
     const body = await request.json();
 
-    const { id } = await params;
+    const { programId: id } = await params;
 
     const result = updateProgramSchema.safeParse(body);
 
@@ -117,12 +117,12 @@ export async function GET(
 }
 
 interface RouteContext {
-  params: Promise<{ id: string }>;
+  params: Promise<{ programId: string }>;
 }
 
 export async function DELETE(req: NextRequest, { params }: RouteContext) {
   try {
-    const { id: rawId } = await params;
+    const { programId: rawId } = await params;
     const id = parseInt(rawId, 10);
 
     if (isNaN(id)) {

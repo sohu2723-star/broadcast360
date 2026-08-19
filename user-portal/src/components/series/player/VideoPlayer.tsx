@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 
 import type { EpisodePart } from "@/types/series-details";
 import authApi from "@/lib/authapi";
+import { mediaUrl } from "@/lib/api-url";
 import FavoriteButton from "@/components/favorite/FavoriteButton";
 
 interface Props {
@@ -235,7 +236,7 @@ export default function VideoPlayer({
         className="aspect-video w-full"
       >
         <source
-          src={`http://localhost:3000${episode.videoUrl}`}
+          src={mediaUrl(episode.videoUrl) ?? undefined}
           type="video/mp4"
         />
 

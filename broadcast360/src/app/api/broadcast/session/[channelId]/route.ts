@@ -1,25 +1,22 @@
 import { NextResponse } from "next/server";
 import { BroadcastSessionRepository } from "@/repositories/broadcast-session.repository";
-import { MediaMTXManager } from "@/managers/mediamtx.manager"; // Adjust path if needed
+import { MediaMTXManager } from "@/managers/mediamtx.manager";
 
 const mediaMTX = new MediaMTXManager();
 
-export async function GET(
-  request: Request,
-  context: {
-    params: Promise<{
-      channelId: string;
-    }>;
-  }
-) {
+type RouteContext = {
+  params: Promise<{ channelId: string }>;
+};
+
+export async function GET(_request: Request, context: RouteContext) {
   try {
     const { channelId } = await context.params;
     const id = Number(channelId);
 
-    if (!id) {
+    if (!Number.isInteger(id) || id <= 0) {
       return NextResponse.json(
         { error: "Invalid channel id" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -29,27 +26,25 @@ export async function GET(
       return NextResponse.json({ data: null });
     }
 
-    // ADDITION: Fetch real stream health from MediaMTX
     const mtxHealth = await mediaMTX.getStreamHealth(`channel-${id}`);
 
-    // Return session with added health data
     return NextResponse.json({
       data: {
         ...session,
         health: {
           ffmpeg: session.status === "LIVE" ? "Running" : "Stopped",
           mediaMTX: mtxHealth.mediaMTX,
-          rtmp: mtxHealth.rtmp,
+          rtmp: mtxHealth.source,
           hls: mtxHealth.hls,
           readersCount: mtxHealth.readersCount,
         },
       },
     });
   } catch (error) {
-    console.error(error);
+    console.error("GET BROADCAST SESSION ERROR", error);
     return NextResponse.json(
       { error: "Failed loading broadcast session" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

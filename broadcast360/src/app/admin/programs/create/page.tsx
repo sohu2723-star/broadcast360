@@ -3,6 +3,8 @@ from "@/components/admin/programs/ProgramForm";
 
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = "force-dynamic";
+
 export default async function CreateProgramPage(){
 
 const channels = await prisma.channel.findMany({

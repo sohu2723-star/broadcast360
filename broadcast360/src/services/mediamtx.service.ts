@@ -10,6 +10,7 @@ import { PlaylistResolverService } from "@/services/playlist-resolver.service";
 import { PlayoutQueueManager } from "@/managers/playout-queue.manager";
 
 import { SwitchManager } from "@/managers/switch-manager";
+import { FFmpegManager } from "@/streaming/ffmpeg";
 
 import { ScheduleCatchupService } from "@/services/schedule-catchup.service";
 
@@ -18,7 +19,8 @@ import { ScheduleRepository } from "@/repositories/schedule.repository";
 import path from "path";
 
 export class BroadcastService {
-  private switcher = new SwitchManager();
+  private ffmpeg = new FFmpegManager();
+  private switcher = new SwitchManager(this.ffmpeg);
 
   private playout = new PlayoutQueueManager();
 
@@ -117,7 +119,7 @@ export class BroadcastService {
           return this.playNext(channelId, streamKey);
         }
 
-        await this.switcher.startLIVE(channelId, item.stream.url);
+        await this.switcher.startLIVE(channelId, item.stream.url, streamKey);
 
         this.monitorLive(channelId, streamKey);
 
@@ -127,13 +129,13 @@ export class BroadcastService {
       /**
        * VOD
        */
-      const video = this.resolver.resolve(item);
+      const video = this.resolver.resolve([item])[0];
 
-      if (!video) {
+      if (!video?.videoUrl) {
         return this.playNext(channelId, streamKey);
       }
 
-      const fullPath = path.join(process.cwd(), "public", video);
+      const fullPath = path.join(process.cwd(), "public", video.videoUrl);
 
       const offset = this.startOffsets.get(channelId) ?? 0;
 
@@ -192,15 +194,18 @@ export class BroadcastService {
 
     let startIndex = 0;
 
-    if (schedule) {
-      const result = this.catchup.calculate(schedule, new Date());
-
+        if (schedule) {
+      const resolvedItems = this.resolver.resolve(playlist.items ?? []);
+      const result = this.catchup.calculate(
+        resolvedItems,
+        schedule.startTime,
+        new Date(),
+      );
       startIndex = result.itemIndex;
-
       this.startOffsets.set(channelId, result.offset);
-
       console.log("📺 Catchup", result);
     }
+
 
     this.queueMode.set(channelId, mode);
 

@@ -1,36 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Broadcast360
 
-## Getting Started
+Broadcast360 contains two Next.js applications: the **backend/admin application** on port `3000` and the **user portal** on port `3001`. The backend also owns the Prisma schema and communicates with MediaMTX for streaming.
 
-First, run the development server:
+## Localhost setup
+
+Install Node.js 22 or newer, PostgreSQL, FFmpeg, and MediaMTX. Create a database named `broadcast360`, then copy the environment templates and replace the placeholder values:
 
 ```bash
+cd broadcast360/broadcast360
+cp .env.example .env
+npm ci
+npm run db:validate
+npm run db:deploy
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The backend is available at [http://localhost:3000](http://localhost:3000). In another terminal, start the user portal:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+cd broadcast360/user-portal
+cp .env.example .env.local
+npm ci
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The user portal is available at [http://localhost:3001](http://localhost:3001). The backend environment uses `USER_PORTAL_ORIGIN=http://localhost:3001`, and the portal uses `NEXT_PUBLIC_API_URL=http://localhost:3000` by default.
 
-## Learn More
+MediaMTX must be running separately for stream ingest and playback. Use `mediamtx/mediamtx.yml` as the starting configuration and keep its management API restricted to the private host or internal network.
 
-To learn more about Next.js, take a look at the following resources:
+## Production deployment
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Run the backend and user portal as separate long-running Node processes behind a reverse proxy. Set `NODE_ENV=production`, use strong distinct values for `JWT_SECRET` and `JWT_SECRET_USER`, configure a production `DATABASE_URL`, and set `USER_PORTAL_ORIGIN` and `NEXT_PUBLIC_API_URL` to the public HTTPS origins.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Build and start the backend:
 
-## Deploy on Vercel
+```bash
+cd broadcast360/broadcast360
+npm ci
+npm run db:validate
+npm run db:deploy
+npm run build
+NODE_ENV=production PORT=3000 npm run start
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Build and start the user portal:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+cd broadcast360/user-portal
+npm ci
+NEXT_PUBLIC_API_URL=https://api.example.com npm run build
+NODE_ENV=production PORT=3001 npm run start
+```
+
+The start scripts accept the `PORT` environment variable, so the same commands work on localhost, a VM, or a container. The build scripts automatically regenerate the Prisma client before compiling the backend.
+
+## Useful checks
+
+```bash
+# Backend
+cd broadcast360/broadcast360
+npm run db:validate
+npm run typecheck
+npm run lint
+npm run build
+
+# User portal
+cd broadcast360/user-portal
+npm run typecheck
+npm run lint
+npm run build
+```
+
+Do not commit `.env`, `.env.local`, database credentials, JWT secrets, uploaded media, or production MediaMTX credentials. Use a process supervisor such as systemd, PM2, or a container orchestrator for production restarts and logs.

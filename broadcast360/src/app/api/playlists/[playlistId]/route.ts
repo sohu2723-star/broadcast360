@@ -1,75 +1,37 @@
-import { NextRequest, NextResponse } from "next/server";
-
+import { NextResponse } from "next/server";
 import { PlaylistService } from "@/services/playlist.service";
 
-export async function GET(
-  req: NextRequest,
-  {
-    params,
-  }: {
-    params: {
-      programId: string;
-      playlistId: string;
-    };
-  },
-) {
-  try {
-    const programId = Number(params.programId);
-    const playlistId = Number(params.playlistId);
+type RouteContext = {
+  params: Promise<{ playlistId: string }>;
+};
 
-    if (
-      Number.isNaN(programId) ||
-      Number.isNaN(playlistId)
-    ) {
+export async function GET(_request: Request, context: RouteContext) {
+  try {
+    const { playlistId: playlistIdParam } = await context.params;
+    const playlistId = Number(playlistIdParam);
+
+    if (!Number.isInteger(playlistId) || playlistId <= 0) {
       return NextResponse.json(
-        {
-          message: "Invalid programId or playlistId.",
-        },
-        {
-          status: 400,
-        },
+        { message: "Invalid playlistId." },
+        { status: 400 },
       );
     }
 
-    const playlist =
-      await PlaylistService.getPlaylistById(
-        playlistId,
-      );
+    const playlist = await PlaylistService.getPlaylistById(playlistId);
 
     if (!playlist) {
       return NextResponse.json(
-        {
-          message: "Playlist not found.",
-        },
-        {
-          status: 404,
-        },
+        { message: "Playlist not found." },
+        { status: 404 },
       );
     }
 
-    return NextResponse.json(
-      {
-        success: true,
-        data: playlist,
-      },
-      {
-        status: 200,
-      },
-    );
+    return NextResponse.json({ success: true, data: playlist });
   } catch (error) {
-    console.error(
-      "GET Playlist Error:",
-      error,
-    );
-
+    console.error("GET PLAYLIST ERROR", error);
     return NextResponse.json(
-      {
-        success: false,
-        message: "Failed to load playlist.",
-      },
-      {
-        status: 500,
-      },
+      { success: false, message: "Failed to load playlist." },
+      { status: 500 },
     );
   }
 }

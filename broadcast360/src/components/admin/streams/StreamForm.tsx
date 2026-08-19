@@ -18,20 +18,46 @@ type StreamFormData = {
   description?: string;
 };
 
-export default function CreateStreamPage() {
+type StreamFormProps = {
+  channels?: Channel[];
+  initialData?: Partial<StreamFormData>;
+  onSubmit?: (data: StreamFormData) => Promise<void> | void;
+  onCancel?: () => void;
+  loading?: boolean;
+};
+
+export default function StreamForm({
+  channels: providedChannels,
+  initialData,
+  onSubmit: submitOverride,
+  onCancel,
+  loading: externalLoading,
+}: StreamFormProps = {}) {
   const router = useRouter();
 
-  const [channels, setChannels] = useState<Channel[]>([]);
-  const [loadingChannels, setLoadingChannels] = useState(true);
-  const [loading, setLoading] = useState(false);
+  const [loadedChannels, setLoadedChannels] = useState<Channel[]>([]);
+  const [loadingChannels, setLoadingChannels] = useState(!providedChannels);
+  const [internalLoading, setInternalLoading] = useState(false);
+  const channels = providedChannels ?? loadedChannels;
+  const isLoading = externalLoading ?? internalLoading;
 
   const [form, setForm] = useState<StreamFormData>({
-    name: "",
-    url: "",
-    protocol: "RTSP",
-    channelId: 0,
-    description: "",
+    name: initialData?.name ?? "",
+    url: initialData?.url ?? "",
+    protocol: initialData?.protocol ?? "RTSP",
+    channelId: initialData?.channelId ?? 0,
+    description: initialData?.description ?? "",
   });
+
+  useEffect(() => {
+    if (!initialData) return;
+    setForm((current) => ({
+      ...current,
+      ...initialData,
+      protocol: initialData.protocol ?? current.protocol,
+      channelId: initialData.channelId ?? current.channelId,
+    }));
+  }, [initialData]);
 
   const [errors, setErrors] = useState<{
     name?: string;
@@ -72,7 +98,7 @@ export default function CreateStreamPage() {
          * [...]
          */
 
-        setChannels(json.data ?? json ?? []);
+        setLoadedChannels(json.data ?? json ?? []);
       } catch (error) {
         console.error("❌ Load channels error:", error);
       } finally {
@@ -80,8 +106,12 @@ export default function CreateStreamPage() {
       }
     }
 
-    loadChannels();
-  }, []);
+    if (!providedChannels) {
+      loadChannels();
+    } else {
+      setLoadingChannels(false);
+    }
+  }, [providedChannels]);
 
   /*
    * ==========================================================
@@ -222,55 +252,43 @@ export default function CreateStreamPage() {
     }
 
     try {
-      setLoading(true);
+      if (submitOverride) {
+        await submitOverride({
+          ...form,
+          name: form.name.trim(),
+          url: form.url.trim(),
+          description: form.description?.trim() || "",
+        });
+        return;
+      }
+
+      setInternalLoading(true);
 
       const response = await fetch("/api/streams", {
         method: "POST",
-
-        headers: {
-          "Content-Type": "application/json",
-        },
-
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: form.name.trim(),
-
           url: form.url.trim(),
-
           protocol: form.protocol,
-
           channelId: form.channelId,
-
           description: form.description?.trim() || null,
         }),
       });
 
       const json = await response.json();
 
-      console.log("CREATE STREAM RESPONSE:", json);
-
       if (!response.ok) {
-        throw new Error(
-          json.error || "Failed to create stream"
-        );
+        throw new Error(json.error || "Failed to create stream");
       }
 
-      /*
-       * Stream successfully created.
-       */
-
       router.push("/admin/streams");
-
       router.refresh();
     } catch (error) {
-      console.error("❌ Create stream error:", error);
-
-      alert(
-        error instanceof Error
-          ? error.message
-          : "Failed to create stream"
-      );
+      console.error("Create stream error:", error);
+      alert(error instanceof Error ? error.message : "Failed to save stream");
     } finally {
-      setLoading(false);
+      setInternalLoading(false);
     }
   }
 
@@ -435,7 +453,7 @@ export default function CreateStreamPage() {
                   Number(e.target.value)
                 )
               }
-              disabled={loadingChannels}
+              disabled={loadingChannels || isLoading}
               className={`w-full rounded-lg border ${
                 errors.channelId
                   ? "border-red-500"
@@ -544,20 +562,18 @@ export default function CreateStreamPage() {
           <div className="flex gap-4">
             <button
               type="submit"
-              disabled={loading}
+              disabled={isLoading}
               className="flex-[2] rounded-lg bg-[#106EE9] py-3 font-medium text-white hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {loading
+              {isLoading
                 ? "Saving..."
                 : "Save Stream"}
             </button>
 
             <button
               type="button"
-              onClick={() =>
-                router.push("/admin/streams")
-              }
-              disabled={loading}
+              onClick={() => onCancel?.() ?? router.push("/admin/streams")}
+              disabled={isLoading}
               className="flex-1 rounded-lg bg-gray-700 py-3 font-medium text-white hover:opacity-80 disabled:opacity-50"
             >
               Cancel

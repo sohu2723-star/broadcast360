@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import authApi from "@/lib/authapi";
 
 // =====================================================
@@ -52,7 +52,7 @@ interface ApiResponse {
 // PAGE
 // =====================================================
 
-export default function PaymentPage() {
+function PaymentContent() {
   const searchParams = useSearchParams();
 
   const subscriptionId = searchParams.get("subscriptionId");
@@ -648,5 +648,20 @@ export default function PaymentPage() {
         </section>
       </main>
     </div>
+  );
+}
+
+
+export default function PaymentPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-[#010312] text-white">
+          <p className="text-sm text-zinc-400">Loading payment...</p>
+        </div>
+      }
+    >
+      <PaymentContent />
+    </Suspense>
   );
 }

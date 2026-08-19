@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 import authApi from "@/lib/authapi";
 
@@ -33,7 +33,7 @@ interface ApiResponse {
 // PAGE
 // =====================================================
 
-export default function CheckoutPage() {
+function CheckoutContent() {
   const searchParams = useSearchParams();
 
   const optionId = searchParams.get("optionId");
@@ -593,5 +593,20 @@ export default function CheckoutPage() {
       </main>
 
     </div>
+  );
+}
+
+
+export default function CheckoutPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-[#010312] text-white">
+          <p className="text-sm text-zinc-400">Loading checkout...</p>
+        </div>
+      }
+    >
+      <CheckoutContent />
+    </Suspense>
   );
 }

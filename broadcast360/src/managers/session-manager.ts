@@ -175,7 +175,7 @@ export class SessionManager {
       health: {
         ffmpeg: session.status === "LIVE" ? "Running" : "Stopped",
         mediaMTX: mtxHealth.mediaMTX,
-        rtmp: mtxHealth.rtmp,
+        rtmp: mtxHealth.source,
         hls: mtxHealth.hls,
         readersCount: mtxHealth.readersCount,
       },

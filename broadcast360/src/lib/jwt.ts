@@ -1,14 +1,4 @@
-import { SignJWT, jwtVerify, JWTPayload } from "jose";
-
-// const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-
-const secretKey = process.env.JWT_SECRET;
-
-if (!secretKey) {
-  throw new Error("JWT_SECRET environment variable is missing in .env!");
-}
-
-const secret = new TextEncoder().encode(secretKey);
+import { jwtVerify, SignJWT, type JWTPayload } from "jose";
 
 export interface TokenPayload extends JWTPayload {
   id: number;
@@ -16,22 +6,30 @@ export interface TokenPayload extends JWTPayload {
   role: "ADMIN" | "USER";
 }
 
+function getSecret() {
+  const secretKey = process.env.JWT_SECRET;
+  if (!secretKey || secretKey.length < 32) {
+    throw new Error("JWT_SECRET must be set and at least 32 characters long");
+  }
+  return new TextEncoder().encode(secretKey);
+}
+
 export async function createToken(payload: {
   id: number;
   email: string;
   role: "ADMIN" | "USER";
 }): Promise<string> {
-  return await new SignJWT(payload)
-    .setProtectedHeader({
-      alg: "HS256",
-    })
+  return new SignJWT(payload)
+    .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("7d")
-    .sign(secret);
+    .sign(getSecret());
 }
 
 export async function verifyToken(token: string): Promise<TokenPayload> {
-  const { payload } = await jwtVerify(token, secret);
+  const { payload } = await jwtVerify(token, getSecret(), {
+    algorithms: ["HS256"],
+  });
 
   return payload as TokenPayload;
 }

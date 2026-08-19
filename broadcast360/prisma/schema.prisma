@@ -22,6 +22,29 @@ enum UserStatus {
   BANNED
 }
 
+enum AccessType {
+  FREE
+  PREMIUM
+}
+
+enum SubscriptionStatus {
+  PENDING
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  KPAY
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  REJECTED
+  FAILED
+}
+
 model User {
   id Int @id @default(autoincrement())
 
@@ -30,6 +53,8 @@ model User {
   email String @unique
 
   password String
+  avatar   String?
+  phone    String?
 
   role Role @default(USER)
 
@@ -40,6 +65,13 @@ model User {
   createdAt DateTime @default(now())
 
   updatedAt DateTime @updatedAt
+
+  watchHistories       WatchHistory[]
+  favorites            Favorite[]
+  subscriptions        Subscription[]
+  programReminders     ProgramReminder[]
+  contactMessages      ContactMessage[]
+  supportConversations SupportConversation[]
 }
 
 // =====================
@@ -405,6 +437,112 @@ model Recording {
   news News[]
 
   createdAt DateTime @default(now())
+}
+
+model WatchHistory {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  playlistItemId  Int?
+  newsId          Int?
+  progressSeconds Int      @default(0)
+  durationSeconds Int?
+  watchedAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  playlistItem PlaylistItem? @relation(fields: [playlistItemId], references: [id], onDelete: Cascade)
+  news         News?         @relation(fields: [newsId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, watchedAt])
+  @@unique([userId, playlistItemId])
+  @@unique([userId, newsId])
+}
+
+model Favorite {
+  id             Int           @id @default(autoincrement())
+  userId         Int
+  movieId        Int?
+  episodeId      Int?
+  entertainmentId Int?
+  newsId         Int?
+  createdAt      DateTime      @default(now())
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  movie         Movie?         @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  episode       Episode?       @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+  entertainment Entertainment? @relation(fields: [entertainmentId], references: [id], onDelete: Cascade)
+  news          News?          @relation(fields: [newsId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, movieId])
+  @@unique([userId, episodeId])
+  @@unique([userId, entertainmentId])
+  @@unique([userId, newsId])
+}
+
+model SubscriptionPlan {
+  id            Int                  @id @default(autoincrement())
+  name          String
+  description   String?
+  isActive      Boolean              @default(true)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  options       SubscriptionOption[]
+  subscriptions Subscription[]
+}
+
+model SubscriptionOption {
+  id               Int              @id @default(autoincrement())
+  planId           Int
+  durationDays     Int
+  price            Decimal          @db.Decimal(65, 30)
+  discountPercent  Decimal          @default(0) @db.Decimal(65, 30)
+  isActive         Boolean          @default(true)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  plan            SubscriptionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  subscriptions   Subscription[]
+
+  @@index([planId])
+  @@unique([planId, durationDays])
+}
+
+model Subscription {
+  id        Int                @id @default(autoincrement())
+  userId    Int
+  planId    Int
+  optionId  Int
+  status    SubscriptionStatus @default(PENDING)
+  startDate DateTime?
+  endDate   DateTime?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  user     User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan     SubscriptionPlan   @relation(fields: [planId], references: [id], onDelete: Restrict)
+  option   SubscriptionOption @relation(fields: [optionId], references: [id], onDelete: Restrict)
+  payments Payment[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+model Payment {
+  id             Int           @id @default(autoincrement())
+  subscriptionId Int
+  amount         Decimal       @db.Decimal(65, 30)
+  currency       String        @default("MMK")
+  method         PaymentMethod @default(KPAY)
+  transactionId  String?        @unique
+  screenshotUrl  String?
+  status         PaymentStatus @default(PENDING)
+  paidAt         DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
 }
 
 model ProgramReminder {

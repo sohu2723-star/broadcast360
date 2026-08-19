@@ -1,6 +1,7 @@
 import { ChildProcess } from "child_process";
 
 import { FFmpegManager } from "@/streaming/ffmpeg";
+import { LiveManager } from "@/managers/live-manager";
 
 type BroadcastMode = "STOPPED" | "VOD" | "LIVE";
 
@@ -12,9 +13,11 @@ export class SwitchManager {
   private current = new Map<number, ChildProcess>();
 
 
-  constructor(
-    private ffmpeg: FFmpegManager
-  ) { }
+  private live: LiveManager;
+
+  constructor(private ffmpeg: FFmpegManager) {
+    this.live = new LiveManager(ffmpeg);
+  }
 
 
   /*
@@ -315,12 +318,57 @@ export class SwitchManager {
 
 
   isRunning(channelId: number) {
+    return this.ffmpeg.isRunning(channelId, "ROUTER");
+  }
 
-    return this.ffmpeg.isRunning(
-      channelId,
-      "ROUTER"
-    );
+  async startLIVE(channelId: number, inputUrl: string, streamKey: string) {
+    await this.live.start(channelId, inputUrl, streamKey);
+    await this.switchToLIVE(channelId, streamKey);
+  }
 
+  async startVOD(
+    channelId: number,
+    filePath: string,
+    streamKey: string,
+    offsetSeconds = 0,
+  ) {
+    await this.stopCurrent(channelId);
+
+    const input = [
+      ...(offsetSeconds > 0 ? ["-ss", String(offsetSeconds)] : []),
+      "-re",
+      "-i",
+      filePath,
+      "-map",
+      "0:v:0",
+      "-map",
+      "0:a:0?",
+      "-c:v",
+      "copy",
+      "-c:a",
+      "aac",
+      "-ar",
+      "48000",
+      "-b:a",
+      "128k",
+      "-f",
+      "flv",
+      `rtmp://127.0.0.1:1935/channel/${streamKey}`,
+    ];
+
+    const process = this.ffmpeg.start(channelId, "ROUTER", input);
+    this.current.set(channelId, process);
+    this.mode.set(channelId, "VOD");
+    return process;
+  }
+
+  async stop(channelId: number) {
+    await this.stopCurrent(channelId);
+    await this.ffmpeg.stop(channelId, "LIVE");
+  }
+
+  hasLivePublisher(channelId: number) {
+    return this.ffmpeg.isRunning(channelId, "LIVE");
   }
 
 }

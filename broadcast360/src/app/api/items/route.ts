@@ -1,100 +1,38 @@
 import { NextResponse } from "next/server";
 import { PlaylistItemService } from "@/services/playlist-item.service";
 
-
-export async function POST(
-  req: Request,
-  {
-    params,
-  }: {
-    params: Promise<{
-      programId: string;
-      playlistId: string;
-    }>;
-  }
-) {
-
+export async function POST(request: Request) {
   try {
+    const body = await request.json();
+    const playlistId = Number(body?.playlistId);
 
-
-    const {
-      playlistId
-    } = await params;
-
-
-
-    const id = Number(playlistId);
-
-
-
-    if (isNaN(id)) {
-
+    if (!Number.isInteger(playlistId) || playlistId <= 0) {
       return NextResponse.json(
-        {
-          message: "Invalid playlistId"
-        },
-        {
-          status: 400
-        }
+        { message: "A valid playlistId is required" },
+        { status: 400 },
       );
-
     }
 
-
-
-    const body =
-      await req.json();
-
-
-
-    const item =
-      await PlaylistItemService.create(
-        id,
-        body
-      );
-
-
+    const { playlistId: _playlistId, ...itemData } = body;
+    const item = await PlaylistItemService.create(playlistId, itemData);
 
     return NextResponse.json(
-
       {
-        message:
-          "Playlist item created successfully",
-
-        data:item
+        message: "Playlist item created successfully",
+        data: item,
       },
-
-      {
-        status:201
-      }
-
+      { status: 201 },
     );
-
-
-
-  } catch(error){
-
-
-    console.error(error);
-
-
-
+  } catch (error) {
+    console.error("CREATE PLAYLIST ITEM ERROR", error);
     return NextResponse.json(
-
       {
         message:
           error instanceof Error
-          ? error.message
-          : "Failed to create playlist item"
+            ? error.message
+            : "Failed to create playlist item",
       },
-
-      {
-        status:500
-      }
-
+      { status: 500 },
     );
-
-
   }
-
 }

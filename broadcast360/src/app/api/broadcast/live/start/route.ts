@@ -7,14 +7,8 @@ import { LiveManager } from "@/managers/live-manager";
 
 const ffmpeg = new FFmpegManager();
 
-const live = new LiveManager();
-
-
-const switcher = new SwitchManager(
-  ffmpeg,
-  null as any,
-  live
-);
+const live = new LiveManager(ffmpeg);
+const switcher = new SwitchManager(ffmpeg);
 
 
 export async function POST(
@@ -49,11 +43,9 @@ export async function POST(
     }
 
 
-    await switcher.startLIVE(
-      Number(channelId),
-      inputUrl,
-      streamKey
-    );
+    const parsedChannelId = Number(channelId);
+    await live.start(parsedChannelId, inputUrl, streamKey);
+    await switcher.switchToLIVE(parsedChannelId, streamKey);
 
 
     return NextResponse.json({

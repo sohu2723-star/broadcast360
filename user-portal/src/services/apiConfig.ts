@@ -1,5 +1,9 @@
-export const ADMIN_API_URL = "http://localhost:3000"; //Admin running port
+import { API_ORIGIN, apiUrl } from "@/lib/api-url";
+
+export const ADMIN_API_URL = API_ORIGIN;
 
 export const defaultHeaders = {
   "Content-Type": "application/json",
 };
+
+export { apiUrl };

@@ -25,7 +25,7 @@ type UpdateChannelInput = {
   description?: string;
   logo?: string;
   country?: string;
-  accessType: ChannelAccessType,
+  accessType?: ChannelAccessType;
 };
 
 
