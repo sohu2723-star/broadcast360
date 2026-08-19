@@ -13,9 +13,15 @@ async function deliverVerificationEmail({ email, code }: { email: string; code: 
   const emailjsPublicKey = process.env.EMAILJS_PUBLIC_KEY;
 
   if (emailjsServiceId && emailjsTemplateId && emailjsPublicKey) {
+    const emailjsOrigin =
+      process.env.USER_PORTAL_ORIGIN || "http://localhost:3001";
     const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Origin: emailjsOrigin,
+        Referer: `${emailjsOrigin.replace(/\/$/, "")}/`,
+      },
       body: JSON.stringify({
         service_id: emailjsServiceId,
         template_id: emailjsTemplateId,
