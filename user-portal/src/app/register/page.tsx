@@ -47,7 +47,9 @@ declare global {
             ux_mode?: "popup" | "redirect";
             auto_select?: boolean;
           }) => void;
-          renderButton: (element: HTMLElement, options: Record<string, unknown>) => void;
+                      renderButton: (element: HTMLElement, options: Record<string, unknown>) => void;
+            prompt: () => void;
+
         };
       };
     };
@@ -76,6 +78,7 @@ export default function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [welcomeTitle, setWelcomeTitle] = useState("");
   const googleButtonRef = useRef<HTMLDivElement>(null);
+  const googleInitializedRef = useRef(false);
   const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
   useEffect(() => {
@@ -167,7 +170,7 @@ export default function RegisterPage() {
   }
 
   function initializeGoogle() {
-    if (!googleClientId || !googleButtonRef.current || !window.google) return;
+    if (googleInitializedRef.current || !googleClientId || !googleButtonRef.current || !window.google) return;
     window.google.accounts.id.initialize({
       client_id: googleClientId,
       ux_mode: "popup",
@@ -195,6 +198,7 @@ export default function RegisterPage() {
         }
       },
     });
+    googleInitializedRef.current = true;
     window.google.accounts.id.renderButton(googleButtonRef.current, {
       theme: "outline",
       size: "large",
@@ -203,6 +207,30 @@ export default function RegisterPage() {
       width: 360,
     });
   }
+
+  function openGooglePrompt() {
+    initializeGoogle();
+    if (!window.google || !googleInitializedRef.current) {
+      setServerError("Google Sign-In is still loading. Please try again in a moment.");
+      return;
+    }
+    setServerError("");
+    setLoading(true);
+    window.google.accounts.id.prompt();
+    window.setTimeout(() => setLoading(false), 1000);
+  }
+
+  useEffect(() => {
+    if (!googleClientId) return;
+    let attempts = 0;
+    const attempt = () => {
+      initializeGoogle();
+      attempts += 1;
+      if (googleInitializedRef.current || attempts >= 50) return;
+      window.setTimeout(attempt, 100);
+    };
+    attempt();
+  }, [googleClientId]);
 
   async function register() {
     setSubmitted(true);
@@ -342,7 +370,7 @@ export default function RegisterPage() {
         {googleClientId ? (
           <>
             <GoogleDivider />
-            <GoogleButtonSlot googleButtonRef={googleButtonRef} />
+            <GoogleButtonSlot googleButtonRef={googleButtonRef} onClick={openGooglePrompt} />
             <Script src="https://accounts.google.com/gsi/client" strategy="afterInteractive" onLoad={initializeGoogle} />
           </>
         ) : null}

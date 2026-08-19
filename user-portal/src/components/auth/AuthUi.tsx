@@ -93,12 +93,19 @@ export function GoogleDivider() {
   );
 }
 
-export function GoogleButtonSlot({ googleButtonRef }: { googleButtonRef: React.RefObject<HTMLDivElement | null> }) {
+export function GoogleButtonSlot({
+  googleButtonRef,
+  onClick,
+}: {
+  googleButtonRef: React.RefObject<HTMLDivElement | null>;
+  onClick?: () => void;
+}) {
   return (
     <div className="relative h-11 w-full overflow-hidden rounded-2xl">
       <button
         type="button"
-        className="absolute inset-0 flex w-full items-center justify-center gap-3 rounded-2xl border border-slate-200/80 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm"
+        onClick={onClick}
+        className="absolute inset-0 z-0 flex w-full items-center justify-center gap-3 rounded-2xl border border-slate-200/80 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm"
         aria-label="Continue with Google"
       >
         <span className="text-lg font-bold leading-none text-[#4285F4]" aria-hidden="true">G</span>
@@ -106,7 +113,7 @@ export function GoogleButtonSlot({ googleButtonRef }: { googleButtonRef: React.R
       </button>
       <div
         ref={googleButtonRef}
-        className="absolute inset-0 z-10 opacity-0 [&>div]:!h-full [&>div]:!w-full [&_iframe]:!h-full [&_iframe]:!w-full"
+        className="pointer-events-none absolute inset-0 z-10 opacity-0 [&>div]:!h-full [&>div]:!w-full [&_iframe]:!h-full [&_iframe]:!w-full"
         aria-label="Continue with Google"
       />
     </div>

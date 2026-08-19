@@ -6,41 +6,13 @@ import { assertGmailAddress } from "@/lib/auth-policy";
 
 const CODE_TTL_MS = 10 * 60 * 1000;
 const MAX_ATTEMPTS = 5;
+type DeliveryProvider = "SMTP" | "EmailJS";
 
-async function deliverVerificationEmail({ email, code }: { email: string; code: string }) {
-  const emailjsServiceId = process.env.EMAILJS_SERVICE_ID;
-  const emailjsTemplateId = process.env.EMAILJS_TEMPLATE_ID;
-  const emailjsPublicKey = process.env.EMAILJS_PUBLIC_KEY;
-
-  if (emailjsServiceId && emailjsTemplateId && emailjsPublicKey) {
-    const emailjsOrigin =
-      process.env.USER_PORTAL_ORIGIN || "http://localhost:3001";
-    const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Origin: emailjsOrigin,
-        Referer: `${emailjsOrigin.replace(/\/$/, "")}/`,
-      },
-      body: JSON.stringify({
-        service_id: emailjsServiceId,
-        template_id: emailjsTemplateId,
-        user_id: emailjsPublicKey,
-        template_params: {
-          to_email: email,
-          email,
-          verification_code: code,
-          code,
-          app_name: "Broadcast360",
-        },
-      }),
-    });
-    if (!response.ok) throw new Error("EmailJS could not send the verification code");
-    return;
-  }
-
+async function deliverWithSmtp({ email, code }: { email: string; code: string }) {
   const transport = getTransport();
   const from = process.env.SMTP_FROM ?? process.env.SMTP_USER;
+
+  await transport.verify();
   await transport.sendMail({
     from,
     to: email,
@@ -50,20 +22,76 @@ async function deliverVerificationEmail({ email, code }: { email: string; code: 
   });
 }
 
+async function deliverWithEmailJs({ email, code }: { email: string; code: string }) {
+  const emailjsServiceId = process.env.EMAILJS_SERVICE_ID;
+  const emailjsTemplateId = process.env.EMAILJS_TEMPLATE_ID;
+  const emailjsPublicKey = process.env.EMAILJS_PUBLIC_KEY;
+
+  if (!emailjsServiceId || !emailjsTemplateId || !emailjsPublicKey) {
+    throw new Error("EmailJS fallback is not configured");
+  }
+
+  const emailjsOrigin = process.env.USER_PORTAL_ORIGIN || "http://localhost:3001";
+  const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Origin: emailjsOrigin,
+      Referer: `${emailjsOrigin.replace(/\/$/, "")}/`,
+    },
+    body: JSON.stringify({
+      service_id: emailjsServiceId,
+      template_id: emailjsTemplateId,
+      user_id: emailjsPublicKey,
+      template_params: {
+        to_email: email,
+        email,
+        verification_code: code,
+        code,
+        app_name: "Broadcast360",
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const detail = (await response.text()).slice(0, 180);
+    throw new Error(`EmailJS request failed (${response.status})${detail ? `: ${detail}` : ""}`);
+  }
+}
+
+async function deliverVerificationEmail({ email, code }: { email: string; code: string }): Promise<DeliveryProvider> {
+  try {
+    await deliverWithSmtp({ email, code });
+    console.info("[Email] Verification code delivered via SMTP");
+    return "SMTP";
+  } catch (smtpError) {
+    const message = smtpError instanceof Error ? smtpError.message : "Unknown SMTP error";
+    console.warn(`[Email] SMTP delivery failed; trying EmailJS fallback: ${message}`);
+  }
+
+  await deliverWithEmailJs({ email, code });
+  console.info("[Email] Verification code delivered via EmailJS fallback");
+  return "EmailJS";
+}
+
 function getTransport() {
   const host = process.env.SMTP_HOST;
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
 
   if (!host || !user || !pass) {
-    throw new Error("Email delivery is not configured");
+    throw new Error("SMTP is not configured");
   }
 
+  const timeout = Number(process.env.SMTP_TIMEOUT_MS ?? 5000);
   return nodemailer.createTransport({
     host,
     port: Number(process.env.SMTP_PORT ?? 465),
     secure: String(process.env.SMTP_SECURE ?? "true") === "true",
     auth: { user, pass },
+    connectionTimeout: timeout,
+    greetingTimeout: timeout,
+    socketTimeout: timeout,
   });
 }
 
@@ -71,10 +99,7 @@ function createCode() {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
 
-export async function sendVerificationCode(
-  rawEmail: string,
-  purpose = "REGISTER",
-) {
+export async function sendVerificationCode(rawEmail: string, purpose = "REGISTER") {
   const email = assertGmailAddress(rawEmail);
   const code = createCode();
   const codeHash = await hashPassword(code);
@@ -83,20 +108,20 @@ export async function sendVerificationCode(
   await prisma.emailVerificationCode.deleteMany({
     where: { email, purpose, consumedAt: null },
   });
-  await prisma.emailVerificationCode.create({
+  const record = await prisma.emailVerificationCode.create({
     data: { email, codeHash, purpose, expiresAt },
   });
 
-  await deliverVerificationEmail({ email, code });
-
-  return { expiresAt };
+  try {
+    const provider = await deliverVerificationEmail({ email, code });
+    return { expiresAt, provider };
+  } catch (error) {
+    await prisma.emailVerificationCode.delete({ where: { id: record.id } }).catch(() => undefined);
+    throw error;
+  }
 }
 
-export async function consumeVerificationCode(
-  rawEmail: string,
-  rawCode: string,
-  purpose = "REGISTER",
-) {
+export async function consumeVerificationCode(rawEmail: string, rawCode: string, purpose = "REGISTER") {
   const email = assertGmailAddress(rawEmail);
   const code = rawCode.trim();
   if (!/^\d{6}$/.test(code)) {
