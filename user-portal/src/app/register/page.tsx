@@ -19,6 +19,7 @@ import {
   authInputClass,
   FieldError,
 } from "@/components/auth/AuthUi";
+import DobPicker from "@/components/auth/DobPicker";
 
 type Gender = "" | "MALE" | "FEMALE" | "OTHER" | "UNSPECIFIED";
 type GoogleCredentialResponse = { credential: string };
@@ -68,6 +69,8 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [codeLoading, setCodeLoading] = useState(false);
   const [codeSent, setCodeSent] = useState(false);
+  const [resendCountdown, setResendCountdown] = useState(0);
+  const [showCodeSentNotice, setShowCodeSentNotice] = useState(false);
   const [serverError, setServerError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -80,6 +83,14 @@ export default function RegisterPage() {
     const timer = window.setTimeout(() => { window.location.href = "/profile"; }, 1700);
     return () => window.clearTimeout(timer);
   }, [welcomeTitle]);
+
+  useEffect(() => {
+    if (resendCountdown <= 0) return;
+    const timer = window.setInterval(() => {
+      setResendCountdown((current) => Math.max(0, current - 1));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [resendCountdown]);
 
   function validateEmail(email: string) {
     if (!email.trim()) return "Email is required";
@@ -117,10 +128,21 @@ export default function RegisterPage() {
 
   function handleChange(field: keyof RegisterForm, value: string) {
     setForm((previous) => ({ ...previous, [field]: value }));
-    if (submitted) setErrors((previous) => ({ ...previous, [field]: undefined }));
+    setErrors((previous) => {
+      if (!previous[field]) return previous;
+      const next = { ...previous };
+      delete next[field];
+      return next;
+    });
+    if (serverError) setServerError("");
+    if (field === "email") {
+      setCodeSent(false);
+      setResendCountdown(0);
+    }
   }
 
   async function sendCode() {
+    if (resendCountdown > 0) return;
     const emailError = validateEmail(form.email);
     if (emailError) {
       setErrors((previous) => ({ ...previous, email: emailError }));
@@ -131,6 +153,8 @@ export default function RegisterPage() {
       setServerError("");
       await api.post("/api/user-portal/auth/send-code", { email: form.email });
       setCodeSent(true);
+      setResendCountdown(60);
+      setShowCodeSentNotice(true);
     } catch (error: unknown) {
       setServerError(
         axios.isAxiosError(error)
@@ -215,6 +239,14 @@ export default function RegisterPage() {
 
   return (
     <AuthBackdrop>
+      {showCodeSentNotice ? (
+        <AuthNotice
+          title="Code sent"
+          message={`We sent a 6-digit verification code to ${form.email}. Please check your Gmail inbox or Spam folder.`}
+          onDone={() => setShowCodeSentNotice(false)}
+        />
+      ) : null}
+
       {welcomeTitle ? (
         <AuthNotice
           title={welcomeTitle}
@@ -248,7 +280,11 @@ export default function RegisterPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <AuthLabel>Date of Birth</AuthLabel>
-              <input type="date" value={form.dateOfBirth} onChange={(event) => handleChange("dateOfBirth", event.target.value)} className={field("dateOfBirth")} />
+              <DobPicker
+                value={form.dateOfBirth}
+                onChange={(value) => handleChange("dateOfBirth", value)}
+                hasError={Boolean(errors.dateOfBirth)}
+              />
               <FieldError message={errors.dateOfBirth} />
             </div>
             <div>
@@ -268,11 +304,12 @@ export default function RegisterPage() {
             <AuthLabel>Email verification code</AuthLabel>
             <div className="flex gap-2">
               <input value={form.verificationCode} inputMode="numeric" maxLength={6} placeholder="6-digit code" onChange={(event) => handleChange("verificationCode", event.target.value.replace(/\D/g, ""))} className={`${field("verificationCode")} min-w-0 flex-1`} />
-              <button type="button" onClick={sendCode} disabled={codeLoading} className="rounded-2xl border border-cyan-200/30 px-3 text-xs font-bold text-cyan-100 transition hover:bg-cyan-200/10 disabled:opacity-60">
-                {codeLoading ? <MoonSpinner label="Sending" /> : codeSent ? "Resend code" : "Send code"}
+              <button type="button" onClick={sendCode} disabled={codeLoading || resendCountdown > 0} className="min-w-[7.4rem] rounded-2xl border border-cyan-200/30 px-3 text-xs font-bold text-cyan-100 transition hover:bg-cyan-200/10 disabled:cursor-not-allowed disabled:opacity-60">
+                {codeLoading ? <MoonSpinner label="Sending" /> : resendCountdown > 0 ? `Resend in ${resendCountdown}s` : codeSent ? "Resend code" : "Send code"}
               </button>
             </div>
             <FieldError message={errors.verificationCode} />
+            {codeSent ? <p className="mt-2 text-xs text-cyan-200/80">Code sent. You can request another code when the timer reaches 0.</p> : null}
           </div>
 
           <div>

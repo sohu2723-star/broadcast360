@@ -8,6 +8,7 @@ import {
   isAllowedAdminEmail,
 } from "@/lib/auth-policy";
 import type { GoogleIdentity } from "@/lib/google-auth";
+import { consumeVerificationCode } from "@/services/email-verification.service";
 
 const userRepository = new UserRepository();
 
@@ -174,6 +175,25 @@ export class AuthService {
       throw new Error("Current password incorrect");
     }
     await userRepository.update(id, { password: await hashPassword(newPassword) });
+    return true;
+  }
+
+  async resetUserPassword(email: string, verificationCode: string, newPassword: string) {
+    const normalizedEmail = assertGmailAddress(email);
+    const user = await userRepository.findByEmail(normalizedEmail);
+
+    if (!user || user.role === "ADMIN") {
+      throw new Error("Unable to reset password for this account");
+    }
+
+    await consumeVerificationCode(
+      normalizedEmail,
+      verificationCode,
+      "PASSWORD_RESET",
+    );
+    await userRepository.update(user.id, {
+      password: await hashPassword(newPassword),
+    });
     return true;
   }
 }

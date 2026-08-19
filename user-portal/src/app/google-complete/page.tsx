@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 
@@ -13,6 +14,7 @@ import {
   authInputClass,
   FieldError,
 } from "@/components/auth/AuthUi";
+import DobPicker from "@/components/auth/DobPicker";
 
 type Gender = "" | "MALE" | "FEMALE" | "OTHER" | "UNSPECIFIED";
 
@@ -23,6 +25,7 @@ export default function GoogleCompletePage() {
   const [form, setForm] = useState<FormState>({ name: "", dateOfBirth: "", gender: "" });
   const [errors, setErrors] = useState<Errors>({});
   const [serverError, setServerError] = useState("");
+  const [sessionExpired, setSessionExpired] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [completed, setCompleted] = useState(false);
@@ -36,7 +39,10 @@ export default function GoogleCompletePage() {
         setForm((previous) => ({ ...previous, name: response.data.user?.name ?? "" }));
       })
       .catch(() => {
-        if (active) setServerError("Your Google session has expired. Please sign in again.");
+        if (active) {
+          setSessionExpired(true);
+          setServerError("Your Google session has expired. Please sign in again.");
+        }
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -107,9 +113,14 @@ export default function GoogleCompletePage() {
         </div>
 
         {serverError ? <AuthError message={serverError} /> : null}
+        {sessionExpired ? (
+          <Link href="/login" className="mt-5 block w-full rounded-2xl bg-gradient-to-r from-blue-500 to-cyan-400 py-3.5 text-center text-sm font-bold text-slate-950 transition hover:brightness-110">
+            Sign in with Google again
+          </Link>
+        ) : null}
         {loading ? (
           <div className="flex justify-center py-10 text-sm text-cyan-100"><MoonSpinner label="Checking your Google account" /></div>
-        ) : (
+        ) : sessionExpired ? null : (
           <div className="space-y-5">
             <div>
               <AuthLabel>Name</AuthLabel>
@@ -119,7 +130,11 @@ export default function GoogleCompletePage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <AuthLabel>Date of Birth</AuthLabel>
-                <input type="date" value={form.dateOfBirth} onChange={(event) => update("dateOfBirth", event.target.value)} className={authInputClass(Boolean(errors.dateOfBirth))} />
+                <DobPicker
+                  value={form.dateOfBirth}
+                  onChange={(value) => update("dateOfBirth", value)}
+                  hasError={Boolean(errors.dateOfBirth)}
+                />
                 <FieldError message={errors.dateOfBirth} />
               </div>
               <div>

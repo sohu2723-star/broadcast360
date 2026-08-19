@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { AuthService } from "@/services/auth.service";
 
 import { cors, optionsResponse } from "@/lib/cors";
+import { setUserAuthCookie } from "@/lib/auth-cookie";
 
 const authService = new AuthService();
 
@@ -21,17 +22,7 @@ export async function POST(request: NextRequest) {
       user: result.user,
     });
 
-    response.cookies.set("user_token", result.token, {
-      httpOnly: true,
-
-      secure: process.env.NODE_ENV === "production",
-
-      sameSite: "lax",
-
-      maxAge: 60 * 60 * 24 * 7,
-
-      path: "/",
-    });
+    setUserAuthCookie(response, result.token);
 
     console.log("USER COOKIE CREATED");
 

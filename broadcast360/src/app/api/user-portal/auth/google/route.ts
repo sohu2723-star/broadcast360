@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { cors, optionsResponse } from "@/lib/cors";
-import { setAuthCookie } from "@/lib/auth-cookie";
+import { setUserAuthCookie } from "@/lib/auth-cookie";
 import { verifyGoogleCredential } from "@/lib/google-auth";
 import { AuthService } from "@/services/auth.service";
 
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       user: result.user,
       isNewUser: result.isNewUser,
     });
-    setAuthCookie(response, result.token);
+    setUserAuthCookie(response, result.token);
     return cors(response);
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Google user login failed";
