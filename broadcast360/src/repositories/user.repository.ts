@@ -108,7 +108,14 @@ export class UserRepository {
 
   updateProfile(
     id: number,
-    data: { name?: string; email?: string; phone?: string; avatar?: string },
+    data: {
+      name?: string;
+      email?: string;
+      phone?: string;
+      avatar?: string;
+      dateOfBirth?: Date;
+      gender?: string;
+    },
   ) {
     return prisma.user.update({ where: { id }, data });
   }

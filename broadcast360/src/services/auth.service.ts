@@ -18,6 +18,8 @@ function publicUser(user: {
   role: "ADMIN" | "USER";
   avatar?: string | null;
   phone?: string | null;
+  dateOfBirth?: Date | null;
+  gender?: string | null;
 }) {
   return {
     id: user.id,
@@ -26,6 +28,8 @@ function publicUser(user: {
     role: user.role,
     avatar: user.avatar ?? null,
     phone: user.phone ?? null,
+    dateOfBirth: user.dateOfBirth ?? null,
+    gender: user.gender ?? null,
   };
 }
 
@@ -122,6 +126,7 @@ export class AuthService {
       throw new Error("Admin accounts cannot login through the user portal");
     }
 
+    const isNewUser = !existing;
     const user = existing
       ? await userRepository.update(existing.id, {
           googleId: identity.googleId,
@@ -144,12 +149,19 @@ export class AuthService {
         });
 
     const token = await createUserToken({ id: user.id, email: user.email, role: "USER" });
-    return { token, user: publicUser(user) };
+    return { token, user: publicUser(user), isNewUser };
   }
 
   async updateProfile(
     id: number,
-    data: { name?: string; email?: string; phone?: string; avatar?: string },
+    data: {
+      name?: string;
+      email?: string;
+      phone?: string;
+      avatar?: string;
+      dateOfBirth?: Date;
+      gender?: string;
+    },
   ) {
     const user = await userRepository.updateProfile(id, data);
     return publicUser(user);

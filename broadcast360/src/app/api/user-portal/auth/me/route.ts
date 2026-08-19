@@ -100,6 +100,8 @@ export async function GET(request: NextRequest) {
           email: user.email,
           phone: user.phone,
           avatar: user.avatar,
+          dateOfBirth: user.dateOfBirth,
+          gender: user.gender,
           role: user.role,
           status: user.status,
 

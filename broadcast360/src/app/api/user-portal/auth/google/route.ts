@@ -16,7 +16,11 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const identity = await verifyGoogleCredential(body.credential);
     const result = await authService.googleUserLogin(identity);
-    const response = NextResponse.json({ success: true, user: result.user });
+    const response = NextResponse.json({
+      success: true,
+      user: result.user,
+      isNewUser: result.isNewUser,
+    });
     setAuthCookie(response, result.token);
     return cors(response);
   } catch (error: unknown) {
