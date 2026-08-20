@@ -17,6 +17,7 @@ type Props = {
   initialThumbnailUrl?: string | null;
   apiError?: string;
   onSubmit: (data: MovieFormData) => Promise<void>;
+  onApiErrorClear?: () => void;
   showPreview?: boolean;
   onPreviewChange?: (video: string | null, thumbnail: string | null) => void;
 };
@@ -28,6 +29,7 @@ export default function MovieForm({
   initialThumbnailUrl,
   apiError,
   onSubmit,
+  onApiErrorClear,
   onPreviewChange,
   showPreview = true,
 }: Props) {
@@ -182,6 +184,7 @@ export default function MovieForm({
                 className="w-full rounded-xl border border-white/10 bg-[#111936] p-3 text-white focus:border-blue-500 focus:outline-none"
                 value={form.title}
                 onChange={(e) => {
+                  onApiErrorClear?.();
                   setForm({
                     ...form,
                     title: e.target.value,
@@ -203,9 +206,10 @@ export default function MovieForm({
                 rows={4}
                 className="w-full rounded-xl border border-white/10 bg-[#111936] p-3 text-white focus:border-blue-500 focus:outline-none"
                 value={form.description}
-                onChange={(e) =>
-                  setForm({ ...form, description: e.target.value })
-                }
+                onChange={(e) => {
+                  onApiErrorClear?.();
+                  setForm({ ...form, description: e.target.value });
+                }}
               />
               {errors.description && (
                 <p className="mt-1 text-sm text-red-500">
@@ -226,6 +230,7 @@ export default function MovieForm({
                 }`}
                 value={form.genre}
                 onChange={(e) => {
+                  onApiErrorClear?.();
                   setForm({
                     ...form,
                     genre: e.target.value,
@@ -264,6 +269,7 @@ export default function MovieForm({
                 value={form.releaseYear || ""}
                 placeholder="2026"
                 onChange={(e) => {
+                  onApiErrorClear?.();
                   const value = e.target.value;
                   if (/^\d{0,4}$/.test(value)) {
                     setForm({
@@ -297,6 +303,7 @@ export default function MovieForm({
                 accept="video/*"
                 className="hidden"
                 onChange={(e) => {
+                  onApiErrorClear?.();
                   const file = e.target.files?.[0] ?? null;
                   if (!file) return;
 
@@ -361,6 +368,7 @@ export default function MovieForm({
               type="POSTER"
               value={thumbnailPreview ?? undefined}
               onChange={(file) => {
+                onApiErrorClear?.();
                 setErrors((prev) => ({
                   ...prev,
                   thumbnail: "",
