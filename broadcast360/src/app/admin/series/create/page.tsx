@@ -63,17 +63,19 @@ export default function CreateSeriesPage() {
       const response = await res.json();
 
       if (!res.ok) {
-        alert(response.message || "Failed to create series");
+        setErrors({
+          api: response.message || response.error || "Failed to create series",
+        });
         return;
       }
-
-      alert("Series created successfully!");
 
       router.push("/admin/series");
       router.refresh();
     } catch (error) {
       console.error("Create Series Error:", error);
-      alert("Something went wrong.");
+      setErrors({
+        api: error instanceof Error ? error.message : "Something went wrong.",
+      });
     }
   }
 
