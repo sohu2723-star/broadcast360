@@ -14,6 +14,7 @@ import {
   AuthError,
   AuthLabel,
   AuthNotice,
+  AuthTransitionLoader,
   GoogleButtonSlot,
   GoogleDivider,
   MoonSpinner,
@@ -60,6 +61,7 @@ export default function LoginPage() {
   const [serverError, setServerError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showWelcomeBack, setShowWelcomeBack] = useState(false);
+  const [authTransitionLoading, setAuthTransitionLoading] = useState(false);
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotForm, setForgotForm] = useState<ForgotForm>({ email: "", verificationCode: "", newPassword: "", confirmPassword: "" });
   const [forgotErrors, setForgotErrors] = useState<ForgotErrors>({});
@@ -208,10 +210,12 @@ export default function LoginPage() {
           clearCurrentUserCache();
           await authApi.get("/api/user-portal/auth/me");
           if (result.data.isNewUser) {
-            window.location.href = "/google-complete";
+            setAuthTransitionLoading(true);
+            window.setTimeout(() => { window.location.href = "/google-complete"; }, 550);
             return;
           }
-          setShowWelcomeBack(true);
+          setAuthTransitionLoading(true);
+          window.setTimeout(() => setShowWelcomeBack(true), 550);
         } catch (error: unknown) {
           setServerError(
             axios.isAxiosError(error)
@@ -273,7 +277,8 @@ export default function LoginPage() {
         setServerError("Admin accounts cannot login here");
         return;
       }
-      setShowWelcomeBack(true);
+      setAuthTransitionLoading(true);
+      window.setTimeout(() => setShowWelcomeBack(true), 550);
     } catch (error: unknown) {
       setServerError(
         axios.isAxiosError(error)
@@ -312,11 +317,13 @@ export default function LoginPage() {
               <div><AuthLabel>Verification code</AuthLabel><div className="flex gap-2"><input value={forgotForm.verificationCode} inputMode="numeric" maxLength={6} placeholder="6-digit code" onChange={(event) => updateForgot("verificationCode", event.target.value.replace(/\D/g, ""))} className={`${authInputClass(Boolean(forgotErrors.verificationCode))} min-w-0 flex-1`} /><button type="button" onClick={sendForgotCode} disabled={forgotLoading || forgotCountdown > 0} className="min-w-[7.2rem] rounded-2xl border border-[#7898bf]/25 bg-[#20385f]/30 px-3 text-xs font-bold text-[#c6d7ea] disabled:cursor-not-allowed disabled:opacity-60">{forgotLoading ? <MoonSpinner label="Sending" /> : forgotCountdown > 0 ? `Resend in ${forgotCountdown}s` : forgotCodeSent ? "Resend code" : "Send code"}</button></div><FieldError message={forgotErrors.verificationCode} /></div>
               <div><AuthLabel>New password</AuthLabel><div className="relative"><input type={showForgotPassword ? "text" : "password"} value={forgotForm.newPassword} onChange={(event) => updateForgot("newPassword", event.target.value)} className={`${authInputClass(Boolean(forgotErrors.newPassword))} pr-12`} /><button type="button" onClick={() => setShowForgotPassword((value) => !value)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white" aria-label="Toggle new password">{showForgotPassword ? <EyeOff size={19} /> : <Eye size={19} />}</button></div><FieldError message={forgotErrors.newPassword} /></div>
               <div><AuthLabel>Confirm password</AuthLabel><div className="relative"><input type={showForgotConfirm ? "text" : "password"} value={forgotForm.confirmPassword} onChange={(event) => updateForgot("confirmPassword", event.target.value)} className={`${authInputClass(Boolean(forgotErrors.confirmPassword))} pr-12`} /><button type="button" onClick={() => setShowForgotConfirm((value) => !value)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white" aria-label="Toggle password confirmation">{showForgotConfirm ? <EyeOff size={19} /> : <Eye size={19} />}</button></div><FieldError message={forgotErrors.confirmPassword} /></div>
-              <button type="button" onClick={resetForgotPassword} disabled={forgotLoading} className="w-full rounded-2xl bg-gradient-to-r from-blue-500 to-cyan-400 py-3.5 text-sm font-bold text-slate-950 disabled:opacity-60">{forgotLoading ? <MoonSpinner label="Updating" /> : "Reset password"}</button>
+              <button type="button" onClick={resetForgotPassword} disabled={forgotLoading} className="b360-primary-action w-full rounded-2xl py-3.5 text-sm font-bold">{forgotLoading ? <MoonSpinner label="Updating" /> : "Reset password"}</button>
             </div>
           </div>
         </div>
       ) : null}
+
+      {authTransitionLoading ? <AuthTransitionLoader label="Signing you in..." /> : null}
 
       {showWelcomeBack ? (
         <AuthNotice
@@ -378,7 +385,7 @@ export default function LoginPage() {
             type="button"
             onClick={login}
             disabled={loading}
-            className="w-full rounded-2xl bg-[#284a78] py-3.5 text-sm font-bold text-slate-950 shadow-lg shadow-black/20 transition hover:brightness-110 active:scale-[0.98] disabled:cursor-wait disabled:opacity-70"
+            className="b360-primary-action w-full rounded-2xl py-3.5 text-sm font-bold"
           >
             {loading ? <MoonSpinner label="Authenticating" /> : "Login"}
           </button>

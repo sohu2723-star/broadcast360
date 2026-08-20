@@ -57,6 +57,28 @@ textarea:focus-visible {
   outline-offset: 2px;
 }
 
+.b360-primary-action {
+  background: linear-gradient(90deg, #287cff 0%, #10cbe0 100%);
+  color: #061127;
+  box-shadow: 0 12px 28px rgba(16, 203, 224, 0.16);
+  transition: filter 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.b360-primary-action:hover {
+  filter: brightness(1.08) saturate(1.04);
+  box-shadow: 0 14px 32px rgba(16, 203, 224, 0.22);
+}
+
+.b360-primary-action:active {
+  transform: scale(0.98);
+}
+
+.b360-primary-action:disabled {
+  cursor: wait;
+  opacity: 0.72;
+  filter: saturate(0.72);
+}
+
 .hide-scrollbar {
   overflow: auto;
   scrollbar-width: none;

@@ -10,6 +10,7 @@ import {
   AuthError,
   AuthLabel,
   AuthNotice,
+  AuthTransitionLoader,
   FieldError,
   GoogleButtonSlot,
   GoogleDivider,
@@ -55,6 +56,7 @@ export default function LoginPage() {
   const [serverError, setServerError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showWelcomeBack, setShowWelcomeBack] = useState(false);
+  const [authTransitionLoading, setAuthTransitionLoading] = useState(false);
   const googleButtonRef = useRef<HTMLDivElement>(null);
   const googleInitializedRef = useRef(false);
   const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
@@ -121,7 +123,8 @@ export default function LoginPage() {
             setServerError(data.message ?? "Google admin login failed");
             return;
           }
-          setShowWelcomeBack(true);
+          setAuthTransitionLoading(true);
+          window.setTimeout(() => setShowWelcomeBack(true), 550);
         } catch {
           setServerError("Google admin login failed");
         } finally {
@@ -187,7 +190,8 @@ export default function LoginPage() {
         setServerError("This account is not authorized for the admin portal");
         return;
       }
-      setShowWelcomeBack(true);
+      setAuthTransitionLoading(true);
+      window.setTimeout(() => setShowWelcomeBack(true), 550);
     } catch {
       setServerError("Something went wrong");
     } finally {
@@ -197,6 +201,8 @@ export default function LoginPage() {
 
   return (
     <AuthBackdrop>
+      {authTransitionLoading ? <AuthTransitionLoader label="Signing you in..." /> : null}
+
       {showWelcomeBack ? (
         <AuthNotice
           title="Welcome back"
@@ -263,7 +269,7 @@ export default function LoginPage() {
             type="button"
             onClick={login}
             disabled={loading}
-            className="w-full rounded-2xl bg-[#284a78] py-3.5 text-sm font-bold text-slate-950 shadow-lg shadow-black/20 transition hover:brightness-110 active:scale-[0.98] disabled:cursor-wait disabled:opacity-70"
+            className="b360-primary-action w-full rounded-2xl py-3.5 text-sm font-bold"
           >
             {loading ? <MoonSpinner label="Authenticating" /> : "Login"}
           </button>

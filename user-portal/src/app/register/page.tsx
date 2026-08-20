@@ -14,6 +14,7 @@ import {
   AuthError,
   AuthLabel,
   AuthNotice,
+  AuthTransitionLoader,
   GoogleButtonSlot,
   GoogleDivider,
   MoonSpinner,
@@ -82,6 +83,7 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [welcomeTitle, setWelcomeTitle] = useState("");
+  const [authTransitionLoading, setAuthTransitionLoading] = useState(false);
   const googleButtonRef = useRef<HTMLDivElement>(null);
   const googleInitializedRef = useRef(false);
   const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
@@ -192,10 +194,12 @@ export default function RegisterPage() {
           clearCurrentUserCache();
           await authApi.get("/api/user-portal/auth/me");
           if (result.data.isNewUser) {
-            window.location.href = "/google-complete";
+            setAuthTransitionLoading(true);
+            window.setTimeout(() => { window.location.href = "/google-complete"; }, 550);
             return;
           }
-          setWelcomeTitle("Welcome back");
+          setAuthTransitionLoading(true);
+          window.setTimeout(() => setWelcomeTitle("Welcome back"), 550);
         } catch (error: unknown) {
           setServerError(
             axios.isAxiosError(error)
@@ -264,7 +268,8 @@ export default function RegisterPage() {
       });
       clearCurrentUserCache();
       await authApi.get("/api/user-portal/auth/me");
-      setWelcomeTitle("Welcome");
+      setAuthTransitionLoading(true);
+      window.setTimeout(() => setWelcomeTitle("Welcome"), 550);
     } catch (error: unknown) {
       setServerError(
         axios.isAxiosError(error)
@@ -280,6 +285,8 @@ export default function RegisterPage() {
 
   return (
     <AuthBackdrop>
+      {authTransitionLoading ? <AuthTransitionLoader label="Creating your account..." /> : null}
+
       {showCodeSentNotice ? (
         <AuthNotice
           title="Code sent"
@@ -375,7 +382,7 @@ export default function RegisterPage() {
             <FieldError message={errors.confirmPassword} />
           </div>
 
-          <button type="button" onClick={register} disabled={loading} className="w-full rounded-2xl bg-[#284a78] py-3.5 text-sm font-bold text-slate-950 shadow-lg shadow-black/20 transition hover:brightness-110 active:scale-[0.98] disabled:cursor-wait disabled:opacity-70">
+          <button type="button" onClick={register} disabled={loading} className="b360-primary-action w-full rounded-2xl py-3.5 text-sm font-bold">
             {loading ? <MoonSpinner label="Creating account" /> : "Create Account"}
           </button>
         </div>

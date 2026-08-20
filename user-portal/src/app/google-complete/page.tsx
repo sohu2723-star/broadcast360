@@ -10,6 +10,7 @@ import {
   AuthError,
   AuthLabel,
   AuthNotice,
+  AuthTransitionLoader,
   MoonSpinner,
   authInputClass,
   FieldError,
@@ -29,6 +30,7 @@ export default function GoogleCompletePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [authTransitionLoading, setAuthTransitionLoading] = useState(false);
   const redirectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -87,7 +89,8 @@ export default function GoogleCompletePage() {
         dateOfBirth: form.dateOfBirth,
         gender: form.gender,
       });
-      setCompleted(true);
+      setAuthTransitionLoading(true);
+      window.setTimeout(() => setCompleted(true), 550);
     } catch (error: unknown) {
       setServerError(
         axios.isAxiosError(error)
@@ -101,6 +104,8 @@ export default function GoogleCompletePage() {
 
   return (
     <AuthBackdrop>
+      {authTransitionLoading ? <AuthTransitionLoader label="Creating your account..." /> : null}
+
       {completed ? (
         <AuthNotice title="Welcome" message="Your account is ready. Taking you to your Broadcast360 account now." />
       ) : null}
@@ -114,7 +119,7 @@ export default function GoogleCompletePage() {
 
         {serverError ? <AuthError message={serverError} /> : null}
         {sessionExpired ? (
-          <Link href="/login" className="mt-5 block w-full rounded-2xl bg-[#284a78] py-3.5 text-center text-sm font-bold text-slate-950 transition hover:brightness-110">
+          <Link href="/login" className="b360-primary-action mt-5 block w-full rounded-2xl py-3.5 text-center text-sm font-bold">
             Sign in with Google again
           </Link>
         ) : null}
@@ -149,7 +154,7 @@ export default function GoogleCompletePage() {
                 <FieldError message={errors.gender} />
               </div>
             </div>
-            <button type="button" onClick={createAccount} disabled={saving} className="w-full rounded-2xl bg-[#284a78] py-3.5 text-sm font-bold text-slate-950 shadow-lg shadow-black/20 transition hover:brightness-110 active:scale-[0.98] disabled:cursor-wait disabled:opacity-70">
+            <button type="button" onClick={createAccount} disabled={saving} className="b360-primary-action w-full rounded-2xl py-3.5 text-sm font-bold">
               {saving ? <MoonSpinner label="Creating account" /> : "Create Account"}
             </button>
           </div>

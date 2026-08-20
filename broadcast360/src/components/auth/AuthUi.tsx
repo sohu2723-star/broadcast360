@@ -10,6 +10,18 @@ export function MoonSpinner({ label = "Authenticating" }: { label?: string }) {
   );
 }
 
+export function AuthTransitionLoader({ label = "Signing you in..." }: { label?: string }) {
+  return (
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-[#071029]/88 px-5 backdrop-blur-sm" role="status" aria-live="polite">
+      <div className="flex w-full max-w-xs flex-col items-center rounded-3xl border border-[#7898bf]/20 bg-[#101a3a]/96 px-7 py-8 text-center shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
+        <span className="h-12 w-12 animate-spin rounded-full border-[3px] border-[#7898bf]/20 border-r-[#25c7e8] border-t-[#4e8ff5]" aria-hidden="true" />
+        <p className="mt-5 text-sm font-semibold text-[#eaf3ff]">{label}</p>
+        <p className="mt-1 text-xs text-slate-400">Please wait a moment</p>
+      </div>
+    </div>
+  );
+}
+
 export function AuthNotice({
   title,
   message,
@@ -35,7 +47,7 @@ export function AuthNotice({
           <button
             type="button"
             onClick={onDone}
-            className="mt-6 w-full rounded-2xl border border-[#7898bf]/25 bg-[#284a78] px-4 py-3 text-sm font-bold text-[#eef5ff] transition hover:brightness-110 active:scale-[0.98]"
+            className="b360-primary-action mt-6 w-full rounded-2xl px-4 py-3 text-sm font-bold"
           >
             Continue
           </button>
