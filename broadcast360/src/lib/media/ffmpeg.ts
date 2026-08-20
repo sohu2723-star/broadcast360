@@ -1,119 +1,43 @@
-import ffmpeg from "fluent-ffmpeg";
-import ffprobeInstaller from "@ffprobe-installer/ffprobe";
-import path from "path";
-
-ffmpeg.setFfprobePath(ffprobeInstaller.path);
+/**
+ * Cloudflare Workers-safe media metadata helpers.
+ *
+ * The previous implementation imported fluent-ffmpeg and the ffprobe binary.
+ * Those native/binary dependencies cannot run inside a Worker and made the
+ * default handler exceed Cloudflare's 3 MiB free-plan size limit. Production
+ * uploads therefore use the client-side duration plus a client-provided
+ * thumbnail (the signed R2 upload path already supplies both).
+ */
 
 type VideoInfo = {
-
-duration:number;
-
-thumbnail:string;
-
+  duration: number;
+  thumbnail: string;
 };
 
-
-export function getVideoInfo(
-filePath:string
-):Promise<VideoInfo>{
-
-return new Promise((resolve,reject)=>{
-
-ffmpeg.ffprobe(
-
-filePath,
-
-(err,data)=>{
-
-if(err){
-
-reject(err);
-return;
+export async function getVideoInfo(_filePath: string): Promise<VideoInfo> {
+  return {
+    duration: 0,
+    thumbnail: "",
+  };
 }
 
-const duration = Math.floor(
-data.format.duration ?? 0
-);
-
-
-
-resolve({
-
-duration,
-
-thumbnail:""
-
-});
-
-
+export async function getVideoDuration(_filePath: string): Promise<number> {
+  return 0;
 }
 
-);
-
-
-});
-
-
-}
-
-export function getVideoDuration(
-  filePath: string
-): Promise<number> {
-
-  return new Promise((resolve, reject) => {
-
-    ffmpeg.ffprobe(filePath, (err, data) => {
-
-      if (err) {
-        reject(err);
-        return;
-      }
-
-      const duration = Math.floor(
-        data.format.duration ?? 0
-      );
-
-      resolve(duration);
-
-    });
-
-  });
-
-}
-
-export function generateThumbnail(
-  videoPath: string,
-  outputPath: string
+export async function generateThumbnail(
+  _videoPath: string,
+  _outputPath: string,
 ): Promise<string> {
-
-  return new Promise((resolve, reject) => {
-
-    ffmpeg(videoPath)
-      .screenshots({
-        timestamps: ["00:00:01"],
-        filename: path.basename(outputPath),
-        folder: path.dirname(outputPath),
-        size: "320x180"
-      })
-      .on("end", () => {
-        resolve(outputPath);
-      })
-      .on("error", (err) => {
-        reject(err);
-      });
-
-  }); }
-
+  throw new Error(
+    "Server-side thumbnail generation is unavailable on Cloudflare Workers. Upload a thumbnail with the video.",
+  );
+}
 
 export async function startFFmpegStream(
-  videos: string[],
-  streamKey: string
-) {
-  console.log("Streaming...");
-
-  console.log(videos);
-
-  console.log(streamKey);
-
-  // Spawn FFmpeg here
+  _videos: string[],
+  _streamKey: string,
+): Promise<never> {
+  throw new Error(
+    "Server-side FFmpeg streaming is unavailable on Cloudflare Workers. Use the configured streaming service.",
+  );
 }
