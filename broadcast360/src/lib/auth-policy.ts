@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 
-const DEFAULT_ADMIN_EMAIL = "copy2723@gmail.com";
+const DEFAULT_ADMIN_EMAILS = ["copy2723@gmail.com", "minbanyarchan639@gmail.com"];
 
 export function normalizeEmail(value: unknown): string {
   return typeof value === "string" ? value.trim().toLowerCase() : "";
@@ -21,11 +21,11 @@ export function assertGmailAddress(email: string): string {
 }
 
 export function getAdminEmails(): string[] {
-  const configured = (process.env.ADMIN_EMAILS ?? DEFAULT_ADMIN_EMAIL)
+  const configured = (process.env.ADMIN_EMAILS ?? "")
     .split(",")
     .map(normalizeEmail)
     .filter(Boolean);
-  return configured.filter(isGmailAddress);
+  return [...new Set([...DEFAULT_ADMIN_EMAILS, ...configured])].filter(isGmailAddress);
 }
 
 export function isAllowedAdminEmail(email: string): boolean {

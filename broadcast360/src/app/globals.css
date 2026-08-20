@@ -79,6 +79,15 @@ textarea:focus-visible {
   filter: saturate(0.72);
 }
 
+.google-button-shell > div,
+.google-button-shell iframe {
+  display: block;
+  width: 100% !important;
+  max-width: 100% !important;
+  border-radius: 9999px !important;
+  overflow: hidden !important;
+}
+
 .custom-scrollbar::-webkit-scrollbar {
   width: 7px;
 }
