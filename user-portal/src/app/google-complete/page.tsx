@@ -76,7 +76,7 @@ export default function GoogleCompletePage() {
     if (!form.name.trim() || form.name.trim().length < 2) nextErrors.name = "Name must be at least 2 characters";
     if (!form.dateOfBirth) nextErrors.dateOfBirth = "Date of birth is required";
     if (!form.gender) nextErrors.gender = "Please choose a gender";
-    if (!acceptedPolicy) setPolicyError("Please accept the Broadcast360 policy");
+    if (!acceptedPolicy) setPolicyError("Please accept the Hxu Movie policy");
     if (!captcha.checked) setCaptchaError("Please confirm that you are not a robot");
     else if (!captcha.answer) setCaptchaError("Enter the CAPTCHA characters");
     setErrors(nextErrors);
@@ -124,12 +124,12 @@ export default function GoogleCompletePage() {
       {authTransitionLoading ? <AuthTransitionLoader label="Creating your account..." /> : null}
 
       {completed ? (
-        <AuthNotice title="Welcome" message="Your account is ready. Taking you to your Broadcast360 account now." />
+        <AuthNotice title="Welcome" message="Your account is ready. Taking you to your Hxu Movie account now." />
       ) : null}
 
       <div className="mx-auto w-full max-w-[480px] rounded-[2rem] border border-[#7898bf]/15 bg-[#101a3a]/95 p-6 shadow-[0_30px_90px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:p-8">
         <div className="mb-8 text-center">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-[#a9c0dd]/70">Broadcast360</p>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-[#a9c0dd]/70">Hxu Movie</p>
           <h1 className="text-3xl font-bold tracking-tight text-white">Complete your profile</h1>
           <p className="mt-2 text-sm leading-6 text-slate-300">Just a few details before you enter your new account.</p>
         </div>
@@ -189,7 +189,7 @@ export default function GoogleCompletePage() {
                   }}
                   className="mt-0.5 h-4 w-4 accent-[#7898bf]"
                 />
-                <span>I agree to the Broadcast360 <Link href="/policy" target="_blank" className="font-semibold text-[#c5d7ee] underline underline-offset-4 hover:text-white">policy</Link>.</span>
+                <span>I agree to the Hxu Movie <Link href="/policy" target="_blank" className="font-semibold text-[#c5d7ee] underline underline-offset-4 hover:text-white">policy</Link>.</span>
               </label>
               <FieldError message={policyError} />
             </div>

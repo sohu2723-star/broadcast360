@@ -1,10 +1,10 @@
-# Broadcast360
+# Hxu Movie
 
-Broadcast360 contains two Next.js applications: the **backend/admin application** on port `3000` and the **user portal** on port `3001`. The backend also owns the Prisma schema and communicates with MediaMTX for streaming.
+Hxu Movie contains two Next.js applications: the **backend/admin application** on port `3000` and the **user portal** on port `3001`. The backend also owns the Prisma schema and communicates with MediaMTX for streaming.
 
 ## Localhost setup
 
-Install Node.js 22 or newer, PostgreSQL, FFmpeg, and MediaMTX. Create a database named `broadcast360`, then copy the environment templates and replace the placeholder values:
+Install Node.js 22 or newer, PostgreSQL, FFmpeg, and MediaMTX. Create a database named `hxumovie`, then copy the environment templates and replace the placeholder values:
 
 ```bash
 cd broadcast360/broadcast360

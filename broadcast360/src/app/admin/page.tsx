@@ -136,7 +136,7 @@ export default function DashboardPage() {
             Dashboard
           </h1>
           <p className="mt-2 text-sm text-slate-400">
-            Monitor Broadcast360 content and account activity.
+            Monitor Hxu Movie content and account activity.
           </p>
         </div>
         <Link

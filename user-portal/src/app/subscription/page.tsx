@@ -115,7 +115,7 @@ export default function SubscriptionPage() {
           </h1>
 
           <p className="mx-auto mt-4 max-w-xl text-base text-slate-400">
-            Unlock premium Broadcast360 content, enjoy ad-free viewing, and get access to exclusive original programs.
+            Unlock premium Hxu Movie content, enjoy ad-free viewing, and get access to exclusive original programs.
           </p>
         </div>
 

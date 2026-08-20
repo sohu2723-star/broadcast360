@@ -207,7 +207,7 @@ export default function SubscriptionStatusCard({
                   "
                 >
                   You have full access to
-                  Broadcast360 Premium.
+                  Hxu Movie Premium.
                 </p>
 
               </div>
@@ -784,7 +784,7 @@ export default function SubscriptionStatusCard({
               </h2>
 
               <p className="mt-1 text-sm text-zinc-400">
-                Enjoy the free Broadcast360
+                Enjoy the free Hxu Movie
                 experience.
               </p>
 

@@ -323,7 +323,7 @@ export default function TVPage() {
                         <div>
 
                             <h1 className="text-xl font-bold">
-                                Broadcast360
+                                Hxu Movie
                             </h1>
 
                             <p className="text-sm text-gray-400">

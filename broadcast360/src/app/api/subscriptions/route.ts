@@ -166,7 +166,7 @@ export async function POST(request: NextRequest) {
     /*
      * IMPORTANT:
      * Replace this with your actual authentication/session
-     * method used in Broadcast360.
+     * method used in Hxu Movie.
      */
     const userId = 1;
 

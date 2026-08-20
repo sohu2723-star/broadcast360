@@ -32,7 +32,7 @@ export async function middleware(request: NextRequest) {
     const token = request.cookies.get("token")?.value;
 
     if (!token) {
-      return NextResponse.redirect(new URL("/login", request.url));
+      return NextResponse.redirect(new URL("/admin/login", request.url));
     }
 
     try {
@@ -41,7 +41,7 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL("/admin", request.url));
       }
     } catch {
-      return NextResponse.redirect(new URL("/login", request.url));
+      return NextResponse.redirect(new URL("/admin/login", request.url));
     }
   }
 
@@ -94,20 +94,24 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  if (pathname === "/admin/login") {
+    return NextResponse.next();
+  }
+
   if (pathname.startsWith("/admin")) {
     const token = request.cookies.get("token")?.value;
 
     if (!token) {
-      return NextResponse.redirect(new URL("/login", request.url));
+      return NextResponse.redirect(new URL("/admin/login", request.url));
     }
 
     try {
       const payload = await verifyToken(token);
       if (payload.role !== "ADMIN") {
-        return NextResponse.redirect(new URL("/login", request.url));
+        return NextResponse.redirect(new URL("/admin/login", request.url));
       }
     } catch {
-      return NextResponse.redirect(new URL("/login", request.url));
+      return NextResponse.redirect(new URL("/admin/login", request.url));
     }
   }
 

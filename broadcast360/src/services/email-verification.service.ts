@@ -16,9 +16,9 @@ async function deliverWithSmtp({ email, code }: { email: string; code: string })
   await transport.sendMail({
     from,
     to: email,
-    subject: "Broadcast360 verification code",
-    text: `Your Broadcast360 verification code is ${code}. It expires in 10 minutes.`,
-    html: `<div style="font-family:Arial,sans-serif"><h2>Broadcast360</h2><p>Your verification code is:</p><p style="font-size:28px;font-weight:700;letter-spacing:6px">${code}</p><p>This code expires in 10 minutes.</p></div>`,
+    subject: "Hxu Movie verification code",
+    text: `Your Hxu Movie verification code is ${code}. It expires in 10 minutes.`,
+    html: `<div style="font-family:Arial,sans-serif"><h2>Hxu Movie</h2><p>Your verification code is:</p><p style="font-size:28px;font-weight:700;letter-spacing:6px">${code}</p><p>This code expires in 10 minutes.</p></div>`,
   });
 }
 
@@ -48,7 +48,7 @@ async function deliverWithEmailJs({ email, code }: { email: string; code: string
         email,
         verification_code: code,
         code,
-        app_name: "Broadcast360",
+        app_name: "Hxu Movie",
       },
     }),
   });

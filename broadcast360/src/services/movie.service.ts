@@ -94,7 +94,7 @@ export async function editMovie(
 
   // Replace Video
   if (video && video.size > 0) {
-    const temporaryPath = await writeTemporaryMediaFile(video, "broadcast360-movie");
+    const temporaryPath = await writeTemporaryMediaFile(video, "hxumovie-movie");
 
     try {
       updateData.videoUrl = await uploadMediaFile(video, "videos/movies");
@@ -148,7 +148,7 @@ export async function addMovie(formData: FormData) {
     throw new Error("Both video and thumbnail are required");
   }
 
-  const temporaryPath = await writeTemporaryMediaFile(video, "broadcast360-movie");
+  const temporaryPath = await writeTemporaryMediaFile(video, "hxumovie-movie");
 
   try {
     const [videoUrl, thumbnailUrl, duration] = await Promise.all([

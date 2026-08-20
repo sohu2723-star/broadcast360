@@ -297,7 +297,7 @@ export async function addEpisode(
   } else if (videoFile) {
     const temporaryVideoPath = await writeTemporaryMediaFile(
       videoFile,
-      "broadcast360-episode",
+      "hxumovie-episode",
     );
 
     try {
@@ -483,7 +483,7 @@ export async function updateEpisode(
   if (data.videoFile instanceof File && data.videoFile.size > 0) {
     const temporaryVideoPath = await writeTemporaryMediaFile(
       data.videoFile,
-      "broadcast360-episode",
+      "hxumovie-episode",
     );
     try {
       try {

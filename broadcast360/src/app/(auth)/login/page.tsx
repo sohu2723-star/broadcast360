@@ -206,16 +206,16 @@ export default function LoginPage() {
       {showWelcomeBack ? (
         <AuthNotice
           title="Welcome back"
-          message="Your Broadcast360 admin account is ready. Taking you to the dashboard now."
+          message="Your Hxu Movie admin account is ready. Taking you to the dashboard now."
           onDone={() => router.push("/admin")}
         />
       ) : null}
 
       <div className="mx-auto w-full max-w-[440px] rounded-[2rem] border border-[#7898bf]/15 bg-[#101a3a]/95 p-6 shadow-[0_30px_90px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:p-8">
         <div className="mb-8 text-center">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-[#a9c0dd]/70">Broadcast360 Admin</p>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-[#a9c0dd]/70">Hxu Movie Admin</p>
           <h1 className="text-3xl font-bold tracking-tight text-white">Login</h1>
-          <p className="mt-2 text-sm text-slate-300">Welcome back to Broadcast360</p>
+          <p className="mt-2 text-sm text-slate-300">Welcome back to Hxu Movie</p>
         </div>
 
         {serverError ? <AuthError message={serverError} /> : null}

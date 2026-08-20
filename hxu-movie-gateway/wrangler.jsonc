@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "hxu-movie",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-21",
+  "compatibility_flags": ["nodejs_compat"],
+  "services": [
+    {
+      "binding": "ADMIN",
+      "service": "hxu-movie-admin"
+    },
+    {
+      "binding": "PORTAL",
+      "service": "hxu-movie-portal"
+    }
+  ]
+}

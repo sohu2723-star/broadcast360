@@ -209,7 +209,7 @@ export default function RegisterPage() {
         </h1>
 
         <p className="mb-8 text-center text-gray-400">
-          Register your Broadcast360 account
+          Register your Hxu Movie account
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-5">

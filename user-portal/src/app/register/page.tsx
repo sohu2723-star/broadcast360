@@ -143,7 +143,7 @@ export default function RegisterPage() {
     if (passwordError) nextErrors.password = passwordError;
     if (form.password !== form.confirmPassword) nextErrors.confirmPassword = "Passwords do not match";
     if (!/^\d{6}$/.test(form.verificationCode)) nextErrors.verificationCode = "Enter the 6-digit code sent to Gmail";
-    if (!acceptedPolicy) setPolicyError("Please accept the Broadcast360 policy");
+    if (!acceptedPolicy) setPolicyError("Please accept the Hxu Movie policy");
     if (!captcha.checked) setCaptchaError("Please confirm that you are not a robot");
     else if (!captcha.answer) setCaptchaError("Enter the CAPTCHA characters");
     setErrors(nextErrors);
@@ -328,16 +328,16 @@ export default function RegisterPage() {
       {welcomeTitle ? (
         <AuthNotice
           title={welcomeTitle}
-          message="Your Broadcast360 account is ready. Taking you to your account now."
+          message="Your Hxu Movie account is ready. Taking you to your account now."
           onDone={() => { window.location.href = "/profile"; }}
         />
       ) : null}
 
       <div className="mx-auto w-full max-w-[480px] rounded-[2rem] border border-[#7898bf]/15 bg-[#101a3a]/95 p-6 shadow-[0_30px_90px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:p-8">
         <div className="mb-7 text-center">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-[#a9c0dd]/70">Broadcast360</p>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-[#a9c0dd]/70">Hxu Movie</p>
           <h1 className="text-3xl font-bold tracking-tight text-white">Create Account</h1>
-          <p className="mt-2 text-sm text-slate-300">Register your Broadcast360 account</p>
+          <p className="mt-2 text-sm text-slate-300">Register your Hxu Movie account</p>
         </div>
 
         {serverError ? <AuthError message={serverError} /> : null}
@@ -410,7 +410,7 @@ export default function RegisterPage() {
                 className="mt-0.5 h-4 w-4 accent-[#7898bf]"
               />
               <span>
-                I agree to the Broadcast360{" "}
+                I agree to the Hxu Movie{" "}
                 <Link href="/policy" target="_blank" className="font-semibold text-[#c5d7ee] underline underline-offset-4 hover:text-white">
                   policy
                 </Link>

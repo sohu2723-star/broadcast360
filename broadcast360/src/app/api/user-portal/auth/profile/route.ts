@@ -35,7 +35,7 @@ export async function PUT(request: NextRequest) {
         const body = await request.json();
 
     if (body.acceptedPolicy !== true) {
-      return cors(NextResponse.json({ message: "You must accept the Broadcast360 policy" }, { status: 400 }));
+      return cors(NextResponse.json({ message: "You must accept the Hxu Movie policy" }, { status: 400 }));
     }
     if (!verifyCaptchaChallenge(body.captchaToken, body.captchaAnswer)) {
       return cors(NextResponse.json({ message: "CAPTCHA verification failed" }, { status: 400 }));

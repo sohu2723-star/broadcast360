@@ -4,7 +4,7 @@ const CHALLENGE_TTL_SECONDS = 10 * 60;
 const CHALLENGE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
 function getSecret() {
-  return process.env.JWT_SECRET_USER || process.env.JWT_SECRET || "broadcast360-development-captcha-secret";
+  return process.env.JWT_SECRET_USER || process.env.JWT_SECRET || "hxumovie-development-captcha-secret";
 }
 
 function sign(value: string) {

@@ -69,7 +69,7 @@ export default function ReactivationPage() {
         ) : (
           <>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#a9c0dd]/70">Broadcast360 Support</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#a9c0dd]/70">Hxu Movie Support</p>
               <h1 className="mt-3 text-3xl font-bold tracking-tight text-white">Reactivate account</h1>
               <p className="mt-3 text-sm leading-6 text-slate-300">If your account became inactive after three months without login, send a request to the admin team. This is a regular support message, not live chat.</p>
             </div>

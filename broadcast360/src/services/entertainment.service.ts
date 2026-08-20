@@ -82,7 +82,7 @@ export async function editEntertainment(
   if (data.video instanceof File && data.video.size > 0) {
     const temporaryPath = await writeTemporaryMediaFile(
       data.video,
-      "broadcast360-entertainment",
+      "hxumovie-entertainment",
     );
     try {
       updateData.videoUrl = await uploadMediaFile(
@@ -137,7 +137,7 @@ export async function addEntertainment(formData: FormData) {
   if (!videoUrl && video instanceof File && video.size > 0) {
     const temporaryPath = await writeTemporaryMediaFile(
       video,
-      "broadcast360-entertainment",
+      "hxumovie-entertainment",
     );
     try {
       videoUrl = await uploadMediaFile(video, "videos/entertainments");

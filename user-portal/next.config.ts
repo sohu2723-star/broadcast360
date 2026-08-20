@@ -3,7 +3,10 @@ import type { NextConfig } from "next";
 
 initOpenNextCloudflareForDev();
 
-const backendOrigin = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000").replace(/\/$/, "");
+const configuredBackendOrigin = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "";
+const backendOrigin =
+  configuredBackendOrigin ||
+  (process.env.NODE_ENV === "development" ? "http://localhost:3000" : "");
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
@@ -11,6 +14,7 @@ const nextConfig: NextConfig = {
     unoptimized: true,
   },
   async rewrites() {
+    if (!backendOrigin) return [];
     return [
       {
         source: "/api/:path*",

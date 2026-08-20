@@ -303,12 +303,12 @@ export default function VideoPlayer({
       ? crypto.randomUUID()
       : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const sessionKey = `live-${channel.id}-${randomPart}`;
-    const viewerKey = typeof window !== "undefined" && window.localStorage.getItem("broadcast360_viewer_key")
-      ? window.localStorage.getItem("broadcast360_viewer_key")!
+    const viewerKey = typeof window !== "undefined" && window.localStorage.getItem("hxumovie_viewer_key")
+      ? window.localStorage.getItem("hxumovie_viewer_key")!
       : `viewer-${randomPart}`;
 
-    if (typeof window !== "undefined" && !window.localStorage.getItem("broadcast360_viewer_key")) {
-      window.localStorage.setItem("broadcast360_viewer_key", viewerKey);
+    if (typeof window !== "undefined" && !window.localStorage.getItem("hxumovie_viewer_key")) {
+      window.localStorage.setItem("hxumovie_viewer_key", viewerKey);
     }
 
     let disposed = false;

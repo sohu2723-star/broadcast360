@@ -46,7 +46,7 @@ export async function createAdvertisement(formData: FormData) {
     throw new Error("Video file is required for creating an advertisement");
   }
 
-  const temporaryPath = await writeTemporaryMediaFile(video, "broadcast360-ad");
+  const temporaryPath = await writeTemporaryMediaFile(video, "hxumovie-ad");
   try {
     const [videoUrl, thumbnailUrl, duration] = await Promise.all([
       uploadMediaFile(video, "videos/ads"),
@@ -87,7 +87,7 @@ export async function editAdvertisement(id: number, formData: FormData) {
   } = { title, active };
 
   if (video && video.size > 0) {
-    const temporaryPath = await writeTemporaryMediaFile(video, "broadcast360-ad");
+    const temporaryPath = await writeTemporaryMediaFile(video, "hxumovie-ad");
     try {
       updateData.videoUrl = await uploadMediaFile(video, "videos/ads");
       updateData.duration = await getVideoDuration(temporaryPath);

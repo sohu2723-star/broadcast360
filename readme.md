@@ -1,8 +1,8 @@
-# Broadcast360
+# Hxu Movie
 
 ## Project Overview
 
-Broadcast360 is a web-based live TV and video streaming platform that allows administrators to manage live channels, videos, series, and news content. Users can watch live TV channels, browse recorded videos, watch series, and stay updated with the latest news.
+Hxu Movie is a web-based live TV and video streaming platform that allows administrators to manage live channels, videos, series, and news content. Users can watch live TV channels, browse recorded videos, watch series, and stay updated with the latest news.
 
 ## Features
 
