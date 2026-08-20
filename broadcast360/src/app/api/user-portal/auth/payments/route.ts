@@ -8,10 +8,7 @@ import {
   optionsResponse,
 } from "@/lib/cors";
 
-import fs from "fs/promises";
-import path from "path";
-
-import { readPaymentScreenshot } from "@/lib/ocr/payment-ocr";
+import { uploadMediaFile } from "@/lib/media/storage";
 
 // =====================================================
 // OPTIONS
@@ -28,8 +25,6 @@ export async function OPTIONS() {
 export async function POST(
   request: NextRequest
 ) {
-  let savedFilePath: string | null = null;
-
   try {
     // =================================================
     // AUTH
@@ -248,157 +243,50 @@ export async function POST(
     // SAVE SCREENSHOT
     // =================================================
 
-    const bytes =
-      await screenshot.arrayBuffer();
-
-    const buffer =
-      Buffer.from(bytes);
-
-    let extension = "jpg";
-
-    if (
-      screenshot.type ===
-      "image/png"
-    ) {
-      extension = "png";
-    } else if (
-      screenshot.type ===
-      "image/webp"
-    ) {
-      extension = "webp";
-    }
-
-    const fileName =
-      `payment-${userId}-${subscription.id}-${Date.now()}.${extension}`;
-
-    const uploadDirectory =
-      path.join(
-        process.cwd(),
-        "public",
-        "uploads",
-        "payments"
-      );
-
-    await fs.mkdir(
-      uploadDirectory,
-      {
-        recursive: true,
-      }
-    );
-
-    savedFilePath =
-      path.join(
-        uploadDirectory,
-        fileName
-      );
-
-    await fs.writeFile(
-      savedFilePath,
-      buffer
-    );
-
-    const screenshotUrl =
-      `/uploads/payments/${fileName}`;
-
-    // =================================================
-    // OCR
-    // =================================================
-
-    console.log(
-      "========================================"
-    );
-
-    console.log(
-      "STARTING PAYMENT OCR"
-    );
-
-    console.log(
-      "Subscription ID:",
-      subscription.id
-    );
-
-    console.log(
-      "Screenshot:",
-      savedFilePath
-    );
-
-    console.log(
-      "Expected amount:",
-      expectedAmount
-    );
-
-    console.log(
-      "========================================"
-    );
-
-    const ocr =
-      await readPaymentScreenshot(
-        savedFilePath
-      );
-
-    console.log(
-      "OCR RESULT:",
-      ocr
+    const screenshotUrl = await uploadMediaFile(
+      screenshot,
+      "payments",
     );
 
     // =================================================
-    // TRANSACTION ID
+    // MANUAL PAYMENT DETAILS
     // =================================================
 
-    if (!ocr.transactionId) {
-      return cors(
-        NextResponse.json(
-          {
-            success: false,
-            message:
-              "Could not detect the transaction ID from the screenshot. Please upload a clearer KPay screenshot.",
-          },
-          { status: 400 }
-        )
-      );
-    }
-
-    // =================================================
-    // AMOUNT
-    // =================================================
-
-    if (
-      ocr.amount === null ||
-      ocr.amount === undefined
-    ) {
-      return cors(
-        NextResponse.json(
-          {
-            success: false,
-            message:
-              "Could not detect the payment amount from the screenshot. Please upload a clearer KPay screenshot.",
-          },
-          { status: 400 }
-        )
-      );
-    }
-
-    // =================================================
-    // NORMALIZE TRANSACTION ID
-    // =================================================
-
-    const transactionId =
-      String(ocr.transactionId)
-        .trim()
-        .replace(/\s+/g, "");
+    // Cloudflare Workers cannot run the previous Tesseract Node worker.
+    // The screenshot is stored for admin review, while the user supplies
+    // the transaction ID and amount explicitly in the payment form.
+    const transactionId = String(
+      formData.get("transactionId") ?? "",
+    )
+      .trim()
+      .replace(/\s+/g, "");
 
     if (!transactionId) {
       return cors(
         NextResponse.json(
           {
             success: false,
-            message:
-              "Invalid transaction ID detected.",
+            message: "Transaction ID is required.",
           },
-          { status: 400 }
-        )
+          { status: 400 },
+        ),
       );
     }
+
+    const submittedAmount = Number(formData.get("amount"));
+    if (!Number.isFinite(submittedAmount)) {
+      return cors(
+        NextResponse.json(
+          {
+            success: false,
+            message: "Payment amount is required.",
+          },
+          { status: 400 },
+        ),
+      );
+    }
+
+    const paymentAmount = Math.round(submittedAmount);
 
     // =================================================
     // DUPLICATE TRANSACTION
@@ -428,10 +316,7 @@ export async function POST(
     // PAYMENT AMOUNT
     // =================================================
 
-    const ocrAmount =
-      Math.round(
-        Number(ocr.amount)
-      );
+    const ocrAmount = paymentAmount;
 
     console.log(
       "EXPECTED AMOUNT:",
@@ -551,8 +436,7 @@ export async function POST(
             transactionId:
               transactionId,
 
-            amount:
-              ocr.amount,
+            amount: paymentAmount,
           },
         },
         { status: 201 }
@@ -564,20 +448,6 @@ export async function POST(
       "CREATE PAYMENT ERROR:",
       error
     );
-
-    // =================================================
-    // CLEANUP IMAGE
-    // =================================================
-
-    if (savedFilePath) {
-      try {
-        await fs.unlink(
-          savedFilePath
-        );
-      } catch {
-        // Ignore cleanup error
-      }
-    }
 
     const message =
       error instanceof Error

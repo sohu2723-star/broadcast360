@@ -9,8 +9,6 @@ const streamOrigin = process.env.PUBLIC_STREAM_ORIGIN || "*";
 const nextConfig: NextConfig = {
   assetPrefix: "/admin",
   serverExternalPackages: [
-    "fluent-ffmpeg",
-    "@ffprobe-installer/ffprobe",
     "@prisma/client",
     ".prisma/client",
     "pg",
