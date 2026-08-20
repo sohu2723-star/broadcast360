@@ -12,6 +12,23 @@ import { consumeVerificationCode } from "@/services/email-verification.service";
 
 const userRepository = new UserRepository();
 
+const USER_INACTIVITY_DAYS = 90;
+const USER_INACTIVITY_WINDOW_MS = USER_INACTIVITY_DAYS * 24 * 60 * 60 * 1000;
+
+export function isUserInactiveByInactivity(
+  lastLoginAt: Date | null | undefined,
+  createdAt?: Date | null,
+) {
+  const activityDate = lastLoginAt ?? createdAt ?? null;
+  return Boolean(
+    activityDate && Date.now() - new Date(activityDate).getTime() >= USER_INACTIVITY_WINDOW_MS,
+  );
+}
+
+function inactiveAccountError() {
+  return new Error("Account inactive after 3 months without login. Please request reactivation from Support.");
+}
+
 function publicUser(user: {
   id: number;
   name: string;
@@ -77,7 +94,11 @@ export class AuthService {
     const normalizedEmail = assertGmailAddress(email);
     const user = await userRepository.findByEmail(normalizedEmail);
     if (!user || user.role === "ADMIN") throw new Error("Invalid user credentials");
-    if (user.status !== "ACTIVE") throw new Error("Account disabled");
+    if (user.status !== "ACTIVE") throw inactiveAccountError();
+    if (isUserInactiveByInactivity(user.lastLoginAt, user.createdAt)) {
+      await userRepository.update(user.id, { status: "INACTIVE" });
+      throw inactiveAccountError();
+    }
     if (!(await comparePassword(password, user.password))) {
       throw new Error("Invalid user credentials");
     }
@@ -125,6 +146,13 @@ export class AuthService {
     const existing = await userRepository.findByEmail(email);
     if (existing?.role === "ADMIN" || isAllowedAdminEmail(email)) {
       throw new Error("Admin accounts cannot login through the user portal");
+    }
+    if (existing && existing.status !== "ACTIVE") {
+      throw inactiveAccountError();
+    }
+    if (existing && isUserInactiveByInactivity(existing.lastLoginAt, existing.createdAt)) {
+      await userRepository.update(existing.id, { status: "INACTIVE" });
+      throw inactiveAccountError();
     }
 
     const isNewUser = !existing;

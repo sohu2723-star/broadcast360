@@ -17,6 +17,7 @@ export function useUsers() {
   const [data, setData] = useState<PaginatedUsersResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [canCreateAccounts, setCanCreateAccounts] = useState(false);
 
   // Modal states
   const [selectedUser, setSelectedUser] = useState<UserItemResponse | null>(
@@ -55,6 +56,18 @@ export function useUsers() {
 
   useEffect(() => {
     fetchUsers();
+    let cancelled = false;
+    void fetch("/api/auth/me", { credentials: "include", cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((result) => {
+        if (!cancelled) setCanCreateAccounts(Boolean(result?.user?.canCreateAccounts));
+      })
+      .catch(() => {
+        if (!cancelled) setCanCreateAccounts(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [fetchUsers]);
 
   const handleView = (user: UserItemResponse) => {
@@ -79,6 +92,7 @@ export function useUsers() {
     pagination: data?.pagination,
     loading,
     error,
+    canCreateAccounts,
     filters,
     setFilters,
     selectedUser,

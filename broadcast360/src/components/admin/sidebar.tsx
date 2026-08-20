@@ -125,6 +125,10 @@ const menus: MenuItem[] = [
         name: "Premium Chats",
         path: "/admin/support/chats",
       },
+      {
+        name: "Reactivation Requests",
+        path: "/admin/support/reactivation",
+      },
     ],
   },
 
@@ -157,6 +161,7 @@ export default function Sidebar({
   const [supportCount, setSupportCount] = useState({
     contactMessages: 0,
     premiumChats: 0,
+    reactivationRequests: 0,
   });
 
   // =====================================================
@@ -254,6 +259,8 @@ export default function Sidebar({
 
               premiumChats:
                 Number(data.premiumChats) || 0,
+              reactivationRequests:
+                Number(data.reactivationRequests) || 0,
             });
           }
         } else {
@@ -340,6 +347,9 @@ export default function Sidebar({
 
       case "Premium Chats":
         return supportCount.premiumChats;
+
+      case "Reactivation Requests":
+        return supportCount.reactivationRequests;
 
       default:
         return 0;

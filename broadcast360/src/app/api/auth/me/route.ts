@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { verifyToken } from "@/lib/jwt";
+import { canCreateAccounts } from "@/lib/admin-auth";
 
 import { UserRepository } from "@/repositories/user.repository";
 
@@ -57,6 +58,7 @@ export async function GET(request: NextRequest) {
           phone: user.phone,
           avatar: user.avatar,
           role: user.role,
+          canCreateAccounts: canCreateAccounts(user.email),
         },
       }),
     );

@@ -340,7 +340,16 @@ export default function LoginPage() {
           <p className="mt-2 text-sm text-slate-300">Welcome back to Broadcast360</p>
         </div>
 
-        {serverError ? <AuthError message={serverError} /> : null}
+        {serverError ? (
+          <div className="space-y-3">
+            <AuthError message={serverError} />
+            {serverError.toLowerCase().includes("inactive") ? (
+              <Link href="/support/reactivation" className="block text-center text-sm font-semibold text-[#b8cee8] underline decoration-[#7898bf]/50 underline-offset-4 hover:text-white">
+                Request account reactivation from Support
+              </Link>
+            ) : null}
+          </div>
+        ) : null}
 
         <div className="mt-6 space-y-5">
           <div>

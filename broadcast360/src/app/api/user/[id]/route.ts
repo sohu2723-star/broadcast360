@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchUserById, removeUser } from "@/services/user.service";
+import { getAdminFromRequest } from "@/lib/admin-auth";
 
 /* ================= GET (View User Details) ================= */
 export async function GET(
@@ -7,6 +8,11 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const admin = await getAdminFromRequest(request);
+    if (!admin) {
+      return NextResponse.json({ message: "Admin authentication required" }, { status: 401 });
+    }
+
     const { id } = await params;
     const userId = Number(id);
 
@@ -33,10 +39,15 @@ export async function GET(
 
 /* ================= DELETE (Delete User) ================= */
 export async function DELETE(
-  req: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const admin = await getAdminFromRequest(request);
+    if (!admin) {
+      return NextResponse.json({ message: "Admin authentication required" }, { status: 401 });
+    }
+
     const { id } = await params;
     const userId = Number(id);
 

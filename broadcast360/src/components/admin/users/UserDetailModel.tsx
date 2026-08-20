@@ -16,7 +16,7 @@ export const UserDetailModal: React.FC<Props> = ({ userId, onClose }) => {
     setLoading(true);
     fetch(`/api/user/${userId}`)
       .then((res) => res.json())
-      .then((data) => setUser(data))
+      .then((data) => setUser(data.user ?? data))
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [userId]);

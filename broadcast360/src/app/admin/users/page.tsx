@@ -7,6 +7,7 @@ import { UserDetailModal } from "@/components/admin/users/UserDetailModel";
 import { UserControls } from "@/components/admin/users/UserControls";
 import { UserActions } from "@/components/admin/users/UserActions";
 import { DeleteConfirmModal } from "@/components/admin/users/DeleteConfirmModal";
+import Link from "next/link";
 import { ChevronLeft, ChevronRight, UserPlus } from "lucide-react";
 
 export default function UsersPage() {
@@ -24,11 +25,38 @@ export default function UsersPage() {
     setUserToDelete,
     handleView,
     handleDelete,
+    canCreateAccounts,
   } = useUsers();
 
   return (
     <div className="min-h-screen bg-[#0b0f19] p-6 text-slate-100 sm:p-8">
       <div className="mx-auto max-w-7xl space-y-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-2xl font-semibold text-white">User List</h2>
+            <p className="mt-1 text-sm text-slate-400">Manage registered users and account status.</p>
+          </div>
+          {canCreateAccounts ? (
+            <Link
+              href="/admin/users/create"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#4f6689] to-[#7898bf] px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-[#4f6689]/20 transition hover:opacity-90"
+            >
+              <UserPlus className="h-4 w-4" />
+              Create Account
+            </Link>
+          ) : (
+            <button
+              type="button"
+              disabled
+              title="Only the configured server-mail admin can create accounts"
+              className="inline-flex cursor-not-allowed items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-slate-500 opacity-70"
+            >
+              <UserPlus className="h-4 w-4" />
+              Create Account
+            </button>
+          )}
+        </div>
+
         {/* Stats Cards */}
         <UserStatsCards stats={stats} />
 
@@ -44,20 +72,20 @@ export default function UsersPage() {
                 <th className="px-4 py-3.5">Gmail</th>
                 <th className="px-4 py-3.5">Role</th>
                 <th className="px-4 py-3.5">Status</th>
-                <th className="px-4 py-3.5">Joined</th>
+                <th className="px-4 py-3.5">Last Login</th>
                 <th className="px-4 py-3.5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 text-sm">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="py-8 text-center text-slate-500">
+                  <td colSpan={6} className="py-8 text-center text-slate-500">
                     Loading users...
                   </td>
                 </tr>
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-8 text-center text-slate-500">
+                  <td colSpan={6} className="py-8 text-center text-slate-500">
                     No users found.
                   </td>
                 </tr>
@@ -102,7 +130,7 @@ export default function UsersPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-slate-400">
-                      {new Date(user.createdAt).toLocaleDateString()}
+                      {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString() : "Never"}
                     </td>
                     <td className="px-4 py-3">
                       {/* Action buttons component */}

@@ -24,8 +24,8 @@ export default function UserForm({ mode, userId }: Props) {
 
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(mode === "edit");
-  const [changePassword, setChangePassword] = useState(false);
-
+  const [capabilityLoading, setCapabilityLoading] = useState(mode === "create");
+  const [canCreateAccounts, setCanCreateAccounts] = useState(false);
   const [form, setForm] = useState<UserFormData>({
     name: "",
     email: "",
@@ -40,6 +40,13 @@ export default function UserForm({ mode, userId }: Props) {
   useEffect(() => {
     if (mode === "edit" && userId) {
       loadUser();
+    }
+    if (mode === "create") {
+      fetch("/api/auth/me", { credentials: "include", cache: "no-store" })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((result) => setCanCreateAccounts(Boolean(result?.user?.canCreateAccounts)))
+        .catch(() => setCanCreateAccounts(false))
+        .finally(() => setCapabilityLoading(false));
     }
   }, []);
 
@@ -87,7 +94,7 @@ export default function UserForm({ mode, userId }: Props) {
 
       case "password":
         // Skip validation if editing and not changing password
-        if (mode === "edit" && !changePassword) return "";
+        if (mode === "edit") return "";
         if (!value) return "Password is required";
         if (value.length < 8) return "Password must be at least 8 characters";
         if (!/[A-Z]/.test(value)) return "Password needs an uppercase letter";
@@ -127,42 +134,27 @@ export default function UserForm({ mode, userId }: Props) {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
 
-    // Mark all fields as touched to trigger full validation view
-    setTouched({ name: true, email: true, password: true });
+    if (mode === "create") {
+      setTouched({ name: true, email: true, password: true });
+      const nameErr = validateField("name", form.name);
+      const emailErr = validateField("email", form.email);
+      const passErr = validateField("password", form.password);
 
-    // Pre-validate client side before hitting backend
-    const nameErr = validateField("name", form.name);
-    const emailErr = validateField("email", form.email);
-    const passErr = validateField("password", form.password);
-
-    if (nameErr || emailErr || passErr) {
-      setErrors({
-        name: nameErr,
-        email: emailErr,
-        password: passErr,
-      });
-      return;
+      if (nameErr || emailErr || passErr) {
+        setErrors({
+          name: nameErr,
+          email: emailErr,
+          password: passErr,
+        });
+        return;
+      }
     }
 
     setLoading(true);
     setErrors({});
 
     try {
-      let body;
-
-      if (mode === "edit") {
-        body = {
-          name: form.name,
-          email: form.email,
-          role: form.role,
-          status: form.status,
-          ...(changePassword && form.password
-            ? { password: form.password }
-            : {}),
-        };
-      } else {
-        body = form;
-      }
+      const body = mode === "edit" ? { status: form.status } : form;
 
       const res = await fetch(
         mode === "create" ? "/api/users" : `/api/users/${userId}`,
@@ -201,10 +193,20 @@ export default function UserForm({ mode, userId }: Props) {
     }
   }
 
-  if (fetching) {
+  if (fetching || capabilityLoading) {
     return (
       <div className="flex h-64 items-center justify-center text-white">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#4f6689] border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (mode === "create" && !canCreateAccounts) {
+    return (
+      <div className="mx-auto max-w-xl rounded-3xl border border-white/10 bg-[#0B1026] p-8 text-center shadow-2xl">
+        <h2 className="text-2xl font-bold text-white">Create Account Disabled</h2>
+        <p className="mt-3 text-sm leading-6 text-slate-400">Only the configured server-mail admin can create Admin or User accounts.</p>
+        <button type="button" onClick={() => router.back()} className="mt-6 rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-slate-300 hover:bg-white/10">Go Back</button>
       </div>
     );
   }
@@ -248,6 +250,8 @@ export default function UserForm({ mode, userId }: Props) {
               }`}
               placeholder="e.g. John Doe"
               value={form.name}
+              readOnly={mode === "edit"}
+              disabled={mode === "edit"}
               onBlur={() => handleBlur("name")}
               onChange={(e) => {
                 setForm({ ...form, name: e.target.value });
@@ -279,6 +283,8 @@ export default function UserForm({ mode, userId }: Props) {
               }`}
               placeholder="e.g. user@gmail.com"
               value={form.email}
+              readOnly={mode === "edit"}
+              disabled={mode === "edit"}
               onBlur={() => handleBlur("email")}
               onChange={(e) => {
                 setForm({ ...form, email: e.target.value });
@@ -335,58 +341,8 @@ export default function UserForm({ mode, userId }: Props) {
               )}
             </div>
           ) : (
-            <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="block text-sm font-semibold text-white">
-                    Password
-                  </span>
-                  <span className="text-xs text-gray-400">
-                    Leave blank unless you wish to change it.
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setChangePassword(!changePassword);
-                    setForm({ ...form, password: "" });
-                    setErrors((prev) => ({ ...prev, password: "" }));
-                  }}
-                  className={`rounded-xl border px-4 py-2 text-xs font-semibold transition ${
-                    changePassword
-                      ? "border-red-500/40 bg-red-500/10 text-red-400 hover:bg-red-500/20"
-                      : "border-white/20 bg-white/10 text-white hover:bg-white/20"
-                  }`}
-                >
-                  {changePassword ? "Cancel Change" : "Change Password"}
-                </button>
-              </div>
-
-              {changePassword && (
-                <div className="mt-4 border-t border-white/5 pt-4">
-                  <input
-                    type="password"
-                    className="w-full rounded-xl border border-white/10 bg-[#111936] p-3.5 text-sm text-white placeholder-gray-500 focus:border-[#4f6689] focus:outline-none"
-                    placeholder="Enter new password"
-                    value={form.password}
-                    onBlur={() => handleBlur("password")}
-                    onChange={(e) => {
-                      setForm({ ...form, password: e.target.value });
-                      if (touched.password) {
-                        setErrors((prev) => ({
-                          ...prev,
-                          password: validateField("password", e.target.value),
-                        }));
-                      }
-                    }}
-                  />
-                  {touched.password && errors.password && (
-                    <p className="mt-1.5 text-xs text-red-400">
-                      {errors.password}
-                    </p>
-                  )}
-                </div>
-              )}
+            <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-4 text-sm text-slate-400">
+              Name, Gmail, and Role are locked for safety. Only Account Status can be changed from this page.
             </div>
           )}
 
@@ -397,8 +353,9 @@ export default function UserForm({ mode, userId }: Props) {
                 User Role
               </label>
               <select
-                className="w-full cursor-pointer rounded-xl border border-white/10 bg-[#111936] p-3.5 text-sm text-white transition focus:border-[#4f6689] focus:outline-none"
+                className={`w-full rounded-xl border border-white/10 bg-[#111936] p-3.5 text-sm text-white transition focus:border-[#4f6689] focus:outline-none ${mode === "edit" ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}
                 value={form.role}
+                disabled={mode === "edit"}
                 onChange={(e) =>
                   setForm({ ...form, role: e.target.value as Role })
                 }

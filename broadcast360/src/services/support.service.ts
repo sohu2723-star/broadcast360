@@ -13,6 +13,7 @@ import {
   getUnreadPremiumChatCount,
   markUserMessagesAsRead,
 } from "@/repositories/support.repository";
+import { getPendingReactivationRequestCount as countPendingReactivationRequests } from "@/services/reactivation.service";
 
 // Helper to sanitize pagination parameters safely against NaN
 function sanitizePagination(page: number, limit: number) {
@@ -147,4 +148,8 @@ export async function getPremiumChatNotificationCount() {
 
 export async function markPremiumChatAsRead(conversationId: number) {
   return markUserMessagesAsRead(conversationId);
+}
+
+export async function getReactivationNotificationCount() {
+  return countPendingReactivationRequests();
 }

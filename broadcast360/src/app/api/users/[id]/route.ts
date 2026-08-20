@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { UserService } from "@/services/user.service";
+import { getAdminFromRequest } from "@/lib/admin-auth";
 
 import { updateUserSchema } from "@/lib/validators/user.validator";
 
@@ -19,6 +20,10 @@ export async function GET(
   },
 ) {
   try {
+    const admin = await getAdminFromRequest(request);
+    if (!admin) {
+      return NextResponse.json({ success: false, message: "Admin authentication required" }, { status: 401 });
+    }
     const { id } = await context.params;
 
     const user = await userService.getUser(Number(id));
@@ -72,6 +77,10 @@ export async function PUT(
   },
 ) {
   try {
+    const admin = await getAdminFromRequest(request);
+    if (!admin) {
+      return NextResponse.json({ success: false, message: "Admin authentication required" }, { status: 401 });
+    }
     const { id } = await context.params;
 
     const body = await request.json();
@@ -127,6 +136,10 @@ export async function DELETE(
   },
 ) {
   try {
+    const admin = await getAdminFromRequest(request);
+    if (!admin) {
+      return NextResponse.json({ success: false, message: "Admin authentication required" }, { status: 401 });
+    }
     const { id } = await context.params;
 
     await userService.deleteUser(Number(id));

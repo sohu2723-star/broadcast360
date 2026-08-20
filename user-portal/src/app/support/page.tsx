@@ -16,6 +16,7 @@ import {
   AlertTriangle,
   ShieldCheck,
   Globe2,
+  RefreshCw,
   ExternalLink,
 } from "lucide-react";
 
@@ -53,9 +54,9 @@ export default function SupportPage() {
 
         const status = err?.response?.status;
 
-        if (status === 401) {
+        if (status === 401 || status === 403) {
           setIsUnauthorized(true);
-          setError("You need to be logged in to access customer support.");
+          setError(status === 403 ? "Your account is inactive. You can send a reactivation request to the admin team." : "You need to be logged in to access customer support.");
           return;
         }
 
@@ -108,6 +109,12 @@ export default function SupportPage() {
               className="rounded-xl bg-blue-600 px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue-600/25 transition hover:bg-blue-500 active:scale-[0.98]"
             >
               Log In
+            </button>
+            <button
+              onClick={() => router.push("/support/reactivation")}
+              className="rounded-xl border border-[#7898bf]/25 bg-[#20385f]/30 px-7 py-3.5 text-sm font-semibold text-[#c6d7ea] transition hover:bg-[#20385f]/50"
+            >
+              Request Reactivation
             </button>
             <button
               onClick={() => router.push("/")}
@@ -165,7 +172,7 @@ export default function SupportPage() {
       </div>
 
       {/* QUICK SELECTION CARDS GRID */}
-      <div className="mb-12 grid gap-6 md:grid-cols-2">
+      <div className="mb-12 grid gap-6 md:grid-cols-3">
         {/* Contact Support Direct Route */}
         <button
           onClick={() => router.push("/support/contact")}
@@ -182,6 +189,25 @@ export default function SupportPage() {
           </div>
           <div className="mt-8 flex items-center text-sm font-semibold text-blue-400 transition-colors group-hover:text-blue-300">
             Open Support Portal <span className="ml-1 transition-transform group-hover:translate-x-1">→</span>
+          </div>
+        </button>
+
+        {/* Inactive account reactivation route */}
+        <button
+          onClick={() => router.push("/support/reactivation")}
+          className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-white/10 bg-[#0B1026] p-8 text-left transition-all duration-300 hover:-translate-y-1 hover:border-[#7898bf]/50 hover:bg-[#101735] hover:shadow-2xl hover:shadow-[#7898bf]/10"
+        >
+          <div>
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#7898bf]/10 text-[#b8cee8] ring-1 ring-[#7898bf]/20 transition-transform group-hover:scale-110">
+              <RefreshCw className="h-6 w-6" />
+            </div>
+            <h2 className="mt-6 text-xl font-bold text-white">Reactivate Account</h2>
+            <p className="mt-2 text-sm leading-relaxed text-slate-400">
+              If your account became inactive, send a request for the admin team to review.
+            </p>
+          </div>
+          <div className="mt-8 flex items-center text-sm font-semibold text-[#b8cee8] transition-colors group-hover:text-white">
+            Send Reactivation Request <span className="ml-1 transition-transform group-hover:translate-x-1">→</span>
           </div>
         </button>
 

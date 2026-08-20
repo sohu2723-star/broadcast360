@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cors, optionsResponse } from "@/lib/cors";
 import { verifyUserToken } from "@/lib/user-jwt";
 import { UserRepository } from "@/repositories/user.repository";
+import { isUserInactiveByInactivity } from "@/services/auth.service";
 
 import { prisma } from "@/lib/prisma";
 
@@ -57,6 +58,25 @@ export async function GET(request: NextRequest) {
           {
             status: 404,
           },
+        ),
+      );
+    }
+
+    if (user.role === "USER" && user.status === "ACTIVE" && isUserInactiveByInactivity(user.lastLoginAt, user.createdAt)) {
+      await userRepository.update(user.id, { status: "INACTIVE" });
+      return cors(
+        NextResponse.json(
+          { message: "Account inactive after 3 months without login", code: "INACTIVE_ACCOUNT" },
+          { status: 403 },
+        ),
+      );
+    }
+
+    if (user.role === "USER" && user.status !== "ACTIVE") {
+      return cors(
+        NextResponse.json(
+          { message: "Account inactive. Please request reactivation from Support.", code: "INACTIVE_ACCOUNT" },
+          { status: 403 },
         ),
       );
     }

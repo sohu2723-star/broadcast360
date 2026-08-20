@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { UserService } from "@/services/user.service";
+import { canCreateAccounts, getAdminFromRequest } from "@/lib/admin-auth";
 import { createUserSchema } from "@/lib/validators/user.validator";
 
 const userService = new UserService();
@@ -13,6 +14,10 @@ GET ALL USERS (PAGINATED & FILTERED)
 
 export async function GET(request: NextRequest) {
   try {
+    const admin = await getAdminFromRequest(request);
+    if (!admin) {
+      return NextResponse.json({ success: false, message: "Admin authentication required" }, { status: 401 });
+    }
     const { searchParams } = new URL(request.url);
 
     // Extract query parameters with defaults
@@ -66,6 +71,14 @@ CREATE USER
 
 export async function POST(request: NextRequest) {
   try {
+    const admin = await getAdminFromRequest(request);
+    if (!admin) {
+      return NextResponse.json({ success: false, message: "Admin authentication required" }, { status: 401 });
+    }
+    if (!canCreateAccounts(admin.email)) {
+      return NextResponse.json({ success: false, message: "Only the configured server-mail admin can create accounts" }, { status: 403 });
+    }
+
     const body = await request.json();
 
     const validation = createUserSchema.safeParse(body);

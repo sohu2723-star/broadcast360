@@ -76,6 +76,8 @@ model User {
   programReminders     ProgramReminder[]
   contactMessages      ContactMessage[]
   supportConversations SupportConversation[]
+  reactivationRequests AccountReactivationRequest[] @relation("ReactivationRequester")
+  reviewedReactivationRequests AccountReactivationRequest[] @relation("ReactivationReviewer")
 }
 
 model EmailVerificationCode {
@@ -594,6 +596,31 @@ enum SupportConversationStatus {
 enum SupportSenderRole {
   USER
   ADMIN
+}
+
+enum ReactivationRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model AccountReactivationRequest {
+  id           Int                       @id @default(autoincrement())
+  userId       Int
+  user         User                      @relation("ReactivationRequester", fields: [userId], references: [id], onDelete: Cascade)
+  email        String
+  name         String
+  message      String
+  status       ReactivationRequestStatus @default(PENDING)
+  reviewedById Int?
+  reviewedBy   User?                     @relation("ReactivationReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedAt   DateTime?
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @updatedAt
+
+  @@index([status])
+  @@index([userId])
+  @@index([createdAt])
 }
 
 model ContactMessage {

@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchPaginatedUsers } from "@/services/user.service";
+import { getAdminFromRequest } from "@/lib/admin-auth";
 import { Role, UserStatus } from "@/generated/prisma";
 
 /* ================= GET ================= */
 export async function GET(request: NextRequest) {
   try {
+    const admin = await getAdminFromRequest(request);
+    if (!admin) {
+      return NextResponse.json({ message: "Admin authentication required" }, { status: 401 });
+    }
     const { searchParams } = new URL(request.url);
 
     const page = Math.max(

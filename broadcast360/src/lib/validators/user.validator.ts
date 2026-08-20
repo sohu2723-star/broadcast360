@@ -47,14 +47,6 @@ export const publicRegisterSchema = z.object({
   verificationCode: z.string().regex(/^\d{6}$/, "Verification code must be 6 digits"),
 });
 
-export const updateUserSchema = createUserSchema
-  .pick({
-    name: true,
-    email: true,
-    phone: true,
-    avatar: true,
-    password: true,
-    role: true,
-    status: true,
-  })
-  .partial();
+export const updateUserSchema = z.object({
+  status: z.enum(["ACTIVE", "INACTIVE", "BANNED"]),
+});
