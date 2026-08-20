@@ -2,20 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isUserPremium } from "@/services/subscription.service";
 import { verifyUserToken } from "@/lib/user-jwt";
+import { getPortalCorsHeaders } from "@/lib/portal-cors";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin":
-    "http://localhost:3001",
 
-  "Access-Control-Allow-Credentials":
-    "true",
-
-  "Access-Control-Allow-Methods":
-    "GET, OPTIONS",
-
-  "Access-Control-Allow-Headers":
-    "Content-Type",
-};
 
 export async function GET(
   request: Request,
@@ -28,6 +17,7 @@ export async function GET(
   },
 ) {
   try {
+    const corsHeaders = getPortalCorsHeaders(request);
     const { id } = await params;
 
     const channelId = Number(id);
@@ -311,7 +301,7 @@ export async function GET(
       },
       {
         status: 500,
-        headers: corsHeaders,
+        headers: getPortalCorsHeaders(request),
       },
     );
   }
@@ -320,6 +310,6 @@ export async function GET(
 export async function OPTIONS() {
   return new NextResponse(null, {
     status: 204,
-    headers: corsHeaders,
+    headers: getPortalCorsHeaders(),
   });
 }

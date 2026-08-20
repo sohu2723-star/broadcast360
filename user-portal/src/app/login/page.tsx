@@ -9,6 +9,7 @@ import axios from "axios";
 import api from "@/lib/api";
 import authApi from "@/lib/authapi";
 import { clearCurrentUserCache } from "@/lib/current-user";
+import CaptchaChallenge from "@/components/auth/CaptchaChallenge";
 import {
   AuthBackdrop,
   AuthError,
@@ -26,6 +27,7 @@ type GoogleCredentialResponse = { credential: string };
 
 type LoginForm = { email: string; password: string };
 type LoginErrors = { email?: string; password?: string };
+type CaptchaState = { token: string; answer: string; checked: boolean };
 type ForgotForm = { email: string; verificationCode: string; newPassword: string; confirmPassword: string };
 type ForgotErrors = Partial<Record<keyof ForgotForm, string>>;
 
@@ -59,6 +61,8 @@ export default function LoginPage() {
   const [googleReady, setGoogleReady] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [serverError, setServerError] = useState("");
+  const [captcha, setCaptcha] = useState<CaptchaState>({ token: "", answer: "", checked: false });
+  const [captchaError, setCaptchaError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showWelcomeBack, setShowWelcomeBack] = useState(false);
   const [authTransitionLoading, setAuthTransitionLoading] = useState(false);
@@ -75,7 +79,12 @@ export default function LoginPage() {
   const [showForgotConfirm, setShowForgotConfirm] = useState(false);
   const googleButtonRef = useRef<HTMLDivElement>(null);
   const googleInitializedRef = useRef(false);
+  const captchaRef = useRef<CaptchaState>(captcha);
   const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+  useEffect(() => {
+    captchaRef.current = captcha;
+  }, [captcha]);
 
   useEffect(() => {
     if (!showWelcomeBack) return;
@@ -108,8 +117,15 @@ export default function LoginPage() {
     const passwordError = validatePassword(form.password);
     if (emailError) nextErrors.email = emailError;
     if (passwordError) nextErrors.password = passwordError;
+    if (!captcha.checked) setCaptchaError("Please confirm that you are not a robot");
+    else if (!captcha.answer) setCaptchaError("Enter the CAPTCHA characters");
     setErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0;
+    return Object.keys(nextErrors).length === 0 && captcha.checked && Boolean(captcha.answer);
+  }
+
+  function updateCaptcha(value: CaptchaState) {
+    setCaptcha(value);
+    if (value.checked && value.answer) setCaptchaError("");
   }
 
   function handleChange(field: keyof LoginForm, value: string) {
@@ -206,6 +222,8 @@ export default function LoginPage() {
           setServerError("");
           const result = await authApi.post("/api/user-portal/auth/google", {
             credential: response.credential,
+            captchaToken: captchaRef.current.token,
+            captchaAnswer: captchaRef.current.answer,
           });
           clearCurrentUserCache();
           await authApi.get("/api/user-portal/auth/me");
@@ -240,6 +258,10 @@ export default function LoginPage() {
   }
 
   function openGooglePrompt() {
+    if (!captcha.checked || !captcha.answer) {
+      setCaptchaError(!captcha.checked ? "Please confirm that you are not a robot" : "Enter the CAPTCHA characters");
+      return;
+    }
     initializeGoogle();
     if (!window.google || !googleInitializedRef.current) {
       setServerError("Google Sign-In is still loading. Please try again in a moment.");
@@ -270,7 +292,11 @@ export default function LoginPage() {
 
     try {
       setLoading(true);
-      const response = await authApi.post("/api/user-portal/auth/login", form);
+      const response = await authApi.post("/api/user-portal/auth/login", {
+        ...form,
+        captchaToken: captcha.token,
+        captchaAnswer: captcha.answer,
+      });
       clearCurrentUserCache();
       await authApi.get("/api/user-portal/auth/me");
       if (response.data.user.role === "ADMIN") {
@@ -389,6 +415,14 @@ export default function LoginPage() {
             </div>
             <FieldError message={errors.password} />
           </div>
+
+          <CaptchaChallenge
+            token={captcha.token}
+            answer={captcha.answer}
+            checked={captcha.checked}
+            error={captchaError}
+            onChange={updateCaptcha}
+          />
 
           <button
             type="button"

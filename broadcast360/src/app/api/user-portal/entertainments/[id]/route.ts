@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { resolveMediaUrl } from "@/lib/media/url";
 
 
 interface Context {
@@ -17,7 +18,7 @@ export async function GET(
 
 
   try {
-
+    const origin = new URL(request.url).origin;
 
     const { id } = await context.params;
 
@@ -165,7 +166,7 @@ export async function GET(
 
             item.entertainment!.thumbnail
 
-            ? `http://localhost:3000${item.entertainment!.thumbnail}`
+            ? resolveMediaUrl(item.entertainment!.thumbnail, origin)
 
             : null,
 
@@ -175,7 +176,7 @@ export async function GET(
 
             item.entertainment!.videoUrl
 
-            ? `http://localhost:3000${item.entertainment!.videoUrl}`
+            ? resolveMediaUrl(item.entertainment!.videoUrl, origin)
 
             : null,
 
@@ -193,7 +194,7 @@ export async function GET(
 
              channelLogo:
           schedule?.channel.logo
-            ? `http://localhost:3000${schedule.channel.logo}`
+            ? resolveMediaUrl(schedule.channel.logo, origin)
             : null,
 
           scheduleStart:
@@ -391,7 +392,7 @@ export async function GET(
 
         entertainment.thumbnail
 
-        ? `http://localhost:3000${entertainment.thumbnail}`
+        ? resolveMediaUrl(entertainment.thumbnail, origin)
 
         : null,
 
@@ -501,7 +502,7 @@ export async function GET(
 
         channelLogo:
         schedule?.channel.logo
-        ? `http://localhost:3000${schedule.channel.logo}`
+        ? resolveMediaUrl(schedule.channel.logo, origin)
         : null,
 
 

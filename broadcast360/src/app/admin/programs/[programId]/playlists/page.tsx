@@ -1,17 +1,6 @@
 import PlaylistItemList from "@/components/admin/playlist-items/PlaylistItemList";
 import Link from "next/link";
-
-async function getPlaylist(playlistId: number) {
-  const res = await fetch(`http://localhost:3000/api/playlists/${playlistId}`, {
-    cache: "no-store",
-  });
-
-  if (!res.ok) {
-    throw new Error("Failed to load playlist");
-  }
-
-  return res.json();
-}
+import { PlaylistService } from "@/services/playlist.service";
 
 interface Props {
   params: Promise<{
@@ -25,9 +14,11 @@ export default async function PlaylistPage({ params }: Props) {
 
   const playlistIdNumber = Number(playlistId);
 
-  const data = await getPlaylist(playlistIdNumber);
+  const playlist = await PlaylistService.getPlaylistById(playlistIdNumber);
 
-  const playlist = data.data;
+  if (!playlist) {
+    throw new Error("Playlist not found");
+  }
 
   return (
     <div className="space-y-6 p-6">

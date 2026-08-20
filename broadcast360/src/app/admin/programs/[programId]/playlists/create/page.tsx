@@ -1,4 +1,5 @@
 import PlaylistForm from "@/components/admin/playlists/PlaylistForm";
+import { fetchProgramById } from "@/services/program.service";
 
 
 interface PageProps {
@@ -8,35 +9,6 @@ interface PageProps {
   }>;
 
 }
-
-
-
-async function getProgram(programId:number){
-
-const res = await fetch(
-
-`http://localhost:3000/api/programs/${programId}`,
-
-{
-cache:"no-store"
-}
-
-);
-
-
-if(!res.ok){
-
-throw new Error(
-"Failed to load program"
-);
-
-}
-
-
-return res.json();
-
-}
-
 
 
 
@@ -59,13 +31,11 @@ Number(programId);
 
 
 
-const data =
-await getProgram(id);
+const program = await fetchProgramById(id);
 
-
-
-const program =
-data.data;
+if (!program) {
+  throw new Error("Program not found");
+}
 
 
 
@@ -101,7 +71,7 @@ programId={id}
 
 
 channelName={
-program.channel
+program.channel?.name ?? "Unassigned"
 }
 
 

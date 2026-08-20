@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { verifyUserToken } from "@/lib/user-jwt";
+import { verifyCaptchaChallenge } from "@/lib/captcha";
 
 import { AuthService } from "@/services/auth.service";
 
@@ -31,9 +32,17 @@ export async function PUT(request: NextRequest) {
 
     const payload = await verifyUserToken(token);
 
-    const body = await request.json();
+        const body = await request.json();
+
+    if (body.acceptedPolicy !== true) {
+      return cors(NextResponse.json({ message: "You must accept the Broadcast360 policy" }, { status: 400 }));
+    }
+    if (!verifyCaptchaChallenge(body.captchaToken, body.captchaAnswer)) {
+      return cors(NextResponse.json({ message: "CAPTCHA verification failed" }, { status: 400 }));
+    }
 
     const dateOfBirth = body.dateOfBirth
+
       ? new Date(`${body.dateOfBirth}T00:00:00.000Z`)
       : undefined;
 

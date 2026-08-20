@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { resolveMediaUrl } from "@/lib/media/url";
 
 interface Context {
   params: Promise<{
@@ -7,14 +8,10 @@ interface Context {
   }>;
 }
 
-function mediaUrl(path: string | null) {
-  if (!path) return null;
-
-  return path.startsWith("http") ? path : `http://localhost:3000${path}`;
-}
 
 export async function GET(request: NextRequest, context: Context) {
   try {
+    const origin = request.nextUrl.origin;
     const { id } = await context.params;
 
     const playlistId = Number(id);
@@ -105,9 +102,9 @@ export async function GET(request: NextRequest, context: Context) {
 
       releaseYear: firstMovie.releaseYear,
 
-      thumbnail: mediaUrl(firstMovie.thumbnail),
+      thumbnail: resolveMediaUrl(firstMovie.thumbnail, origin),
 
-      videoUrl: mediaUrl(firstMovie.videoUrl),
+      videoUrl: resolveMediaUrl(firstMovie.videoUrl, origin),
 
       duration: firstMovie.duration,
 
@@ -117,7 +114,7 @@ export async function GET(request: NextRequest, context: Context) {
 
       channelName: schedule?.channel?.name ?? "-",
 
-      channelLogo: mediaUrl(schedule?.channel?.logo ?? null),
+      channelLogo: resolveMediaUrl(schedule?.channel?.logo ?? null, origin),
 
       // Schedule
 
@@ -149,9 +146,9 @@ export async function GET(request: NextRequest, context: Context) {
 
       releaseYear: item.movie?.releaseYear ?? null,
 
-      thumbnail: mediaUrl(item.movie?.thumbnail ?? null),
+      thumbnail: resolveMediaUrl(item.movie?.thumbnail ?? null, origin),
 
-      videoUrl: mediaUrl(item.movie?.videoUrl ?? null),
+      videoUrl: resolveMediaUrl(item.movie?.videoUrl ?? null, origin),
 
       duration: item.movie?.duration ?? 0,
 
@@ -159,7 +156,7 @@ export async function GET(request: NextRequest, context: Context) {
 
       channelName: schedule?.channel?.name ?? "-",
 
-      channelLogo: mediaUrl(schedule?.channel?.logo ?? null),
+      channelLogo: resolveMediaUrl(schedule?.channel?.logo ?? null, origin),
 
       scheduleStart: schedule?.startTime ?? null,
 
@@ -246,7 +243,7 @@ export async function GET(request: NextRequest, context: Context) {
 
           releaseYear: relatedMovie?.releaseYear ?? null,
 
-          thumbnail: mediaUrl(relatedMovie?.thumbnail ?? null),
+          thumbnail: resolveMediaUrl(relatedMovie?.thumbnail, origin),
 
           duration: relatedMovie?.duration ?? 0,
 
@@ -254,7 +251,7 @@ export async function GET(request: NextRequest, context: Context) {
 
           channelName: relatedSchedule?.channel?.name ?? "-",
 
-          channelLogo: mediaUrl(relatedSchedule?.channel?.logo ?? null),
+          channelLogo: resolveMediaUrl(relatedSchedule?.channel?.logo ?? null, origin),
         };
       });
 

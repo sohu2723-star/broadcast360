@@ -16,16 +16,22 @@ import {
   FieldError,
 } from "@/components/auth/AuthUi";
 import DobPicker from "@/components/auth/DobPicker";
+import CaptchaChallenge from "@/components/auth/CaptchaChallenge";
 
 type Gender = "" | "MALE" | "FEMALE" | "OTHER" | "UNSPECIFIED";
 
 type FormState = { name: string; dateOfBirth: string; gender: Gender };
+type CaptchaState = { token: string; answer: string; checked: boolean };
 type Errors = Partial<Record<keyof FormState, string>>;
 
 export default function GoogleCompletePage() {
   const [form, setForm] = useState<FormState>({ name: "", dateOfBirth: "", gender: "" });
   const [errors, setErrors] = useState<Errors>({});
   const [serverError, setServerError] = useState("");
+  const [acceptedPolicy, setAcceptedPolicy] = useState(false);
+  const [policyError, setPolicyError] = useState("");
+  const [captcha, setCaptcha] = useState<CaptchaState>({ token: "", answer: "", checked: false });
+  const [captchaError, setCaptchaError] = useState("");
   const [sessionExpired, setSessionExpired] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -70,8 +76,16 @@ export default function GoogleCompletePage() {
     if (!form.name.trim() || form.name.trim().length < 2) nextErrors.name = "Name must be at least 2 characters";
     if (!form.dateOfBirth) nextErrors.dateOfBirth = "Date of birth is required";
     if (!form.gender) nextErrors.gender = "Please choose a gender";
+    if (!acceptedPolicy) setPolicyError("Please accept the Broadcast360 policy");
+    if (!captcha.checked) setCaptchaError("Please confirm that you are not a robot");
+    else if (!captcha.answer) setCaptchaError("Enter the CAPTCHA characters");
     setErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0;
+    return Object.keys(nextErrors).length === 0 && acceptedPolicy && captcha.checked && Boolean(captcha.answer);
+  }
+
+  function updateCaptcha(value: CaptchaState) {
+    setCaptcha(value);
+    if (value.checked && value.answer) setCaptchaError("");
   }
 
   function update(field: keyof FormState, value: string) {
@@ -88,6 +102,9 @@ export default function GoogleCompletePage() {
         name: form.name.trim(),
         dateOfBirth: form.dateOfBirth,
         gender: form.gender,
+        acceptedPolicy,
+        captchaToken: captcha.token,
+        captchaAnswer: captcha.answer,
       });
       setAuthTransitionLoading(true);
       window.setTimeout(() => setCompleted(true), 550);
@@ -153,6 +170,28 @@ export default function GoogleCompletePage() {
                 </select>
                 <FieldError message={errors.gender} />
               </div>
+            </div>
+            <CaptchaChallenge
+              token={captcha.token}
+              answer={captcha.answer}
+              checked={captcha.checked}
+              error={captchaError}
+              onChange={updateCaptcha}
+            />
+            <div className="rounded-2xl border border-[#7898bf]/15 bg-[#0b1636]/45 px-4 py-3">
+              <label className="flex cursor-pointer items-start gap-3 text-sm text-slate-200">
+                <input
+                  type="checkbox"
+                  checked={acceptedPolicy}
+                  onChange={(event) => {
+                    setAcceptedPolicy(event.target.checked);
+                    if (event.target.checked) setPolicyError("");
+                  }}
+                  className="mt-0.5 h-4 w-4 accent-[#7898bf]"
+                />
+                <span>I agree to the Broadcast360 <Link href="/policy" target="_blank" className="font-semibold text-[#c5d7ee] underline underline-offset-4 hover:text-white">policy</Link>.</span>
+              </label>
+              <FieldError message={policyError} />
             </div>
             <button type="button" onClick={createAccount} disabled={saving} className="b360-primary-action w-full rounded-2xl py-3.5 text-sm font-bold">
               {saving ? <MoonSpinner label="Creating account" /> : "Create Account"}

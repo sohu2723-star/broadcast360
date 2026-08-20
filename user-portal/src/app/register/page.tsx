@@ -22,6 +22,7 @@ import {
   FieldError,
 } from "@/components/auth/AuthUi";
 import DobPicker from "@/components/auth/DobPicker";
+import CaptchaChallenge from "@/components/auth/CaptchaChallenge";
 
 type Gender = "" | "MALE" | "FEMALE" | "OTHER" | "UNSPECIFIED";
 type GoogleCredentialResponse = { credential: string };
@@ -37,6 +38,7 @@ type RegisterForm = {
 };
 
 type RegisterErrors = Partial<Record<keyof RegisterForm, string>>;
+type CaptchaState = { token: string; answer: string; checked: boolean };
 
 declare global {
   interface Window {
@@ -80,13 +82,22 @@ export default function RegisterPage() {
   const [resendCountdown, setResendCountdown] = useState(0);
   const [showCodeSentNotice, setShowCodeSentNotice] = useState(false);
   const [serverError, setServerError] = useState("");
+  const [acceptedPolicy, setAcceptedPolicy] = useState(false);
+  const [policyError, setPolicyError] = useState("");
+  const [captcha, setCaptcha] = useState<CaptchaState>({ token: "", answer: "", checked: false });
+  const [captchaError, setCaptchaError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [welcomeTitle, setWelcomeTitle] = useState("");
   const [authTransitionLoading, setAuthTransitionLoading] = useState(false);
   const googleButtonRef = useRef<HTMLDivElement>(null);
   const googleInitializedRef = useRef(false);
+  const captchaRef = useRef<CaptchaState>(captcha);
   const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+  useEffect(() => {
+    captchaRef.current = captcha;
+  }, [captcha]);
 
   useEffect(() => {
     if (!welcomeTitle) return;
@@ -132,8 +143,16 @@ export default function RegisterPage() {
     if (passwordError) nextErrors.password = passwordError;
     if (form.password !== form.confirmPassword) nextErrors.confirmPassword = "Passwords do not match";
     if (!/^\d{6}$/.test(form.verificationCode)) nextErrors.verificationCode = "Enter the 6-digit code sent to Gmail";
+    if (!acceptedPolicy) setPolicyError("Please accept the Broadcast360 policy");
+    if (!captcha.checked) setCaptchaError("Please confirm that you are not a robot");
+    else if (!captcha.answer) setCaptchaError("Enter the CAPTCHA characters");
     setErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0;
+    return Object.keys(nextErrors).length === 0 && acceptedPolicy && captcha.checked && Boolean(captcha.answer);
+  }
+
+  function updateCaptcha(value: CaptchaState) {
+    setCaptcha(value);
+    if (value.checked && value.answer) setCaptchaError("");
   }
 
   function handleChange(field: keyof RegisterForm, value: string) {
@@ -190,6 +209,8 @@ export default function RegisterPage() {
           setServerError("");
           const result = await authApi.post("/api/user-portal/auth/google", {
             credential: response.credential,
+            captchaToken: captchaRef.current.token,
+            captchaAnswer: captchaRef.current.answer,
           });
           clearCurrentUserCache();
           await authApi.get("/api/user-portal/auth/me");
@@ -224,6 +245,10 @@ export default function RegisterPage() {
   }
 
   function openGooglePrompt() {
+    if (!captcha.checked || !captcha.answer) {
+      setCaptchaError(!captcha.checked ? "Please confirm that you are not a robot" : "Enter the CAPTCHA characters");
+      return;
+    }
     initializeGoogle();
     if (!window.google || !googleInitializedRef.current) {
       setServerError("Google Sign-In is still loading. Please try again in a moment.");
@@ -261,10 +286,15 @@ export default function RegisterPage() {
         dateOfBirth: form.dateOfBirth,
         gender: form.gender,
         verificationCode: form.verificationCode,
+        acceptedPolicy,
+        captchaToken: captcha.token,
+        captchaAnswer: captcha.answer,
       });
       await authApi.post("/api/user-portal/auth/login", {
         email: form.email.trim().toLowerCase(),
         password: form.password,
+        captchaToken: captcha.token,
+        captchaAnswer: captcha.answer,
       });
       clearCurrentUserCache();
       await authApi.get("/api/user-portal/auth/me");
@@ -358,6 +388,36 @@ export default function RegisterPage() {
             </div>
             <FieldError message={errors.verificationCode} />
             {codeSent ? <p className="mt-2 text-xs text-[#b7cbe4]/80">Code sent. You can request another code when the timer reaches 0.</p> : null}
+          </div>
+
+          <CaptchaChallenge
+            token={captcha.token}
+            answer={captcha.answer}
+            checked={captcha.checked}
+            error={captchaError}
+            onChange={updateCaptcha}
+          />
+
+          <div className="rounded-2xl border border-[#7898bf]/15 bg-[#0b1636]/45 px-4 py-3">
+            <label className="flex cursor-pointer items-start gap-3 text-sm text-slate-200">
+              <input
+                type="checkbox"
+                checked={acceptedPolicy}
+                onChange={(event) => {
+                  setAcceptedPolicy(event.target.checked);
+                  if (event.target.checked) setPolicyError("");
+                }}
+                className="mt-0.5 h-4 w-4 accent-[#7898bf]"
+              />
+              <span>
+                I agree to the Broadcast360{" "}
+                <Link href="/policy" target="_blank" className="font-semibold text-[#c5d7ee] underline underline-offset-4 hover:text-white">
+                  policy
+                </Link>
+                .
+              </span>
+            </label>
+            <FieldError message={policyError} />
           </div>
 
           <div>

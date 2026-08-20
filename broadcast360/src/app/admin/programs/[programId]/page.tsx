@@ -1,23 +1,8 @@
 import ProgramCard from "@/components/admin/programs/ProgramCard";
 import PlaylistList from "@/components/admin/playlists/PlaylistList";
 import Link from "next/link";
-
-async function getProgram(id: number) {
-  const res = await fetch(`http://localhost:3000/api/programs/${id}`, {
-    cache: "no-store",
-  });
-
-  return res.json();
-}
-
-async function getPlaylists(id: number, page: number) {
-  const res = await fetch(
-    `http://localhost:3000/api/programs/${id}/playlists?page=${page}`,
-    { cache: "no-store" },
-  );
-
-  return res.json();
-}
+import { fetchProgramDetails } from "@/services/program.service";
+import { PlaylistService } from "@/services/playlist.service";
 
 export default async function Page({
   params,
@@ -32,9 +17,12 @@ export default async function Page({
   const id = Number(programId);
   const currentPage = Number(page ?? 1);
 
-  const programData = await getProgram(id);
-  const playlistData = await getPlaylists(id, currentPage);
-  console.log("PAGE PLAYLIST DATA:", playlistData);
+  const programData = await fetchProgramDetails(id);
+  const playlistData = await PlaylistService.getProgramPlaylists(id, currentPage, 10);
+
+  if (!programData) {
+    throw new Error("Program not found");
+  }
 
   return (
     <div className="space-y-6 p-6">
@@ -59,7 +47,7 @@ export default async function Page({
       </div>
 
       {/* PROGRAM INFO */}
-      <ProgramCard program={programData.data} />
+      <ProgramCard program={{ ...programData, channel: programData.channel?.name ?? "Unassigned" }} />
 
       {/* PLAYLIST SECTION */}
       <div className="rounded-xl border border-white/10 bg-[#0B1026] p-4">
@@ -67,9 +55,9 @@ export default async function Page({
 
         <PlaylistList
           programId={id}
-          playlists={playlistData.data.playlists}
-          page={playlistData.data.page}
-          totalPages={playlistData.data.totalPages}
+          playlists={playlistData.playlists}
+          page={playlistData.page}
+          totalPages={playlistData.totalPages}
         />
       </div>
     </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   Newspaper,
@@ -71,10 +72,10 @@ export default function NewsPage() {
             </p>
           </div>
 
-          <button className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#4f6689] to-[#400FD3] px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-[#400FD3]/20 transition-all hover:opacity-90 active:scale-95">
+          <Link href="/admin/news/create" className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#4f6689] to-[#400FD3] px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-[#400FD3]/20 transition-all hover:opacity-90 active:scale-95">
             <Plus size={16} />
             Create News
-          </button>
+          </Link>
         </div>
 
         {/* Data Table */}
@@ -157,13 +158,10 @@ export default function NewsPage() {
                       {/* Actions */}
                       <td className="py-3.5 px-4 text-center">
                         {item.videoUrl ? (
-                          <button
-                            onClick={() => window.open(item.videoUrl!, "_blank")}
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold text-emerald-400 hover:bg-emerald-500/20 transition-all"
-                          >
+                          <Link href={`/admin/news/${item.id}`} className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-[11px] font-semibold text-emerald-400 hover:bg-emerald-500/20 transition-all">
                             <Play size={12} className="fill-current" />
-                            Watch Stream
-                          </button>
+                            View
+                          </Link>
                         ) : (
                           <span className="inline-flex items-center gap-1 text-[11px] text-zinc-600 italic">
                             <Video size={12} /> No Media

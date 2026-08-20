@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { resolveMediaUrl } from "@/lib/media/url";
+import { getPortalCorsHeaders } from "@/lib/portal-cors";
 
 interface Params {
   params: Promise<{
@@ -9,6 +11,8 @@ interface Params {
 
 export async function GET(request: Request, { params }: Params) {
   try {
+    const origin = new URL(request.url).origin;
+    const corsHeaders = getPortalCorsHeaders(request);
     const { id } = await params;
 
     const seriesId = Number(id);
@@ -109,9 +113,7 @@ export async function GET(request: Request, { params }: Params) {
 
         releaseYear: item.releaseYear,
 
-        thumbnail: item.thumbnail
-          ? `http://localhost:3000${item.thumbnail}`
-          : null,
+        thumbnail: resolveMediaUrl(item.thumbnail, origin),
 
         latestEpisode: latestEpisode
           ? {
@@ -135,9 +137,7 @@ export async function GET(request: Request, { params }: Params) {
       {
         status: 200,
         headers: {
-          "Access-Control-Allow-Origin": "http://localhost:3001",
-          "Access-Control-Allow-Methods": "GET, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type",
+          ...corsHeaders,
         },
       },
     );

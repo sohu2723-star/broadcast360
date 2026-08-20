@@ -1,17 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "http://localhost:3001",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-};
+import { resolveMediaUrl } from "@/lib/media/url";
+import { getPortalCorsHeaders } from "@/lib/portal-cors";
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const origin = new URL(req.url).origin;
+    const corsHeaders = getPortalCorsHeaders(req);
     const { id } = await params;
 
     const seriesId = Number(id);
@@ -127,9 +125,7 @@ export async function GET(
 
         duration: episode.duration,
 
-        thumbnail: episode.thumbnailUrl
-          ? `http://localhost:3000${episode.thumbnailUrl}`
-          : null,
+        thumbnail: resolveMediaUrl(episode.thumbnailUrl, origin),
 
         videoUrl: episode.videoUrl,
       });
@@ -163,9 +159,7 @@ export async function GET(
 
         releaseYear: series.releaseYear,
 
-        thumbnail: series.thumbnail
-          ? `http://localhost:3000${series.thumbnail}`
-          : null,
+        thumbnail: resolveMediaUrl(series.thumbnail, origin),
 
         latestEpisode: episodes[episodes.length - 1],
 
@@ -185,7 +179,7 @@ export async function GET(
       },
       {
         status: 500,
-        headers: corsHeaders,
+        headers: getPortalCorsHeaders(req),
       },
     );
   }
@@ -193,7 +187,7 @@ export async function GET(
 
 export async function OPTIONS() {
   return new NextResponse(null, {
-    status: 200,
-    headers: corsHeaders,
+    status: 204,
+    headers: getPortalCorsHeaders(),
   });
 }
