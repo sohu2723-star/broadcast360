@@ -76,6 +76,8 @@ model User {
   programReminders     ProgramReminder[]
   contactMessages      ContactMessage[]
   supportConversations SupportConversation[]
+  liveViewerSessions LiveViewerSession[]
+  advertisementEvents AdvertisementEvent[]
   reactivationRequests AccountReactivationRequest[] @relation("ReactivationRequester")
   reviewedReactivationRequests AccountReactivationRequest[] @relation("ReactivationReviewer")
 }
@@ -110,6 +112,7 @@ model Channel {
   schedules         Schedule[]
   recordings        Recording[]
   broadcastSessions BroadcastSession[]
+  liveViewerSessions LiveViewerSession[]
   createdAt         DateTime           @default(now())
   programs          Program[]
 
@@ -230,6 +233,7 @@ model Advertisement {
   createdAt    DateTime @default(now())
 
   playlistItems PlaylistItem[]
+  analyticsEvents AdvertisementEvent[]
 }
 
 // =====================
@@ -428,6 +432,7 @@ model BroadcastSession {
 
   channel  Channel   @relation(fields: [channelId], references: [id])
   schedule Schedule? @relation(fields: [scheduleId], references: [id])
+  liveViewerSessions LiveViewerSession[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -497,6 +502,47 @@ model Favorite {
   @@unique([userId, episodeId])
   @@unique([userId, entertainmentId])
   @@unique([userId, newsId])
+}
+
+enum AdvertisementEventType {
+  IMPRESSION
+  COMPLETE
+  CLICK
+}
+
+model LiveViewerSession {
+  id Int @id @default(autoincrement())
+  sessionKey String @unique
+  viewerKey String
+  userId Int?
+  channelId Int
+  broadcastSessionId Int?
+  startedAt DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+  endedAt DateTime?
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  broadcastSession BroadcastSession? @relation(fields: [broadcastSessionId], references: [id], onDelete: SetNull)
+
+  @@index([channelId, lastSeenAt])
+  @@index([lastSeenAt])
+  @@index([startedAt])
+}
+
+model AdvertisementEvent {
+  id Int @id @default(autoincrement())
+  advertisementId Int
+  userId Int?
+  sessionKey String?
+  eventType AdvertisementEventType
+  occurredAt DateTime @default(now())
+
+  advertisement Advertisement @relation(fields: [advertisementId], references: [id], onDelete: Cascade)
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([advertisementId, eventType, occurredAt])
+  @@index([occurredAt])
 }
 
 model SubscriptionPlan {

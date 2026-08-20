@@ -294,6 +294,45 @@ export default function VideoPlayer({
     accessChannel?.playbackUrl,
   ]);
 
+  useEffect(() => {
+    if (accessState !== "allowed" || !channel?.id) {
+      return;
+    }
+
+    const randomPart = typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const sessionKey = `live-${channel.id}-${randomPart}`;
+    const viewerKey = typeof window !== "undefined" && window.localStorage.getItem("broadcast360_viewer_key")
+      ? window.localStorage.getItem("broadcast360_viewer_key")!
+      : `viewer-${randomPart}`;
+
+    if (typeof window !== "undefined" && !window.localStorage.getItem("broadcast360_viewer_key")) {
+      window.localStorage.setItem("broadcast360_viewer_key", viewerKey);
+    }
+
+    let disposed = false;
+    const send = (event: "start" | "heartbeat" | "end", keepalive = false) => {
+      if (disposed && event !== "end") return;
+      return fetch("/api/analytics/live-view", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        keepalive,
+        body: JSON.stringify({ channelId: channel.id, sessionKey, viewerKey, event }),
+      }).catch(() => undefined);
+    };
+
+    void send("start");
+    const interval = window.setInterval(() => void send("heartbeat"), 30_000);
+
+    return () => {
+      disposed = true;
+      window.clearInterval(interval);
+      void send("end", true);
+    };
+  }, [accessState, channel?.id]);
+
   /*
    * =====================================================
    * NO CHANNEL
