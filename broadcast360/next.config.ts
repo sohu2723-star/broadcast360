@@ -1,10 +1,21 @@
+import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 import type { NextConfig } from "next";
+
+initOpenNextCloudflareForDev();
 
 const userPortalOrigin = process.env.USER_PORTAL_ORIGIN || "http://localhost:3001";
 const streamOrigin = process.env.PUBLIC_STREAM_ORIGIN || "*";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["fluent-ffmpeg", "@ffprobe-installer/ffprobe"],
+  serverExternalPackages: [
+    "fluent-ffmpeg",
+    "@ffprobe-installer/ffprobe",
+    "@prisma/client",
+    ".prisma/client",
+    "pg",
+    "pg-cloudflare",
+    "jose",
+  ],
   async headers() {
     return [
       {

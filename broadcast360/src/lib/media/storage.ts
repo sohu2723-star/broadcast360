@@ -1,8 +1,9 @@
 import fs from "fs/promises";
 import path from "path";
 import { createClient } from "@supabase/supabase-js";
+import { isR2Configured, createR2SignedUpload, uploadR2MediaFile } from "./r2-storage";
 
-const DEFAULT_BUCKET = "broadcast360-media";
+const DEFAULT_BUCKET = "hxu-movie-media";
 
 function getStorageConfig() {
   const baseUrl = process.env.SUPABASE_URL?.replace(/\/$/, "");
@@ -37,13 +38,17 @@ export async function createSignedMediaUpload(input: {
   contentType?: string;
   size: number;
 }) {
+  if (!Number.isFinite(input.size) || input.size <= 0) {
+    throw new Error("Uploaded file is empty");
+  }
+
+  if (isR2Configured()) {
+    return createR2SignedUpload(input);
+  }
+
   const config = getStorageConfig();
   if (!config) {
     throw new Error("Supabase Storage is not configured");
-  }
-
-  if (!Number.isFinite(input.size) || input.size <= 0) {
-    throw new Error("Uploaded file is empty");
   }
 
   const client = createClient(config.baseUrl, config.apiKey, {
@@ -75,6 +80,10 @@ export async function createSignedMediaUpload(input: {
 export async function uploadMediaFile(file: File, folder: string) {
   if (!file || file.size <= 0) {
     throw new Error("Uploaded file is empty");
+  }
+
+  if (isR2Configured()) {
+    return uploadR2MediaFile(file, folder);
   }
 
   const filename = `${Date.now()}-${safeFilename(file.name)}`;

@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "@/lib/jwt";
 import { verifyUserToken } from "@/lib/user-jwt";
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const origin = request.headers.get("origin");
 
@@ -115,5 +115,10 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/admin/:path*"],
+  matcher: [
+    "/",
+    "/admin/:path*",
+    "/api/admin/:path*",
+    "/api/user-portal/:path*",
+  ],
 };

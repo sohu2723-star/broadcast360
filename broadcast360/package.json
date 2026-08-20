@@ -1,11 +1,15 @@
 {
-  "name": "broadcast360",
+  "name": "hxu-movie-admin",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "prisma generate && next dev -p ${PORT:-3000}",
     "build": "prisma generate && next build",
     "start": "next start -p ${PORT:-3000}",
+    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "db:generate": "prisma generate",
@@ -14,9 +18,12 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1115.0",
+    "@aws-sdk/s3-request-presigner": "^3.1115.0",
     "@ffprobe-installer/ffprobe": "^2.1.2",
     "@heroicons/react": "^2.2.0",
     "@hookform/resolvers": "^5.4.0",
+    "@opennextjs/cloudflare": "^1.20.2",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.9.0",
     "@supabase/supabase-js": "^2.112.3",
@@ -30,9 +37,10 @@
     "jose": "^6.2.5",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^1.27.0",
-    "next": "16.2.9",
+    "next": "^16.2.11",
     "nodemailer": "^9.0.5",
     "pg": "^8.22.0",
+    "pg-cloudflare": "^1.4.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-hook-form": "^7.80.0",
@@ -59,6 +67,7 @@
     "prisma": "^7.9.0",
     "tailwindcss": "^4",
     "tsx": "^4.22.4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wrangler": "^4.125.0"
   }
 }

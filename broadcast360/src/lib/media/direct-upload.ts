@@ -38,13 +38,22 @@ export async function uploadAdminFileDirect(
     );
   }
 
-  const uploadBody = new FormData();
-  uploadBody.append("cacheControl", "3600");
-  uploadBody.append("", file);
+  const r2UploadHeaders =
+    signedBody.uploadHeaders && typeof signedBody.uploadHeaders === "object"
+      ? (signedBody.uploadHeaders as Record<string, string>)
+      : null;
+  const uploadBody = r2UploadHeaders
+    ? file
+    : (() => {
+        const formData = new FormData();
+        formData.append("cacheControl", "3600");
+        formData.append("", file);
+        return formData;
+      })();
 
   const uploadResponse = await fetch(signedBody.signedUrl as string, {
     method: "PUT",
-    headers: { "x-upsert": "false" },
+    headers: r2UploadHeaders || { "x-upsert": "false" },
     body: uploadBody,
   });
   const uploadText = await uploadResponse.text().catch(() => "");
