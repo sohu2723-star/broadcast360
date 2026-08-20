@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import AdvertisementForm from "@/components/admin/advertisements/advertisementForm";
+import { uploadAdminFileDirect } from "@/lib/media/direct-upload";
 
 type AdvertisementFormPayload = {
   title: string;
@@ -11,6 +12,24 @@ type AdvertisementFormPayload = {
   thumbnail: File | null;
 };
 
+function getVideoDuration(file: File) {
+  return new Promise<number>((resolve) => {
+    const url = URL.createObjectURL(file);
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    video.onloadedmetadata = () => {
+      const duration = Number.isFinite(video.duration) ? video.duration : 0;
+      URL.revokeObjectURL(url);
+      resolve(Math.max(0, Math.round(duration)));
+    };
+    video.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(0);
+    };
+    video.src = url;
+  });
+}
+
 export default function CreateAdvertisementPage() {
   const router = useRouter();
   const [error, setError] = useState("");
@@ -18,14 +37,24 @@ export default function CreateAdvertisementPage() {
   async function handleCreateSubmit(data: AdvertisementFormPayload) {
     setError("");
 
-    const formData = new FormData();
-    formData.append("title", data.title);
-    formData.append("active", String(data.active));
-
-    if (data.video) formData.append("video", data.video);
-    if (data.thumbnail) formData.append("thumbnail", data.thumbnail);
-
     try {
+      if (!data.video) throw new Error("Advertisement video file is required");
+
+      const [videoUpload, thumbnailUpload, duration] = await Promise.all([
+        uploadAdminFileDirect(data.video, "videos/ads"),
+        data.thumbnail
+          ? uploadAdminFileDirect(data.thumbnail, "thumbnails/ads")
+          : Promise.resolve(null),
+        getVideoDuration(data.video),
+      ]);
+
+      const formData = new FormData();
+      formData.append("title", data.title);
+      formData.append("active", String(data.active));
+      formData.append("videoUrl", videoUpload.publicUrl);
+      formData.append("duration", String(duration));
+      if (thumbnailUpload) formData.append("thumbnailUrl", thumbnailUpload.publicUrl);
+
       const res = await fetch("/api/ads", {
         method: "POST",
         body: formData,
@@ -33,7 +62,7 @@ export default function CreateAdvertisementPage() {
       const result = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        throw new Error(result.message || result.error || "Advertisement creation failed");
+        throw new Error(result.message || result.error || `Advertisement create failed (HTTP ${res.status})`);
       }
 
       router.push("/admin/ads");

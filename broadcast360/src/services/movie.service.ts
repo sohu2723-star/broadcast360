@@ -115,15 +115,37 @@ export async function addMovie(formData: FormData) {
   const genre = formData.get("genre") as string;
   const releaseYear = Number(formData.get("releaseYear"));
 
-  const video = formData.get("video") as File;
-  const thumbnail = formData.get("thumbnail") as File;
+  const video = formData.get("video") as File | null;
+  const thumbnail = formData.get("thumbnail") as File | null;
+  const preUploadedVideoUrl = String(formData.get("videoUrl") ?? "").trim();
+  const preUploadedThumbnailUrl = String(formData.get("thumbnailUrl") ?? "").trim();
+  const preUploadedDuration = Number(formData.get("duration"));
 
-  if (!video) {
+  if ((!video || video.size <= 0) && !preUploadedVideoUrl) {
     throw new Error("Video is required");
   }
 
-  if (!thumbnail) {
+  if ((!thumbnail || thumbnail.size <= 0) && !preUploadedThumbnailUrl) {
     throw new Error("Thumbnail is required");
+  }
+
+  if (preUploadedVideoUrl && preUploadedThumbnailUrl) {
+    return createMovie({
+      title,
+      description,
+      genre,
+      releaseYear,
+      videoUrl: preUploadedVideoUrl,
+      thumbnail: preUploadedThumbnailUrl,
+      duration:
+        Number.isFinite(preUploadedDuration) && preUploadedDuration >= 0
+          ? Math.round(preUploadedDuration)
+          : 0,
+    });
+  }
+
+  if (!video || !thumbnail) {
+    throw new Error("Both video and thumbnail are required");
   }
 
   const temporaryPath = await writeTemporaryMediaFile(video, "broadcast360-movie");

@@ -4,6 +4,25 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import EntertainmentForm from "@/components/admin/entertainments/entertainmentForm";
 import type { EntertainmentFormData } from "@/types/entertainment";
+import { uploadAdminFileDirect } from "@/lib/media/direct-upload";
+
+function getVideoDuration(file: File) {
+  return new Promise<number>((resolve) => {
+    const url = URL.createObjectURL(file);
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    video.onloadedmetadata = () => {
+      const duration = Number.isFinite(video.duration) ? video.duration : 0;
+      URL.revokeObjectURL(url);
+      resolve(Math.max(0, Math.round(duration)));
+    };
+    video.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(0);
+    };
+    video.src = url;
+  });
+}
 
 export default function CreateEntertainmentPage() {
   const router = useRouter();
@@ -18,31 +37,27 @@ export default function CreateEntertainmentPage() {
 
   async function handleSubmit(data: EntertainmentFormData) {
     try {
-      const formData = new FormData();
+      if (!(data.video instanceof File)) {
+        throw new Error("Entertainment video file is required");
+      }
+      if (!(data.thumbnail instanceof File)) {
+        throw new Error("Entertainment thumbnail is required");
+      }
 
+      const [videoUpload, thumbnailUpload, duration] = await Promise.all([
+        uploadAdminFileDirect(data.video, "videos/entertainments"),
+        uploadAdminFileDirect(data.thumbnail, "thumbnails/entertainments"),
+        getVideoDuration(data.video),
+      ]);
+
+      const formData = new FormData();
       formData.append("title", data.title);
       formData.append("description", data.description);
       formData.append("category", data.category);
-
-      formData.append(
-        "releaseYear",
-        String(data.releaseYear)
-      );
-
-      formData.append(
-        "duration",
-        String(data.duration)
-      );
-
-
-
-      if (data.video instanceof File) {
-        formData.append("video", data.video);
-      }
-
-      if (data.thumbnail instanceof File) {
-        formData.append("thumbnail", data.thumbnail);
-      }
+      formData.append("releaseYear", String(data.releaseYear));
+      formData.append("duration", String(duration));
+      formData.append("videoUrl", videoUpload.publicUrl);
+      formData.append("thumbnailUrl", thumbnailUpload.publicUrl);
 
       const res = await fetch("/api/entertainments", {
         method: "POST",

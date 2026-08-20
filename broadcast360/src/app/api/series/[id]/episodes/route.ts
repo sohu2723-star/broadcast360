@@ -155,6 +155,8 @@ export async function POST(
       videoRaw.size > 0
         ? videoRaw
         : null;
+    const videoUrl = String(formData.get("videoUrl") ?? "").trim();
+    const duration = Number(formData.get("duration"));
 
     // =================================================
     // THUMBNAIL
@@ -168,6 +170,7 @@ export async function POST(
       thumbnailRaw.size > 0
         ? thumbnailRaw
         : null;
+    const thumbnailUrl = String(formData.get("thumbnailUrl") ?? "").trim();
 
     // =================================================
     // VALIDATE EPISODE NUMBER
@@ -194,7 +197,7 @@ export async function POST(
     // VIDEO REQUIRED
     // =================================================
 
-    if (!videoFile) {
+    if (!videoFile && !videoUrl) {
       return NextResponse.json(
         {
           message:
@@ -222,6 +225,9 @@ export async function POST(
           episodeNo,
           videoFile,
           thumbnailFile,
+          videoUrl,
+          thumbnailUrl,
+          duration,
         },
       );
 

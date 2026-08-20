@@ -106,6 +106,9 @@ export async function addEntertainment(formData: FormData) {
   const releaseYear = releaseYearValue ? Number(releaseYearValue) : undefined;
   const thumbnail = formData.get("thumbnail") as File | null;
   const video = formData.get("video") as File | null;
+  const preUploadedThumbnailUrl = String(formData.get("thumbnailUrl") ?? "").trim();
+  const preUploadedVideoUrl = String(formData.get("videoUrl") ?? "").trim();
+  const preUploadedDuration = Number(formData.get("duration"));
 
   if (!title || !description || !category) {
     throw new Error("Missing required fields");
@@ -120,14 +123,18 @@ export async function addEntertainment(formData: FormData) {
   }
 
   const thumbnailUrl =
-    thumbnail instanceof File && thumbnail.size > 0
+    preUploadedThumbnailUrl ||
+    (thumbnail instanceof File && thumbnail.size > 0
       ? await uploadMediaFile(thumbnail, "thumbnails/entertainments")
-      : "";
+      : "");
 
-  let videoUrl = "";
-  let duration = 0;
+  let videoUrl = preUploadedVideoUrl;
+  let duration =
+    Number.isFinite(preUploadedDuration) && preUploadedDuration >= 0
+      ? Math.round(preUploadedDuration)
+      : 0;
 
-  if (video instanceof File && video.size > 0) {
+  if (!videoUrl && video instanceof File && video.size > 0) {
     const temporaryPath = await writeTemporaryMediaFile(
       video,
       "broadcast360-entertainment",

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import MovieForm from "@/components/admin/movies/movieForm";
 import type { MovieFormData } from "@/types/movie";
+import { uploadAdminFileDirect } from "@/lib/media/direct-upload";
 
 function getResponseMessage(response: Response, body: string) {
   const contentType = response.headers.get("content-type") || "";
@@ -21,7 +22,12 @@ function getResponseMessage(response: Response, body: string) {
     return parsed.message || parsed.error || "Movie creation failed";
   }
 
-  if (response.redirected || response.url.includes("/login") || response.status === 401 || response.status === 403) {
+  if (
+    response.redirected ||
+    response.url.includes("/login") ||
+    response.status === 401 ||
+    response.status === 403
+  ) {
     return "Admin session expired or access was denied. Please log in again and retry.";
   }
 
@@ -32,6 +38,24 @@ function getResponseMessage(response: Response, body: string) {
   return `Movie creation failed (HTTP ${response.status}). Please try again.`;
 }
 
+function getVideoDuration(file: File) {
+  return new Promise<number>((resolve) => {
+    const url = URL.createObjectURL(file);
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    video.onloadedmetadata = () => {
+      const duration = Number.isFinite(video.duration) ? video.duration : 0;
+      URL.revokeObjectURL(url);
+      resolve(Math.max(0, Math.round(duration)));
+    };
+    video.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(0);
+    };
+    video.src = url;
+  });
+}
+
 export default function CreateMoviePage() {
   const router = useRouter();
   const [apiError, setApiError] = useState("");
@@ -39,14 +63,30 @@ export default function CreateMoviePage() {
   async function handleSubmit(data: MovieFormData) {
     try {
       setApiError("");
+
+      if (!data.video) {
+        setApiError("Video file is required");
+        return;
+      }
+      if (!data.thumbnail) {
+        setApiError("Movie poster is required");
+        return;
+      }
+
+      const [videoUpload, thumbnailUpload, duration] = await Promise.all([
+        uploadAdminFileDirect(data.video, "videos/movies"),
+        uploadAdminFileDirect(data.thumbnail, "thumbnails/movies"),
+        getVideoDuration(data.video),
+      ]);
+
       const formData = new FormData();
       formData.append("title", data.title);
       formData.append("description", data.description);
       formData.append("genre", data.genre);
       formData.append("releaseYear", String(data.releaseYear));
-
-      if (data.video) formData.append("video", data.video);
-      if (data.thumbnail) formData.append("thumbnail", data.thumbnail);
+      formData.append("videoUrl", videoUpload.publicUrl);
+      formData.append("thumbnailUrl", thumbnailUpload.publicUrl);
+      formData.append("duration", String(duration));
 
       const response = await fetch("/api/movies", {
         method: "POST",
@@ -79,7 +119,7 @@ export default function CreateMoviePage() {
       setApiError(
         error instanceof Error
           ? error.message
-          : "Unable to reach the server. Check your connection and try again.",
+          : "Unable to upload or create the movie. Please try again.",
       );
     }
   }

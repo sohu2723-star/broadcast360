@@ -6,44 +6,36 @@ export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
 
-    const title = formData.get("title");
-    const active = formData.get("active");
+    const title = String(formData.get("title") ?? "").trim();
+    const activeRaw = formData.get("active");
+    const active = activeRaw === "true" || activeRaw === "1";
     const video = formData.get("video");
     const thumbnail = formData.get("thumbnail");
+    const videoUrl = String(formData.get("videoUrl") ?? "").trim();
+    const thumbnailUrl = String(formData.get("thumbnailUrl") ?? "").trim();
+    const duration = String(formData.get("duration") ?? "");
 
-    const rawData: any = {
-      title,
-      active,
-      video,
-    };
-
-    if (thumbnail && thumbnail instanceof File && thumbnail.size > 0) {
-      rawData.thumbnail = thumbnail;
-    } else {
-      rawData.thumbnail = undefined;
-    }
-
-    const result = createAdvertisementSchema.safeParse(rawData);
-
-    if (!result.success) {
+    if (!title) {
       return NextResponse.json(
-        {
-          message: "Validation failed",
-          errors: result.error.flatten().fieldErrors,
-        },
-        { status: 400 }
+        { message: "Advertisement title is required" },
+        { status: 400 },
+      );
+    }
+    if ((!(video instanceof File) || video.size <= 0) && !videoUrl) {
+      return NextResponse.json(
+        { message: "Advertisement video file is required" },
+        { status: 400 },
       );
     }
 
-    const validatedData = result.data;
     const processedFormData = new FormData();
-    processedFormData.append("title", validatedData.title);
-    processedFormData.append("active", String(validatedData.active));
-    processedFormData.append("video", validatedData.video);
-    
-    if (validatedData.thumbnail) {
-      processedFormData.append("thumbnail", validatedData.thumbnail);
-    }
+    processedFormData.append("title", title);
+    processedFormData.append("active", String(active));
+    if (video instanceof File && video.size > 0) processedFormData.append("video", video);
+    if (thumbnail instanceof File && thumbnail.size > 0) processedFormData.append("thumbnail", thumbnail);
+    if (videoUrl) processedFormData.append("videoUrl", videoUrl);
+    if (thumbnailUrl) processedFormData.append("thumbnailUrl", thumbnailUrl);
+    if (duration) processedFormData.append("duration", duration);
 
     const newAdvertisement = await createAdvertisement(processedFormData);
     return NextResponse.json(newAdvertisement, { status: 201 });
@@ -51,8 +43,11 @@ export async function POST(req: NextRequest) {
   } catch (error: unknown) {
     console.error("POST ERROR =", error);
     return NextResponse.json(
-      { message: error || "Create error" },
-      { status: 500 }
+      {
+        message:
+          error instanceof Error ? error.message : "Advertisement create failed",
+      },
+      { status: 500 },
     );
   }
 }

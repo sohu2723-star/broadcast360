@@ -12,6 +12,7 @@ import {
   createChannelSchema,
   updateChannelSchema,
 } from "@/lib/validators/channel.validator";
+import { uploadAdminFileDirect } from "@/lib/media/direct-upload";
 
 type ChannelFormProps = {
   mode: "create" | "edit";
@@ -60,25 +61,8 @@ export default function ChannelForm({
       return logoUrl;
     }
 
-    const form = new FormData();
-
-    form.append("file", logo);
-
-    const res = await fetch(
-      "/api/upload/logo",
-      {
-        method: "POST",
-        body: form,
-      },
-    );
-
-    const data = await res.json();
-
-    if (!res.ok || !data.url) {
-      throw new Error(data.message || "Logo upload failed");
-    }
-
-    return data.url;
+    const upload = await uploadAdminFileDirect(logo, "logos");
+    return upload.publicUrl;
   }
 
   async function submit(event?: React.FormEvent<HTMLFormElement>) {
@@ -353,33 +337,33 @@ export default function ChannelForm({
 
           <input
             type="file"
-            accept="image/*"
+            accept="image/png,image/jpeg,image/webp"
             onChange={(e) => {
-              const file =
-                e.target.files?.[0];
-
+              const file = e.target.files?.[0] ?? null;
               if (!file) return;
 
-              if (
-                !file.type.startsWith(
-                  "image/",
-                )
-              ) {
-                setErrors({
-                  logo:
-                    "Only image files allowed",
-                });
-
+              if (!file.type.match(/^image\/(png|jpeg|webp)$/)) {
+                setLogo(null);
+                setErrors((prev) => ({
+                  ...prev,
+                  logo: "Choose a PNG, JPG, or WEBP image",
+                }));
                 return;
               }
 
-              setLogo(file);
+              if (file.size > 5 * 1024 * 1024) {
+                setLogo(null);
+                setErrors((prev) => ({
+                  ...prev,
+                  logo: "Logo must be 5 MB or smaller",
+                }));
+                return;
+              }
 
-              setPreview(
-                URL.createObjectURL(
-                  file,
-                ),
-              );
+              if (preview.startsWith("blob:")) URL.revokeObjectURL(preview);
+              setLogo(file);
+              setErrors((prev) => ({ ...prev, logo: "" }));
+              setPreview(URL.createObjectURL(file));
             }}
           />
 

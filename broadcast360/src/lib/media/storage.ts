@@ -1,5 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
+import { createClient } from "@supabase/supabase-js";
 
 const DEFAULT_BUCKET = "broadcast360-media";
 
@@ -28,6 +29,47 @@ function encodeStoragePath(storagePath: string) {
 
 function contentTypeFor(file: File) {
   return file.type || "application/octet-stream";
+}
+
+export async function createSignedMediaUpload(input: {
+  folder: string;
+  filename: string;
+  contentType?: string;
+  size: number;
+}) {
+  const config = getStorageConfig();
+  if (!config) {
+    throw new Error("Supabase Storage is not configured");
+  }
+
+  if (!Number.isFinite(input.size) || input.size <= 0) {
+    throw new Error("Uploaded file is empty");
+  }
+
+  const client = createClient(config.baseUrl, config.apiKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+  const storagePath = `${input.folder.replace(/^\/+|\/+$/g, "")}/${Date.now()}-${crypto.randomUUID()}-${safeFilename(input.filename)}`;
+  const { data, error } = await client.storage
+    .from(config.bucket)
+    .createSignedUploadUrl(storagePath, { upsert: false });
+
+  if (error || !data) {
+    throw new Error(error?.message || "Unable to create signed upload URL");
+  }
+
+  const publicUrl = `${config.baseUrl}/storage/v1/object/public/${config.bucket}/${encodeStoragePath(storagePath)}`;
+  return {
+    bucket: config.bucket,
+    path: storagePath,
+    token: data.token,
+    signedUrl: data.signedUrl,
+    publicUrl,
+    contentType: input.contentType || "application/octet-stream",
+  };
 }
 
 export async function uploadMediaFile(file: File, folder: string) {

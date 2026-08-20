@@ -95,7 +95,7 @@ export default function ProgramForm({
         body: JSON.stringify(result.data),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
       if (res.ok) {
         setMessage(
@@ -106,7 +106,19 @@ export default function ProgramForm({
 
         router.push("/admin/programs");
       } else {
-        setMessage(data.message || "Something went wrong");
+        const fieldErrors = data.errors || {};
+        const nextErrors: Record<string, string> = {
+          channelId: Array.isArray(fieldErrors.channelId) ? fieldErrors.channelId[0] || "" : "",
+          title: Array.isArray(fieldErrors.title) ? fieldErrors.title[0] || "" : "",
+          type: Array.isArray(fieldErrors.type) ? fieldErrors.type[0] || "" : "",
+          description: Array.isArray(fieldErrors.description) ? fieldErrors.description[0] || "" : "",
+        };
+        setErrors(nextErrors);
+        setMessage(
+          data.message ||
+            Object.values(nextErrors).find(Boolean) ||
+            "Unable to save program",
+        );
       }
     } catch (error) {
       console.log(error);
@@ -126,7 +138,11 @@ export default function ProgramForm({
       <select
         value={channelId}
 
-        onChange={(e) => setChannelId(e.target.value)}
+        onChange={(e) => {
+          setChannelId(e.target.value);
+          setErrors((prev) => ({ ...prev, channelId: "" }));
+          setMessage("");
+        }}
 
         className="w-full rounded bg-black p-3"
       >
@@ -148,7 +164,11 @@ export default function ProgramForm({
 
         value={title}
 
-        onChange={(e) => setTitle(e.target.value)}
+        onChange={(e) => {
+          setTitle(e.target.value);
+          setErrors((prev) => ({ ...prev, title: "" }));
+          setMessage("");
+        }}
 
         className="w-full rounded bg-black p-3"
       />
@@ -158,7 +178,11 @@ export default function ProgramForm({
       <select
         value={type}
 
-        onChange={(e) => setType(e.target.value as ProgramType)}
+        onChange={(e) => {
+          setType(e.target.value as ProgramType);
+          setErrors((prev) => ({ ...prev, type: "" }));
+          setMessage("");
+        }}
 
         className="w-full rounded bg-black p-3"
       >
@@ -176,7 +200,11 @@ export default function ProgramForm({
 
         value={description}
 
-        onChange={(e) => setDescription(e.target.value)}
+        onChange={(e) => {
+          setDescription(e.target.value);
+          setErrors((prev) => ({ ...prev, description: "" }));
+          setMessage("");
+        }}
 
         className="w-full rounded bg-black p-3"
       />
@@ -189,6 +217,7 @@ export default function ProgramForm({
         <button
           disabled={loading}
 
+          type="button"
           onClick={submit}
 
           className="rounded bg-[#4f6689] px-5 py-3"
@@ -197,6 +226,7 @@ export default function ProgramForm({
         </button>
 
         <button
+          type="button"
           onClick={() => router.push("/admin/programs")}
 
           className="rounded bg-[#F41010] px-5 py-3"

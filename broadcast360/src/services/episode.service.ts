@@ -38,6 +38,9 @@ export type EpisodeCreateInput = {
   episodeNo: number;
   videoFile: File | null;
   thumbnailFile: File | null;
+  videoUrl?: string;
+  thumbnailUrl?: string;
+  duration?: number;
 };
 
 // =====================================================
@@ -194,6 +197,9 @@ export async function addEpisode(
     episodeNo,
     videoFile,
     thumbnailFile,
+    videoUrl: preUploadedVideoUrl,
+    thumbnailUrl: preUploadedThumbnailUrl,
+    duration: preUploadedDuration,
   } = data;
 
   // ===================================================
@@ -213,7 +219,7 @@ export async function addEpisode(
   // VIDEO REQUIRED
   // ===================================================
 
-  if (!videoFile) {
+  if (!videoFile && !preUploadedVideoUrl) {
     throw new Error(
       "Video file is required",
     );
@@ -277,54 +283,63 @@ export async function addEpisode(
   // ===================================================
 
   const fileId = Date.now();
-  const temporaryVideoPath = await writeTemporaryMediaFile(
-    videoFile,
-    "broadcast360-episode",
-  );
+  let duration =
+    Number.isFinite(preUploadedDuration) && (preUploadedDuration ?? 0) >= 0
+      ? Math.round(preUploadedDuration ?? 0)
+      : 0;
+  let thumbnailUrl = preUploadedThumbnailUrl || "";
+  let videoUrl = preUploadedVideoUrl || "";
 
-  let duration = 0;
-  let thumbnailUrl = "";
-  let videoUrl = "";
-
-  try {
-    try {
-      duration = await getVideoDuration(temporaryVideoPath);
-    } catch (error) {
-      console.error("Duration error:", error);
+  if (preUploadedVideoUrl) {
+    if (!thumbnailUrl && thumbnailFile instanceof File && thumbnailFile.size > 0) {
+      thumbnailUrl = await uploadMediaFile(thumbnailFile, "thumbnails/episodes");
     }
+  } else if (videoFile) {
+    const temporaryVideoPath = await writeTemporaryMediaFile(
+      videoFile,
+      "broadcast360-episode",
+    );
 
-    videoUrl = await uploadMediaFile(videoFile, "videos/episodes");
-
-    if (thumbnailFile instanceof File && thumbnailFile.size > 0) {
-      thumbnailUrl = await uploadMediaFile(
-        thumbnailFile,
-        "thumbnails/episodes",
-      );
-    } else {
-      const temporaryThumbnailPath = path.join(
-        "/tmp",
-        `${fileId}-episode-thumb.jpg`,
-      );
+    try {
       try {
-        await generateThumbnail(temporaryVideoPath, temporaryThumbnailPath);
-        const thumbnailBytes = await fs.readFile(temporaryThumbnailPath);
-        const generatedThumbnail = new File(
-          [thumbnailBytes],
-          `${fileId}-episode-thumb.jpg`,
-          { type: "image/jpeg" },
-        );
+        duration = await getVideoDuration(temporaryVideoPath);
+      } catch (error) {
+        console.error("Duration error:", error);
+      }
+
+      videoUrl = await uploadMediaFile(videoFile, "videos/episodes");
+
+      if (thumbnailFile instanceof File && thumbnailFile.size > 0) {
         thumbnailUrl = await uploadMediaFile(
-          generatedThumbnail,
+          thumbnailFile,
           "thumbnails/episodes",
         );
-      } catch (error) {
-        console.error("Thumbnail error:", error);
-      } finally {
-        await fs.rm(temporaryThumbnailPath, { force: true }).catch(() => undefined);
+      } else {
+        const temporaryThumbnailPath = path.join(
+          "/tmp",
+          `${fileId}-episode-thumb.jpg`,
+        );
+        try {
+          await generateThumbnail(temporaryVideoPath, temporaryThumbnailPath);
+          const thumbnailBytes = await fs.readFile(temporaryThumbnailPath);
+          const generatedThumbnail = new File(
+            [thumbnailBytes],
+            `${fileId}-episode-thumb.jpg`,
+            { type: "image/jpeg" },
+          );
+          thumbnailUrl = await uploadMediaFile(
+            generatedThumbnail,
+            "thumbnails/episodes",
+          );
+        } catch (error) {
+          console.error("Thumbnail error:", error);
+        } finally {
+          await fs.rm(temporaryThumbnailPath, { force: true }).catch(() => undefined);
+        }
       }
+    } finally {
+      await removeTemporaryMediaFile(temporaryVideoPath);
     }
-  } finally {
-    await removeTemporaryMediaFile(temporaryVideoPath);
   }
 
   // ===================================================

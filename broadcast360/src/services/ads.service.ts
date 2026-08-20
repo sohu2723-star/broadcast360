@@ -21,8 +21,28 @@ export async function createAdvertisement(formData: FormData) {
   const active = formData.get("active") === "true";
   const video = formData.get("video") as File | null;
   const thumbnail = formData.get("thumbnail") as File | null;
+  const preUploadedVideoUrl = String(formData.get("videoUrl") ?? "").trim();
+  const preUploadedThumbnailUrl = String(formData.get("thumbnailUrl") ?? "").trim();
+  const preUploadedDuration = Number(formData.get("duration"));
 
-  if (!video || video.size === 0) {
+  if ((!video || video.size === 0) && !preUploadedVideoUrl) {
+    throw new Error("Video file is required for creating an advertisement");
+  }
+
+  if (preUploadedVideoUrl) {
+    return dbCreateAdvertisement({
+      title,
+      active,
+      thumbnailUrl: preUploadedThumbnailUrl || undefined,
+      videoUrl: preUploadedVideoUrl,
+      duration:
+        Number.isFinite(preUploadedDuration) && preUploadedDuration >= 0
+          ? Math.round(preUploadedDuration)
+          : 0,
+    });
+  }
+
+  if (!video) {
     throw new Error("Video file is required for creating an advertisement");
   }
 

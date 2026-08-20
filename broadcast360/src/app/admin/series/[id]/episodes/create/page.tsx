@@ -15,6 +15,25 @@ import EpisodeForm from "@/components/admin/episode/EpisodeForm";
 import type {
   EpisodeFormData,
 } from "@/types/episode";
+import { uploadAdminFileDirect } from "@/lib/media/direct-upload";
+
+function getVideoDuration(file: File) {
+  return new Promise<number>((resolve) => {
+    const url = URL.createObjectURL(file);
+    const video = document.createElement("video");
+    video.preload = "metadata";
+    video.onloadedmetadata = () => {
+      const duration = Number.isFinite(video.duration) ? video.duration : 0;
+      URL.revokeObjectURL(url);
+      resolve(Math.max(0, Math.round(duration)));
+    };
+    video.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(0);
+    };
+    video.src = url;
+  });
+}
 
 type SeriesData = {
   id: number;
@@ -106,52 +125,24 @@ export default function CreateEpisodePage() {
   async function handleSubmit(
     data: EpisodeFormData,
   ) {
-    const formData =
-      new FormData();
-
-    // =================================================
-    // TITLE
-    // =================================================
-
-    formData.append(
-      "title",
-      data.title.trim(),
-    );
-
-    // =================================================
-    // EPISODE NUMBER
-    // =================================================
-
-    formData.append(
-      "episodeNo",
-      String(
-        data.episodeNo,
-      ),
-    );
-
-    // =================================================
-    // VIDEO
-    // =================================================
-
-    if (data.videoFile) {
-      formData.append(
-        "video",
-        data.videoFile,
-      );
+    if (!data.videoFile) {
+      throw new Error("Video file is required");
     }
 
-    // =================================================
-    // THUMBNAIL
-    // =================================================
-
-    if (
+    const [videoUpload, thumbnailUpload, duration] = await Promise.all([
+      uploadAdminFileDirect(data.videoFile, "videos/episodes"),
       data.thumbnailFile
-    ) {
-      formData.append(
-        "thumbnail",
-        data.thumbnailFile,
-      );
-    }
+        ? uploadAdminFileDirect(data.thumbnailFile, "thumbnails/episodes")
+        : Promise.resolve(null),
+      getVideoDuration(data.videoFile),
+    ]);
+
+    const formData = new FormData();
+    formData.append("title", data.title.trim());
+    formData.append("episodeNo", String(data.episodeNo));
+    formData.append("videoUrl", videoUpload.publicUrl);
+    formData.append("duration", String(duration));
+    if (thumbnailUpload) formData.append("thumbnailUrl", thumbnailUpload.publicUrl);
 
     const res =
       await fetch(

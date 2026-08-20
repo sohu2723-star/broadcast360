@@ -160,6 +160,8 @@ export default function EpisodeForm({
     setLoadingEpisodes,
   ] = useState(false);
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   // ===================================================
   // LOAD EPISODES
   // ===================================================
@@ -712,9 +714,20 @@ export default function EpisodeForm({
     // SUBMIT
     // -------------------------------------------------
 
-    await onSubmit(
-      result.data as EpisodeFormData,
-    );
+    try {
+      setIsSubmitting(true);
+      await onSubmit(result.data as EpisodeFormData);
+    } catch (error) {
+      console.error("Episode submit error:", error);
+      setErrors({
+        submit:
+          error instanceof Error
+            ? error.message
+            : "Unable to save episode. Please try again.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   // ===================================================
@@ -900,14 +913,23 @@ export default function EpisodeForm({
 
         {/* BUTTONS */}
 
+        {errors.submit && (
+          <p role="alert" className="rounded-xl border border-red-400/30 bg-red-950/40 p-3 text-sm text-red-200">
+            {errors.submit}
+          </p>
+        )}
+
         <div className="flex gap-4 border-t border-white/10 pt-4">
           <button
             type="submit"
-            className="flex-1 rounded-xl bg-[#4f6689] py-3 font-bold text-white transition hover:opacity-80"
+            disabled={isSubmitting || loadingEpisodes}
+            className="flex-1 rounded-xl bg-[#4f6689] py-3 font-bold text-white transition hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isEdit
-              ? "Update Episode"
-              : "Save Episode"}
+            {isSubmitting
+              ? "Uploading..."
+              : isEdit
+                ? "Update Episode"
+                : "Save Episode"}
           </button>
 
           <button

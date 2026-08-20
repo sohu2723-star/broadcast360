@@ -174,9 +174,9 @@ export async function POST(
 
     const video =
       formData.get("video");
+    const videoUrl = String(formData.get("videoUrl") ?? "").trim();
 
-
-    if (!(video instanceof File)) {
+    if ((!(video instanceof File) || video.size <= 0) && !videoUrl) {
 
       return NextResponse.json(
         {
@@ -194,9 +194,9 @@ export async function POST(
 
     const thumbnail =
       formData.get("thumbnail");
+    const thumbnailUrl = String(formData.get("thumbnailUrl") ?? "").trim();
 
-
-    if (!(thumbnail instanceof File)) {
+    if ((!(thumbnail instanceof File) || thumbnail.size <= 0) && !thumbnailUrl) {
 
       return NextResponse.json(
         {

@@ -73,15 +73,17 @@ export async function POST(req: NextRequest) {
 
     const video = formData.get("video");
     const thumbnail = formData.get("thumbnail");
+    const videoUrl = String(formData.get("videoUrl") ?? "").trim();
+    const thumbnailUrl = String(formData.get("thumbnailUrl") ?? "").trim();
 
-    if (!(video instanceof File) || video.size <= 0) {
+    if ((!(video instanceof File) || video.size <= 0) && !videoUrl) {
       return NextResponse.json(
         { message: "Video file is required" },
         { status: 400 }
       );
     }
 
-    if (!(thumbnail instanceof File) || thumbnail.size <= 0) {
+    if ((!(thumbnail instanceof File) || thumbnail.size <= 0) && !thumbnailUrl) {
       return NextResponse.json(
         { message: "Thumbnail file is required" },
         { status: 400 },
