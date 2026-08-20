@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import AdminConfirmDialog from "@/components/admin/ui/AdminConfirmDialog";
 
 interface Program {
   id: number;
@@ -27,6 +28,8 @@ export default function ProgramsPage() {
   const [programs, setPrograms] = useState<Program[]>([]);
   const [loading, setLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
+  const [deleteTarget, setDeleteTarget] = useState<Program | null>(null);
+  const [actionMessage, setActionMessage] = useState("");
 
   // Dynamic Options States
   const [dynamicTypes, setDynamicTypes] = useState<string[]>([]);
@@ -91,19 +94,22 @@ export default function ProgramsPage() {
     setSelectedChannel(value);
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this program?")) return;
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
 
     startTransition(async () => {
       try {
-        const res = await fetch(`/api/programs/${id}`, { method: "DELETE" });
-        if (res.ok) {
-          setPrograms((prev) => prev.filter((p) => p.id !== id));
-          await fetchWorkspaceData();
-          router.refresh();
-        }
+        const res = await fetch(`/api/programs/${deleteTarget.id}`, { method: "DELETE" });
+        const result = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(result.message || "Delete failed");
+        setPrograms((prev) => prev.filter((p) => p.id !== deleteTarget.id));
+        setDeleteTarget(null);
+        setActionMessage("Program deleted successfully.");
+        await fetchWorkspaceData();
+        router.refresh();
       } catch (error) {
         console.error("Delete error:", error);
+        setActionMessage(error instanceof Error ? error.message : "Delete failed");
       }
     });
   };
@@ -126,6 +132,12 @@ export default function ProgramsPage() {
           + Create Program
         </button>
       </div>
+
+      {actionMessage && (
+        <div className="rounded-xl border border-white/10 bg-[#0B1026] px-4 py-3 text-sm text-slate-200">
+          {actionMessage}
+        </div>
+      )}
 
       {/* FILTER CARD */}
       <div className="rounded-2xl border border-white/10 bg-[#0B1026] p-2">
@@ -242,7 +254,8 @@ export default function ProgramsPage() {
                       </a>
 
                       <button
-                        onClick={() => handleDelete(program.id)}
+                        type="button"
+                        onClick={() => setDeleteTarget(program)}
                         className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:scale-105 hover:bg-red-500"
                       >
                         Delete
@@ -284,6 +297,18 @@ export default function ProgramsPage() {
           </div>
         </div>
       )}
+      <AdminConfirmDialog
+        open={Boolean(deleteTarget)}
+        title="Delete program?"
+        description={deleteTarget ? `“${deleteTarget.title}” will be permanently removed.` : "This action cannot be undone."}
+        confirmLabel="Delete program"
+        destructive
+        loading={isPending}
+        onCancel={() => {
+          if (!isPending) setDeleteTarget(null);
+        }}
+        onConfirm={handleDelete}
+      />
     </div>
   );
 }

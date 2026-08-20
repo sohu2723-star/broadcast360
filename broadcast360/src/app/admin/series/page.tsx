@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import Pagination from "@/components/admin/Pagination";
+import AdminConfirmDialog from "@/components/admin/ui/AdminConfirmDialog";
 
 type SeriesItem = {
   id: number;
@@ -30,6 +31,9 @@ export default function SeriesPage() {
     total: 0,
   });
   const [search, setSearch] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<SeriesItem | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [actionMessage, setActionMessage] = useState("");
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "";
@@ -98,30 +102,24 @@ export default function SeriesPage() {
     }));
   };
 
-  const handleDelete = async (id: number) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this series and all its episodes?",
-    );
-    if (!confirmDelete) return;
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
 
+    setDeleteLoading(true);
+    setActionMessage("");
     try {
-      const res = await fetch(`/api/series/${id}`, {
-        method: "DELETE",
-      });
-
-      const result = await res.json();
-
-      if (!res.ok) {
-        throw new Error(result.message || "Failed to delete from server");
-      }
-
-      setSeriesList((prev) => prev.filter((item) => item.id !== id));
-      alert("Series deleted successfully!");
-
-      loadSeries(pagination.page, search);
+      const res = await fetch(`/api/series/${deleteTarget.id}`, { method: "DELETE" });
+      const result = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(result.message || "Delete failed");
+      setDeleteTarget(null);
+      setSeriesList((prev) => prev.filter((item) => item.id !== deleteTarget.id));
+      setActionMessage("Series deleted successfully.");
+      await loadSeries(pagination.page, search);
     } catch (error) {
       console.error("Delete UI Error:", error);
-      alert("Delete failed. Please try again.");
+      setActionMessage(error instanceof Error ? error.message : "Delete failed");
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -148,6 +146,12 @@ export default function SeriesPage() {
           + Add Series
         </Link>
       </div>
+
+      {actionMessage && (
+        <div className="mb-4 rounded-xl border border-white/10 bg-[#0B1026] px-4 py-3 text-sm text-slate-200">
+          {actionMessage}
+        </div>
+      )}
 
       {/* Main Data Table */}
       <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#0B1026]">
@@ -253,7 +257,8 @@ export default function SeriesPage() {
                           Edit
                         </Link>
                         <button
-                          onClick={() => handleDelete(series.id)}
+                          type="button"
+                          onClick={() => setDeleteTarget(series)}
                           className="rounded-lg bg-[#F41010] px-4 py-2 text-sm text-white transition hover:opacity-80"
                         >
                           Delete
@@ -278,6 +283,19 @@ export default function SeriesPage() {
           setPagination((prev) => ({ ...prev, page: nextPg }));
         }}
         loading={loading}
+      />
+
+      <AdminConfirmDialog
+        open={Boolean(deleteTarget)}
+        title="Delete series?"
+        description={deleteTarget ? `“${deleteTarget.title}” and all of its episodes will be permanently removed.` : "This action cannot be undone."}
+        confirmLabel="Delete series"
+        destructive
+        loading={deleteLoading}
+        onCancel={() => {
+          if (!deleteLoading) setDeleteTarget(null);
+        }}
+        onConfirm={handleDelete}
       />
     </div>
   );

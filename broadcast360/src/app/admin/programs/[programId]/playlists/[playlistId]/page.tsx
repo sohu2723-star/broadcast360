@@ -1,22 +1,15 @@
 import PlaylistItemList from "@/components/admin/playlist-items/PlaylistItemList";
 import PlaylistInfoCard from "@/components/admin/playlists/PlaylistInfoCard";
-import { Series } from "@/generated/prisma/edge";
+import { PlaylistService } from "@/services/playlist.service";
 
 async function getPlaylist(programId: number, playlistId: number) {
-  const baseUrl = process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
+  const playlist = await PlaylistService.getPlaylistById(playlistId);
 
-  const res = await fetch(
-    `${baseUrl}/api/programs/${programId}/playlists/${playlistId}`,
-    { cache: "no-store" },
-  );
-
-  const data = await res.json();
-
-  if (!res.ok) {
-    throw new Error(data.message || "Failed to load playlist");
+  if (!playlist || playlist.program.id !== programId) {
+    throw new Error("Playlist not found");
   }
 
-  return data;
+  return playlist;
 }
 
 interface Props {
@@ -40,9 +33,7 @@ export default async function PlaylistPage({
     throw new Error("Invalid id");
   }
 
-  const data = await getPlaylist(programIdNumber, playlistIdNumber);
-
-  const playlist = data.data;
+  const playlist = await getPlaylist(programIdNumber, playlistIdNumber);
 
   return (
     <div className="min-h-screen bg-[#010312] p-8">

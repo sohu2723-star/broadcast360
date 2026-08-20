@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import Pagination from "@/components/admin/Pagination";
+import AdminConfirmDialog from "@/components/admin/ui/AdminConfirmDialog";
 
 type Advertisement = {
   id: number;
@@ -39,6 +40,9 @@ export default function AdvertisementsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [deleteTarget, setDeleteTarget] = useState<Advertisement | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [actionMessage, setActionMessage] = useState("");
 
   const loadAdvertisements = useCallback(
     async (pageNumber: number, query: string, status: string) => {
@@ -79,30 +83,34 @@ export default function AdvertisementsPage() {
   }, [page, search, statusFilter, loadAdvertisements]);
 
   // DELETE
-  const handleDelete = async (id: number) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this advertisement?",
-    );
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
 
-    if (!confirmDelete) return;
-
+    setDeleteLoading(true);
+    setActionMessage("");
     try {
-      const res = await fetch(`/api/ads/${id}`, {
-        method: "DELETE",
-      });
-
-      if (!res.ok) throw new Error("Delete failed");
-
-      alert("Advertisement deleted");
-      loadAdvertisements(page, search, statusFilter);
+      const res = await fetch(`/api/ads/${deleteTarget.id}`, { method: "DELETE" });
+      const result = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(result.message || "Delete failed");
+      setDeleteTarget(null);
+      setActionMessage("Advertisement deleted successfully.");
+      await loadAdvertisements(page, search, statusFilter);
     } catch (error) {
       console.error(error);
-      alert("Delete failed");
+      setActionMessage(error instanceof Error ? error.message : "Delete failed");
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
   return (
     <div className="p-6">
+      {actionMessage && (
+        <div className="mb-4 rounded-xl border border-white/10 bg-[#0B1026] px-4 py-3 text-sm text-slate-200">
+          {actionMessage}
+        </div>
+      )}
+
       {/* SEARCH + FILTER */}
       <div className="mb-6 flex items-center justify-between">
         <div className="flex gap-4">
@@ -221,7 +229,8 @@ export default function AdvertisementsPage() {
                       </Link>
 
                       <button
-                        onClick={() => handleDelete(ad.id)}
+                        type="button"
+                        onClick={() => setDeleteTarget(ad)}
                         className="cursor-pointer rounded-lg bg-[#F41010] px-4 py-2 text-sm font-semibold text-white transition-all hover:opacity-90"
                       >
                         Delete
@@ -253,6 +262,19 @@ export default function AdvertisementsPage() {
           setPage(nextPg);
         }}
         loading={loading}
+      />
+
+      <AdminConfirmDialog
+        open={Boolean(deleteTarget)}
+        title="Delete advertisement?"
+        description={deleteTarget ? `“${deleteTarget.title}” will be permanently removed.` : "This action cannot be undone."}
+        confirmLabel="Delete advertisement"
+        destructive
+        loading={deleteLoading}
+        onCancel={() => {
+          if (!deleteLoading) setDeleteTarget(null);
+        }}
+        onConfirm={handleDelete}
       />
     </div>
   );

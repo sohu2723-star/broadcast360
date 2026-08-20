@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import AdminConfirmDialog from "@/components/admin/ui/AdminConfirmDialog";
 
 interface Item {
   id: number;
@@ -40,29 +42,39 @@ export default function PlaylistItemList({
   playlistId,
 }: Props) {
   const router = useRouter();
+  const [deleteTarget, setDeleteTarget] = useState<Item | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [actionMessage, setActionMessage] = useState("");
 
-  async function handleDelete(id: number) {
-    if (!confirm("Delete this playlist item?")) {
-      return;
-    }
+  async function handleDelete() {
+    if (!deleteTarget) return;
 
+    setDeleteLoading(true);
+    setActionMessage("");
     const res = await fetch(
-      `/api/programs/${programId}/playlists/${playlistId}/items/${id}`,
-      {
-        method: "DELETE",
-      },
+      `/api/programs/${programId}/playlists/${playlistId}/items/${deleteTarget.id}`,
+      { method: "DELETE" },
     );
 
     if (!res.ok) {
-      alert("Delete failed");
+      setActionMessage("Delete failed");
+      setDeleteLoading(false);
       return;
     }
 
+    setDeleteTarget(null);
+    setDeleteLoading(false);
     router.refresh();
   }
 
   return (
-    <div className="mt-6 overflow-hidden rounded-lg border border-gray-700">
+    <>
+      {actionMessage && (
+        <div className="mt-4 rounded-xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-sm text-red-200">
+          {actionMessage}
+        </div>
+      )}
+      <div className="mt-6 overflow-hidden rounded-lg border border-gray-700">
       <table className="w-full text-left text-sm text-white">
         <thead className="bg-gray-800">
           <tr>
@@ -113,7 +125,8 @@ export default function PlaylistItemList({
 
                 <td className="px-4 py-3 text-right">
                   <button
-                    onClick={() => handleDelete(item.id)}
+                    type="button"
+                    onClick={() => setDeleteTarget(item)}
                     className="rounded bg-red-600 px-3 py-1 text-white hover:bg-red-700"
                   >
                     Delete
@@ -123,6 +136,20 @@ export default function PlaylistItemList({
             ))}
         </tbody>
       </table>
-    </div>
+      </div>
+
+      <AdminConfirmDialog
+        open={Boolean(deleteTarget)}
+        title="Delete playlist item?"
+        description="This playlist item will be permanently removed from the playlist."
+        confirmLabel="Delete item"
+        destructive
+        loading={deleteLoading}
+        onCancel={() => {
+          if (!deleteLoading) setDeleteTarget(null);
+        }}
+        onConfirm={handleDelete}
+      />
+    </>
   );
 }

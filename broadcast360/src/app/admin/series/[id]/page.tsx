@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Pagination from "@/components/admin/Pagination";
+import AdminConfirmDialog from "@/components/admin/ui/AdminConfirmDialog";
 
 type Episode = {
   id: number;
@@ -53,6 +54,9 @@ export default function SeriesDetailPage() {
 
   const [series, setSeries] = useState<Series | null>(null);
   const [loading, setLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState<Episode | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [actionMessage, setActionMessage] = useState("");
 
   const [pagination, setPagination] = useState({
     page: 1,
@@ -90,25 +94,23 @@ export default function SeriesDetailPage() {
     loadSeries(pagination.page);
   }, [pagination.page]);
 
-  const handleDelete = async (episodeId: number) => {
-    if (!id) return;
+  const handleDelete = async () => {
+    if (!id || !deleteTarget) return;
 
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this episode?",
-    );
-    if (!confirmed) return;
-
+    setDeleteLoading(true);
+    setActionMessage("");
     try {
-      const res = await fetch(`/api/episodes/${episodeId}`, {
-        method: "DELETE",
-      });
-
-      if (!res.ok) throw new Error("Delete failed");
-
+      const res = await fetch(`/api/episodes/${deleteTarget.id}`, { method: "DELETE" });
+      const result = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(result.message || "Delete failed");
+      setDeleteTarget(null);
+      setActionMessage("Episode deleted successfully.");
       await loadSeries(pagination.page);
     } catch (error) {
       console.error(error);
-      alert("Delete failed");
+      setActionMessage(error instanceof Error ? error.message : "Delete failed");
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -135,6 +137,12 @@ export default function SeriesDetailPage() {
           ← Back
         </button>
       </div>
+
+      {actionMessage && (
+        <div className="mb-4 rounded-xl border border-white/10 bg-[#0B1026] px-4 py-3 text-sm text-slate-200">
+          {actionMessage}
+        </div>
+      )}
 
       {/* SERIES DETAILS */}
       <div className="w-full rounded-2xl border border-white/10 bg-[#0B1026] p-8">
@@ -356,7 +364,8 @@ export default function SeriesDetailPage() {
                       Edit
                     </Link>
                     <button
-                      onClick={() => handleDelete(ep.id)}
+                      type="button"
+                      onClick={() => setDeleteTarget(ep)}
                       className="rounded bg-red-600 px-3 py-1 text-white hover:bg-red-700"
                     >
                       Delete
@@ -387,6 +396,18 @@ export default function SeriesDetailPage() {
           setPagination((prev) => ({ ...prev, page: nextPg }));
         }}
         loading={loading}
+      />
+      <AdminConfirmDialog
+        open={Boolean(deleteTarget)}
+        title="Delete episode?"
+        description={deleteTarget ? `“${deleteTarget.title}” will be permanently removed.` : "This action cannot be undone."}
+        confirmLabel="Delete episode"
+        destructive
+        loading={deleteLoading}
+        onCancel={() => {
+          if (!deleteLoading) setDeleteTarget(null);
+        }}
+        onConfirm={handleDelete}
       />
     </div>
   );

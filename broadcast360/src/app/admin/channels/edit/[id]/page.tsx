@@ -1,14 +1,14 @@
 import ChannelForm from "@/components/admin/channels/ChannelForm";
+import { fetchChannelById } from "@/services/channel.service";
 
 async function getChannel(id: string) {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_URL}/api/channels/${id}`, {
-    cache: "no-store",
-  });
+  const channel = await fetchChannelById(Number(id));
 
-  if (!res.ok) {
-    throw new Error("Failed to fetch channel");
+  if (!channel) {
+    throw new Error("Channel not found");
   }
-  return res.json();
+
+  return channel;
 }
 
 export default async function EditChannelPage({

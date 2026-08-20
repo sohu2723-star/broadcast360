@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import AdminConfirmDialog from "@/components/admin/ui/AdminConfirmDialog";
 
 type Channel = {
   id: number;
@@ -27,6 +28,9 @@ export default function ChannelsPage() {
   });
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState<Channel | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [actionMessage, setActionMessage] = useState("");
 
   // FETCH PAGINATED CHANNELS
   const loadChannels = useCallback(async (page: number, query: string) => {
@@ -75,22 +79,24 @@ export default function ChannelsPage() {
     setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
-  const handleDelete = async (id: number) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this channel?",
-    );
-    if (!confirmDelete) return;
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
 
+    setDeleteLoading(true);
+    setActionMessage("");
     try {
-      const res = await fetch(`/api/channels/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to delete channel");
-
-      setChannels((prev) => prev.filter((channel) => channel.id !== id));
-      alert("Channel deleted successfully");
-      loadChannels(pagination.page, search);
+      const res = await fetch(`/api/channels/${deleteTarget.id}`, { method: "DELETE" });
+      const result = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(result.message || "Delete failed");
+      setDeleteTarget(null);
+      setChannels((prev) => prev.filter((channel) => channel.id !== deleteTarget.id));
+      setActionMessage("Channel deleted successfully.");
+      await loadChannels(pagination.page, search);
     } catch (error) {
       console.error(error);
-      alert("Delete failed");
+      setActionMessage(error instanceof Error ? error.message : "Delete failed");
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -119,6 +125,12 @@ export default function ChannelsPage() {
           + Add Channel
         </Link>
       </div>
+
+      {actionMessage && (
+        <div className="mb-4 rounded-xl border border-white/10 bg-[#0B1026] px-4 py-3 text-sm text-slate-200">
+          {actionMessage}
+        </div>
+      )}
 
       {/* Main Data Table Card */}
       <div className="bg-[#0B1026] rounded-2xl border border-white/10 overflow-hidden shadow-xl">
@@ -191,7 +203,8 @@ export default function ChannelsPage() {
                             Edit
                           </Link>
                           <button
-                            onClick={() => handleDelete(channel.id)}
+                            type="button"
+                            onClick={() => setDeleteTarget(channel)}
                             className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer"
                           >
                             Delete
@@ -243,6 +256,18 @@ export default function ChannelsPage() {
           </div>
         )}
       </div>
+          <AdminConfirmDialog
+        open={Boolean(deleteTarget)}
+        title="Delete channel?"
+        description={deleteTarget ? `“${deleteTarget.name}” will be permanently removed.` : "This action cannot be undone."}
+        confirmLabel="Delete channel"
+        destructive
+        loading={deleteLoading}
+        onCancel={() => {
+          if (!deleteLoading) setDeleteTarget(null);
+        }}
+        onConfirm={handleDelete}
+      />
     </div>
   );
 }

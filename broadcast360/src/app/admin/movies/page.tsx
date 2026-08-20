@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import Pagination from "@/components/admin/Pagination";
+import AdminConfirmDialog from "@/components/admin/ui/AdminConfirmDialog";
 
 interface Movie {
   id: number;
@@ -29,6 +30,9 @@ export default function MoviesPage() {
   });
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState<Movie | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [actionMessage, setActionMessage] = useState("");
 
   const formatDuration = (seconds: number) => {
     const hrs = Math.floor(seconds / 3600);
@@ -73,20 +77,23 @@ export default function MoviesPage() {
     setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
-  const handleDelete = async (id: number, title: string) => {
-    const confirmDelete = window.confirm(
-      `Are you sure you want to delete "${title}"?`,
-    );
-    if (!confirmDelete) return;
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
 
+    setDeleteLoading(true);
+    setActionMessage("");
     try {
-      const res = await fetch(`/api/movies/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to delete movie");
-      alert("Movie deleted successfully");
-      loadMovies(pagination.page, search);
+      const res = await fetch(`/api/movies/${deleteTarget.id}`, { method: "DELETE" });
+      const result = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(result.message || "Delete failed");
+      setDeleteTarget(null);
+      setActionMessage("Movie deleted successfully.");
+      await loadMovies(pagination.page, search);
     } catch (error) {
       console.error(error);
-      alert("Delete failed");
+      setActionMessage(error instanceof Error ? error.message : "Delete failed");
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -109,11 +116,17 @@ export default function MoviesPage() {
 
         <Link
           href="/admin/movies/create"
-          className="rounded-xl bg-[#4f6689] px-5 py-3 whitespace-nowrap"
+          className="rounded-xl bg-[#4f6689] px-5 py-3 whitespace-nowrap transition hover:bg-[#617fa8]"
         >
           + Add Movie
         </Link>
       </div>
+
+      {actionMessage && (
+        <div className="mb-4 rounded-xl border border-white/10 bg-[#0B1026] px-4 py-3 text-sm text-slate-200">
+          {actionMessage}
+        </div>
+      )}
 
       {/* Main Data Table */}
       <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#0B1026]">
@@ -193,7 +206,7 @@ export default function MoviesPage() {
                             Edit
                           </Link>
                           <button
-                            onClick={() => handleDelete(movie.id, movie.title)}
+                            onClick={() => setDeleteTarget(movie)}
                             className="rounded-lg bg-[#F41010] px-4 py-2 text-sm text-white"
                           >
                             Delete
@@ -219,6 +232,19 @@ export default function MoviesPage() {
           setPagination((prev) => ({ ...prev, page: nextPg }));
         }}
         loading={loading}
+      />
+
+      <AdminConfirmDialog
+        open={Boolean(deleteTarget)}
+        title="Delete movie?"
+        description={deleteTarget ? `“${deleteTarget.title}” will be permanently removed. This action cannot be undone.` : "This action cannot be undone."}
+        confirmLabel="Delete movie"
+        destructive
+        loading={deleteLoading}
+        onCancel={() => {
+          if (!deleteLoading) setDeleteTarget(null);
+        }}
+        onConfirm={handleDelete}
       />
     </div>
   );

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 
 import StreamTable, { Stream } from "@/components/admin/streams/StreamTable";
+import AdminConfirmDialog from "@/components/admin/ui/AdminConfirmDialog";
 
 export default function StreamPage() {
   const [streams, setStreams] = useState<Stream[]>([]);
@@ -15,6 +16,9 @@ export default function StreamPage() {
   const [page, setPage] = useState(1);
 
   const [totalPages, setTotalPages] = useState(1);
+  const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [actionMessage, setActionMessage] = useState("");
 
   async function fetchStreams() {
     try {
@@ -42,16 +46,23 @@ export default function StreamPage() {
     fetchStreams();
   }, [page, search]);
 
-  async function deleteStream(id: number) {
-    const confirmDelete = confirm("Delete this stream?");
+  async function deleteStream() {
+    if (deleteTarget === null) return;
 
-    if (!confirmDelete) return;
-
-    await fetch(`/api/streams/${id}`, {
-      method: "DELETE",
-    });
-
-    fetchStreams();
+    setDeleteLoading(true);
+    setActionMessage("");
+    try {
+      const res = await fetch(`/api/streams/${deleteTarget}`, { method: "DELETE" });
+      const result = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(result.message || "Delete failed");
+      setDeleteTarget(null);
+      setActionMessage("Stream deleted successfully.");
+      await fetchStreams();
+    } catch (error) {
+      setActionMessage(error instanceof Error ? error.message : "Delete failed");
+    } finally {
+      setDeleteLoading(false);
+    }
   }
 
   return (
@@ -111,10 +122,16 @@ export default function StreamPage() {
         </Link>
       </div>
 
+      {actionMessage && (
+        <div className="mb-4 rounded-xl border border-white/10 bg-[#0B1026] px-4 py-3 text-sm text-slate-200">
+          {actionMessage}
+        </div>
+      )}
+
       <StreamTable
         streams={streams}
         loading={loading}
-        onDelete={deleteStream}
+        onDelete={(id) => setDeleteTarget(id)}
       />
 
       {/* PAGINATION */}
@@ -164,6 +181,19 @@ export default function StreamPage() {
           Next
         </button>
       </div>
+
+      <AdminConfirmDialog
+        open={deleteTarget !== null}
+        title="Delete stream?"
+        description="This stream configuration will be permanently removed."
+        confirmLabel="Delete stream"
+        destructive
+        loading={deleteLoading}
+        onCancel={() => {
+          if (!deleteLoading) setDeleteTarget(null);
+        }}
+        onConfirm={deleteStream}
+      />
     </div>
   );
 }

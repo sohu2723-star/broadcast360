@@ -52,9 +52,8 @@ export default function ChannelForm({
   const [preview, setPreview] =
     useState("");
 
-  const [errors, setErrors] = useState<
-    Record<string, string>
-  >({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function uploadLogo() {
     if (!logo) {
@@ -75,14 +74,22 @@ export default function ChannelForm({
 
     const data = await res.json();
 
+    if (!res.ok || !data.url) {
+      throw new Error(data.message || "Logo upload failed");
+    }
+
     return data.url;
   }
 
-  async function submit() {
-    setErrors({});
+  async function submit(event?: React.FormEvent<HTMLFormElement>) {
+    event?.preventDefault();
+    if (isSubmitting) return;
 
-    const uploadedLogo =
-      await uploadLogo();
+    setErrors({});
+    setIsSubmitting(true);
+
+    try {
+      const uploadedLogo = await uploadLogo();
 
     const payload = {
       name,
@@ -187,7 +194,14 @@ export default function ChannelForm({
       }
     }
 
-    router.push("/admin/channels");
+      router.push("/admin/channels");
+    } catch (error) {
+      setErrors({
+        logo: error instanceof Error ? error.message : "Unable to save channel",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -198,7 +212,7 @@ export default function ChannelForm({
           : "Edit Channel"}
       </h1>
 
-      <div className="max-w-xl space-y-5 rounded-2xl bg-[#0B1026] p-8">
+      <form onSubmit={submit} className="max-w-xl space-y-5 rounded-2xl bg-[#0B1026] p-8">
 
         {/* CHANNEL NAME */}
 
@@ -380,26 +394,23 @@ export default function ChannelForm({
 
         <div className="flex gap-4">
           <button
-            onClick={submit}
-            className="rounded-xl bg-[#4f6689] px-6 py-3"
+            type="submit"
+            disabled={isSubmitting}
+            className="rounded-xl bg-[#4f6689] px-6 py-3 transition hover:bg-[#617fa8] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {mode === "create"
-              ? "Save"
-              : "Update"}
+            {isSubmitting ? "Saving…" : mode === "create" ? "Create Channel" : "Save Changes"}
           </button>
 
           <button
-            onClick={() =>
-              router.push(
-                "/admin/channels",
-              )
-            }
-            className="rounded-xl bg-[#F41010] px-6 py-3"
+            type="button"
+            disabled={isSubmitting}
+            onClick={() => router.push("/admin/channels")}
+            className="rounded-xl bg-red-500/90 px-6 py-3 transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Cancel
           </button>
         </div>
-      </div>
+            </form>
     </div>
   );
 }
