@@ -1,54 +1,26 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
+
+import { uploadMediaFile } from "@/lib/media/storage";
 
 export async function POST(request: Request) {
+  try {
+    const formData = await request.formData();
+    const file = formData.get("file");
 
-  const formData = await request.formData();
+    if (!(file instanceof File) || file.size <= 0) {
+      return NextResponse.json(
+        { message: "No logo file" },
+        { status: 400 },
+      );
+    }
 
-  const file = formData.get("file") as File;
-
-
-  if (!file) {
+    const url = await uploadMediaFile(file, "logos");
+    return NextResponse.json({ url });
+  } catch (error) {
+    console.error("Logo upload failed", error);
     return NextResponse.json(
-      { message: "No file" },
-      { status: 400 }
+      { message: "Logo upload failed" },
+      { status: 500 },
     );
   }
-
-  const bytes = await file.arrayBuffer();
-
-  const buffer = Buffer.from(bytes);
-
-  const fileName = file.name;
-
-  const uploadDir = path.join(
-    process.cwd(),
-    "public",
-    "logos"
-  );
-
-  // create logos folder if not exist
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, {
-      recursive: true,
-    });
-  }
-
-  const uploadPath = path.join(
-    uploadDir,
-    fileName
-  );
-
-
-  fs.writeFileSync(
-    uploadPath,
-    buffer
-  );
-
-
-  return NextResponse.json({
-    url: `/logos/${fileName}`,
-  });
-
 }

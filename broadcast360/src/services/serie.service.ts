@@ -1,7 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import fs from "fs/promises";
-import path from "path";
-import { Buffer } from "buffer";
+import { uploadMediaFile } from "@/lib/media/storage";
 
 import {
   createSeries,
@@ -89,76 +87,8 @@ export function removeSeries(
    SAVE THUMBNAIL
 ===================================================== */
 
-async function saveThumbnail(
-  file: File,
-) {
-  const bytes =
-    await file.arrayBuffer();
-
-  const buffer =
-    Buffer.from(bytes);
-
-  /*
-   * Remove unsafe characters from
-   * original filename.
-   */
-
-  const safeFilename =
-    file.name
-      .replace(/\s+/g, "-")
-      .replace(/[^a-zA-Z0-9._-]/g, "");
-
-  const filename =
-    `${Date.now()}-${safeFilename}`;
-
-  /*
-   * Physical path:
-   *
-   * project/
-   * └── public/
-   *     └── thumbnails/
-   *         └── series/
-   */
-
-  const uploadDir =
-    path.join(
-      process.cwd(),
-      "public",
-      "thumbnails",
-      "series",
-    );
-
-  const uploadPath =
-    path.join(
-      uploadDir,
-      filename,
-    );
-
-  /*
-   * Make sure directory exists.
-   */
-
-  await fs.mkdir(
-    uploadDir,
-    {
-      recursive: true,
-    },
-  );
-
-  /*
-   * Save file.
-   */
-
-  await fs.writeFile(
-    uploadPath,
-    buffer,
-  );
-
-  /*
-   * URL stored in database.
-   */
-
-  return `/thumbnails/series/${filename}`;
+async function saveThumbnail(file: File) {
+  return uploadMediaFile(file, "thumbnails/series");
 }
 
 /* =====================================================

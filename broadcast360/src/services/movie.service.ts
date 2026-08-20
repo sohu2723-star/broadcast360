@@ -1,5 +1,8 @@
-import fs from "fs/promises";
-import path from "path";
+import {
+  removeTemporaryMediaFile,
+  uploadMediaFile,
+  writeTemporaryMediaFile,
+} from "@/lib/media/storage";
 
 import {
   createMovie,
@@ -83,47 +86,22 @@ export async function editMovie(
 
   // Replace Thumbnail
   if (thumbnail && thumbnail.size > 0) {
-    const bytes = await thumbnail.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    const filename = `${Date.now()}-${thumbnail.name}`;
-
-    const dir = path.join(
-      process.cwd(),
-      "public/thumbnails/movies"
+    updateData.thumbnail = await uploadMediaFile(
+      thumbnail,
+      "thumbnails/movies",
     );
-
-    await fs.mkdir(dir, { recursive: true });
-
-    const fullPath = path.join(dir, filename);
-
-    await fs.writeFile(fullPath, buffer);
-
-    updateData.thumbnail = `/thumbnails/movies/${filename}`;
   }
 
   // Replace Video
   if (video && video.size > 0) {
-    const bytes = await video.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    const temporaryPath = await writeTemporaryMediaFile(video, "broadcast360-movie");
 
-    const filename = `${Date.now()}-${video.name}`;
-
-    const dir = path.join(
-      process.cwd(),
-      "public/videos/movies"
-    );
-
-    await fs.mkdir(dir, { recursive: true });
-
-    const fullPath = path.join(dir, filename);
-
-    await fs.writeFile(fullPath, buffer);
-
-    const duration = await getVideoDuration(fullPath);
-
-    updateData.videoUrl = `/videos/movies/${filename}`;
-    updateData.duration = duration;
+    try {
+      updateData.videoUrl = await uploadMediaFile(video, "videos/movies");
+      updateData.duration = await getVideoDuration(temporaryPath);
+    } finally {
+      await removeTemporaryMediaFile(temporaryPath);
+    }
   }
 
   return updateMovie(id, updateData);
@@ -148,53 +126,25 @@ export async function addMovie(formData: FormData) {
     throw new Error("Thumbnail is required");
   }
 
-  // Save Video
-  const videoBytes = await video.arrayBuffer();
-  const videoBuffer = Buffer.from(videoBytes);
+  const temporaryPath = await writeTemporaryMediaFile(video, "broadcast360-movie");
 
-  const videoFilename = `${Date.now()}-${video.name}`;
+  try {
+    const [videoUrl, thumbnailUrl, duration] = await Promise.all([
+      uploadMediaFile(video, "videos/movies"),
+      uploadMediaFile(thumbnail, "thumbnails/movies"),
+      getVideoDuration(temporaryPath),
+    ]);
 
-  const videoDir = path.join(
-    process.cwd(),
-    "public/videos/movies"
-  );
-
-  await fs.mkdir(videoDir, { recursive: true });
-
-  const videoPath = path.join(videoDir, videoFilename);
-
-  await fs.writeFile(videoPath, videoBuffer);
-
-  // Get Duration Only
-  const duration = await getVideoDuration(videoPath);
-
-  // Save Thumbnail
-  const thumbnailBytes = await thumbnail.arrayBuffer();
-  const thumbnailBuffer = Buffer.from(thumbnailBytes);
-
-  const thumbnailFilename = `${Date.now()}-${thumbnail.name}`;
-
-  const thumbnailDir = path.join(
-    process.cwd(),
-    "public/thumbnails/movies"
-  );
-
-  await fs.mkdir(thumbnailDir, { recursive: true });
-
-  const thumbnailPath = path.join(
-    thumbnailDir,
-    thumbnailFilename
-  );
-
-  await fs.writeFile(thumbnailPath, thumbnailBuffer);
-
-  return createMovie({
-    title,
-    description,
-    genre,
-    releaseYear,
-    videoUrl: `/videos/movies/${videoFilename}`,
-    thumbnail: `/thumbnails/movies/${thumbnailFilename}`,
-    duration,
-  });
+    return createMovie({
+      title,
+      description,
+      genre,
+      releaseYear,
+      videoUrl,
+      thumbnail: thumbnailUrl,
+      duration,
+    });
+  } finally {
+    await removeTemporaryMediaFile(temporaryPath);
+  }
 }
