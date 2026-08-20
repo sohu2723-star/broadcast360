@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Film } from "lucide-react";
 
 type Movie = {
   id: number;
@@ -112,8 +112,8 @@ export default function MovieDetailPage({
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="flex h-full items-center justify-center text-6xl">
-                  🎬
+                <div className="flex h-full items-center justify-center text-[#7898bf]">
+                  <Film size={54} strokeWidth={1.4} aria-hidden="true" />
                 </div>
               )}
             </div>

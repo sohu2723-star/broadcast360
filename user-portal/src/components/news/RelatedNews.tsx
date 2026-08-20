@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Play } from "lucide-react";
 import type { NewsItem } from "@/services/news.service";
 
 interface Props {
@@ -73,7 +74,7 @@ export default function RelatedNews({ news }: Props) {
               {videoSrc && (
                 <div className="absolute inset-0 flex items-center justify-center bg-black/20 transition group-hover:bg-black/0">
                   <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#106EE9]/90 text-white shadow-md transition group-hover:scale-110">
-                    <span className="ml-0.5 text-[10px]">▶</span>
+                    <Play size={11} fill="currentColor" strokeWidth={1.8} aria-hidden="true" />
                   </div>
                 </div>
               )}

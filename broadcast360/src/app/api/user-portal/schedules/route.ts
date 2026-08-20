@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
       request.cookies.get("user_token")?.value;
 
     console.log(
-      "📅 SCHEDULE API - user_token:",
+      " SCHEDULE API - user_token:",
       token ? "FOUND" : "MISSING",
     );
 
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     const userId = Number(payload.id);
 
     console.log(
-      "📅 SCHEDULE API - userId:",
+      " SCHEDULE API - userId:",
       userId,
     );
 
@@ -74,7 +74,7 @@ export async function GET(request: NextRequest) {
       await isUserPremium(userId);
 
     console.log(
-      "📅 SCHEDULE API - premium:",
+      " SCHEDULE API - premium:",
       premium,
     );
 
@@ -142,7 +142,7 @@ export async function GET(request: NextRequest) {
     }
 
     console.log(
-      "📅 SCHEDULE API - channelId:",
+      " SCHEDULE API - channelId:",
       channelId ?? "ALL",
     );
 
@@ -199,7 +199,7 @@ export async function GET(request: NextRequest) {
     };
 
     console.log(
-      "📅 SCHEDULE API - where:",
+      " SCHEDULE API - where:",
       where,
     );
 

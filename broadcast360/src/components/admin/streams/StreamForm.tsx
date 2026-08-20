@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ArrowDown, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 type Channel = {
@@ -100,7 +101,7 @@ export default function StreamForm({
 
         setLoadedChannels(json.data ?? json ?? []);
       } catch (error) {
-        console.error("❌ Load channels error:", error);
+        console.error(" Load channels error:", error);
       } finally {
         setLoadingChannels(false);
       }
@@ -518,39 +519,39 @@ export default function StreamForm({
 
             <div className="space-y-1 font-mono text-xs text-gray-400">
               <p>
-                {form.protocol || "SOURCE"} → Input
+                <span className="inline-flex items-center gap-1.5">{form.protocol || "SOURCE"} <ArrowRight size={13} aria-hidden="true" /> Input</span>
               </p>
 
-              <p>
-                ↓
+              <p className="flex justify-center">
+                <ArrowDown size={15} aria-hidden="true" />
               </p>
 
               <p>
                 MediaMTX source/{"{streamKey}"}
               </p>
 
-              <p>
-                ↓
+              <p className="flex justify-center">
+                <ArrowDown size={15} aria-hidden="true" />
               </p>
 
               <p>
                 Broadcast / Relay
               </p>
 
-              <p>
-                ↓
+              <p className="flex justify-center">
+                <ArrowDown size={15} aria-hidden="true" />
               </p>
 
               <p>
                 MediaMTX channel/{"{streamKey}"}
               </p>
 
-              <p>
-                ↓
+              <p className="flex justify-center">
+                <ArrowDown size={15} aria-hidden="true" />
               </p>
 
               <p>
-                HLS / WebRTC → Viewer
+                <span className="inline-flex items-center gap-1.5">HLS / WebRTC <ArrowRight size={13} aria-hidden="true" /> Viewer</span>
               </p>
             </div>
           </div>

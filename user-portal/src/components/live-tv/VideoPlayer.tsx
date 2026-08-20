@@ -91,7 +91,7 @@ export default function VideoPlayer({
 
       try {
         console.log(
-          "🔐 Checking access:",
+          " Checking access:",
           channel.name,
           channel.accessType,
         );
@@ -106,7 +106,7 @@ export default function VideoPlayer({
         }
 
         console.log(
-          "✅ Channel access result:",
+          " Channel access result:",
           result,
         );
 
@@ -126,7 +126,7 @@ export default function VideoPlayer({
         }
 
         console.error(
-          "❌ CHANNEL ACCESS FAILED:",
+          " CHANNEL ACCESS FAILED:",
           error,
         );
 
@@ -202,7 +202,7 @@ export default function VideoPlayer({
       accessChannel.playbackUrl;
 
     console.log(
-      "▶️ Starting HLS:",
+      " Starting HLS:",
       streamUrl,
     );
 
@@ -226,7 +226,7 @@ export default function VideoPlayer({
         Hls.Events.MANIFEST_PARSED,
         () => {
           console.log(
-            "✅ HLS manifest loaded:",
+            " HLS manifest loaded:",
             accessChannel.name,
           );
 
@@ -244,7 +244,7 @@ export default function VideoPlayer({
           }
 
           console.error(
-            "❌ HLS ERROR:",
+            " HLS ERROR:",
             data,
           );
 

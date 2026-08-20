@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { MessageSquare } from "lucide-react";
 import authApi from "@/lib/authapi";
 
 interface Message {
@@ -160,8 +161,8 @@ export default function PremiumChatsPage() {
 
         {conversations.length === 0 ? (
           <div className="rounded-2xl border border-white/10 bg-[#0B1026] p-10 text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-indigo-500/10 text-2xl">
-              💬
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-indigo-500/10 text-indigo-200">
+              <MessageSquare size={26} strokeWidth={1.7} aria-hidden="true" />
             </div>
 
             <h2 className="text-lg font-semibold">

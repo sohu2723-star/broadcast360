@@ -1,12 +1,13 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, type ReactNode } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import type { Movie } from "@/types/movie";
 import MovieCard from "./MovieCard";
 
 interface Props {
-  title?: string;
+  title?: ReactNode;
   movies: Movie[];
   horizontal?: boolean;
 }
@@ -61,10 +62,12 @@ export default function MovieGrid({
         <div className="relative">
 
           <button
+            type="button"
+            aria-label="Scroll movies left"
             onClick={scrollLeft}
-            className="absolute left-0 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/70 px-3 py-2 text-2xl text-white"
+            className="absolute left-0 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/70 p-2 text-white transition hover:bg-black"
           >
-            ‹
+            <ChevronLeft size={22} aria-hidden="true" />
           </button>
 
 
@@ -86,10 +89,12 @@ export default function MovieGrid({
 
 
           <button
+            type="button"
+            aria-label="Scroll movies right"
             onClick={scrollRight}
-            className="absolute right-0 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/70 px-3 py-2 text-2xl text-white"
+            className="absolute right-0 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/70 p-2 text-white transition hover:bg-black"
           >
-            ›
+            <ChevronRight size={22} aria-hidden="true" />
           </button>
 
 

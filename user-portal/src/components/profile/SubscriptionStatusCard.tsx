@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Play } from "lucide-react";
 
 import type { User } from "@/types/user";
 
@@ -770,10 +771,10 @@ export default function SubscriptionStatusCard({
                 justify-center
                 rounded-2xl
                 bg-blue-500/10
-                text-2xl
+                text-blue-200
               "
             >
-              ▶
+              <Play size={24} strokeWidth={1.8} aria-hidden="true" />
             </div>
 
             <div>

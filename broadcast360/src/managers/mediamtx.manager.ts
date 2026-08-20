@@ -34,7 +34,7 @@ export class MediaMTXManager {
     } catch (error) {
 
       console.error(
-        "❌ MediaMTX GET PATH ERROR:",
+        " MediaMTX GET PATH ERROR:",
         path,
         error
       );
@@ -259,7 +259,7 @@ export class MediaMTXManager {
       ) {
 
         console.log(
-          "✅ MEDIA PATH READY:",
+          " MEDIA PATH READY:",
           path
         );
 
@@ -346,7 +346,7 @@ export class MediaMTXManager {
     } catch (error) {
 
       console.error(
-        "❌ STREAM HEALTH ERROR:",
+        " STREAM HEALTH ERROR:",
         error
       );
 

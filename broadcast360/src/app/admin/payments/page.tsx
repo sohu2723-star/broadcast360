@@ -3,6 +3,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ChevronRight } from "lucide-react";
 
 // =====================================================
 // TYPES
@@ -812,7 +813,7 @@ export default function PaymentsPage() {
               }
               className="rounded-xl border border-white/10 bg-[#0B1026] px-5 py-2.5 text-xs font-semibold text-gray-300 transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-30"
             >
-              Next →
+              <span className="inline-flex items-center gap-1.5">Next <ChevronRight size={15} aria-hidden="true" /></span>
             </button>
 
           </div>

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Film } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 
 import type { Movie } from "@/types/movie";
@@ -79,9 +79,11 @@ export default function RelatedMovies({ movies, genre }: Props) {
 
   return (
     <section className="relative mt-12">
-      <h2 className="mb-6 text-2xl font-bold text-white">🎬 You may also like this</h2>
+      <h2 className="mb-6 flex items-center gap-2 text-2xl font-bold text-white"><Film size={22} strokeWidth={1.8} className="text-[#7898bf]" aria-hidden="true" />You may also like this</h2>
 
       <button
+        type="button"
+        aria-label="Scroll related movies left"
         onClick={() => handleScroll("left")}
         className="absolute left-0 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/70 p-2 text-white transition hover:bg-black"
       >
@@ -89,6 +91,8 @@ export default function RelatedMovies({ movies, genre }: Props) {
       </button>
 
       <button
+        type="button"
+        aria-label="Scroll related movies right"
         onClick={() => handleScroll("right")}
         className="absolute right-0 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/70 p-2 text-white transition hover:bg-black"
       >

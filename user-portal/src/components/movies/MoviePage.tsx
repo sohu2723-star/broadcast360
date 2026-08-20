@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Film, Flame } from "lucide-react";
 
 import type { Movie } from "@/types/movie";
 import type { Channel } from "@/types/channel";
@@ -113,7 +114,7 @@ export default function MoviePage() {
     </div>
   ) : (
     <MovieGrid
-      title="🔥 HOT MOVIES"
+      title={<span className="inline-flex items-center gap-2"><Flame size={18} strokeWidth={1.8} className="text-[#d7b36a]" aria-hidden="true" />HOT MOVIES</span>}
       movies={hotMovies}
       horizontal
     />
@@ -123,7 +124,7 @@ export default function MoviePage() {
         {/* All Movies */}
 
         <section className="mb-16">
-          <h2 className="mb-6 text-2xl font-bold">🎬 ALL MOVIES ARCHIVE</h2>
+          <h2 className="mb-6 text-2xl font-bold"><span className="inline-flex items-center gap-2"><Film size={22} strokeWidth={1.8} className="text-[#7898bf]" aria-hidden="true" />ALL MOVIES ARCHIVE</span></h2>
 
           {loading ? (
             <div className="rounded-2xl  bg-black p-10 text-center text-gray-400">

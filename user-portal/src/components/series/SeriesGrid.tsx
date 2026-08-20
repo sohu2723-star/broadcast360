@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Series } from "@/types/series";
 import SeriesCard from "./SeriesCard";
 
@@ -50,10 +51,12 @@ export default function SeriesGrid({
       {horizontal ? (
         <div className="relative">
           <button
+            type="button"
+            aria-label="Scroll series left"
             onClick={scrollLeft}
-            className="absolute left-0 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/70 px-3 py-2 text-2xl text-white"
+            className="absolute left-0 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/70 p-2 text-white transition hover:bg-black"
           >
-            ‹
+            <ChevronLeft size={22} aria-hidden="true" />
           </button>
 
           <div
@@ -68,10 +71,12 @@ export default function SeriesGrid({
           </div>
 
           <button
+            type="button"
+            aria-label="Scroll series right"
             onClick={scrollRight}
-            className="absolute right-0 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/70 px-3 py-2 text-2xl text-white"
+            className="absolute right-0 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/70 p-2 text-white transition hover:bg-black"
           >
-            ›
+            <ChevronRight size={22} aria-hidden="true" />
           </button>
         </div>
       ) : (

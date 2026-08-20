@@ -38,7 +38,7 @@ export async function GET(
 
     if (!Number.isInteger(id) || id <= 0) {
       console.error(
-        "❌ Invalid channel ID:",
+        " Invalid channel ID:",
         channelId
       );
 
@@ -68,7 +68,7 @@ export async function GET(
 
     if (!channel) {
       console.error(
-        `❌ Channel ${id} not found`
+        ` Channel ${id} not found`
       );
 
       return NextResponse.json(
@@ -82,7 +82,7 @@ export async function GET(
     }
 
     console.log(
-      "📺 Channel:",
+      " Channel:",
       channel.name
     );
 
@@ -204,7 +204,7 @@ export async function GET(
      */
 
     console.log(
-      `📡 ${channel.name} status:`,
+      ` ${channel.name} status:`,
       {
         status,
 
@@ -274,7 +274,7 @@ export async function GET(
     });
   } catch (error) {
     console.error(
-      "❌ Channel status error:",
+      " Channel status error:",
       error
     );
 

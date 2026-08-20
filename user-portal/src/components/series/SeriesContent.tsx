@@ -70,7 +70,7 @@ export default function SeriesContent({
           onChange={(id) => updateQuery("channelId", id ? String(id) : "")}
         />
       </div>
-      <SeriesGrid title="🔥 Hot Series" series={hotSeries} horizontal />
+      <SeriesGrid title=" Hot Series" series={hotSeries} horizontal />
 
       <SeriesGrid title="All Series" series={series} />
 

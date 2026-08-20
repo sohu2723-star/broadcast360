@@ -32,7 +32,7 @@ export class ConcatManager {
       }
 
       if (!item.videoUrl) {
-        console.log("⚠ SKIP ITEM WITHOUT VIDEO", item.id);
+        console.log(" SKIP ITEM WITHOUT VIDEO", item.id);
 
         continue;
       }

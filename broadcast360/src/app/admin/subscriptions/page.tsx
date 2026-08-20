@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Subscription {
   id: number;
@@ -410,7 +411,7 @@ export default function SubscriptionsPage() {
               onClick={() => setPage((p) => p - 1)}
               className="rounded-xl border border-slate-800 bg-[#0b132b] px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-[#0b132b]"
             >
-              ← Previous
+              <span className="inline-flex items-center gap-1.5"><ChevronLeft size={15} aria-hidden="true" />Previous</span>
             </button>
 
             <span className="text-xs font-medium text-slate-400">
@@ -423,7 +424,7 @@ export default function SubscriptionsPage() {
               onClick={() => setPage((p) => p + 1)}
               className="rounded-xl border border-slate-800 bg-[#0b132b] px-4 py-2 text-xs font-semibold text-slate-300 transition hover:bg-slate-800 disabled:opacity-30 disabled:hover:bg-[#0b132b]"
             >
-              Next →
+              <span className="inline-flex items-center gap-1.5">Next <ChevronRight size={15} aria-hidden="true" /></span>
             </button>
           </div>
         )}

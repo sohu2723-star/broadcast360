@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { Tv } from "lucide-react";
 import ChannelPlayer from "./ChannelPlayer";
 
 interface Channel {
@@ -60,7 +61,7 @@ export default function TVPage() {
                     | Channel[]
                     | ChannelApiResponse;
 
-                console.log("📺 Channel API:", result);
+                console.log(" Channel API:", result);
 
                 let channelList: Channel[] = [];
 
@@ -79,7 +80,7 @@ export default function TVPage() {
                 }
 
                 console.log(
-                    "📺 Channels loaded:",
+                    " Channels loaded:",
                     channelList
                 );
 
@@ -92,7 +93,7 @@ export default function TVPage() {
                 }
             } catch (error) {
                 console.error(
-                    "❌ Failed to load channels:",
+                    " Failed to load channels:",
                     error
                 );
 
@@ -282,8 +283,8 @@ export default function TVPage() {
 
                 <div className="text-center">
 
-                    <div className="text-5xl">
-                        📺
+                    <div className="flex justify-center text-[#7898bf]">
+                        <Tv size={48} strokeWidth={1.5} aria-hidden="true" />
                     </div>
 
                     <h2 className="mt-4 text-xl font-semibold">

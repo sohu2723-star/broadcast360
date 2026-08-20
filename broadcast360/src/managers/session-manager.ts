@@ -11,7 +11,7 @@ export class SessionManager {
   */
 
   async start(channelId: number, scheduleId: number | null) {
-    console.log("🟡 SESSION START", {
+    console.log(" SESSION START", {
       channelId,
       scheduleId,
     });

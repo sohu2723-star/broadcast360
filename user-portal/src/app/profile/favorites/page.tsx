@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Heart } from "lucide-react";
 
 import {
   getFavorites,
@@ -242,8 +243,8 @@ export default function FavoritesPage() {
 
           <div className="flex min-h-[400px] flex-col items-center justify-center text-center">
 
-            <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-white/5 text-4xl">
-              ♡
+            <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-white/5 text-purple-200">
+              <Heart size={36} strokeWidth={1.5} aria-hidden="true" />
             </div>
 
             <h2 className="text-xl font-semibold">

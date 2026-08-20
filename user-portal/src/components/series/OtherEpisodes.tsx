@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { Play } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -82,7 +83,7 @@ export default function OtherEpisodes({
 
               {/* Play Icon */}
               <div className="absolute right-3 top-3 rounded-full bg-black/60 p-2 opacity-0 transition group-hover:opacity-100">
-                ▶
+                <Play size={14} fill="currentColor" strokeWidth={1.8} aria-hidden="true" />
               </div>
 
               {/* Episode Info */}

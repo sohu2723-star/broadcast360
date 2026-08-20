@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { CheckCircle2, XCircle } from "lucide-react";
 
 import {
   validateClientImageRatio,
@@ -573,8 +574,8 @@ export default function ImageUploader({
                   }
                 >
                   {validation.valid
-                    ? "✅ Valid image"
-                    : "❌ Invalid image"}
+                    ? <span className="inline-flex items-center gap-1"><CheckCircle2 size={14} strokeWidth={1.8} aria-hidden="true" />Valid image</span>
+                    : <span className="inline-flex items-center gap-1"><XCircle size={14} strokeWidth={1.8} aria-hidden="true" />Invalid image</span>}
                 </span>
 
                 {!validation.valid && (

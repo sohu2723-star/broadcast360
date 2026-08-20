@@ -104,7 +104,7 @@ export class BroadcastService {
       const playlist = await this.getPlaylist(schedule, channelId);
 
       if (!playlist) {
-        console.log("❌ NO PLAYLIST");
+        console.log(" NO PLAYLIST");
 
         return;
       }
@@ -129,7 +129,7 @@ export class BroadcastService {
       );
 
       if (items.length === 0) {
-        console.log("⚠ EMPTY PLAYLIST");
+        console.log(" EMPTY PLAYLIST");
 
         return;
       }
@@ -157,7 +157,7 @@ export class BroadcastService {
 
         offset = result.offset;
 
-        console.log("⏱ CATCHUP", {
+        console.log(" CATCHUP", {
           startIndex,
           offset,
           current: items[startIndex],
@@ -167,7 +167,7 @@ export class BroadcastService {
       const channel = await getChannelBroadcastInfo(channelId);
 
       if (!channel?.streamKey) {
-        console.log("❌ NO STREAM KEY");
+        console.log(" NO STREAM KEY");
 
         return;
       }
@@ -206,7 +206,7 @@ export class BroadcastService {
 
 
         console.log(
-          "🔴 START LIVE",
+          " START LIVE",
           current.streamUrl
         );
 
@@ -260,7 +260,7 @@ export class BroadcastService {
         } catch (error) {
 
           console.error(
-            "⚠ RECORDING FAILED",
+            " RECORDING FAILED",
             error
           );
 
@@ -285,13 +285,13 @@ export class BroadcastService {
         .filter((item) => item.type !== "STREAM");
 
       if (playItems.length === 0) {
-        console.log("⚠ NO VOD AFTER CURRENT ITEM");
+        console.log(" NO VOD AFTER CURRENT ITEM");
 
         return;
       }
 
       const onFinished = async () => {
-        console.log("📺 PLAYLIST FINISHED", channelId);
+        console.log(" PLAYLIST FINISHED", channelId);
 
         await this.session.stop(channelId);
 
@@ -331,7 +331,7 @@ export class BroadcastService {
 
       await this.session.live(channelId);
     } catch (error) {
-      console.error("❌ BROADCAST ERROR", error);
+      console.error(" BROADCAST ERROR", error);
 
       await this.session.error(
         channelId,
@@ -382,6 +382,6 @@ export class BroadcastService {
 
     this.switching.delete(channelId);
 
-    console.log("🛑 BROADCAST STOP", channelId);
+    console.log(" BROADCAST STOP", channelId);
   }
 }

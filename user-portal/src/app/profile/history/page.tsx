@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Play } from "lucide-react";
 import authApi from "@/lib/authapi";
 
 interface HistoryItem {
@@ -426,8 +427,8 @@ export default function WatchHistoryPage() {
         {history.length === 0 ? (
           <div className="flex min-h-[400px] flex-col items-center justify-center text-center">
 
-            <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-white/5 text-4xl">
-              ▶
+            <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-white/5 text-blue-200">
+              <Play size={36} strokeWidth={1.5} aria-hidden="true" />
             </div>
 
             <h2 className="text-xl font-semibold">
@@ -803,7 +804,7 @@ export default function WatchHistoryPage() {
               group-hover:opacity-100
             "
                       >
-                        ▶
+                        <Play size={16} fill="currentColor" strokeWidth={1.8} aria-hidden="true" />
                       </div>
                     </div>
                   )}

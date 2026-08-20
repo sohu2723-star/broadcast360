@@ -43,7 +43,7 @@ export class BroadcastService {
     const channel = await getChannelBroadcastInfo(channelId);
 
     if (!channel?.streamKey) {
-      console.log("❌ Missing stream key");
+      console.log(" Missing stream key");
 
       return;
     }
@@ -66,7 +66,7 @@ export class BroadcastService {
       await ScheduleRepository.updateStatus(schedule.id, "LIVE");
     }
 
-    console.log("▶ Broadcast started", channelId);
+    console.log(" Broadcast started", channelId);
   }
 
   private async getPlaylist(
@@ -74,7 +74,7 @@ export class BroadcastService {
     channelId: number,
   ) {
     if (schedule?.playlist) {
-      console.log("📺 Schedule playlist", schedule.playlist.name);
+      console.log(" Schedule playlist", schedule.playlist.name);
 
       return schedule.playlist;
     }
@@ -89,7 +89,7 @@ export class BroadcastService {
      * prevent duplicate
      */
     if (this.playing.get(channelId)) {
-      console.log("⚠ Already switching", channelId);
+      console.log(" Already switching", channelId);
 
       return;
     }
@@ -100,12 +100,12 @@ export class BroadcastService {
       const item = this.playout.next(channelId);
 
       if (!item) {
-        console.log("📺 Queue finished");
+        console.log(" Queue finished");
 
         return;
       }
 
-      console.log("▶ PLAY", {
+      console.log(" PLAY", {
         id: item.id,
         type: item.type,
         order: item.order,
@@ -153,7 +153,7 @@ export class BroadcastService {
       }
 
       ffmpeg.once("close", async (code) => {
-        console.log("🎬 VOD END", {
+        console.log(" VOD END", {
           channelId,
           code,
         });
@@ -183,7 +183,7 @@ export class BroadcastService {
     }
 
     if (!playlist) {
-      console.log("❌ No playlist");
+      console.log(" No playlist");
 
       return;
     }
@@ -203,7 +203,7 @@ export class BroadcastService {
       );
       startIndex = result.itemIndex;
       this.startOffsets.set(channelId, result.offset);
-      console.log("📺 Catchup", result);
+      console.log(" Catchup", result);
     }
 
 
@@ -229,7 +229,7 @@ export class BroadcastService {
       const alive = await this.switcher.hasLivePublisher(channelId);
 
       if (!alive) {
-        console.log("🔴 LIVE ENDED");
+        console.log(" LIVE ENDED");
 
         clearInterval(timer);
 
@@ -247,7 +247,7 @@ export class BroadcastService {
 
     this.startOffsets.delete(channelId);
 
-    console.log("🛑 stopped", channelId);
+    console.log(" stopped", channelId);
   }
 
   isRunning(channelId: number) {

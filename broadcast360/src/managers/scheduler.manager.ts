@@ -22,7 +22,7 @@ export class SchedulerManager {
     */
 
     broadcast.setPlaylistFinishedHandler(async ({ channelId, scheduleId }) => {
-      console.log("📺 PLAYLIST FINISHED", {
+      console.log(" PLAYLIST FINISHED", {
         channelId,
         scheduleId,
       });
@@ -38,7 +38,7 @@ export class SchedulerManager {
 
         this.completedSchedule.set(channelId, scheduleId);
 
-        console.log("✅ SCHEDULE COMPLETED", scheduleId);
+        console.log(" SCHEDULE COMPLETED", scheduleId);
       }
 
       this.currentSchedule.set(channelId, null);
@@ -61,12 +61,12 @@ export class SchedulerManager {
 
   async start(channelId: number) {
     if (this.timers.has(channelId)) {
-      console.log("⚠ Scheduler already running", channelId);
+      console.log(" Scheduler already running", channelId);
 
       return;
     }
 
-    console.log("🕒 Scheduler started", channelId);
+    console.log(" Scheduler started", channelId);
 
     /*
        first check immediately
@@ -78,7 +78,7 @@ export class SchedulerManager {
       try {
         await this.checkNow(channelId);
       } catch (error) {
-        console.error("❌ Scheduler error", error);
+        console.error(" Scheduler error", error);
       }
     }, 5000);
 
@@ -136,7 +136,7 @@ export class SchedulerManager {
         return;
       }
 
-      console.log("📺 SWITCH TO SCHEDULE", {
+      console.log(" SWITCH TO SCHEDULE", {
         channelId,
         scheduleId: schedule.id,
       });
@@ -146,7 +146,7 @@ export class SchedulerManager {
       try {
         // Stop fallback if it's currently running
         if (broadcast.isRunning(channelId)) {
-          console.log("🛑 STOP FALLBACK", channelId);
+          console.log(" STOP FALLBACK", channelId);
           await broadcast.stop(channelId);
         }
 
@@ -158,12 +158,12 @@ export class SchedulerManager {
         this.completedSchedule.delete(channelId);
         this.mode.set(channelId, "SCHEDULE");
 
-        console.log("✅ SCHEDULE STARTED", {
+        console.log(" SCHEDULE STARTED", {
           channelId,
           scheduleId: schedule.id,
         });
       } catch (error) {
-        console.error("⚠ SCHEDULE FAILED", error);
+        console.error(" SCHEDULE FAILED", error);
 
         this.currentSchedule.delete(channelId);
         this.mode.set(channelId, "WAITING");
@@ -222,7 +222,7 @@ export class SchedulerManager {
       return;
     }
 
-    console.log("🎬 START FALLBACK", channelId);
+    console.log(" START FALLBACK", channelId);
 
     this.switching.set(channelId, true);
 
@@ -233,9 +233,9 @@ export class SchedulerManager {
 
       await broadcast.switchBroadcast(null, channelId);
 
-      console.log("✅ FALLBACK STARTED", channelId);
+      console.log(" FALLBACK STARTED", channelId);
     } catch (error) {
-      console.error("❌ FALLBACK FAILED", error);
+      console.error(" FALLBACK FAILED", error);
     } finally {
       this.switching.delete(channelId);
     }
@@ -276,7 +276,7 @@ export class SchedulerManager {
 
     this.switching.delete(channelId);
 
-    console.log("🛑 Scheduler stopped", channelId);
+    console.log(" Scheduler stopped", channelId);
   }
 
   /*

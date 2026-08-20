@@ -50,7 +50,7 @@ export class PlaylistResolverService {
 
       case "MOVIE":
         if (!item.movie?.videoUrl) {
-          console.log("⚠ MOVIE missing video", item.id);
+          console.log(" MOVIE missing video", item.id);
 
           return null;
         }
@@ -77,7 +77,7 @@ export class PlaylistResolverService {
 
       case "EPISODE":
         if (!item.episode?.videoUrl) {
-          console.log("⚠ EPISODE missing video", item.id);
+          console.log(" EPISODE missing video", item.id);
 
           return null;
         }
@@ -104,7 +104,7 @@ export class PlaylistResolverService {
 
       case "ADVERTISEMENT":
         if (!item.advertisement?.videoUrl) {
-          console.log("⚠ AD missing video", item.id);
+          console.log(" AD missing video", item.id);
 
           return null;
         }
@@ -131,7 +131,7 @@ export class PlaylistResolverService {
 
       case "ENTERTAINMENT":
         if (!item.entertainment?.videoUrl) {
-          console.log("⚠ ENTERTAINMENT missing video", item.id);
+          console.log(" ENTERTAINMENT missing video", item.id);
 
           return null;
         }
@@ -158,7 +158,7 @@ export class PlaylistResolverService {
 
       case "NEWS":
         if (!item.news?.videoUrl) {
-          console.log("⚠ NEWS missing video", item.id);
+          console.log(" NEWS missing video", item.id);
 
           return null;
         }
@@ -187,7 +187,7 @@ export class PlaylistResolverService {
 
       case "STREAM":
         if (!item.stream?.url) {
-          console.log("⚠ STREAM missing URL", item.id);
+          console.log(" STREAM missing URL", item.id);
 
           return null;
         }
@@ -207,7 +207,7 @@ export class PlaylistResolverService {
         };
 
       default:
-        console.log("⚠ UNKNOWN PLAYLIST TYPE", item.type);
+        console.log(" UNKNOWN PLAYLIST TYPE", item.type);
 
         return null;
     }

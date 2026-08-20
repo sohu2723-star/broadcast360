@@ -4,8 +4,30 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import { MoonSpinner } from "@/components/auth/AuthUi";
+import {
+  Activity,
+  BarChart3,
+  Clock3,
+  Eye,
+  Film,
+  Gem,
+  Heart,
+  ListChecks,
+  Megaphone,
+  Radio,
+  Tv,
+  UserCheck,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 
-type MetricRow = { title: string; value: string | number; hint: string; tone?: string };
+type MetricRow = {
+  title: string;
+  value: string | number;
+  hint: string;
+  tone?: string;
+  icon: LucideIcon;
+};
 type DashboardData = {
   generatedAt: string;
   rangeDays: number;
@@ -56,12 +78,19 @@ function DashboardSkeleton() {
   );
 }
 
-function Panel({ title, subtitle, children, className = "" }: { title: string; subtitle?: string; children: React.ReactNode; className?: string }) {
+function Panel({ title, subtitle, icon: Icon, children, className = "" }: { title: string; subtitle?: string; icon?: LucideIcon; children: React.ReactNode; className?: string }) {
   return (
     <section className={`rounded-2xl border border-white/10 bg-[#0B1026] p-5 shadow-lg shadow-black/10 sm:p-6 ${className}`}>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-lg font-bold text-white">{title}</h2>
+          <div className="flex items-center gap-2.5">
+            {Icon ? (
+              <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#7898bf]/20 bg-[#7898bf]/10 text-[#b8cee8]" aria-hidden="true">
+                <Icon size={16} strokeWidth={1.8} />
+              </span>
+            ) : null}
+            <h2 className="text-lg font-bold text-white">{title}</h2>
+          </div>
           {subtitle ? <p className="mt-1 text-xs leading-5 text-slate-500">{subtitle}</p> : null}
         </div>
       </div>
@@ -154,11 +183,11 @@ export default function DashboardPage() {
   if (!data) return null;
 
   const metricCards: MetricRow[] = [
-    { title: "Total Users", value: formatNumber(data.stats.totalUsers), hint: `${activeRate}% active`, tone: "text-[#b8cee8]" },
-    { title: "Active Users", value: formatNumber(data.stats.activeUsers), hint: `${formatNumber(data.stats.inactiveUsers)} inactive`, tone: "text-emerald-200" },
-    { title: "Premium Users", value: formatNumber(data.stats.premiumUsers), hint: "Active subscriptions", tone: "text-[#d7b36a]" },
-    { title: "Live Viewers", value: formatNumber(data.liveBroadcastViewers.activeViewers), hint: `${formatNumber(data.liveBroadcastViewers.sessionsLast24h)} sessions / 24h`, tone: "text-[#a9bfd9]" },
-    { title: "Live Streams", value: formatNumber(data.stats.liveStreams), hint: `${formatNumber(data.stats.totalChannels)} total channels`, tone: "text-rose-200" },
+    { title: "Total Users", value: formatNumber(data.stats.totalUsers), hint: `${activeRate}% active`, tone: "text-[#b8cee8]", icon: Users },
+    { title: "Active Users", value: formatNumber(data.stats.activeUsers), hint: `${formatNumber(data.stats.inactiveUsers)} inactive`, tone: "text-emerald-200", icon: UserCheck },
+    { title: "Premium Users", value: formatNumber(data.stats.premiumUsers), hint: "Active subscriptions", tone: "text-[#d7b36a]", icon: Gem },
+    { title: "Live Viewers", value: formatNumber(data.liveBroadcastViewers.activeViewers), hint: `${formatNumber(data.liveBroadcastViewers.sessionsLast24h)} sessions / 24h`, tone: "text-[#a9bfd9]", icon: Eye },
+    { title: "Live Streams", value: formatNumber(data.stats.liveStreams), hint: `${formatNumber(data.stats.totalChannels)} total channels`, tone: "text-rose-200", icon: Radio },
   ];
 
   return (
@@ -170,26 +199,48 @@ export default function DashboardPage() {
 
       {error ? <div className="rounded-xl border border-amber-200/20 bg-amber-100/5 px-4 py-3 text-sm text-amber-100">Showing the last successful analytics snapshot. {error}</div> : null}
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">{metricCards.map((item) => <div key={item.title} className="rounded-2xl border border-white/10 bg-[#0B1026] p-5 shadow-lg shadow-black/10"><p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{item.title}</p><p className={`mt-4 text-3xl font-bold ${item.tone}`}>{item.value}</p><p className="mt-2 text-xs text-slate-500">{item.hint}</p></div>)}</div>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        {metricCards.map((item) => {
+          const Icon = item.icon;
+          return (
+            <div key={item.title} className="rounded-2xl border border-white/10 bg-[#0B1026] p-5 shadow-lg shadow-black/10">
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{item.title}</p>
+                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[#7898bf]/20 bg-[#7898bf]/10 text-[#b8cee8]" aria-hidden="true">
+                  <Icon size={18} strokeWidth={1.8} />
+                </span>
+              </div>
+              <p className={`mt-4 text-3xl font-bold ${item.tone}`}>{item.value}</p>
+              <p className="mt-2 text-xs text-slate-500">{item.hint}</p>
+            </div>
+          );
+        })}
+      </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
-        <Panel title="Daily / Weekly / Monthly User Activity" subtitle={`Daily active users and watch events over the last ${data.rangeDays} days.`}><UserActivityChart rows={data.userActivity} /></Panel>
-        <Panel title="Peak Watching Time" subtitle="Watch-history events grouped by local database hour."><div className="flex items-end gap-1.5 overflow-hidden rounded-xl border border-white/5 bg-[#080D20] px-3 pb-3 pt-6">{Array.from({ length: 24 }).map((_, hour) => { const row = data.peakWatchingTime.find((item) => item.hour === hour); const max = Math.max(1, ...data.peakWatchingTime.map((item) => item.views)); const height = Math.max(3, Math.round(((row?.views ?? 0) / max) * 100)); return <div key={hour} className="group flex min-w-0 flex-1 items-end" title={`${formatHour(hour)}: ${formatNumber(row?.views ?? 0)} views`}><div className="w-full rounded-t bg-[#d7b36a]/80 group-hover:bg-[#f0d48b]" style={{ height: `${height}%` }} /></div>; })}</div><div className="mt-3 flex justify-between text-[10px] text-slate-600"><span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span><span>12 AM</span></div><p className="mt-4 rounded-xl border border-[#d7b36a]/20 bg-[#d7b36a]/5 px-3 py-2 text-xs text-[#f0d48b]">Peak period: {peakHour ? `${formatHour(peakHour.hour)} with ${formatNumber(peakHour.views)} watch events` : "Not enough data yet"}</p></Panel>
+                <Panel icon={Activity} title="Daily / Weekly / Monthly User Activity" subtitle={`Daily active users and watch events over the last ${data.rangeDays} days.`}><UserActivityChart rows={data.userActivity} /></Panel>
+        <Panel icon={Clock3} title="Peak Watching Time" subtitle="Watch-history events grouped by local database hour.">
+<div className="flex items-end gap-1.5 overflow-hidden rounded-xl border border-white/5 bg-[#080D20] px-3 pb-3 pt-6">{Array.from({ length: 24 }).map((_, hour) => { const row = data.peakWatchingTime.find((item) => item.hour === hour); const max = Math.max(1, ...data.peakWatchingTime.map((item) => item.views)); const height = Math.max(3, Math.round(((row?.views ?? 0) / max) * 100)); return <div key={hour} className="group flex min-w-0 flex-1 items-end" title={`${formatHour(hour)}: ${formatNumber(row?.views ?? 0)} views`}><div className="w-full rounded-t bg-[#d7b36a]/80 group-hover:bg-[#f0d48b]" style={{ height: `${height}%` }} /></div>; })}</div><div className="mt-3 flex justify-between text-[10px] text-slate-600"><span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span><span>12 AM</span></div><p className="mt-4 rounded-xl border border-[#d7b36a]/20 bg-[#d7b36a]/5 px-3 py-2 text-xs text-[#f0d48b]">Peak period: {peakHour ? `${formatHour(peakHour.hour)} with ${formatNumber(peakHour.views)} watch events` : "Not enough data yet"}</p></Panel>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <Panel title="Most Popular Channels" subtitle="Ranked by recorded watch-history events in the selected range."><RankedBars rows={data.popularChannels} valueKey="views" valueLabel="views" /></Panel>
-        <Panel title="Most Favourite Content" subtitle="Ranked by favorites created in the selected range."><RankedBars rows={data.mostFavourite} valueKey="favourites" valueLabel="favorites" /></Panel>
+        <Panel icon={BarChart3} title="Most Popular Channels" subtitle="Ranked by recorded watch-history events in the selected range."><RankedBars rows={data.popularChannels} valueKey="views" valueLabel="views" /></Panel>
+        <Panel icon={Heart} title="Most Favourite Content" subtitle="Ranked by favorites created in the selected range."><RankedBars rows={data.mostFavourite} valueKey="favourites" valueLabel="favorites" /></Panel>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <Panel title="Most Watched Content" subtitle="Top movies, episodes, entertainment, and news by watch events."><div className="overflow-x-auto"><table className="w-full min-w-[520px] text-left text-sm"><thead className="border-b border-white/10 text-xs uppercase tracking-[0.12em] text-slate-500"><tr><th className="pb-3 pr-3">Content</th><th className="pb-3 pr-3">Type</th><th className="pb-3 text-right">Views</th><th className="pb-3 text-right">Users</th></tr></thead><tbody className="divide-y divide-white/5">{data.mostWatched.length ? data.mostWatched.slice(0, 8).map((row) => <tr key={`${row.type}-${row.contentId}`}><td className="max-w-[230px] truncate py-3 pr-3 text-slate-200">{row.title}</td><td className="py-3 pr-3 text-xs text-slate-500">{row.type}</td><td className="py-3 text-right font-semibold text-[#b8cee8]">{formatNumber(row.views)}</td><td className="py-3 text-right text-slate-400">{formatNumber(row.uniqueUsers)}</td></tr>) : <tr><td colSpan={4} className="py-8"><EmptyAnalytics /></td></tr>}</tbody></table></div></Panel>
-        <Panel title="Live Broadcast Viewer Analytics" subtitle="Active viewer sessions are refreshed by live-TV heartbeat telemetry."><div className="grid gap-3 sm:grid-cols-2"><div className="rounded-xl border border-[#7898bf]/20 bg-[#7898bf]/5 p-4"><p className="text-xs text-slate-500">Active now</p><p className="mt-1 text-2xl font-bold text-[#b8cee8]">{formatNumber(data.liveBroadcastViewers.activeViewers)}</p></div><div className="rounded-xl border border-white/10 bg-white/[0.02] p-4"><p className="text-xs text-slate-500">Sessions / 24h</p><p className="mt-1 text-2xl font-bold text-white">{formatNumber(data.liveBroadcastViewers.sessionsLast24h)}</p></div></div><div className="mt-5 space-y-3">{data.liveBroadcastViewers.channels.length ? data.liveBroadcastViewers.channels.slice(0, 6).map((row) => <div key={row.channelId} className="flex items-center justify-between border-b border-white/5 pb-2 text-sm"><span className="truncate text-slate-300">{row.name}</span><span className="font-semibold text-emerald-200">{formatNumber(row.viewers)} viewers</span></div>) : <EmptyAnalytics message="No live viewer heartbeat has been recorded yet." />}</div></Panel>
+                <Panel icon={Film} title="Most Watched Content" subtitle="Top movies, episodes, entertainment, and news by watch events.">
+<div className="overflow-x-auto"><table className="w-full min-w-[520px] text-left text-sm"><thead className="border-b border-white/10 text-xs uppercase tracking-[0.12em] text-slate-500"><tr><th className="pb-3 pr-3">Content</th><th className="pb-3 pr-3">Type</th><th className="pb-3 text-right">Views</th><th className="pb-3 text-right">Users</th></tr></thead><tbody className="divide-y divide-white/5">{data.mostWatched.length ? data.mostWatched.slice(0, 8).map((row) => <tr key={`${row.type}-${row.contentId}`}><td className="max-w-[230px] truncate py-3 pr-3 text-slate-200">{row.title}</td><td className="py-3 pr-3 text-xs text-slate-500">{row.type}</td><td className="py-3 text-right font-semibold text-[#b8cee8]">{formatNumber(row.views)}</td><td className="py-3 text-right text-slate-400">{formatNumber(row.uniqueUsers)}</td></tr>) : <tr><td colSpan={4} className="py-8"><EmptyAnalytics /></td></tr>}</tbody></table></div></Panel>
+                <Panel icon={Radio} title="Live Broadcast Viewer Analytics" subtitle="Active viewer sessions are refreshed by live-TV heartbeat telemetry.">
+<div className="grid gap-3 sm:grid-cols-2"><div className="rounded-xl border border-[#7898bf]/20 bg-[#7898bf]/5 p-4"><p className="text-xs text-slate-500">Active now</p><p className="mt-1 text-2xl font-bold text-[#b8cee8]">{formatNumber(data.liveBroadcastViewers.activeViewers)}</p></div><div className="rounded-xl border border-white/10 bg-white/[0.02] p-4"><p className="text-xs text-slate-500">Sessions / 24h</p><p className="mt-1 text-2xl font-bold text-white">{formatNumber(data.liveBroadcastViewers.sessionsLast24h)}</p></div></div><div className="mt-5 space-y-3">{data.liveBroadcastViewers.channels.length ? data.liveBroadcastViewers.channels.slice(0, 6).map((row) => <div key={row.channelId} className="flex items-center justify-between border-b border-white/5 pb-2 text-sm"><span className="truncate text-slate-300">{row.name}</span><span className="font-semibold text-emerald-200">{formatNumber(row.viewers)} viewers</span></div>) : <EmptyAnalytics message="No live viewer heartbeat has been recorded yet." />}</div></Panel>
       </div>
 
-      <Panel title="Advertisement Performance" subtitle="Impressions, completions, clicks, and completion rate from recorded advertisement events."><div className="overflow-x-auto"><table className="w-full min-w-[680px] text-left text-sm"><thead className="border-b border-white/10 text-xs uppercase tracking-[0.12em] text-slate-500"><tr><th className="pb-3 pr-3">Advertisement</th><th className="pb-3 text-right">Impressions</th><th className="pb-3 text-right">Completions</th><th className="pb-3 text-right">Clicks</th><th className="pb-3 text-right">Completion rate</th></tr></thead><tbody className="divide-y divide-white/5">{data.advertisementPerformance.length ? data.advertisementPerformance.map((row) => <tr key={row.advertisementId}><td className="max-w-[300px] truncate py-3 pr-3 text-slate-200">{row.title}</td><td className="py-3 text-right text-slate-300">{formatNumber(row.impressions)}</td><td className="py-3 text-right text-slate-300">{formatNumber(row.completions)}</td><td className="py-3 text-right text-slate-300">{formatNumber(row.clicks)}</td><td className="py-3 text-right font-semibold text-[#d7b36a]">{row.completionRate.toFixed(1)}%</td></tr>) : <tr><td colSpan={5} className="py-8"><EmptyAnalytics message="No advertisement events have been recorded yet. The dashboard will populate as ads emit impression/completion/click events." /></td></tr>}</tbody></table></div></Panel>
+            <Panel icon={Megaphone} title="Advertisement Performance" subtitle="Impressions, completions, clicks, and completion rate from recorded advertisement events.">
+<div className="overflow-x-auto"><table className="w-full min-w-[680px] text-left text-sm"><thead className="border-b border-white/10 text-xs uppercase tracking-[0.12em] text-slate-500"><tr><th className="pb-3 pr-3">Advertisement</th><th className="pb-3 text-right">Impressions</th><th className="pb-3 text-right">Completions</th><th className="pb-3 text-right">Clicks</th><th className="pb-3 text-right">Completion rate</th></tr></thead><tbody className="divide-y divide-white/5">{data.advertisementPerformance.length ? data.advertisementPerformance.map((row) => <tr key={row.advertisementId}><td className="max-w-[300px] truncate py-3 pr-3 text-slate-200">{row.title}</td><td className="py-3 text-right text-slate-300">{formatNumber(row.impressions)}</td><td className="py-3 text-right text-slate-300">{formatNumber(row.completions)}</td><td className="py-3 text-right text-slate-300">{formatNumber(row.clicks)}</td><td className="py-3 text-right font-semibold text-[#d7b36a]">{row.completionRate.toFixed(1)}%</td></tr>) : <tr><td colSpan={5} className="py-8"><EmptyAnalytics message="No advertisement events have been recorded yet. The dashboard will populate as ads emit impression/completion/click events." /></td></tr>}</tbody></table></div></Panel>
 
-      <div className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]"><Panel title="Live Status" subtitle="Current channel availability."><div className="divide-y divide-white/5">{data.channels.length ? data.channels.map((channel) => <div key={channel.name} className="flex items-center justify-between gap-4 py-3 text-sm"><span className="min-w-0 truncate text-slate-200">{channel.name}</span><span className={channel.status === "LIVE" ? "shrink-0 text-emerald-300" : "shrink-0 text-slate-500"}>● {channel.status}</span></div>) : <EmptyAnalytics message="No channel status is available yet." />}</div></Panel><Panel title="Recent Activity" subtitle="Latest channel and broadcast events."><div className="space-y-4">{data.activities?.length ? data.activities.slice(0, 6).map((activity, index) => <div key={`${activity.message}-${index}`} className="border-l border-[#7898bf]/30 pl-3"><p className="text-sm text-slate-200">{activity.message}</p><p className="mt-1 text-xs text-slate-500">{new Date(activity.time).toLocaleString()}</p></div>) : <EmptyAnalytics message="No recent activity." />}</div></Panel></div>
+            <div className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]"><Panel icon={Tv} title="Live Status" subtitle="Current channel availability.">
+<div className="divide-y divide-white/5">{data.channels.length ? data.channels.map((channel) => <div key={channel.name} className="flex items-center justify-between gap-4 py-3 text-sm"><span className="min-w-0 truncate text-slate-200">{channel.name}</span><span className={channel.status === "LIVE" ? "shrink-0 text-emerald-300" : "shrink-0 text-slate-500"}>● {channel.status}</span></div>) : <EmptyAnalytics message="No channel status is available yet." />}</div></Panel><Panel icon={ListChecks} title="Recent Activity" subtitle="Latest channel and broadcast events.">
+<div className="space-y-4">{data.activities?.length ? data.activities.slice(0, 6).map((activity, index) => <div key={`${activity.message}-${index}`} className="border-l border-[#7898bf]/30 pl-3"><p className="text-sm text-slate-200">{activity.message}</p><p className="mt-1 text-xs text-slate-500">{new Date(activity.time).toLocaleString()}</p></div>) : <EmptyAnalytics message="No recent activity." />}</div></Panel></div>
 
       <div className="flex items-center justify-between text-xs text-slate-600"><span>Analytics range: last {data.rangeDays} days.</span><span>Updated {new Date(data.generatedAt).toLocaleString()}</span></div>
     </div>

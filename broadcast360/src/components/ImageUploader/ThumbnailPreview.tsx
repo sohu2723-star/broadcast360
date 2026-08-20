@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { ImageIcon } from "lucide-react";
 
 type Props = {
   title?: string;
@@ -34,7 +35,7 @@ export default function ThumbnailPreview({
           />
         ) : (
           <div className="text-center text-slate-500">
-            <div className="mb-3 text-5xl">🖼️</div>
+            <div className="mb-3 flex justify-center text-[#7898bf]"><ImageIcon size={48} strokeWidth={1.5} aria-hidden="true" /></div>
 
             <p>No thumbnail selected</p>
 

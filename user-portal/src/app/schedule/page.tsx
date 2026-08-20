@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ChevronRight, Tv } from "lucide-react";
 
 import {
   getPremiumSchedules,
@@ -547,8 +548,8 @@ export default function SchedulePage() {
         ) : schedules.length === 0 ? (
           <div className="rounded-xl bg-gray-900 p-10 text-center">
 
-            <div className="mb-3 text-4xl">
-              📺
+            <div className="mb-3 flex justify-center text-[#7898bf]">
+              <Tv size={42} strokeWidth={1.5} aria-hidden="true" />
             </div>
 
             <p className="font-semibold text-gray-300">
@@ -619,7 +620,7 @@ export default function SchedulePage() {
               }
               className="rounded-lg bg-gray-800 px-5 py-2 text-sm font-medium hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              Next →
+              <span className="inline-flex items-center gap-1.5">Next <ChevronRight size={15} aria-hidden="true" /></span>
             </button>
 
           </div>

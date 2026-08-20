@@ -129,7 +129,7 @@ export default function NewsVideoPlayer({
                     resumeAppliedRef.current = true;
 
                     console.log(
-                        `✅ Resuming news ${news.id} from ${progress}s`
+                        ` Resuming news ${news.id} from ${progress}s`
                     );
                 };
 

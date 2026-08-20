@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Flame } from "lucide-react";
 
 import {
   getNews,
@@ -209,8 +210,9 @@ export default function UserNewsPage() {
         ===================================================== */}
 
         <section className="mb-12">
-          <h2 className="mb-5 text-2xl font-bold text-white">
-            🔥 HOT NEWS
+          <h2 className="mb-5 flex items-center gap-2.5 text-2xl font-bold text-white">
+            <Flame size={22} strokeWidth={1.8} className="text-[#d7b36a]" aria-hidden="true" />
+            HOT NEWS
           </h2>
 
           {loading ? (

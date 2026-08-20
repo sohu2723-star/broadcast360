@@ -76,7 +76,7 @@ export default function ChannelPlayer({
 
         if (!response.ok) {
           console.log(
-            `⚠️ Status API failed: ${channel.name}`
+            ` Status API failed: ${channel.name}`
           );
 
           setStatus("offline");
@@ -86,7 +86,7 @@ export default function ChannelPlayer({
         const data = await response.json();
 
         console.log(
-          `📡 ${channel.name} status:`,
+          ` ${channel.name} status:`,
           {
             status: data.status,
             isLive: data.isLive,
@@ -110,7 +110,7 @@ export default function ChannelPlayer({
         }
       } catch (error) {
         console.error(
-          `❌ Status check failed: ${channel.name}`,
+          ` Status check failed: ${channel.name}`,
           error
         );
 
@@ -187,7 +187,7 @@ export default function ChannelPlayer({
       }
 
       console.log(
-        `▶️ Video playing: ${channel.name}`
+        ` Video playing: ${channel.name}`
       );
     };
 
@@ -219,7 +219,7 @@ export default function ChannelPlayer({
       }
 
       console.log(
-        `❌ Video error: ${channel.name}`
+        ` Video error: ${channel.name}`
       );
 
       /*
@@ -259,7 +259,7 @@ export default function ChannelPlayer({
       }
 
       console.log(
-        `📡 Starting HLS: ${channel.name}`
+        ` Starting HLS: ${channel.name}`
       );
 
       /*
@@ -300,7 +300,7 @@ export default function ChannelPlayer({
           }
 
           console.log(
-            `📺 Metadata loaded: ${channel.name}`
+            ` Metadata loaded: ${channel.name}`
           );
 
           video.play().catch(() => {
@@ -362,7 +362,7 @@ export default function ChannelPlayer({
             }
 
             console.log(
-              `📺 Manifest loaded: ${channel.name}`
+              ` Manifest loaded: ${channel.name}`
             );
 
             video.play().catch(() => {
@@ -387,7 +387,7 @@ export default function ChannelPlayer({
             }
 
             console.log(
-              `⚠️ HLS ${channel.name}:`,
+              ` HLS ${channel.name}:`,
               data.type,
               data.details,
               data.fatal
@@ -438,7 +438,7 @@ export default function ChannelPlayer({
              */
 
             console.error(
-              `❌ Fatal HLS error: ${channel.name}`
+              ` Fatal HLS error: ${channel.name}`
             );
 
             hls.destroy();
@@ -459,7 +459,7 @@ export default function ChannelPlayer({
        */
 
       console.error(
-        `❌ HLS not supported: ${channel.name}`
+        ` HLS not supported: ${channel.name}`
       );
 
       setStatus("offline");

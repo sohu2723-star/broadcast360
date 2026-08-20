@@ -55,7 +55,7 @@ export class ScheduleCatchupService {
       const duration = item.duration ?? 0;
 
       if (duration <= 0) {
-        console.log("⚠ SKIP ITEM WITHOUT DURATION", item);
+        console.log(" SKIP ITEM WITHOUT DURATION", item);
 
         continue;
       }

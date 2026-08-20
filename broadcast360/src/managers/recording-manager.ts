@@ -62,7 +62,7 @@ const args = [
 
 
   console.log(
-    "🔴 RECORDING STARTED",
+    " RECORDING STARTED",
     output
   );
 
@@ -78,7 +78,7 @@ const args = [
     const active = this.active.get(channelId);
 
     if (!active) {
-      console.log("⚠ NO ACTIVE RECORDING", channelId);
+      console.log(" NO ACTIVE RECORDING", channelId);
 
       return null;
     }
@@ -93,7 +93,7 @@ const args = [
 
     this.active.delete(channelId);
 
-    console.log("⏹ RECORDING STOPPED", {
+    console.log(" RECORDING STOPPED", {
       channelId,
       duration,
     });

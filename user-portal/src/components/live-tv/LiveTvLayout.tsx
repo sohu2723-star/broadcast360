@@ -37,7 +37,7 @@ export default function LiveTvLayout() {
           await channelService.getAllChannels();
 
         console.log(
-          "📺 CHANNELS:",
+          " CHANNELS:",
           data,
         );
 
@@ -110,7 +110,7 @@ export default function LiveTvLayout() {
     channel: Channel,
   ) {
     console.log(
-      "📺 Selected channel:",
+      " Selected channel:",
       channel.name,
       channel.accessType,
     );

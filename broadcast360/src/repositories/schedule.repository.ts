@@ -234,12 +234,12 @@ export const ScheduleRepository = {
     });
 
     if (!schedule) {
-      console.log("📅 No active schedule");
+      console.log(" No active schedule");
 
       return null;
     }
 
-    console.log("📺 Active schedule", {
+    console.log(" Active schedule", {
       id: schedule.id,
 
       status: schedule.status,

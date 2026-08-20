@@ -7,6 +7,7 @@ import {
 } from "react";
 
 import Link from "next/link";
+import { CalendarDays, ChevronLeft, ChevronRight, Film, Timer } from "lucide-react";
 import { useParams } from "next/navigation";
 
 // =====================================================
@@ -472,19 +473,20 @@ export default function EpisodePlayerPage() {
 
               <div className="flex items-center gap-6 mt-4 text-gray-300">
 
-                <span className="bg-white/5 px-3 py-1 rounded-full">
-                  🎬 Ep{" "}
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1">
+                  <Film size={13} strokeWidth={1.8} aria-hidden="true" />
+                  Ep{" "}
                   {episode.episodeNo}
                 </span>
 
-                <span className="bg-white/5 px-3 py-1 rounded-full">
-                  ⏱{" "}
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1">
+                  <Timer size={13} strokeWidth={1.8} aria-hidden="true" />
                   {duration ||
                     "Loading..."}
                 </span>
 
-                <span className="bg-white/5 px-3 py-1 rounded-full">
-                  📅{" "}
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/5 px-3 py-1">
+                  <CalendarDays size={13} strokeWidth={1.8} aria-hidden="true" />
                   {new Date(
                     episode.createdAt,
                   ).toLocaleDateString()}
@@ -505,7 +507,7 @@ export default function EpisodePlayerPage() {
                     href={`/admin/series/${series.id}/episodes/${previousEpisode.id}`}
                     className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg hover:bg-white/10"
                   >
-                    ◀ Previous Episode
+                    <span className="inline-flex items-center gap-1.5"><ChevronLeft size={16} aria-hidden="true" />Previous Episode</span>
                   </Link>
                 ) : (
                   <div />
@@ -518,7 +520,7 @@ export default function EpisodePlayerPage() {
                     href={`/admin/series/${series.id}/episodes/${nextEpisode.id}`}
                     className="px-4 py-2 bg-[#4f6689] rounded-lg hover:bg-[#7898bf]/30"
                   >
-                    Next Episode ▶
+                    <span className="inline-flex items-center gap-1.5">Next Episode<ChevronRight size={16} aria-hidden="true" /></span>
                   </Link>
                 ) : (
                   <div />

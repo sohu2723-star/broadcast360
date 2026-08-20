@@ -16,10 +16,10 @@ export type Episode = {
   createdAt: Date | string;
 };
 
-// ✅ API UPDATE TYPE (clean + correct)
+//  API UPDATE TYPE (clean + correct)
 export type EpisodeUpdateData = {
   title: string;
   episodeNo: number;
-  videoFile?: File | null; // ✅ optional + nullable (edit-safe)
+  videoFile?: File | null; //  optional + nullable (edit-safe)
   thumbnailFile?: File | null;
 };

@@ -37,11 +37,11 @@ export default function TVPage() {
 
         const channel = await res.json();
 
-        console.log("📺 Channel:", channel);
+        console.log(" Channel:", channel);
 
         if (!channel.streamKey) {
           console.error(
-            "❌ Channel does not have a streamKey"
+            " Channel does not have a streamKey"
           );
 
           return;
@@ -55,7 +55,7 @@ export default function TVPage() {
         setStreamKey(channel.streamKey);
       } catch (error) {
         console.error(
-          "❌ Failed to fetch channel:",
+          " Failed to fetch channel:",
           error
         );
       }
@@ -77,10 +77,10 @@ export default function TVPage() {
     const streamUrl =
       `http://localhost:8888/channel/${streamKey}/index.m3u8`;
 
-    console.log("📡 HLS URL:", streamUrl);
+    console.log(" HLS URL:", streamUrl);
 
     const startPlayer = () => {
-      console.log("▶ Starting HLS player");
+      console.log(" Starting HLS player");
 
       if (hlsRef.current) {
         hlsRef.current.destroy();
@@ -100,7 +100,7 @@ export default function TVPage() {
       hls.on(
         Hls.Events.MANIFEST_PARSED,
         () => {
-          console.log("✅ HLS ready");
+          console.log(" HLS ready");
 
           video.play().catch(() => {});
         }
@@ -132,7 +132,7 @@ export default function TVPage() {
 
             default:
               console.log(
-                "❌ Fatal HLS error"
+                " Fatal HLS error"
               );
 
               hls.destroy();
@@ -160,7 +160,7 @@ export default function TVPage() {
 
             if (res.ok) {
               console.log(
-                "✅ Stream found"
+                " Stream found"
               );
 
               if (checkTimerRef.current) {
@@ -216,7 +216,7 @@ export default function TVPage() {
 
     else {
       console.error(
-        "❌ HLS is not supported"
+        " HLS is not supported"
       );
     }
 

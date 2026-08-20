@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { AlertTriangle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { AdvertisementFormData } from "@/types/advertisement";
 import ImageUploader from "@/components/ImageUploader";
@@ -218,14 +219,14 @@ export default function AdvertisementForm({
               <div className="mt-1">
                 {shouldShowTitleError && errors.title && (
                   <p className="text-xs font-medium text-red-400">
-                    ⚠ {errors.title}
+                    <AlertTriangle size={14} strokeWidth={1.8} className="mr-1 inline-block align-text-bottom" aria-hidden="true" />{errors.title}
                   </p>
                 )}
                 {!errors.title &&
                   !titleAvailable &&
                   (hasSubmittedAttempt || isTitleChecked) && (
                     <p className="text-xs font-medium text-red-400">
-                      ⚠ This title is already taken
+                      <AlertTriangle size={14} strokeWidth={1.8} className="mr-1 inline-block align-text-bottom" aria-hidden="true" />This title is already taken
                     </p>
                   )}
                 {titleAvailable &&
@@ -279,7 +280,7 @@ export default function AdvertisementForm({
               </div>
               {shouldShowVideoError && (
                 <p className="mt-1.5 text-xs font-medium text-red-500">
-                  ⚠ {errors.video}
+                  <AlertTriangle size={14} strokeWidth={1.8} className="mr-1 inline-block align-text-bottom" aria-hidden="true" />{errors.video}
                 </p>
               )}
 

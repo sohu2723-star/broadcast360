@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ShieldCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import InfoCard from "@/components/admin/profile/InfoCard";
@@ -287,7 +288,8 @@ export default function ProfilePage() {
               <div className="mt-1">
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-4 py-1 text-xs font-semibold tracking-wider text-indigo-300 shadow-sm">
                   <span>{user?.role ?? "ADMIN"}</span>
-                  <span className="text-[10px]">🔒</span>
+                                    <ShieldCheck size={13} strokeWidth={1.8} aria-hidden="true" />
+
                 </span>
               </div>
             </div>

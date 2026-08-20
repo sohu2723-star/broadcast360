@@ -46,7 +46,7 @@ export class SwitchManager {
     } catch (error) {
 
       console.error(
-        "❌ ROUTER STOP ERROR",
+        " ROUTER STOP ERROR",
         error
       );
 
@@ -63,7 +63,7 @@ export class SwitchManager {
 
 
     console.log(
-      "🛑 ROUTER STOPPED",
+      " ROUTER STOPPED",
       channelId
     );
   }
@@ -144,7 +144,7 @@ export class SwitchManager {
 
 
     console.log(
-      "🎬 ROUTE VOD",
+      " ROUTE VOD",
       {
         input,
         output
@@ -262,7 +262,7 @@ export class SwitchManager {
 
 
     console.log(
-      "🔴 ROUTE LIVE",
+      " ROUTE LIVE",
       {
         input,
         output

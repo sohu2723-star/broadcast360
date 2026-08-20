@@ -3,6 +3,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { ArrowRight, Heart, LockKeyhole, LogOut, Pencil, Play, UserRound } from "lucide-react";
 import { MoonSpinner } from "@/components/auth/AuthUi";
 import axios from "axios";
 
@@ -451,7 +452,7 @@ export default function ProfilePage() {
                   active:scale-[0.98]
                 "
               >
-                <span>✎</span>
+                <Pencil size={16} strokeWidth={1.8} aria-hidden="true" />
                 Edit Profile
               </button>
 
@@ -496,13 +497,11 @@ export default function ProfilePage() {
 
               <div className="mb-5 flex items-center justify-between">
 
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10 text-2xl">
-                  ▶
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10 text-blue-200">
+                  <Play size={22} strokeWidth={1.8} aria-hidden="true" />
                 </div>
 
-                <span className="text-xl text-zinc-500 transition group-hover:translate-x-1 group-hover:text-blue-400">
-                  →
-                </span>
+                <ArrowRight size={18} className="text-zinc-500 transition group-hover:translate-x-1 group-hover:text-blue-400" aria-hidden="true" />
 
               </div>
 
@@ -515,7 +514,7 @@ export default function ProfilePage() {
               </p>
 
               <div className="mt-5 text-sm font-semibold text-blue-400">
-                View watch history →
+                <span className="inline-flex items-center gap-1.5">View watch history <ArrowRight size={15} aria-hidden="true" /></span>
               </div>
 
             </div>
@@ -547,12 +546,12 @@ export default function ProfilePage() {
 
               <div className="mb-5 flex items-center justify-between">
 
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-500/10 text-2xl">
-                  ♡
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-500/10 text-purple-200">
+                  <Heart size={22} strokeWidth={1.8} aria-hidden="true" />
                 </div>
 
                 <span className="rounded-full border border-purple-500/20 bg-purple-500/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-purple-400">
-                  View Favorites →
+                  <span className="inline-flex items-center gap-1.5">View Favorites <ArrowRight size={13} aria-hidden="true" /></span>
                 </span>
 
               </div>
@@ -615,8 +614,8 @@ export default function ProfilePage() {
 
             <div className="flex items-center gap-4">
 
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-yellow-500/10 text-xl">
-                🔒
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-yellow-500/10 text-yellow-200">
+                <LockKeyhole size={20} strokeWidth={1.8} aria-hidden="true" />
               </div>
 
               <div>
@@ -633,9 +632,7 @@ export default function ProfilePage() {
 
             </div>
 
-            <span className="text-zinc-500">
-              →
-            </span>
+            <ArrowRight size={18} className="text-zinc-500" aria-hidden="true" />
 
           </button>
 
@@ -661,8 +658,8 @@ export default function ProfilePage() {
 
             <div className="flex items-center gap-4">
 
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-500/10 text-xl">
-                👤
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-500/10 text-blue-200">
+                <UserRound size={20} strokeWidth={1.8} aria-hidden="true" />
               </div>
 
               <div>
@@ -679,9 +676,7 @@ export default function ProfilePage() {
 
             </div>
 
-            <span className="text-zinc-500">
-              →
-            </span>
+            <ArrowRight size={18} className="text-zinc-500" aria-hidden="true" />
 
           </button>
 
@@ -705,8 +700,8 @@ export default function ProfilePage() {
 
             <div className="flex items-center gap-4">
 
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-500/10 text-xl">
-                ↪
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-500/10 text-red-200">
+                <LogOut size={20} strokeWidth={1.8} aria-hidden="true" />
               </div>
 
               <div>
@@ -723,9 +718,7 @@ export default function ProfilePage() {
 
             </div>
 
-            <span className="text-zinc-500">
-              →
-            </span>
+            <ArrowRight size={18} className="text-zinc-500" aria-hidden="true" />
 
           </button>
 

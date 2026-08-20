@@ -16,7 +16,7 @@ export class PlayoutManager {
     onFinished: () => Promise<void>,
     loop = false,
   ) {
-    console.log("▶ START CONCAT PLAYOUT", {
+    console.log(" START CONCAT PLAYOUT", {
       channelId,
       total: items.length,
       offset,
@@ -78,7 +78,7 @@ export class PlayoutManager {
       this.stopping.delete(channelId);
 
       if (isStopping) {
-        console.log("⏹ IGNORE CLOSE - MANUAL STOP", {
+        console.log(" IGNORE CLOSE - MANUAL STOP", {
           channelId,
           code,
         });
@@ -87,11 +87,11 @@ export class PlayoutManager {
       }
 
       if (loop) {
-        console.log("⏹ LOOP PLAYLIST STOPPED", channelId);
+        console.log(" LOOP PLAYLIST STOPPED", channelId);
         return;
       }
 
-      console.log("✅ CONCAT FINISHED", {
+      console.log(" CONCAT FINISHED", {
         channelId,
         code,
       });
@@ -105,7 +105,7 @@ export class PlayoutManager {
 
     await this.ffmpeg.stop(channelId, "SOURCE");
 
-    console.log("🛑 PLAYOUT STOP", channelId);
+    console.log(" PLAYOUT STOP", channelId);
   }
 
   isRunning(channelId: number) {

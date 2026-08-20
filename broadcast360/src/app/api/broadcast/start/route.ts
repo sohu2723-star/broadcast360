@@ -32,7 +32,7 @@ export async function POST(request: Request) {
       channelId,
     });
   } catch (error) {
-    console.error("❌ Broadcast start failed", error);
+    console.error(" Broadcast start failed", error);
 
     return NextResponse.json(
       {

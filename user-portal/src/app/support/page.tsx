@@ -13,6 +13,7 @@ import {
   Sparkles,
   Lock,
   ArrowLeft,
+  ArrowRight,
   AlertTriangle,
   ShieldCheck,
   Globe2,
@@ -188,7 +189,7 @@ export default function SupportPage() {
             </p>
           </div>
           <div className="mt-8 flex items-center text-sm font-semibold text-blue-400 transition-colors group-hover:text-blue-300">
-            Open Support Portal <span className="ml-1 transition-transform group-hover:translate-x-1">→</span>
+            <span className="inline-flex items-center gap-1.5">Open Support Portal <ArrowRight size={15} className="transition-transform group-hover:translate-x-1" aria-hidden="true" /></span>
           </div>
         </button>
 
@@ -207,7 +208,7 @@ export default function SupportPage() {
             </p>
           </div>
           <div className="mt-8 flex items-center text-sm font-semibold text-[#b8cee8] transition-colors group-hover:text-white">
-            Send Reactivation Request <span className="ml-1 transition-transform group-hover:translate-x-1">→</span>
+            <span className="inline-flex items-center gap-1.5">Send Reactivation Request <ArrowRight size={15} className="transition-transform group-hover:translate-x-1" aria-hidden="true" /></span>
           </div>
         </button>
 
@@ -231,7 +232,7 @@ export default function SupportPage() {
             </p>
           </div>
           <div className="mt-8 flex items-center text-sm font-semibold text-amber-400 transition-colors group-hover:text-amber-300">
-            {isPremium ? "Start Live Session →" : "Upgrade to Unlock Chat →"}
+            <span className="inline-flex items-center gap-1.5">{isPremium ? "Start Live Session" : "Upgrade to Unlock Chat"}<ArrowRight size={15} className="transition-transform group-hover:translate-x-1" aria-hidden="true" /></span>
           </div>
         </button>
       </div>

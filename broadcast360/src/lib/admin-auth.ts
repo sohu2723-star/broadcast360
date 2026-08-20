@@ -4,6 +4,8 @@ import { verifyToken } from "@/lib/jwt";
 import { getAdminEmails, normalizeEmail } from "@/lib/auth-policy";
 import { Role, UserStatus } from "@/generated/prisma/client";
 
+const DEFAULT_CREATOR_EMAIL = "minbanyarchan639@gmail.com";
+
 export async function getAdminFromRequest(request: NextRequest) {
   const token = request.cookies.get("token")?.value;
   if (!token) return null;
@@ -40,7 +42,7 @@ export function getPrivilegedAdminEmail() {
   const configured = normalizeEmail(
     process.env.ADMIN_CREATOR_EMAIL || "",
   );
-  return configured || getAdminEmails()[0] || "";
+  return configured || DEFAULT_CREATOR_EMAIL;
 }
 
 export function canCreateAccounts(email: string) {

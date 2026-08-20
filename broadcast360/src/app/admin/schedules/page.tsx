@@ -38,7 +38,7 @@ export default function SchedulesPage() {
 
         if (search) params.append("search", search);
 
-        // ✅ SINGLE DATE FILTER
+        //  SINGLE DATE FILTER
         if (date) {
           params.append("date", date);
         }

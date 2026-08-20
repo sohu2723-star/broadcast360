@@ -81,9 +81,9 @@ export async function PUT(
        Series 1 = Naruto
        Series 2 = One Piece
 
-       Series 2 ကို Naruto ပြောင်းမယ်ဆိုရင် ❌
+       Series 2 ကို Naruto ပြောင်းမယ်ဆိုရင် 
        
-       Series 1 ကို Naruto အတိုင်းထားပြီး edit လုပ်ရင် ✅
+       Series 1 ကို Naruto အတိုင်းထားပြီး edit လုပ်ရင် 
     ===================================================== */
 
     const existingSeries = await prisma.series.findFirst({

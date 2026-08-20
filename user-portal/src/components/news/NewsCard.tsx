@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Play } from "lucide-react";
 
 import type { NewsItem } from "@/services/news.service";
 
@@ -71,7 +72,7 @@ export default function NewsCard({
           >
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#106EE9] text-white shadow-lg transition group-hover:scale-110">
               <span className="ml-0.5 text-xs">
-                ▶
+                <Play size={14} fill="currentColor" strokeWidth={1.8} aria-hidden="true" />
               </span>
             </div>
           </Link>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Film, Flame } from "lucide-react";
 
 import type { Entertainment } from "@/types/entertainment";
 import type { Channel } from "@/types/channel";
@@ -115,7 +116,7 @@ export default function EntertainmentPage() {
             <div>No entertainments found.</div>
           ) : (
             <EntertainmentGrid
-              title="🔥 HOT ENTERTAINMENTS"
+              title={<span className="inline-flex items-center gap-2"><Flame size={18} strokeWidth={1.8} className="text-[#d7b36a]" aria-hidden="true" />HOT ENTERTAINMENTS</span>}
               entertainments={hotEntertainments}
               horizontal
             />
@@ -124,7 +125,7 @@ export default function EntertainmentPage() {
 
         <section>
           <h2 className="mb-8 text-2xl font-bold">
-            🎬 ALL ENTERTAINMENTS ARCHIVE
+             <span className="inline-flex items-center gap-2"><Film size={22} strokeWidth={1.8} className="text-[#7898bf]" aria-hidden="true" />ALL ENTERTAINMENTS ARCHIVE</span>
           </h2>
 
           <EntertainmentGrid entertainments={paginatedEntertainments} />

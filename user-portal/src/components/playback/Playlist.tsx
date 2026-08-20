@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { Film, Play, Timer } from "lucide-react";
 
 import type { Movie } from "@/types/movie";
 
@@ -27,7 +28,7 @@ function formatDuration(seconds?: number | null) {
 export default function Playlist({ movies, selectedId, onSelect }: Props) {
   return (
     <div>
-      <h2 className="mb-4 text-lg font-bold text-white">🎬 Playlist Parts</h2>
+      <h2 className="mb-4 flex items-center gap-2 text-lg font-bold text-white"><Film size={18} strokeWidth={1.8} className="text-[#7898bf]" aria-hidden="true" />Playlist Parts</h2>
 
       <div className="max-h-[480px] space-y-3 overflow-y-auto pr-2 scrollbar-thin">
         {movies.map((movie) => {
@@ -70,13 +71,12 @@ export default function Playlist({ movies, selectedId, onSelect }: Props) {
 
                 <p className="truncate text-sm text-gray-300">{movie.title}</p>
 
-                <p className="mt-1 text-xs text-gray-400">
-                  ⏱ {formatDuration(movie.duration)}
+                <p className="mt-1 flex items-center gap-1 text-xs text-gray-400">
+                  <Timer size={12} strokeWidth={1.8} aria-hidden="true" />{formatDuration(movie.duration)}
                 </p>
 
                 <p className="mt-2 flex items-center gap-1 text-[10px] font-medium uppercase text-[#106EE9]">
-                  <span>▶</span>
-
+                  <Play size={11} fill="currentColor" strokeWidth={1.8} aria-hidden="true" />
                   <span>{isActive ? "Currently Playing" : "Play Now"}</span>
                 </p>
               </div>

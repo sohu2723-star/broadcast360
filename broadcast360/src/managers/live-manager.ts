@@ -22,7 +22,7 @@ export class LiveManager {
 
     if (existing) {
       console.log(
-        "⚠ LIVE already running",
+        " LIVE already running",
         channelId,
       );
 
@@ -56,7 +56,7 @@ export class LiveManager {
      * INPUT:
      *
      * Larix / OBS
-     *      ↓
+     *      (downstream)
      * live/{streamKey}
      *
      * Example:
@@ -178,7 +178,7 @@ export class LiveManager {
     ];
 
     console.log(
-      "🔴 START LIVE SOURCE",
+      " START LIVE SOURCE",
       {
         channelId,
         streamKey,
@@ -207,7 +207,7 @@ export class LiveManager {
     );
 
     console.log(
-      "🛑 LIVE SOURCE STOP",
+      " LIVE SOURCE STOP",
       channelId,
     );
   }

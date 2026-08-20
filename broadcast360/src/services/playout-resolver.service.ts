@@ -10,7 +10,7 @@ export class PlayoutManager {
     items: ResolvedPlaylistItem[],
     startIndex: number = 0,
   ) {
-    console.log("▶ PLAYOUT LOAD", {
+    console.log(" PLAYOUT LOAD", {
       channelId,
       total: items.length,
       startIndex,
@@ -33,7 +33,7 @@ export class PlayoutManager {
     const item = queue[current];
 
     if (!item) {
-      console.log("📺 PLAYLIST FINISHED", channelId);
+      console.log(" PLAYLIST FINISHED", channelId);
 
       return null;
     }

@@ -60,7 +60,7 @@ export default function EditSeriesPage() {
     return <p className="text-red-500">Series not found</p>;
   }
 
-  // ✅ IMPORTANT: fill all fields
+  //  IMPORTANT: fill all fields
   const initialData: SeriesFormData = {
     title: series.title,
     description: series.description ?? "",
@@ -81,7 +81,7 @@ export default function EditSeriesPage() {
         thumbnailUrl={series.thumbnail}
         onSubmit={async (data) => {
           try {
-            // ✅ validate (edit schema = thumbnail optional)
+            //  validate (edit schema = thumbnail optional)
             const result = editSeriesSchema.safeParse({
               title: data.title,
               description: data.description,

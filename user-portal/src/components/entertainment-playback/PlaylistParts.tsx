@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { Play } from "lucide-react";
 
 import type { Entertainment } from "@/types/entertainment";
 
@@ -72,7 +73,7 @@ export default function PlaylistParts({
               </p>
 
               <p className="mt-2 flex items-center gap-1 text-[10px] font-medium uppercase text-[#106EE9]">
-                <span>▶</span>
+                <Play size={11} fill="currentColor" strokeWidth={1.8} aria-hidden="true" />
                 <span>{isActive ? "Currently Playing" : "Play Now"}</span>
               </p>
             </div>

@@ -17,7 +17,7 @@ export class FFmpegManager {
     const existing = this.processes.get(key);
 
     if (existing && !existing.killed) {
-      console.log("⚠ FFmpeg already running", {
+      console.log(" FFmpeg already running", {
         channelId,
         role,
       });
@@ -25,7 +25,7 @@ export class FFmpegManager {
       return existing;
     }
 
-    console.log("🚀 START FFMPEG", {
+    console.log(" START FFMPEG", {
       channelId,
       role,
       command: `ffmpeg ${args.join(" ")}`,
@@ -48,13 +48,13 @@ export class FFmpegManager {
       if (manual) {
         this.manualStops.delete(key);
 
-        console.log("⏹ IGNORE CLOSE - MANUAL STOP", {
+        console.log(" IGNORE CLOSE - MANUAL STOP", {
           channelId,
           role,
           code,
         });
       } else {
-        console.log("🛑 FFMPEG CLOSED", {
+        console.log(" FFMPEG CLOSED", {
           channelId,
           role,
           code,
@@ -65,7 +65,7 @@ export class FFmpegManager {
     });
 
     process.once("error", (err) => {
-      console.error("❌ FFMPEG ERROR", {
+      console.error(" FFMPEG ERROR", {
         channelId,
         role,
         err,
@@ -86,7 +86,7 @@ export class FFmpegManager {
       return;
     }
 
-    console.log("🛑 STOP FFMPEG", {
+    console.log(" STOP FFMPEG", {
       channelId,
       role,
     });
@@ -108,7 +108,7 @@ export class FFmpegManager {
 
       setTimeout(() => {
         if (!process.killed) {
-          console.log("⚠ FORCE KILL", {
+          console.log(" FORCE KILL", {
             channelId,
             role,
           });

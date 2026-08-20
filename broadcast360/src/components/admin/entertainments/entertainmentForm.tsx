@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { AlertTriangle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { EntertainmentFormData } from "@/types/entertainment";
 import { GENRES } from "@/lib/constants/genres";
@@ -256,13 +257,13 @@ export default function EntertainmentForm({
 
               {errors.title && (
                 <p className="mt-1 text-xs font-medium text-red-400">
-                  ⚠ {errors.title}
+                  <AlertTriangle size={14} strokeWidth={1.8} className="mr-1 inline-block align-text-bottom" aria-hidden="true" />{errors.title}
                 </p>
               )}
 
               {titleError && (
                 <p className="mt-1 text-xs font-medium text-red-400">
-                  ⚠ {titleError}
+                  <AlertTriangle size={14} strokeWidth={1.8} className="mr-1 inline-block align-text-bottom" aria-hidden="true" />{titleError}
                 </p>
               )}
             </div>
@@ -349,7 +350,7 @@ export default function EntertainmentForm({
 
                 {errors.releaseYear && (
                   <p className="mt-1 text-xs font-medium text-red-400">
-                    ⚠ {errors.releaseYear}
+                    <AlertTriangle size={14} strokeWidth={1.8} className="mr-1 inline-block align-text-bottom" aria-hidden="true" />{errors.releaseYear}
                   </p>
                 )}
               </div>
@@ -386,7 +387,7 @@ export default function EntertainmentForm({
 
               {errors.description && (
                 <p className="mt-1 text-xs font-medium text-red-400">
-                  ⚠ {errors.description}
+                  <AlertTriangle size={14} strokeWidth={1.8} className="mr-1 inline-block align-text-bottom" aria-hidden="true" />{errors.description}
                 </p>
               )}
             </div>
@@ -445,7 +446,7 @@ export default function EntertainmentForm({
 
               {errors.video && (
                 <p className="mt-1 text-xs font-medium text-red-400">
-                  ⚠ {errors.video}
+                  <AlertTriangle size={14} strokeWidth={1.8} className="mr-1 inline-block align-text-bottom" aria-hidden="true" />{errors.video}
                 </p>
               )}
 
@@ -496,7 +497,7 @@ export default function EntertainmentForm({
             />
             {errors.thumbnail && (
               <p className="mt-1 text-xs font-medium text-red-400">
-                ⚠ {errors.thumbnail}
+                <AlertTriangle size={14} strokeWidth={1.8} className="mr-1 inline-block align-text-bottom" aria-hidden="true" />{errors.thumbnail}
               </p>
             )}
           </div>

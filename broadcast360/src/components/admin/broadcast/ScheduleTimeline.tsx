@@ -79,7 +79,7 @@ export default function HorizontalScheduleTimeline({
             Schedule Playout Timeline
           </h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Control view: Past (15m) → NOW → Upcoming (15m)
+            Control view: Past (15m) · NOW · Upcoming (15m)
           </p>
         </div>
         <div className="flex items-center gap-2">
