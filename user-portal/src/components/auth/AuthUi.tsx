@@ -117,7 +117,7 @@ export function GoogleButtonSlot({
   loading?: boolean;
 }) {
   return (
-    <div data-google-ready={googleReady ? "true" : "false"} className="google-button-shell relative mx-auto h-11 w-full max-w-[360px] min-w-0 overflow-hidden rounded-full">
+    <div data-google-ready={googleReady ? "true" : "false"} className="google-button-shell relative mx-auto h-11 w-full max-w-full min-w-0 overflow-hidden rounded-full">
       <button
         type="button"
         onClick={onClick}
@@ -129,7 +129,7 @@ export function GoogleButtonSlot({
       </button>
       <div
         ref={googleButtonRef}
-        className={`${googleReady ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"} absolute inset-0 z-10 flex min-w-0 items-center justify-center overflow-hidden rounded-full [&>div]:!mx-auto [&>div]:!h-full [&>div]:!max-w-full [&>div]:!w-full [&_iframe]:!block [&_iframe]:!h-full [&_iframe]:!max-w-full [&_iframe]:!w-full`}
+        className={`${googleReady ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"} absolute inset-0 z-10 flex min-w-0 items-center justify-center overflow-hidden rounded-full [&>div]:!mx-0 [&>div]:!h-full [&>div]:!max-w-none [&>div]:!w-full [&_iframe]:!block [&_iframe]:!h-full [&_iframe]:!max-w-none [&_iframe]:!w-full`}
         aria-label="Continue with Google"
       />
     </div>
