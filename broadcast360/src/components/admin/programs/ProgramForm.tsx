@@ -191,7 +191,7 @@ export default function ProgramForm({
 
           onClick={submit}
 
-          className="rounded bg-blue-600 px-5 py-3"
+          className="rounded bg-[#4f6689] px-5 py-3"
         >
           {loading ? "Saving..." : mode === "edit" ? "Update" : "Create"}
         </button>

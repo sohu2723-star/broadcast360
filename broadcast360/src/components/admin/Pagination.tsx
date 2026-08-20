@@ -83,7 +83,7 @@ export default function Pagination({
               onClick={() => setPage(Number(item))}
               className={`h-10 w-10 rounded-lg text-sm transition ${
                 page === item
-                  ? "bg-[#106EE9] font-semibold text-white shadow-md shadow-blue-500/20"
+                  ? "bg-[#4f6689] font-semibold text-white shadow-md shadow-blue-500/20"
                   : "bg-white/5 text-gray-300 hover:bg-white/10"
               }`}
             >

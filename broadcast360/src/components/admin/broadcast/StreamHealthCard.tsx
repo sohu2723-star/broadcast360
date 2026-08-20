@@ -35,7 +35,7 @@ export default function StreamHealthCard({ health }: HealthProps) {
   ];
 
   return (
-    <div className="h-full rounded-xl border border-[#106EE9]/20 bg-[#0F172A] p-6 shadow-md">
+    <div className="h-full rounded-xl border border-[#4f6689]/20 bg-[#0F172A] p-6 shadow-md">
       <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-slate-800 pb-3">
         Stream Health
       </h2>

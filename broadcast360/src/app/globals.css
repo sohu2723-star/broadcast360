@@ -78,3 +78,18 @@ textarea:focus-visible {
   scrollbar-width: thin;
   scrollbar-color: #4f6689 #0b1634;
 }
+
+select {
+  color: var(--foreground);
+  background-color: var(--surface-input);
+  color-scheme: dark;
+}
+
+select option {
+  color: var(--foreground);
+  background-color: var(--surface);
+}
+
+select:disabled {
+  color: var(--muted);
+}

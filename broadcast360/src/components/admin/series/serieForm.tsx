@@ -249,7 +249,7 @@ export default function SeriesForm({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex-1 cursor-pointer rounded-xl bg-[#106EE9] py-3 font-bold text-white transition hover:opacity-80 disabled:opacity-50"
+            className="flex-1 cursor-pointer rounded-xl bg-[#4f6689] py-3 font-bold text-white transition hover:opacity-80 disabled:opacity-50"
           >
             {isSubmitting
               ? "Saving..."

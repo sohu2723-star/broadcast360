@@ -47,7 +47,7 @@ export default function PlaylistList({
       {/* PAGINATION */}
       {totalPages > 1 && (
         <div className="flex justify-between items-center pt-4 border-t border-white/10">
-          
+
           <Link
             href={`?page=${page - 1}`}
             className={`px-4 py-2 rounded-lg ${
@@ -68,7 +68,7 @@ export default function PlaylistList({
             className={`px-4 py-2 rounded-lg ${
               page >= totalPages
                 ? "bg-gray-800 text-gray-500 pointer-events-none"
-                : "bg-blue-600 text-white"
+                : "bg-[#4f6689] text-white"
             }`}
           >
             Next

@@ -40,7 +40,7 @@ export default function PlaylistInfoCard({
 
             <span className="text-white">/</span>
 
-            <span className="text-[#106EE9]">{programName}</span>
+            <span className="text-[#4f6689]">{programName}</span>
           </div>
         </div>
 
@@ -48,7 +48,7 @@ export default function PlaylistInfoCard({
           <Link
             href={`/admin/programs/${programId}/playlists/${playlistId}/items/create`}
 
-            className="rounded-xl bg-[#106EE9] px-5 py-3 transition hover:opacity-90"
+            className="rounded-xl bg-[#4f6689] px-5 py-3 transition hover:opacity-90"
           >
             + Add Item
           </Link>

@@ -290,7 +290,7 @@ export default function SeriesDetailPage() {
 
         <Link
           href={`/admin/series/${series.id}/episodes/create`}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+          className="rounded-lg bg-[#4f6689] px-4 py-2 text-white hover:bg-[#7898bf]/30"
         >
           + Add Episode
         </Link>

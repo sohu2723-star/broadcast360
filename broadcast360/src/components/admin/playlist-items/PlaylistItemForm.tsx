@@ -134,7 +134,7 @@ export default function PlaylistItemForm({
           type="button"
           onClick={submit}
           disabled={loading}
-          className="rounded-lg bg-[#106EE9] px-6 py-3 text-white disabled:opacity-50"
+          className="rounded-lg bg-[#4f6689] px-6 py-3 text-white disabled:opacity-50"
         >
           {loading ? "Saving..." : "Add Item"}
         </button>

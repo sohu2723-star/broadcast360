@@ -39,7 +39,7 @@ export default function ProgramDetails({ program }: Props) {
           onClick={() =>
             router.push(`/admin/programs/${program.id}/playlists/create`)
           }
-          className="rounded-xl bg-blue-600 px-5 py-3"
+          className="rounded-xl bg-[#4f6689] px-5 py-3"
         >
           + Create Playlist
         </button>

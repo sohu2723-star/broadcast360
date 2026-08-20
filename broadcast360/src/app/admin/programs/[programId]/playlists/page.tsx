@@ -44,7 +44,7 @@ export default async function PlaylistPage({ params }: Props) {
         <Link
           href={`/admin/programs/${programId}/playlists/${playlistId}/items/create`}
 
-          className="mt-5 inline-block rounded-lg bg-[#106EE9] px-5 py-3 text-white"
+          className="mt-5 inline-block rounded-lg bg-[#4f6689] px-5 py-3 text-white"
         >
           + Add Playlist Item
         </Link>

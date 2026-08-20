@@ -302,7 +302,7 @@ export default function AdvertisementForm({
               <input
                 type="checkbox"
                 id="active"
-                className="h-5 w-5 cursor-pointer rounded border-white/10 bg-[#111936] accent-[#106EE9]"
+                className="h-5 w-5 cursor-pointer rounded border-white/10 bg-[#111936] accent-[#4f6689]"
                 checked={form.active}
                 onChange={(e) => setForm({ ...form, active: e.target.checked })}
               />
@@ -342,7 +342,7 @@ export default function AdvertisementForm({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex-1 cursor-pointer rounded-xl bg-[#106EE9] py-3 text-sm font-bold text-white transition-all hover:opacity-90 disabled:opacity-50"
+            className="flex-1 cursor-pointer rounded-xl bg-[#4f6689] py-3 text-sm font-bold text-white transition-all hover:opacity-90 disabled:opacity-50"
           >
             {isSubmitting
               ? "Saving..."

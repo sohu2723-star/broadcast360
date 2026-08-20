@@ -115,7 +115,7 @@ export default function EditPlaylistPage() {
             text-white
             border
             border-gray-700
-            focus:border-[#106EE9]
+            focus:border-[#4f6689]
             outline-none
           "
         />
@@ -140,7 +140,7 @@ export default function EditPlaylistPage() {
             onClick={submit}
             disabled={loading}
             className="
-              bg-[#106EE9]
+              bg-[#4f6689]
               text-white
               px-5
               py-2

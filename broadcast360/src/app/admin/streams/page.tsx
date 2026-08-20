@@ -99,7 +99,7 @@ export default function StreamPage() {
         <Link
           href="/admin/streams/create"
           className="
-          bg-[#106EE9]
+          bg-[#4f6689]
           px-5
           py-3
           rounded-lg

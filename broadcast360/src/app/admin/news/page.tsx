@@ -43,7 +43,7 @@ export default function NewsPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#010312] font-mono text-xs text-[#106EE9] animate-pulse">
+      <div className="flex min-h-screen items-center justify-center bg-[#010312] font-mono text-xs text-[#4f6689] animate-pulse">
         Fetching recorded news telemetry...
       </div>
     );
@@ -56,13 +56,13 @@ export default function NewsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-[#106EE9]/10 border border-[#106EE9]/30 text-[#106EE9]">
+              <div className="p-1.5 rounded-lg bg-[#4f6689]/10 border border-[#4f6689]/30 text-[#4f6689]">
                 <Newspaper size={18} />
               </div>
               <h1 className="text-xl font-bold tracking-tight text-white">
                 News Management
               </h1>
-              <span className="rounded bg-[#106EE9]/10 border border-[#106EE9]/20 px-2 py-0.5 font-mono text-[10px] font-bold text-[#106EE9]">
+              <span className="rounded bg-[#4f6689]/10 border border-[#4f6689]/20 px-2 py-0.5 font-mono text-[10px] font-bold text-[#4f6689]">
                 {news.length} ITEMS
               </span>
             </div>
@@ -71,7 +71,7 @@ export default function NewsPage() {
             </p>
           </div>
 
-          <button className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#106EE9] to-[#400FD3] px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-[#400FD3]/20 transition-all hover:opacity-90 active:scale-95">
+          <button className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#4f6689] to-[#400FD3] px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-[#400FD3]/20 transition-all hover:opacity-90 active:scale-95">
             <Plus size={16} />
             Create News
           </button>
@@ -106,7 +106,7 @@ export default function NewsPage() {
                   news.map((item) => (
                     <tr
                       key={item.id}
-                      className="transition-colors hover:bg-[#106EE9]/5"
+                      className="transition-colors hover:bg-[#4f6689]/5"
                     >
                       {/* ID */}
                       <td className="py-3.5 px-4 font-mono text-[11px] text-zinc-400 font-bold">
@@ -116,7 +116,7 @@ export default function NewsPage() {
                       {/* Title */}
                       <td className="py-3.5 px-4 font-semibold text-white">
                         <div className="flex items-center gap-2">
-                          <Radio size={14} className="text-[#106EE9] shrink-0" />
+                          <Radio size={14} className="text-[#4f6689] shrink-0" />
                           <span className="truncate max-w-xs">{item.title}</span>
                         </div>
                       </td>

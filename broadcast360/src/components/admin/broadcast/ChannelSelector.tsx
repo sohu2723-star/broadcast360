@@ -54,7 +54,7 @@ export default function ChannelSelector({ value, onChange }: Props) {
 
   return (
     <div className="space-y-2">
-      <label className="text-xs font-semibold text-[#106EE9] uppercase tracking-wider">
+      <label className="text-xs font-semibold text-[#4f6689] uppercase tracking-wider">
         Broadcast Channel
       </label>
 
@@ -64,7 +64,7 @@ export default function ChannelSelector({ value, onChange }: Props) {
           onChange(Number(e.target.value));
         }}
         disabled={loading}
-        className="h-11 w-full rounded-lg border border-[#106EE9]/30 bg-[#080C19] px-3 text-sm font-medium text-white shadow-inner focus:border-[#106EE9] focus:outline-none"
+        className="h-11 w-full rounded-lg border border-[#4f6689]/30 bg-[#080C19] px-3 text-sm font-medium text-white shadow-inner focus:border-[#4f6689] focus:outline-none"
       >
         <option value="">-- Select Channel --</option>
 

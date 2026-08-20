@@ -89,3 +89,18 @@ textarea:focus-visible {
 .playlist-scroll::-webkit-scrollbar-thumb:hover {
   background: #7898bf;
 }
+
+select {
+  color: var(--foreground);
+  background-color: var(--surface-input);
+  color-scheme: dark;
+}
+
+select option {
+  color: var(--foreground);
+  background-color: var(--surface);
+}
+
+select:disabled {
+  color: var(--muted);
+}

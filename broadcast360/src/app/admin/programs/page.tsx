@@ -114,14 +114,14 @@ export default function ProgramsPage() {
       <div className="mb-2 flex items-center justify-between">
         <button
           onClick={() => router.back()}
-          className="rounded-xl border border-white/10 bg-[#0B1026] px-5 py-2.5 text-sm transition hover:border-[#106EE9]"
+          className="rounded-xl border border-white/10 bg-[#0B1026] px-5 py-2.5 text-sm transition hover:border-[#4f6689]"
         >
           ← Back
         </button>
 
         <button
           onClick={() => router.push("/admin/programs/create")}
-          className="rounded-xl bg-[#106EE9] px-5 py-2.5 text-sm font-semibold transition hover:bg-[#400FD3]"
+          className="rounded-xl bg-[#4f6689] px-5 py-2.5 text-sm font-semibold transition hover:bg-[#400FD3]"
         >
           + Create Program
         </button>
@@ -133,13 +133,13 @@ export default function ProgramsPage() {
           <input
             type="text"
             placeholder="Search programs..."
-            className="w-full rounded-xl border border-white/10 bg-[#010312] px-4 py-3 text-sm focus:border-[#106EE9] focus:outline-none"
+            className="w-full rounded-xl border border-white/10 bg-[#010312] px-4 py-3 text-sm focus:border-[#4f6689] focus:outline-none"
             value={search}
             onChange={(e) => handleSearchChange(e.target.value)}
           />
 
           <select
-            className="w-full rounded-xl border border-white/10 bg-[#010312] px-4 py-3 text-sm focus:border-[#106EE9]"
+            className="w-full rounded-xl border border-white/10 bg-[#010312] px-4 py-3 text-sm focus:border-[#4f6689]"
             value={selectedType}
             onChange={(e) => handleTypeChange(e.target.value)}
           >
@@ -152,7 +152,7 @@ export default function ProgramsPage() {
           </select>
 
           <select
-            className="w-full rounded-xl border border-white/10 bg-[#010312] px-4 py-3 text-sm focus:border-[#106EE9]"
+            className="w-full rounded-xl border border-white/10 bg-[#010312] px-4 py-3 text-sm focus:border-[#4f6689]"
             value={selectedChannel}
             onChange={(e) => handleChannelChange(e.target.value)}
           >

@@ -113,7 +113,7 @@ export default function AdvertisementsPage() {
               setPage(1);
             }}
             placeholder="Search title..."
-            className="w-96 rounded-xl border border-white/10 bg-[#0B1026] px-4 py-3 text-white outline-none focus:border-[#106EE9]"
+            className="w-96 rounded-xl border border-white/10 bg-[#0B1026] px-4 py-3 text-white outline-none focus:border-[#4f6689]"
           />
 
           <select
@@ -122,7 +122,7 @@ export default function AdvertisementsPage() {
               setStatusFilter(e.target.value);
               setPage(1);
             }}
-            className="rounded-xl border border-white/10 bg-[#0B1026] px-4 py-2 text-white outline-none focus:border-[#106EE9]"
+            className="rounded-xl border border-white/10 bg-[#0B1026] px-4 py-2 text-white outline-none focus:border-[#4f6689]"
           >
             <option value="all">All Status</option>
             <option value="active">Active</option>
@@ -132,7 +132,7 @@ export default function AdvertisementsPage() {
 
         <Link
           href="/admin/ads/create"
-          className="rounded-xl bg-[#106EE9] px-5 py-3 text-white transition-all hover:opacity-90"
+          className="rounded-xl bg-[#4f6689] px-5 py-3 text-white transition-all hover:opacity-90"
         >
           + Create New Ads
         </Link>
@@ -208,7 +208,7 @@ export default function AdvertisementsPage() {
                     <div className="flex gap-3">
                       <Link
                         href={`/admin/ads/${ad.id}`}
-                        className="rounded-lg bg-[#106EE9] px-4 py-2 text-center text-sm font-semibold transition-all hover:opacity-90"
+                        className="rounded-lg bg-[#4f6689] px-4 py-2 text-center text-sm font-semibold transition-all hover:opacity-90"
                       >
                         View
                       </Link>

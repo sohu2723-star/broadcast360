@@ -355,7 +355,7 @@ export default function EpisodePlayerPage() {
                   href={`/admin/series/${series.id}/episodes/${ep.id}`}
                   className={`block p-3 rounded-lg ${
                     ep.id === episode.id
-                      ? "bg-blue-600"
+                      ? "bg-[#4f6689]"
                       : "bg-white/5 hover:bg-white/10"
                   }`}
                 >
@@ -516,7 +516,7 @@ export default function EpisodePlayerPage() {
                 {nextEpisode ? (
                   <Link
                     href={`/admin/series/${series.id}/episodes/${nextEpisode.id}`}
-                    className="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-500"
+                    className="px-4 py-2 bg-[#4f6689] rounded-lg hover:bg-[#7898bf]/30"
                   >
                     Next Episode ▶
                   </Link>

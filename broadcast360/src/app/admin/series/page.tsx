@@ -137,13 +137,13 @@ export default function SeriesPage() {
             placeholder="Search series by title or genre..."
             value={search}
             onChange={handleSearchChange}
-            className="w-full rounded-xl border border-white/10 bg-[#0B1026] px-4 py-3 text-sm text-white placeholder-gray-500 transition focus:border-[#106EE9] focus:outline-none"
+            className="w-full rounded-xl border border-white/10 bg-[#0B1026] px-4 py-3 text-sm text-white placeholder-gray-500 transition focus:border-[#4f6689] focus:outline-none"
           />
         </div>
 
         <Link
           href="/admin/series/create"
-          className="rounded-xl bg-[#106EE9] px-5 py-3 whitespace-nowrap text-white transition hover:opacity-90"
+          className="rounded-xl bg-[#4f6689] px-5 py-3 whitespace-nowrap text-white transition hover:opacity-90"
         >
           + Add Series
         </Link>
@@ -222,7 +222,7 @@ export default function SeriesPage() {
 
                     {/* Episode & Part Count Badge */}
                     <td className="p-5">
-                      <span className="rounded-full border border-[#106EE9]/20 bg-white/5 px-3 py-1 text-xs font-semibold text-[#106EE9]">
+                      <span className="rounded-full border border-[#4f6689]/20 bg-white/5 px-3 py-1 text-xs font-semibold text-[#4f6689]">
                         {series.episodeCount} Ep
                         {series.episodeCount > 1 ? "s" : ""}{" "}
                         <span className="text-gray-400">
@@ -242,7 +242,7 @@ export default function SeriesPage() {
                       <div className="flex justify-center gap-3">
                         <Link
                           href={`/admin/series/${series.id}`}
-                          className="rounded-lg bg-[#106EE9] px-4 py-2 text-sm text-white transition hover:opacity-80"
+                          className="rounded-lg bg-[#4f6689] px-4 py-2 text-sm text-white transition hover:opacity-80"
                         >
                           Details
                         </Link>

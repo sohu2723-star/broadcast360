@@ -143,7 +143,7 @@ export default function PremiumChatsPage() {
                   bg-[#0B1026]
                   p-5
                   transition
-                  hover:border-[#106EE9]/50
+                  hover:border-[#4f6689]/50
                   hover:bg-[#111936]
                 "
               >
@@ -160,7 +160,7 @@ export default function PremiumChatsPage() {
                         justify-center
                         overflow-hidden
                         rounded-full
-                        bg-[#106EE9]
+                        bg-[#4f6689]
                         font-bold
                       "
                     >
@@ -309,7 +309,7 @@ export default function PremiumChatsPage() {
               }
               className="
                 rounded-lg
-                bg-[#106EE9]
+                bg-[#4f6689]
                 px-4
                 py-2
                 text-sm

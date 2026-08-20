@@ -221,7 +221,7 @@ export default function ScheduleForm({ initialData }: ScheduleFormProps) {
   }
 
   return (
-    <div className="w-full max-w-xl mx-auto p-6 rounded-2xl bg-[#010312] border border-[#106EE9]/20 shadow-2xl backdrop-blur-sm text-white">
+    <div className="w-full max-w-xl mx-auto p-6 rounded-2xl bg-[#010312] border border-[#4f6689]/20 shadow-2xl backdrop-blur-sm text-white">
       {error && (
         <div className="mb-5 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-medium tracking-wide">
           {error}
@@ -231,7 +231,7 @@ export default function ScheduleForm({ initialData }: ScheduleFormProps) {
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* CHANNEL */}
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-[#106EE9] tracking-wider uppercase">
+          <label className="text-xs font-semibold text-[#4f6689] tracking-wider uppercase">
             Channel
           </label>
           <select
@@ -250,7 +250,7 @@ export default function ScheduleForm({ initialData }: ScheduleFormProps) {
                 endTime: "",
               }));
             }}
-            className="h-11 w-full rounded-lg border border-[#106EE9]/30 bg-[#010312] px-3.5 text-sm text-white focus:border-[#106EE9] focus:outline-none focus:ring-1 focus:ring-[#106EE9] transition-all"
+            className="h-11 w-full rounded-lg border border-[#4f6689]/30 bg-[#010312] px-3.5 text-sm text-white focus:border-[#4f6689] focus:outline-none focus:ring-1 focus:ring-[#4f6689] transition-all"
           >
             <option value="">Select Channel</option>
             {channels.map((c) => (
@@ -263,7 +263,7 @@ export default function ScheduleForm({ initialData }: ScheduleFormProps) {
 
         {/* PROGRAM */}
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-[#106EE9] tracking-wider uppercase">
+          <label className="text-xs font-semibold text-[#4f6689] tracking-wider uppercase">
             Program
           </label>
           <select
@@ -280,7 +280,7 @@ export default function ScheduleForm({ initialData }: ScheduleFormProps) {
                 endTime: "",
               }));
             }}
-            className="h-11 w-full rounded-lg border border-[#106EE9]/30 bg-[#010312] px-3.5 text-sm text-white focus:border-[#106EE9] focus:outline-none focus:ring-1 focus:ring-[#106EE9] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            className="h-11 w-full rounded-lg border border-[#4f6689]/30 bg-[#010312] px-3.5 text-sm text-white focus:border-[#4f6689] focus:outline-none focus:ring-1 focus:ring-[#4f6689] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <option value="">Select Program</option>
             {programs.map((p) => (
@@ -293,7 +293,7 @@ export default function ScheduleForm({ initialData }: ScheduleFormProps) {
 
         {/* PLAYLIST */}
         <div className="space-y-1.5">
-          <label className="text-xs font-semibold text-[#106EE9] tracking-wider uppercase">
+          <label className="text-xs font-semibold text-[#4f6689] tracking-wider uppercase">
             Playlist
           </label>
           <select
@@ -336,7 +336,7 @@ export default function ScheduleForm({ initialData }: ScheduleFormProps) {
                     : "",
               }));
             }}
-            className="h-11 w-full rounded-lg border border-[#106EE9]/30 bg-[#010312] px-3.5 text-sm text-white focus:border-[#106EE9] focus:outline-none focus:ring-1 focus:ring-[#106EE9] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            className="h-11 w-full rounded-lg border border-[#4f6689]/30 bg-[#010312] px-3.5 text-sm text-white focus:border-[#4f6689] focus:outline-none focus:ring-1 focus:ring-[#4f6689] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <option value="">Select Playlist</option>
             {playlists.map((p) => (
@@ -347,7 +347,7 @@ export default function ScheduleForm({ initialData }: ScheduleFormProps) {
           </select>
 
           {formData.playlistId > 0 && (
-            <p className="text-xs text-[#106EE9]/70 pt-0.5">
+            <p className="text-xs text-[#4f6689]/70 pt-0.5">
               Duration:
               <span className="ml-1.5 font-medium text-white">
                 {formatDuration(playlistDuration)}
@@ -360,7 +360,7 @@ export default function ScheduleForm({ initialData }: ScheduleFormProps) {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 pt-1">
           {/* START TIME */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-[#106EE9] tracking-wider uppercase">
+            <label className="text-xs font-semibold text-[#4f6689] tracking-wider uppercase">
               Start Time
             </label>
             <input
@@ -382,13 +382,13 @@ export default function ScheduleForm({ initialData }: ScheduleFormProps) {
                       : prev.endTime,
                 }));
               }}
-              className="h-11 w-full rounded-lg border border-[#106EE9]/30 bg-[#010312] px-3.5 text-sm text-white focus:border-[#106EE9] focus:outline-none focus:ring-1 focus:ring-[#106EE9] transition-all"
+              className="h-11 w-full rounded-lg border border-[#4f6689]/30 bg-[#010312] px-3.5 text-sm text-white focus:border-[#4f6689] focus:outline-none focus:ring-1 focus:ring-[#4f6689] transition-all"
             />
           </div>
 
           {/* END TIME */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-[#106EE9] tracking-wider uppercase">
+            <label className="text-xs font-semibold text-[#4f6689] tracking-wider uppercase">
               End Time
             </label>
             <input
@@ -404,7 +404,7 @@ export default function ScheduleForm({ initialData }: ScheduleFormProps) {
                   }));
                 }
               }}
-              className={`h-11 w-full rounded-lg border border-[#106EE9]/30 bg-[#010312] px-3.5 text-sm text-white focus:border-[#106EE9] focus:outline-none focus:ring-1 focus:ring-[#106EE9] transition-all ${
+              className={`h-11 w-full rounded-lg border border-[#4f6689]/30 bg-[#010312] px-3.5 text-sm text-white focus:border-[#4f6689] focus:outline-none focus:ring-1 focus:ring-[#4f6689] transition-all ${
                 playlistDuration > 0
                   ? "opacity-50 cursor-not-allowed bg-[#010312]/60"
                   : ""
@@ -423,7 +423,7 @@ export default function ScheduleForm({ initialData }: ScheduleFormProps) {
         <button
           type="submit"
           disabled={loading || loadingPrograms || loadingPlaylists}
-          className="mt-6 h-11 w-full rounded-lg bg-gradient-to-r from-[#106EE9] to-[#400FD3] text-sm font-semibold text-white shadow-lg shadow-[#106EE9]/20 hover:opacity-95 active:scale-[0.99] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
+          className="mt-6 h-11 w-full rounded-lg bg-gradient-to-r from-[#4f6689] to-[#400FD3] text-sm font-semibold text-white shadow-lg shadow-[#4f6689]/20 hover:opacity-95 active:scale-[0.99] transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
         >
           {loading
             ? "Saving..."

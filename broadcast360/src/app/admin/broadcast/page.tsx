@@ -67,7 +67,7 @@ export default function BroadcastPage() {
 
   return (
     <div className="min-h-screen bg-[#080C19] p-6 text-white font-sans">
-      <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-xl border border-[#106EE9]/20 bg-[#0F172A] p-5 shadow-lg">
+      <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-xl border border-[#4f6689]/20 bg-[#0F172A] p-5 shadow-lg">
         <div>
           <h1 className="text-2xl font-bold tracking-wide">Broadcast Playout Control</h1>
           <p className="mt-1 text-xs text-slate-400">
@@ -93,9 +93,9 @@ export default function BroadcastPage() {
           <div className="grid gap-6 lg:grid-cols-3">
             <SessionCard session={session} />
 
-            <div className="rounded-xl border border-[#106EE9]/20 bg-[#0F172A] p-6 shadow-md flex flex-col justify-between">
+            <div className="rounded-xl border border-[#4f6689]/20 bg-[#0F172A] p-6 shadow-md flex flex-col justify-between">
               <div>
-                <h2 className="text-xs font-bold uppercase tracking-wider text-[#106EE9]">
+                <h2 className="text-xs font-bold uppercase tracking-wider text-[#4f6689]">
                   Selected Channel
                 </h2>
                 <div className="mt-4 flex items-center justify-between">

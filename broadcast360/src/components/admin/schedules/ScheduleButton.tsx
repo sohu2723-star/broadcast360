@@ -22,7 +22,7 @@ export default function ScheduleButton({ id }: Props) {
 
       <Link
         href={`/admin/schedules/${id}`}
-        className="bg-[#106EE9] px-4 py-2 rounded-lg text-sm"
+        className="bg-[#4f6689] px-4 py-2 rounded-lg text-sm"
       >
         View
       </Link>

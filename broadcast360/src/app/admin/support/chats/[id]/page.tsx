@@ -340,7 +340,7 @@ export default function AdminChatPage() {
                         <div
                           className={`rounded-2xl px-4 py-3 text-sm ${
                             isAdmin
-                              ? "rounded-br-md bg-blue-600 text-white"
+                              ? "rounded-br-md bg-[#4f6689] text-white"
                               : "rounded-bl-md bg-gray-800 text-gray-200"
                           }`}
                         >
@@ -407,7 +407,7 @@ export default function AdminChatPage() {
                     sending ||
                     !message.trim()
                   }
-                  className="self-end rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="self-end rounded-xl bg-[#4f6689] px-5 py-3 text-sm font-semibold hover:bg-[#7898bf]/30 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {sending
                     ? "Sending..."

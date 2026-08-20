@@ -26,13 +26,7 @@ export default function SeriesContent({
   const router = useRouter();
 
   const [isPending, startTransition] = useTransition();
-  const hotSeries = [...series]
-    .map((item) => ({
-      ...item,
-      views: Math.floor(Math.random() * 10000),
-    }))
-    .sort((a, b) => b.views - a.views)
-    .slice(0, 5);
+  const hotSeries = series.slice(0, 5);
 
   function updateQuery(key: string, value: string) {
     const scrollY = window.scrollY;

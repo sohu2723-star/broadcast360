@@ -95,7 +95,7 @@ export default function PlaylistForm({
       onSubmit={handleSubmit}
       className="space-y-4 max-w-md"
     >
-     
+
       <div
       className="
       bg-[#0B1026]
@@ -107,7 +107,7 @@ export default function PlaylistForm({
 
       <p>
       Channel:
-      <span className="text-[#106EE9] ml-2">
+      <span className="text-[#4f6689] ml-2">
       {channelName}
       </span>
       </p>
@@ -115,7 +115,7 @@ export default function PlaylistForm({
 
       <p>
       Program:
-      <span className="text-[#106EE9] ml-2">
+      <span className="text-[#4f6689] ml-2">
       {programName}
       </span>
       </p>
@@ -180,7 +180,7 @@ export default function PlaylistForm({
       <button
         type="submit"
         disabled={loading}
-        className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+        className="bg-[#4f6689] text-white px-4 py-2 rounded-lg"
       >
         {loading ? "Creating..." : "Create Playlist"}
       </button>

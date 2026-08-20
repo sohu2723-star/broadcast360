@@ -118,9 +118,9 @@ export default function ChannelDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#010312] font-mono text-xs text-[#106EE9]">
+      <div className="flex min-h-screen items-center justify-center bg-[#010312] font-mono text-xs text-[#4f6689]">
         <div className="flex items-center gap-2 rounded-xl border border-white/5 bg-[#0B1026] px-5 py-3 shadow-lg">
-          <Activity size={16} className="animate-spin text-[#106EE9]" />
+          <Activity size={16} className="animate-spin text-[#4f6689]" />
           <span className="tracking-widest">LOADING CHANNEL DETAILS...</span>
         </div>
       </div>
@@ -139,7 +139,7 @@ export default function ChannelDetailPage() {
         </p>
         <Link
           href="/admin/channels"
-          className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#0B1026] px-4 py-2 text-xs font-medium text-white border border-white/10 hover:border-[#106EE9]/40 hover:bg-[#106EE9]/10 transition-all shadow-md"
+          className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#0B1026] px-4 py-2 text-xs font-medium text-white border border-white/10 hover:border-[#4f6689]/40 hover:bg-[#4f6689]/10 transition-all shadow-md"
         >
           <ArrowLeft size={14} /> Return to Directory
         </Link>
@@ -156,13 +156,13 @@ export default function ChannelDetailPage() {
   return (
     <div className="min-h-screen bg-[#010312] p-4 sm:p-6 text-white font-sans antialiased">
       <div className="mx-auto max-w-7xl space-y-5">
-        
+
         {/* Header Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-white/10 pb-4 gap-4">
           <div className="flex items-center gap-3">
             <Link
               href="/admin/channels"
-              className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-[#0B1026] p-2 text-zinc-400 hover:border-[#106EE9]/50 hover:text-white transition-all shadow-sm"
+              className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-[#0B1026] p-2 text-zinc-400 hover:border-[#4f6689]/50 hover:text-white transition-all shadow-sm"
               title="Back to Channels"
             >
               <ArrowLeft size={18} />
@@ -170,10 +170,10 @@ export default function ChannelDetailPage() {
             <div>
               <div className="flex items-center gap-2.5">
                 <h1 className="text-xl font-bold tracking-tight">{channel.name}</h1>
-                <span className="rounded-md bg-[#106EE9]/10 border border-[#106EE9]/30 px-2 py-0.5 font-mono text-[11px] font-semibold text-[#106EE9]">
+                <span className="rounded-md bg-[#4f6689]/10 border border-[#4f6689]/30 px-2 py-0.5 font-mono text-[11px] font-semibold text-[#4f6689]">
                   ID #{channel.id}
                 </span>
-                
+
                 {/* Access Type Read-Only Header Badge */}
                 <span
                   className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border ${
@@ -193,7 +193,7 @@ export default function ChannelDetailPage() {
             <button
               onClick={saveChanges}
               disabled={saving}
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#106EE9] to-[#400FD3] px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-[#400FD3]/20 hover:opacity-90 active:scale-[0.98] disabled:opacity-50 transition-all cursor-pointer"
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#4f6689] to-[#400FD3] px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-[#400FD3]/20 hover:opacity-90 active:scale-[0.98] disabled:opacity-50 transition-all cursor-pointer"
             >
               <Save size={14} />
               {saving ? "Saving..." : "Save Settings"}
@@ -215,7 +215,7 @@ export default function ChannelDetailPage() {
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <Tv className="h-8 w-8 text-[#106EE9]" />
+                  <Tv className="h-8 w-8 text-[#4f6689]" />
                 )}
               </div>
 
@@ -236,13 +236,13 @@ export default function ChannelDetailPage() {
             </div>
 
             {/* Ingest Stream Box */}
-            <div className="w-full sm:w-auto bg-[#010312]/80 backdrop-blur-md border border-[#106EE9]/30 rounded-xl p-3.5 min-w-[280px]">
+            <div className="w-full sm:w-auto bg-[#010312]/80 backdrop-blur-md border border-[#4f6689]/30 rounded-xl p-3.5 min-w-[280px]">
               <div className="flex items-center justify-between text-xs mb-2">
                 <span className="text-zinc-300 font-medium flex items-center gap-1.5">
                   Stream Key
                 </span>
               </div>
-              <div className="flex items-center justify-between gap-3 bg-[#0B1026] px-3 py-2 rounded-lg border border-white/5 font-mono text-xs text-[#106EE9]">
+              <div className="flex items-center justify-between gap-3 bg-[#0B1026] px-3 py-2 rounded-lg border border-white/5 font-mono text-xs text-[#4f6689]">
                 <span className="truncate max-w-[180px] font-semibold">{channel.streamKey}</span>
                 <button
                   onClick={handleCopyKey}
@@ -258,14 +258,14 @@ export default function ChannelDetailPage() {
 
         {/* Main Content Layout Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          
+
           {/* Main Controls Column */}
           <div className="lg:col-span-2 space-y-5">
-            
+
             {/* Fallback Automation Card */}
             <div className="rounded-2xl border border-white/10 bg-[#0B1026] p-5 space-y-4 shadow-lg">
               <div className="flex items-center justify-between border-b border-white/5 pb-3">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-[#106EE9] flex items-center gap-2">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-[#4f6689] flex items-center gap-2">
                   <ListVideo size={16} /> 24/7 Fallback Automation
                 </h3>
                 <span className="text-xs text-zinc-500 font-mono bg-white/5 px-2 py-0.5 rounded-full border border-white/5">
@@ -289,7 +289,7 @@ export default function ChannelDetailPage() {
                       e.target.value ? Number(e.target.value) : null
                     )
                   }
-                  className="w-full rounded-xl border border-white/10 bg-[#010312] px-3.5 py-2.5 text-xs text-white outline-none focus:border-[#106EE9] focus:ring-1 focus:ring-[#106EE9] transition-all cursor-pointer"
+                  className="w-full rounded-xl border border-white/10 bg-[#010312] px-3.5 py-2.5 text-xs text-white outline-none focus:border-[#4f6689] focus:ring-1 focus:ring-[#4f6689] transition-all cursor-pointer"
                 >
                   <option value="">No fallback playlist assigned</option>
                   {channel.playlists.map((playlist) => (
@@ -303,9 +303,9 @@ export default function ChannelDetailPage() {
                 </select>
 
                 {selectedPlaylistData ? (
-                  <div className="flex items-center justify-between rounded-xl border border-[#106EE9]/30 bg-[#106EE9]/10 px-3.5 py-2.5 text-xs">
+                  <div className="flex items-center justify-between rounded-xl border border-[#4f6689]/30 bg-[#4f6689]/10 px-3.5 py-2.5 text-xs">
                     <div className="flex items-center gap-2 text-sky-300 font-medium truncate">
-                      <CheckCircle2 size={15} className="text-[#106EE9] shrink-0" />
+                      <CheckCircle2 size={15} className="text-[#4f6689] shrink-0" />
                       <span className="truncate">Active: <strong className="text-white">{selectedPlaylistData.name}</strong></span>
                     </div>
                     {selectedPlaylistData.totalDuration && (
@@ -340,10 +340,10 @@ export default function ChannelDetailPage() {
 
           {/* Sidebar Telemetry Column */}
           <div className="space-y-5">
-            
+
             {/* Read-Only Access Tier Banner */}
             <div className="rounded-2xl border border-white/10 bg-[#0B1026] p-5 space-y-3 shadow-lg">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-[#106EE9] flex items-center gap-2">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[#4f6689] flex items-center gap-2">
                 <Shield size={16} /> Access Tier
               </h3>
 
@@ -371,7 +371,7 @@ export default function ChannelDetailPage() {
 
             {/* Quick Stats Grid */}
             <div className="rounded-2xl border border-white/10 bg-[#0B1026] p-5 space-y-3 shadow-lg">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-[#106EE9] flex items-center gap-2">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[#4f6689] flex items-center gap-2">
                 <Sliders size={16} /> Overview Metrics
               </h3>
 
@@ -392,7 +392,7 @@ export default function ChannelDetailPage() {
                 </div>
                 <div className="flex justify-between items-center p-2.5 rounded-lg bg-[#010312] border border-white/5">
                   <span className="text-zinc-500">Bound Playlists</span>
-                  <span className="text-[#106EE9] font-bold">{channel.playlists.length} Total</span>
+                  <span className="text-[#4f6689] font-bold">{channel.playlists.length} Total</span>
                 </div>
               </div>
             </div>

@@ -44,7 +44,7 @@ export default function NowPlayingCard({ channelId }: { channelId: number }) {
   const current = data?.nowPlaying;
 
   return (
-    <div className="h-full rounded-xl border border-[#106EE9]/20 bg-[#0F172A] p-6 shadow-md flex flex-col justify-between">
+    <div className="h-full rounded-xl border border-[#4f6689]/20 bg-[#0F172A] p-6 shadow-md flex flex-col justify-between">
       <div>
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">

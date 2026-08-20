@@ -21,7 +21,7 @@ interface Props {
 export default function SessionCard({ session }: Props) {
   if (!session) {
     return (
-      <div className="h-full min-h-[160px] rounded-xl border border-[#106EE9]/20 bg-[#0F172A] p-6 shadow-md flex items-center justify-center">
+      <div className="h-full min-h-[160px] rounded-xl border border-[#4f6689]/20 bg-[#0F172A] p-6 shadow-md flex items-center justify-center">
         <p className="text-slate-400 text-sm">No broadcast session found</p>
       </div>
     );
@@ -37,7 +37,7 @@ export default function SessionCard({ session }: Props) {
   }[session.status];
 
   return (
-    <div className="h-full rounded-xl border border-[#106EE9]/20 bg-[#0F172A] p-6 shadow-md flex flex-col justify-between">
+    <div className="h-full rounded-xl border border-[#4f6689]/20 bg-[#0F172A] p-6 shadow-md flex flex-col justify-between">
       <div>
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <h2 className="text-lg font-bold text-white">{session.channel.name}</h2>

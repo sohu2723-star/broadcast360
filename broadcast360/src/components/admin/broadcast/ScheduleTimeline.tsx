@@ -28,7 +28,7 @@ export default function HorizontalScheduleTimeline({
       try {
         const res = await fetch(`/api/broadcast/schedule/${channelId}`);
         const result = await res.json();
-        
+
         // Combine previous and upcoming into a single chronological array
         if (result?.data) {
           const combined = [
@@ -113,7 +113,7 @@ export default function HorizontalScheduleTimeline({
                 key={item.id}
                 className={`min-w-[280px] max-w-[320px] flex-shrink-0 rounded-xl border p-4 flex flex-col justify-between transition-all ${
                   isLive
-                    ? "is-live bg-[#106EE9]/15 border-[#106EE9] shadow-lg shadow-[#106EE9]/20 ring-1 ring-[#106EE9]"
+                    ? "is-live bg-[#4f6689]/15 border-[#4f6689] shadow-lg shadow-[#4f6689]/20 ring-1 ring-[#4f6689]"
                     : isCompleted
                     ? "bg-slate-900/40 border-slate-800 opacity-60"
                     : "bg-slate-900 border-slate-800"

@@ -571,7 +571,7 @@ export default function TVPage() {
 
                             <div className="mt-4 text-center">
 
-                                <span className="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-1.5 text-xs font-bold">
+                                <span className="inline-flex items-center gap-2 rounded-full bg-[#4f6689] px-4 py-1.5 text-xs font-bold">
 
                                     <span className="h-2 w-2 rounded-full bg-white" />
 
@@ -672,7 +672,7 @@ export default function TVPage() {
                                             )
                                         }
                                         className={`rounded-lg border px-4 py-2 text-sm transition ${isSelected
-                                                ? "border-blue-500 bg-blue-600 text-white"
+                                                ? "border-blue-500 bg-[#4f6689] text-white"
                                                 : "border-gray-700 bg-gray-900 text-gray-400 hover:border-gray-500 hover:text-white"
                                             }`}
                                     >

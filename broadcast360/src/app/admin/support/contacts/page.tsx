@@ -194,7 +194,7 @@ export default function ContactMessagesPage() {
   return (
     <div className="min-h-screen bg-[#070B19] p-6 lg:p-10 text-slate-100 font-sans antialiased selection:bg-blue-500/30">
       <div className="mx-auto max-w-7xl">
-        
+
         {/* HEADER */}
         <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -342,7 +342,7 @@ export default function ContactMessagesPage() {
                                 updateStatus(message.id, "READ");
                               }
                             }}
-                            className="rounded-lg bg-blue-600/10 px-3 py-1.5 text-xs font-semibold text-blue-400 transition hover:bg-blue-600/20 hover:text-blue-300"
+                            className="rounded-lg bg-[#4f6689]/10 px-3 py-1.5 text-xs font-semibold text-blue-400 transition hover:bg-[#4f6689]/20 hover:text-blue-300"
                           >
                             View
                           </button>

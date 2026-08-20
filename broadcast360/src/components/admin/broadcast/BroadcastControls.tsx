@@ -78,9 +78,9 @@ export default function BroadcastControls({
     status === "LIVE" || status === "STARTING" || status === "SWITCHING";
 
   return (
-    <div className="h-full rounded-xl border border-[#106EE9]/20 bg-[#0F172A] p-6 shadow-md flex flex-col justify-between">
+    <div className="h-full rounded-xl border border-[#4f6689]/20 bg-[#0F172A] p-6 shadow-md flex flex-col justify-between">
       <div>
-        <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-[#106EE9]">
+        <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-[#4f6689]">
           Broadcast Controls
         </h2>
 

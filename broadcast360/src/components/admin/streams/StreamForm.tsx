@@ -563,7 +563,7 @@ export default function StreamForm({
             <button
               type="submit"
               disabled={isLoading}
-              className="flex-[2] rounded-lg bg-[#106EE9] py-3 font-medium text-white hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex-[2] rounded-lg bg-[#4f6689] py-3 font-medium text-white hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isLoading
                 ? "Saving..."

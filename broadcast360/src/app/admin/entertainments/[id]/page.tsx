@@ -270,7 +270,7 @@ export default function EntertainmentDetailPage() {
                 onClick={() =>
                   router.push(`/admin/entertainments/edit/${entertainment.id}`)
                 }
-                className="flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2 text-sm hover:bg-blue-700"
+                className="flex items-center gap-2 rounded-lg bg-[#4f6689] px-5 py-2 text-sm hover:bg-[#7898bf]/30"
               >
                 <Pencil size={16} />
                 Edit

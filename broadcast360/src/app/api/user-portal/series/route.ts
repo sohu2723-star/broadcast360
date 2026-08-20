@@ -83,6 +83,7 @@ export async function GET(req: Request) {
         },
       },
       orderBy: { endTime: "desc" },
+      take: 250,
     });
 
     const seriesMap = new Map<number, {

@@ -75,10 +75,10 @@ export default function ScheduleDetailsView({
   return (
     <div className="max-w-6xl mx-auto space-y-6 p-4 sm:p-6 text-[#FFFFFF] bg-[#010312] min-h-screen">
       {/* 1. HERO HEADER BANNER */}
-      <div className="w-full bg-[#0B1026] border border-[#106EE9]/30 rounded-xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
+      <div className="w-full bg-[#0B1026] border border-[#4f6689]/30 rounded-xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xl">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
-            <span className="text-xs font-bold tracking-widest text-[#106EE9] uppercase bg-[#106EE9]/10 px-2.5 py-1 rounded border border-[#106EE9]/20 font-mono">
+            <span className="text-xs font-bold tracking-widest text-[#4f6689] uppercase bg-[#4f6689]/10 px-2.5 py-1 rounded border border-[#4f6689]/20 font-mono">
               {scheduleData.id}
             </span>
 
@@ -120,13 +120,13 @@ export default function ScheduleDetailsView({
         <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <button
             onClick={onEdit}
-            className="flex-1 sm:flex-initial px-4 h-10 bg-[#010312] hover:bg-[#106EE9]/10 border border-[#106EE9]/40 rounded-lg text-sm font-medium transition-all"
+            className="flex-1 sm:flex-initial px-4 h-10 bg-[#010312] hover:bg-[#4f6689]/10 border border-[#4f6689]/40 rounded-lg text-sm font-medium transition-all"
           >
             Modify Window
           </button>
           <button
             onClick={onForceSkip}
-            className="flex-1 sm:flex-initial px-4 h-10 bg-gradient-to-r from-[#106EE9] to-[#400FD3] hover:opacity-90 rounded-lg text-sm font-medium transition-all shadow-md shadow-[#400FD3]/20"
+            className="flex-1 sm:flex-initial px-4 h-10 bg-gradient-to-r from-[#4f6689] to-[#400FD3] hover:opacity-90 rounded-lg text-sm font-medium transition-all shadow-md shadow-[#400FD3]/20"
           >
             Force Skip Asset
           </button>
@@ -137,13 +137,13 @@ export default function ScheduleDetailsView({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* LEFT/CENTER: SPECS & TIMELINE */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-[#0B1026] border border-[#106EE9]/15 rounded-xl p-6 space-y-6">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-[#106EE9]">
+          <div className="bg-[#0B1026] border border-[#4f6689]/15 rounded-xl p-6 space-y-6">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-[#4f6689]">
               Playout Timeline Configuration
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="p-4 bg-[#010312] border border-[#106EE9]/10 rounded-lg">
+              <div className="p-4 bg-[#010312] border border-[#4f6689]/10 rounded-lg">
                 <span className="text-xs text-zinc-400 block mb-1">
                   Scheduled Start
                 </span>
@@ -151,7 +151,7 @@ export default function ScheduleDetailsView({
                   {formattedTimes.start}
                 </span>
               </div>
-              <div className="p-4 bg-[#010312] border border-[#106EE9]/10 rounded-lg">
+              <div className="p-4 bg-[#010312] border border-[#4f6689]/10 rounded-lg">
                 <span className="text-xs text-zinc-400 block mb-1">
                   Scheduled End
                 </span>
@@ -171,9 +171,9 @@ export default function ScheduleDetailsView({
                   </span>
                   <span>Remaining: {telemetry.remainingMinutes}m</span>
                 </div>
-                <div className="w-full h-2 bg-[#010312] rounded-full overflow-hidden border border-[#106EE9]/10">
+                <div className="w-full h-2 bg-[#010312] rounded-full overflow-hidden border border-[#4f6689]/10">
                   <div
-                    className="h-full bg-gradient-to-r from-[#106EE9] to-[#1CFE10] transition-all duration-500 rounded-full animate-pulse"
+                    className="h-full bg-gradient-to-r from-[#4f6689] to-[#1CFE10] transition-all duration-500 rounded-full animate-pulse"
                     style={{ width: `${telemetry.progressPercent}%` }}
                   />
                 </div>
@@ -182,8 +182,8 @@ export default function ScheduleDetailsView({
           </div>
 
           {/* Database Relational Keys */}
-          <div className="bg-[#0B1026] border border-[#106EE9]/15 rounded-xl p-6">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-[#106EE9] mb-4">
+          <div className="bg-[#0B1026] border border-[#4f6689]/15 rounded-xl p-6">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-[#4f6689] mb-4">
               Relational Database Micro-Keys
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 font-mono text-xs">
@@ -211,21 +211,21 @@ export default function ScheduleDetailsView({
 
         {/* RIGHT COLUMN: ASSETS & EMERGENCY TERMINATION */}
         <div className="space-y-6">
-          <div className="bg-[#0B1026] border border-[#106EE9]/15 rounded-xl p-6 space-y-4">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-[#106EE9]">
+          <div className="bg-[#0B1026] border border-[#4f6689]/15 rounded-xl p-6 space-y-4">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-[#4f6689]">
               Source Asset Target
             </h3>
             <div className="space-y-1.5">
               <span className="text-xs text-zinc-400 block">
                 Linked Playlist Bundle
               </span>
-              <p className="text-sm font-medium bg-[#010312] p-3 rounded-lg border border-[#106EE9]/10 font-mono break-all">
+              <p className="text-sm font-medium bg-[#010312] p-3 rounded-lg border border-[#4f6689]/10 font-mono break-all">
                 {scheduleData.playlistName}
               </p>
             </div>
 
             {assetMeta && (
-              <div className="border-t border-[#106EE9]/10 pt-4 space-y-2 text-xs">
+              <div className="border-t border-[#4f6689]/10 pt-4 space-y-2 text-xs">
                 <div className="flex justify-between">
                   <span className="text-zinc-400">Total Playlist Items:</span>
                   <span className="font-mono">{assetMeta.totalItems ?? 0}</span>

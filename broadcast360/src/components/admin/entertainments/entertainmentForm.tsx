@@ -506,7 +506,7 @@ export default function EntertainmentForm({
         <div className="mt-6 flex gap-4 border-t border-white/10 pt-4">
           <button
             type="submit"
-            className="flex-1 cursor-pointer rounded-xl bg-[#106EE9] py-3 text-sm font-bold text-white transition-all hover:opacity-80"
+            className="flex-1 cursor-pointer rounded-xl bg-[#4f6689] py-3 text-sm font-bold text-white transition-all hover:opacity-80"
           >
             {entertainmentId ? "Update Entertainment" : "Create Entertainment"}
           </button>

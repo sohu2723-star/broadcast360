@@ -903,7 +903,7 @@ export default function EpisodeForm({
         <div className="flex gap-4 border-t border-white/10 pt-4">
           <button
             type="submit"
-            className="flex-1 rounded-xl bg-[#106EE9] py-3 font-bold text-white transition hover:opacity-80"
+            className="flex-1 rounded-xl bg-[#4f6689] py-3 font-bold text-white transition hover:opacity-80"
           >
             {isEdit
               ? "Update Episode"

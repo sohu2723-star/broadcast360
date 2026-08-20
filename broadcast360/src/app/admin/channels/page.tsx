@@ -44,7 +44,7 @@ export default function ChannelsPage() {
       }
     } catch (error) {
       console.log(error);
-    } 
+    }
     finally {
       setLoading(false);
     }
@@ -107,14 +107,14 @@ export default function ChannelsPage() {
             placeholder="Search channels by name or country..."
             value={search}
             onChange={handleSearchChange}
-            className="w-full bg-[#0B1026] text-white border border-white/10 rounded-xl px-4 py-2.5 placeholder-gray-500 focus:outline-none focus:border-[#106EE9] focus:ring-1 focus:ring-[#106EE9] transition text-sm shadow-sm"
+            className="w-full bg-[#0B1026] text-white border border-white/10 rounded-xl px-4 py-2.5 placeholder-gray-500 focus:outline-none focus:border-[#4f6689] focus:ring-1 focus:ring-[#4f6689] transition text-sm shadow-sm"
           />
         </div>
 
         {/* Add Button */}
         <Link
           href="/admin/channels/create"
-          className="w-full sm:w-auto bg-[#106EE9] hover:bg-[#0e5bc2] text-white px-5 py-2.5 rounded-xl font-medium text-sm text-center whitespace-nowrap transition shadow-lg shadow-[#106EE9]/20"
+          className="w-full sm:w-auto bg-[#4f6689] hover:bg-[#0e5bc2] text-white px-5 py-2.5 rounded-xl font-medium text-sm text-center whitespace-nowrap transition shadow-lg shadow-[#4f6689]/20"
         >
           + Add Channel
         </Link>
@@ -180,7 +180,7 @@ export default function ChannelsPage() {
                         <div className="flex items-center justify-end gap-2">
                           <Link
                             href={`/admin/channels/${channel.id}`}
-                            className="bg-[#106EE9]/10 hover:bg-[#106EE9]/20 text-[#106EE9] border border-[#106EE9]/30 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition"
+                            className="bg-[#4f6689]/10 hover:bg-[#4f6689]/20 text-[#4f6689] border border-[#4f6689]/30 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition"
                           >
                             Details
                           </Link>

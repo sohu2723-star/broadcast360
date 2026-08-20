@@ -204,7 +204,7 @@ export default function UserForm({ mode, userId }: Props) {
   if (fetching) {
     return (
       <div className="flex h-64 items-center justify-center text-white">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#106EE9] border-t-transparent" />
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#4f6689] border-t-transparent" />
       </div>
     );
   }
@@ -244,7 +244,7 @@ export default function UserForm({ mode, userId }: Props) {
               className={`w-full rounded-xl border bg-[#111936] p-3.5 text-sm text-white placeholder-gray-500 transition focus:outline-none ${
                 touched.name && errors.name
                   ? "border-red-500/60 focus:border-red-500"
-                  : "border-white/10 focus:border-[#106EE9]"
+                  : "border-white/10 focus:border-[#4f6689]"
               }`}
               placeholder="e.g. John Doe"
               value={form.name}
@@ -275,7 +275,7 @@ export default function UserForm({ mode, userId }: Props) {
               className={`w-full rounded-xl border bg-[#111936] p-3.5 text-sm text-white placeholder-gray-500 transition focus:outline-none ${
                 touched.email && errors.email
                   ? "border-red-500/60 focus:border-red-500"
-                  : "border-white/10 focus:border-[#106EE9]"
+                  : "border-white/10 focus:border-[#4f6689]"
               }`}
               placeholder="e.g. user@gmail.com"
               value={form.email}
@@ -310,7 +310,7 @@ export default function UserForm({ mode, userId }: Props) {
                 className={`w-full rounded-xl border bg-[#111936] p-3.5 text-sm text-white placeholder-gray-500 transition focus:outline-none ${
                   touched.password && errors.password
                     ? "border-red-500/60 focus:border-red-500"
-                    : "border-white/10 focus:border-[#106EE9]"
+                    : "border-white/10 focus:border-[#4f6689]"
                 }`}
                 placeholder="e.g. Password123!"
                 value={form.password}
@@ -366,7 +366,7 @@ export default function UserForm({ mode, userId }: Props) {
                 <div className="mt-4 border-t border-white/5 pt-4">
                   <input
                     type="password"
-                    className="w-full rounded-xl border border-white/10 bg-[#111936] p-3.5 text-sm text-white placeholder-gray-500 focus:border-[#106EE9] focus:outline-none"
+                    className="w-full rounded-xl border border-white/10 bg-[#111936] p-3.5 text-sm text-white placeholder-gray-500 focus:border-[#4f6689] focus:outline-none"
                     placeholder="Enter new password"
                     value={form.password}
                     onBlur={() => handleBlur("password")}
@@ -397,7 +397,7 @@ export default function UserForm({ mode, userId }: Props) {
                 User Role
               </label>
               <select
-                className="w-full cursor-pointer rounded-xl border border-white/10 bg-[#111936] p-3.5 text-sm text-white transition focus:border-[#106EE9] focus:outline-none"
+                className="w-full cursor-pointer rounded-xl border border-white/10 bg-[#111936] p-3.5 text-sm text-white transition focus:border-[#4f6689] focus:outline-none"
                 value={form.role}
                 onChange={(e) =>
                   setForm({ ...form, role: e.target.value as Role })
@@ -417,7 +417,7 @@ export default function UserForm({ mode, userId }: Props) {
                 Account Status
               </label>
               <select
-                className="w-full cursor-pointer rounded-xl border border-white/10 bg-[#111936] p-3.5 text-sm text-white transition focus:border-[#106EE9] focus:outline-none"
+                className="w-full cursor-pointer rounded-xl border border-white/10 bg-[#111936] p-3.5 text-sm text-white transition focus:border-[#4f6689] focus:outline-none"
                 value={form.status}
                 onChange={(e) =>
                   setForm({ ...form, status: e.target.value as Status })
@@ -442,7 +442,7 @@ export default function UserForm({ mode, userId }: Props) {
           <button
             type="submit"
             disabled={loading}
-            className="flex-1 rounded-xl bg-[#106EE9] py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#106EE9]/20 transition hover:opacity-90 disabled:opacity-50"
+            className="flex-1 rounded-xl bg-[#4f6689] py-3.5 text-sm font-semibold text-white shadow-lg shadow-[#4f6689]/20 transition hover:opacity-90 disabled:opacity-50"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">

@@ -61,7 +61,7 @@ export default function PlaylistCard({ playlist, programId }: Props) {
       <div className="flex gap-3">
         <Link
           href={`/admin/programs/${programId}/playlists/${playlist.id}`}
-          className="rounded-lg bg-[#106EE9] px-4 py-2 text-sm text-white"
+          className="rounded-lg bg-[#4f6689] px-4 py-2 text-sm text-white"
         >
           View
         </Link>

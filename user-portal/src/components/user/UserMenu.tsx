@@ -109,16 +109,16 @@ export default function UserMenu({ user }: Props) {
 
         {/* User information */}
 
-        <div className="hidden min-w-0 text-left sm:block">
+        <div className="min-w-0 flex-1 text-left">
           <div className="flex items-center gap-1.5">
-            <p className="max-w-[130px] truncate text-sm font-semibold text-white">
+              <p className="max-w-[130px] truncate text-sm font-semibold text-white sm:max-w-[130px]">
               {user.name}
             </p>
 
 
           </div>
 
-          <p className="text-xs text-zinc-500">
+          <p className="text-xs text-[#9fb3ca]">
             {isPremium ? "Premium Member" : "Account"}
           </p>
         </div>

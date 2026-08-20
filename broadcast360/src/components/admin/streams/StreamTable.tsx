@@ -115,7 +115,7 @@ ${
                 <Link
                   href={`/admin/streams/${stream.id}/edit`}
                   className="
-bg-[#106EE9]
+bg-[#4f6689]
 px-4
 py-2
 rounded-lg

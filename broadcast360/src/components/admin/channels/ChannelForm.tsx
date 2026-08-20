@@ -381,7 +381,7 @@ export default function ChannelForm({
         <div className="flex gap-4">
           <button
             onClick={submit}
-            className="rounded-xl bg-[#106EE9] px-6 py-3"
+            className="rounded-xl bg-[#4f6689] px-6 py-3"
           >
             {mode === "create"
               ? "Save"

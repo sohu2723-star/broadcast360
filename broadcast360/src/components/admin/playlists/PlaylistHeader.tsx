@@ -13,7 +13,7 @@ export default function PlaylistHeader({ programId }: Props) {
 
       <Link
         href={`/admin/programs/${programId}/playlists/create`}
-        className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+        className="bg-[#4f6689] text-white px-4 py-2 rounded-lg"
       >
         + Create Playlist
       </Link>

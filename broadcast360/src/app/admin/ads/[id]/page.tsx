@@ -84,7 +84,7 @@ export default function AdvertisementDetailsPage({ params }: PageProps) {
         </div>
         <button
           onClick={() => router.push("/admin/advertisements")}
-          className="text-xs font-semibold text-[#106EE9] hover:underline"
+          className="text-xs font-semibold text-[#4f6689] hover:underline"
         >
           &larr; Back to Advertisements Registry
         </button>
@@ -123,7 +123,7 @@ export default function AdvertisementDetailsPage({ params }: PageProps) {
         <div className="flex w-full flex-col gap-6">
           {/* Metadata Card */}
           <div className="space-y-4 rounded-2xl border border-white/10 bg-[#070B1E] p-6 shadow-2xl">
-            <h2 className="border-b border-white/5 pb-2 text-xl font-semibold tracking-wider text-[#106EE9] uppercase">
+            <h2 className="border-b border-white/5 pb-2 text-xl font-semibold tracking-wider text-[#4f6689] uppercase">
               Details
             </h2>
 
@@ -194,7 +194,7 @@ export default function AdvertisementDetailsPage({ params }: PageProps) {
             <button
               onClick={() => router.push(`/admin/ads/edit/${ad.id}`)}
               style={{ backgroundColor: "#2b10f4", width: "200px" }}
-              className="rounded-xl bg-[#106EE9] px-6 py-2.5 text-base font-bold text-white shadow-lg transition-all hover:bg-[#106EE9]/90 active:scale-[0.98]"
+              className="rounded-xl bg-[#4f6689] px-6 py-2.5 text-base font-bold text-white shadow-lg transition-all hover:bg-[#4f6689]/90 active:scale-[0.98]"
             >
               Edit
             </button>

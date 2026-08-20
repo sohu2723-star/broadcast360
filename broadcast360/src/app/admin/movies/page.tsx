@@ -103,13 +103,13 @@ export default function MoviesPage() {
             placeholder="Search movies by title or genre..."
             value={search}
             onChange={handleSearchChange}
-            className="w-full rounded-xl border border-white/10 bg-[#0B1026] px-4 py-3 text-sm text-white placeholder-gray-500 transition focus:border-[#106EE9] focus:outline-none"
+            className="w-full rounded-xl border border-white/10 bg-[#0B1026] px-4 py-3 text-sm text-white placeholder-gray-500 transition focus:border-[#4f6689] focus:outline-none"
           />
         </div>
 
         <Link
           href="/admin/movies/create"
-          className="rounded-xl bg-[#106EE9] px-5 py-3 whitespace-nowrap"
+          className="rounded-xl bg-[#4f6689] px-5 py-3 whitespace-nowrap"
         >
           + Add Movie
         </Link>
@@ -182,7 +182,7 @@ export default function MoviesPage() {
                         <div className="flex gap-3">
                           <Link
                             href={`/admin/movies/${movie.id}`}
-                            className="rounded-lg bg-[#106EE9] px-4 py-2 text-sm"
+                            className="rounded-lg bg-[#4f6689] px-4 py-2 text-sm"
                           >
                             Details
                           </Link>

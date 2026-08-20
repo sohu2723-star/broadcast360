@@ -24,7 +24,7 @@ export default function NotFound() {
 
         <Link
           href="/"
-          className="mt-8 inline-block rounded-xl bg-blue-600 px-6 py-3 font-semibold transition hover:bg-blue-700"
+          className="mt-8 inline-block rounded-xl bg-[#4f6689] px-6 py-3 font-semibold transition hover:bg-[#7898bf]/30"
         >
           Back to Login
         </Link>

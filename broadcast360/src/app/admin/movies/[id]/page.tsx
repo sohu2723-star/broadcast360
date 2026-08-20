@@ -75,7 +75,7 @@ export default function MovieDetailPage({
 
         <Link
           href="/admin/movies"
-          className="inline-flex items-center gap-2 rounded-lg bg-[#106EE9] px-4 py-2 text-sm"
+          className="inline-flex items-center gap-2 rounded-lg bg-[#4f6689] px-4 py-2 text-sm"
         >
           <ArrowLeft size={18} />
           Back to Movies

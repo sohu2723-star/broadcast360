@@ -87,7 +87,7 @@ export default function SchedulesPage() {
 
         <Link
           href="/admin/schedules/create"
-          className="rounded-xl bg-[#106EE9] px-5 py-3"
+          className="rounded-xl bg-[#4f6689] px-5 py-3"
         >
           + Add Schedule
         </Link>
@@ -127,7 +127,7 @@ export default function SchedulesPage() {
                   onClick={() => setPage(pageNumber)}
                   className={`h-10 w-10 rounded-lg font-medium transition ${
                     page === pageNumber
-                      ? "bg-[#106EE9] text-white"
+                      ? "bg-[#4f6689] text-white"
                       : "bg-white/5 text-gray-300 hover:bg-white/10"
                   }`}
                 >

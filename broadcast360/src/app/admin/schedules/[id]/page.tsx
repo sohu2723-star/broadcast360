@@ -12,7 +12,7 @@ export default function SchedulePage({
   // Next.js 15 requires unwrapping async params in client components using React.use()
   const { id } = use(params);
   const router = useRouter();
-  
+
   const [scheduleData, setScheduleData] = useState<ScheduleDetailsProps["scheduleData"]>();
   const [error, setError] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
@@ -22,11 +22,11 @@ export default function SchedulePage({
       try {
         // Adjust the fetch path if your API route is located elsewhere
         const res = await fetch(`/api/schedules/${id}`);
-        
+
         if (!res.ok) {
           throw new Error(res.status === 404 ? "Schedule not found" : "Failed to fetch telemetry");
         }
-        
+
         const data = await res.json();
         setScheduleData(data);
         setError("");
@@ -47,7 +47,7 @@ export default function SchedulePage({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#010312] text-[#106EE9] font-mono text-sm animate-pulse">
+      <div className="flex items-center justify-center min-h-screen bg-[#010312] text-[#4f6689] font-mono text-sm animate-pulse">
         Establishing telemetry connection...
       </div>
     );
@@ -58,7 +58,7 @@ export default function SchedulePage({
       <div className="flex flex-col items-center justify-center min-h-screen bg-[#010312] text-[#F41010] p-6 space-y-4">
         <h2 className="text-xl font-bold uppercase">Signal Lost</h2>
         <p className="font-mono text-sm">{error}</p>
-        <button 
+        <button
           onClick={() => router.push("/admin/schedules")}
           className="px-4 py-2 border border-[#F41010]/40 rounded hover:bg-[#F41010]/10 transition-colors"
         >

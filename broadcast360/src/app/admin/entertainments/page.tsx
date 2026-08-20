@@ -207,12 +207,12 @@ export default function EntertainmentListPage() {
             setPagination((prev) => ({ ...prev, page: 1 }));
           }}
           placeholder="Search title, category..."
-          className="w-96 rounded-xl border border-white/10 bg-[#0B1026] px-4 py-3 text-white outline-none focus:border-[#106EE9]"
+          className="w-96 rounded-xl border border-white/10 bg-[#0B1026] px-4 py-3 text-white outline-none focus:border-[#4f6689]"
         />
 
         <Link
           href="/admin/entertainments/create"
-          className="rounded-xl bg-[#106EE9] px-5 py-3 font-medium text-white"
+          className="rounded-xl bg-[#4f6689] px-5 py-3 font-medium text-white"
         >
           + Add Entertainment
         </Link>
@@ -297,7 +297,7 @@ export default function EntertainmentListPage() {
                     <div className="flex justify-end gap-2">
                       <Link
                         href={`/admin/entertainments/${item.id}`}
-                        className="rounded-lg bg-[#106EE9] px-4 py-2 text-sm text-white"
+                        className="rounded-lg bg-[#4f6689] px-4 py-2 text-sm text-white"
                       >
                         View
                       </Link>
