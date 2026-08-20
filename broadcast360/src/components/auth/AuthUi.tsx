@@ -103,11 +103,11 @@ export function GoogleButtonSlot({
   loading?: boolean;
 }) {
   return (
-    <div className="relative h-11 w-full overflow-hidden rounded-2xl">
+    <div className="relative mx-auto h-11 w-full max-w-[360px] min-w-0 overflow-hidden rounded-2xl">
       <button
         type="button"
         onClick={onClick}
-        className={`${googleReady ? "pointer-events-none opacity-0" : "opacity-100"} absolute inset-0 z-0 flex w-full items-center justify-center gap-3 rounded-2xl border border-slate-200/80 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm`}
+        className={`${googleReady ? "pointer-events-none opacity-0" : "opacity-100"} absolute inset-0 z-0 flex w-full min-w-0 items-center justify-center gap-3 rounded-2xl border border-slate-200/80 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm`}
         aria-label="Continue with Google"
       >
         <span className="text-lg font-bold leading-none text-[#4285F4]" aria-hidden="true">G</span>
@@ -115,7 +115,7 @@ export function GoogleButtonSlot({
       </button>
       <div
         ref={googleButtonRef}
-        className={`${googleReady ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"} absolute inset-0 z-10 [&>div]:!h-full [&>div]:!w-full [&_iframe]:!h-full [&_iframe]:!w-full`}
+        className={`${googleReady ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"} absolute inset-0 z-10 flex min-w-0 items-center justify-center [&>div]:!mx-auto [&>div]:!h-full [&>div]:!max-w-full [&>div]:!w-full [&_iframe]:!h-full [&_iframe]:!max-w-full [&_iframe]:!w-full`}
         aria-label="Continue with Google"
       />
     </div>

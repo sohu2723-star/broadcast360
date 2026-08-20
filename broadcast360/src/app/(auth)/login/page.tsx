@@ -135,7 +135,7 @@ export default function LoginPage() {
       size: "large",
       text: "continue_with",
       shape: "pill",
-      width: Math.min(360, Math.max(260, googleButtonRef.current.clientWidth || 320)),
+      width: Math.min(360, Math.max(180, Math.floor(googleButtonRef.current.getBoundingClientRect().width || 320))),
       locale: "en",
     });
     setGoogleReady(true);
