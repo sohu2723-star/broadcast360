@@ -7,9 +7,10 @@ import { fetchPaginatedMovies, addMovie } from "@/services/movie.service";
    ZOD VALIDATION
 --------------------------*/
 const movieSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  description: z.string().min(1, "Description is required"),
-  releaseYear: z.number().optional(),
+  title: z.string().trim().min(1, "Title is required"),
+  description: z.string().trim().min(1, "Description is required"),
+  genre: z.string().trim().min(1, "Genre is required"),
+  releaseYear: z.number().int().min(1900, "Release year is invalid").max(new Date().getFullYear(), "Release year cannot be in the future"),
 });
 
 /* -------------------------
@@ -70,15 +71,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const video = formData.get("video") as File | null;
+    const video = formData.get("video");
+    const thumbnail = formData.get("thumbnail");
 
-    if (!video) {
+    if (!(video instanceof File) || video.size <= 0) {
       return NextResponse.json(
         { message: "Video file is required" },
         { status: 400 }
       );
     }
 
+    if (!(thumbnail instanceof File) || thumbnail.size <= 0) {
+      return NextResponse.json(
+        { message: "Thumbnail file is required" },
+        { status: 400 },
+      );
+    }
 
     const movie = await addMovie(formData);
 
@@ -100,7 +108,9 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json(
-      { message: "Movie create failed" },
+      {
+        message: error instanceof Error ? error.message : "Movie create failed",
+      },
       { status: 500 }
     );
   }

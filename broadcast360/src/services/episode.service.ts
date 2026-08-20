@@ -1,5 +1,10 @@
 import fs from "fs/promises";
 import path from "path";
+import {
+  removeTemporaryMediaFile,
+  uploadMediaFile,
+  writeTemporaryMediaFile,
+} from "@/lib/media/storage";
 
 import {
   createEpisode,
@@ -268,156 +273,58 @@ export async function addEpisode(
   }
 
   // ===================================================
-  // FILE ID
+  // MEDIA
   // ===================================================
 
-  const fileId =
-    Date.now();
-
-  // ===================================================
-  // VIDEO
-  // ===================================================
-
-  const safeVideoName =
-    videoFile.name
-      .replace(/\s+/g, "-")
-      .replace(
-        /[^a-zA-Z0-9._-]/g,
-        "",
-      );
-
-  const videoFilename =
-    `${fileId}-${safeVideoName}`;
-
-  const videoDir =
-    path.join(
-      process.cwd(),
-      "public",
-      "uploads",
-      "episodes",
-      "videos",
-    );
-
-  await fs.mkdir(
-    videoDir,
-    {
-      recursive: true,
-    },
+  const fileId = Date.now();
+  const temporaryVideoPath = await writeTemporaryMediaFile(
+    videoFile,
+    "broadcast360-episode",
   );
-
-  const videoPath =
-    path.join(
-      videoDir,
-      videoFilename,
-    );
-
-  await fs.writeFile(
-    videoPath,
-    Buffer.from(
-      await videoFile.arrayBuffer(),
-    ),
-  );
-
-  // ===================================================
-  // DURATION
-  // ===================================================
 
   let duration = 0;
+  let thumbnailUrl = "";
+  let videoUrl = "";
 
   try {
-    duration =
-      await getVideoDuration(
-        videoPath,
-      );
-  } catch (error) {
-    console.error(
-      "Duration error:",
-      error,
-    );
-  }
-
-  // ===================================================
-  // THUMBNAIL DIRECTORY
-  // ===================================================
-
-  const thumbnailDir =
-    path.join(
-      process.cwd(),
-      "public",
-      "uploads",
-      "episodes",
-      "thumbnails",
-    );
-
-  await fs.mkdir(
-    thumbnailDir,
-    {
-      recursive: true,
-    },
-  );
-
-  // ===================================================
-  // THUMBNAIL
-  // ===================================================
-
-  let thumbnailUrl = "";
-
-  if (
-    thumbnailFile instanceof File &&
-    thumbnailFile.size > 0
-  ) {
-    const safeThumbName =
-      thumbnailFile.name
-        .replace(/\s+/g, "-")
-        .replace(
-          /[^a-zA-Z0-9._-]/g,
-          "",
-        );
-
-    const thumbName =
-      `${fileId}-${safeThumbName}`;
-
-    const thumbPath =
-      path.join(
-        thumbnailDir,
-        thumbName,
-      );
-
-    await fs.writeFile(
-      thumbPath,
-      Buffer.from(
-        await thumbnailFile.arrayBuffer(),
-      ),
-    );
-
-    thumbnailUrl =
-      `/uploads/episodes/thumbnails/${thumbName}`;
-  } else {
-    const thumbName =
-      `${fileId}-thumb.jpg`;
-
-    const thumbPath =
-      path.join(
-        thumbnailDir,
-        thumbName,
-      );
-
     try {
-      await generateThumbnail(
-        videoPath,
-        thumbPath,
-      );
-
-      thumbnailUrl =
-        `/uploads/episodes/thumbnails/${thumbName}`;
+      duration = await getVideoDuration(temporaryVideoPath);
     } catch (error) {
-      console.error(
-        "Thumbnail error:",
-        error,
-      );
-
-      thumbnailUrl = "";
+      console.error("Duration error:", error);
     }
+
+    videoUrl = await uploadMediaFile(videoFile, "videos/episodes");
+
+    if (thumbnailFile instanceof File && thumbnailFile.size > 0) {
+      thumbnailUrl = await uploadMediaFile(
+        thumbnailFile,
+        "thumbnails/episodes",
+      );
+    } else {
+      const temporaryThumbnailPath = path.join(
+        "/tmp",
+        `${fileId}-episode-thumb.jpg`,
+      );
+      try {
+        await generateThumbnail(temporaryVideoPath, temporaryThumbnailPath);
+        const thumbnailBytes = await fs.readFile(temporaryThumbnailPath);
+        const generatedThumbnail = new File(
+          [thumbnailBytes],
+          `${fileId}-episode-thumb.jpg`,
+          { type: "image/jpeg" },
+        );
+        thumbnailUrl = await uploadMediaFile(
+          generatedThumbnail,
+          "thumbnails/episodes",
+        );
+      } catch (error) {
+        console.error("Thumbnail error:", error);
+      } finally {
+        await fs.rm(temporaryThumbnailPath, { force: true }).catch(() => undefined);
+      }
+    }
+  } finally {
+    await removeTemporaryMediaFile(temporaryVideoPath);
   }
 
   // ===================================================
@@ -430,7 +337,7 @@ export async function addEpisode(
     episodeNo,
     duration,
     videoUrl:
-      `/uploads/episodes/videos/${videoFilename}`,
+      videoUrl,
     thumbnailUrl,
   });
 }
@@ -551,182 +458,60 @@ export async function updateEpisode(
   }
 
   // ===================================================
-  // FILE ID
+  // MEDIA
   // ===================================================
 
-  const fileId =
-    Date.now();
+  let videoUrl = current.videoUrl;
+  let thumbnailUrl = current.thumbnailUrl;
+  let duration = current.duration;
 
-  let videoUrl =
-    current.videoUrl;
-
-  let thumbnailUrl =
-    current.thumbnailUrl;
-
-  let duration =
-    current.duration;
-
-  // ===================================================
-  // VIDEO
-  // ===================================================
-
-  if (
-    data.videoFile instanceof File &&
-    data.videoFile.size > 0
-  ) {
-    const safeVideoName =
-      data.videoFile.name
-        .replace(/\s+/g, "-")
-        .replace(
-          /[^a-zA-Z0-9._-]/g,
-          "",
-        );
-
-    const videoName =
-      `${fileId}-${safeVideoName}`;
-
-    const videoDir =
-      path.join(
-        process.cwd(),
-        "public",
-        "uploads",
-        "episodes",
-        "videos",
-      );
-
-    await fs.mkdir(
-      videoDir,
-      {
-        recursive: true,
-      },
+  if (data.videoFile instanceof File && data.videoFile.size > 0) {
+    const temporaryVideoPath = await writeTemporaryMediaFile(
+      data.videoFile,
+      "broadcast360-episode",
     );
-
-    const videoPath =
-      path.join(
-        videoDir,
-        videoName,
-      );
-
-    await fs.writeFile(
-      videoPath,
-      Buffer.from(
-        await data.videoFile.arrayBuffer(),
-      ),
-    );
-
-    videoUrl =
-      `/uploads/episodes/videos/${videoName}`;
-
     try {
-      duration =
-        await getVideoDuration(
-          videoPath,
-        );
-    } catch (error) {
-      console.error(
-        "Duration update error:",
-        error,
-      );
-    }
-
-    if (
-      !(
-        data.thumbnailFile instanceof File &&
-        data.thumbnailFile.size > 0
-      )
-    ) {
-      const thumbnailDir =
-        path.join(
-          process.cwd(),
-          "public",
-          "uploads",
-          "episodes",
-          "thumbnails",
-        );
-
-      await fs.mkdir(
-        thumbnailDir,
-        {
-          recursive: true,
-        },
-      );
-
-      const thumbName =
-        `${fileId}-thumb.jpg`;
-
-      const thumbPath =
-        path.join(
-          thumbnailDir,
-          thumbName,
-        );
-
       try {
-        await generateThumbnail(
-          videoPath,
-          thumbPath,
-        );
-
-        thumbnailUrl =
-          `/uploads/episodes/thumbnails/${thumbName}`;
+        duration = await getVideoDuration(temporaryVideoPath);
       } catch (error) {
-        console.error(
-          "Thumbnail update error:",
-          error,
-        );
+        console.error("Duration update error:", error);
       }
+
+      videoUrl = await uploadMediaFile(data.videoFile, "videos/episodes");
+
+      if (!(data.thumbnailFile instanceof File && data.thumbnailFile.size > 0)) {
+        const temporaryThumbnailPath = path.join(
+          "/tmp",
+          `${Date.now()}-episode-thumb.jpg`,
+        );
+        try {
+          await generateThumbnail(temporaryVideoPath, temporaryThumbnailPath);
+          const thumbnailBytes = await fs.readFile(temporaryThumbnailPath);
+          const generatedThumbnail = new File(
+            [thumbnailBytes],
+            `${Date.now()}-episode-thumb.jpg`,
+            { type: "image/jpeg" },
+          );
+          thumbnailUrl = await uploadMediaFile(
+            generatedThumbnail,
+            "thumbnails/episodes",
+          );
+        } catch (error) {
+          console.error("Thumbnail update error:", error);
+        } finally {
+          await fs.rm(temporaryThumbnailPath, { force: true }).catch(() => undefined);
+        }
+      }
+    } finally {
+      await removeTemporaryMediaFile(temporaryVideoPath);
     }
   }
 
-  // ===================================================
-  // THUMBNAIL
-  // ===================================================
-
-  if (
-    data.thumbnailFile instanceof File &&
-    data.thumbnailFile.size > 0
-  ) {
-    const safeThumbName =
-      data.thumbnailFile.name
-        .replace(/\s+/g, "-")
-        .replace(
-          /[^a-zA-Z0-9._-]/g,
-          "",
-        );
-
-    const thumbName =
-      `${fileId}-${safeThumbName}`;
-
-    const thumbnailDir =
-      path.join(
-        process.cwd(),
-        "public",
-        "uploads",
-        "episodes",
-        "thumbnails",
-      );
-
-    await fs.mkdir(
-      thumbnailDir,
-      {
-        recursive: true,
-      },
+  if (data.thumbnailFile instanceof File && data.thumbnailFile.size > 0) {
+    thumbnailUrl = await uploadMediaFile(
+      data.thumbnailFile,
+      "thumbnails/episodes",
     );
-
-    const thumbPath =
-      path.join(
-        thumbnailDir,
-        thumbName,
-      );
-
-    await fs.writeFile(
-      thumbPath,
-      Buffer.from(
-        await data.thumbnailFile.arrayBuffer(),
-      ),
-    );
-
-    thumbnailUrl =
-      `/uploads/episodes/thumbnails/${thumbName}`;
   }
 
   // ===================================================

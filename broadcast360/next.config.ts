@@ -4,6 +4,7 @@ const userPortalOrigin = process.env.USER_PORTAL_ORIGIN || "http://localhost:300
 const streamOrigin = process.env.PUBLIC_STREAM_ORIGIN || "*";
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ["fluent-ffmpeg", "@ffprobe-installer/ffprobe"],
   async headers() {
     return [
       {

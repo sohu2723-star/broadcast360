@@ -38,7 +38,9 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json(
-    { message: "Create error" },
+    {
+      message: error instanceof Error ? error.message : "Create error",
+    },
     { status: 500 }
   );
 }

@@ -1,5 +1,8 @@
 import ffmpeg from "fluent-ffmpeg";
+import ffprobeInstaller from "@ffprobe-installer/ffprobe";
 import path from "path";
+
+ffmpeg.setFfprobePath(ffprobeInstaller.path);
 
 type VideoInfo = {
 

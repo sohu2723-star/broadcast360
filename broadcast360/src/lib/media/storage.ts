@@ -63,6 +63,12 @@ export async function uploadMediaFile(file: File, folder: string) {
     return `${config.baseUrl}/storage/v1/object/public/${config.bucket}/${encodeStoragePath(storagePath)}`;
   }
 
+  if (process.env.VERCEL === "1" || process.env.NODE_ENV === "production") {
+    throw new Error(
+      "Supabase Storage is not configured for production media uploads",
+    );
+  }
+
   const localDirectory = path.join(process.cwd(), "public", folder);
   await fs.mkdir(localDirectory, { recursive: true });
   await fs.writeFile(path.join(localDirectory, filename), bytes);
