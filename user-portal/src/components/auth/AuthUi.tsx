@@ -4,7 +4,7 @@ export function MoonSpinner({ label = "Authenticating" }: { label?: string }) {
   return (
     <span className="inline-flex items-center gap-2" aria-live="polite">
       <span
-        className="h-5 w-5 animate-spin rounded-full border-2 border-white/20 border-r-cyan-200 border-t-cyan-100"
+        className="h-5 w-5 animate-spin rounded-full border-2 border-white/20 border-r-white/80 border-t-white"
         aria-hidden="true"
       />
       <span>{label}</span>
@@ -14,10 +14,10 @@ export function MoonSpinner({ label = "Authenticating" }: { label?: string }) {
 
 export function AuthTransitionLoader({ label = "Signing you in..." }: { label?: string }) {
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-[#071029]/88 px-5 backdrop-blur-sm" role="status" aria-live="polite">
-      <div className="flex w-full max-w-xs flex-col items-center rounded-3xl border border-[#7898bf]/20 bg-[#101a3a]/96 px-7 py-8 text-center shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
-        <span className="h-12 w-12 animate-spin rounded-full border-[3px] border-[#7898bf]/20 border-r-[#25c7e8] border-t-[#4e8ff5]" aria-hidden="true" />
-        <p className="mt-5 text-sm font-semibold text-[#eaf3ff]">{label}</p>
+    <div className="fixed inset-0 z-40 flex items-center justify-center bg-[#121212]/88 px-5 backdrop-blur-sm" role="status" aria-live="polite">
+      <div className="flex w-full max-w-xs flex-col items-center rounded-3xl border border-white/10 bg-[#1f1f1f]/96 px-7 py-8 text-center shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
+        <span className="h-12 w-12 animate-spin rounded-full border-[3px] border-white/15 border-r-white/80 border-t-white" aria-hidden="true" />
+        <p className="mt-5 text-sm font-semibold text-white">{label}</p>
         <p className="mt-1 text-xs text-slate-400">Please wait a moment</p>
       </div>
     </div>
@@ -35,12 +35,12 @@ export function AuthNotice({
 }) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 px-5 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[#0b0b0b]/75 px-5 backdrop-blur-sm"
       role="status"
       aria-live="polite"
     >
-      <div className="w-full max-w-sm rounded-3xl border border-[#7898bf]/20 bg-[#101a3a]/96 p-7 text-center shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#7898bf]/15 text-2xl text-[#c5d7ee]">
+      <div className="w-full max-w-sm rounded-3xl border border-white/10 bg-[#1f1f1f]/96 p-7 text-center shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-white/10 text-2xl text-white">
           ✓
         </div>
         <h2 className="text-xl font-bold text-white">{title}</h2>
@@ -75,24 +75,24 @@ export function FieldError({ message }: { message?: string }) {
 }
 
 export function authInputClass(hasError: boolean) {
-  return `w-full rounded-2xl border bg-[#08122f]/95 px-4 py-3.5 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-[#8eafd4]/70 focus:ring-4 focus:ring-[#7898bf]/10 ${
+  return `w-full rounded-2xl border bg-[#171717]/95 px-4 py-3.5 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-white/50 focus:ring-4 focus:ring-white/10 ${
     hasError ? "border-amber-200/60 bg-amber-100/[0.03]" : "border-white/10"
   }`;
 }
 
 export function AuthBackdrop({ children }: { children: React.ReactNode }) {
   return (
-    <main className="relative flex min-h-screen w-full max-w-[100vw] items-center justify-center overflow-x-hidden overflow-y-auto bg-[#071029] px-4 py-10 text-white sm:px-6">
-      <div className="pointer-events-none absolute -left-32 top-[-12rem] h-[30rem] w-[30rem] rounded-full bg-[#476d9f]/12 blur-3xl" />
-      <div className="pointer-events-none absolute -right-40 bottom-[-14rem] h-[32rem] w-[32rem] rounded-full bg-[#7898bf]/8 blur-3xl" />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_10%,rgba(120,166,220,0.11),transparent_38%)]" />
+    <main className="relative flex min-h-screen w-full max-w-[100vw] items-center justify-center overflow-x-hidden overflow-y-auto bg-[#121212] px-4 py-10 text-white sm:px-6">
+      <div className="pointer-events-none absolute -left-32 top-[-12rem] h-[30rem] w-[30rem] rounded-full bg-white/[0.04] blur-3xl" />
+      <div className="pointer-events-none absolute -right-40 bottom-[-14rem] h-[32rem] w-[32rem] rounded-full bg-white/[0.03] blur-3xl" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_10%,rgba(255,255,255,0.06),transparent_38%)]" />
       <div className="relative z-10 w-full min-w-0 max-w-full">{children}</div>
     </main>
   );
 }
 
 export function AuthLabel({ children }: { children: React.ReactNode }) {
-  return <label className="mb-2 block text-sm font-medium text-slate-200">{children}</label>;
+  return <label className="mb-2 block text-sm font-medium text-white/85">{children}</label>;
 }
 
 export function GoogleDivider() {

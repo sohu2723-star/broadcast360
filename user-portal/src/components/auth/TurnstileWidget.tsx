@@ -57,7 +57,7 @@ export default function TurnstileWidget({ token, error, onChange }: TurnstileWid
 
   if (!siteKey) {
     return (
-      <div className="rounded-2xl border border-amber-200/20 bg-amber-100/5 px-4 py-3 text-sm text-amber-100/90" role="alert">
+      <div className="rounded-none border border-amber-200/20 bg-amber-100/5 px-4 py-3 text-sm text-amber-100/90" role="alert">
         Security check is not configured for this environment.
         <FieldError message={error} />
       </div>
@@ -65,7 +65,7 @@ export default function TurnstileWidget({ token, error, onChange }: TurnstileWid
   }
 
   return (
-    <div className="rounded-2xl border border-[#7898bf]/20 bg-[#0b1636]/75 p-3 sm:p-4">
+    <div className="rounded-none border border-white/10 bg-[#1f1f1f]/75 p-3 sm:p-4">
       <div className="mb-3 flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
         <div>
           <p className="text-sm font-semibold text-white">Security check</p>

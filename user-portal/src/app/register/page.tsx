@@ -21,10 +21,8 @@ import {
   authInputClass,
   FieldError,
 } from "@/components/auth/AuthUi";
-import DobPicker from "@/components/auth/DobPicker";
 import TurnstileWidget from "@/components/auth/TurnstileWidget";
 
-type Gender = "" | "MALE" | "FEMALE" | "OTHER" | "UNSPECIFIED";
 type GoogleCredentialResponse = { credential: string };
 
 type RegisterForm = {
@@ -32,8 +30,6 @@ type RegisterForm = {
   email: string;
   password: string;
   confirmPassword: string;
-  dateOfBirth: string;
-  gender: Gender;
   verificationCode: string;
 };
 
@@ -68,8 +64,6 @@ export default function RegisterPage() {
     email: "",
     password: "",
     confirmPassword: "",
-    dateOfBirth: "",
-    gender: "",
     verificationCode: "",
   });
   const [errors, setErrors] = useState<RegisterErrors>({});
@@ -138,8 +132,6 @@ export default function RegisterPage() {
     if (!name) nextErrors.name = "Name is required";
     else if (name.length < 2) nextErrors.name = "Name must be at least 2 characters";
     if (emailError) nextErrors.email = emailError;
-    if (!form.dateOfBirth) nextErrors.dateOfBirth = "Date of birth is required";
-    if (!form.gender) nextErrors.gender = "Please choose a gender";
     if (passwordError) nextErrors.password = passwordError;
     if (form.password !== form.confirmPassword) nextErrors.confirmPassword = "Passwords do not match";
     if (!/^\d{6}$/.test(form.verificationCode)) nextErrors.verificationCode = "Enter the 6-digit code sent to Gmail";
@@ -281,8 +273,6 @@ export default function RegisterPage() {
         name: form.name.trim(),
         email: form.email.trim().toLowerCase(),
         password: form.password,
-        dateOfBirth: form.dateOfBirth,
-        gender: form.gender,
         verificationCode: form.verificationCode,
         acceptedPolicy,
         turnstileToken,
@@ -329,9 +319,9 @@ export default function RegisterPage() {
         />
       ) : null}
 
-      <div className="mx-auto w-full max-w-[480px] rounded-[2rem] border border-[#7898bf]/15 bg-[#101a3a]/95 p-6 shadow-[0_30px_90px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:p-8">
+      <div className="mx-auto w-full max-w-[480px] rounded-[2rem] border border-white/10 bg-[#1f1f1f]/95 p-6 shadow-[0_30px_90px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:p-8">
         <div className="mb-7 text-center">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-[#a9c0dd]/70">FlickScope</p>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-white/60">FlickScope</p>
           <h1 className="text-3xl font-bold tracking-tight text-white">Create Account</h1>
           <p className="mt-2 text-sm text-slate-300">Register your FlickScope account</p>
         </div>
@@ -351,34 +341,11 @@ export default function RegisterPage() {
             <FieldError message={errors.email} />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <AuthLabel>Date of Birth</AuthLabel>
-              <DobPicker
-                value={form.dateOfBirth}
-                onChange={(value) => handleChange("dateOfBirth", value)}
-                hasError={Boolean(errors.dateOfBirth)}
-              />
-              <FieldError message={errors.dateOfBirth} />
-            </div>
-            <div>
-              <AuthLabel>Gender</AuthLabel>
-              <select value={form.gender} onChange={(event) => handleChange("gender", event.target.value)} className={`${field("gender")} appearance-none`}>
-                <option value="" disabled>Select gender</option>
-                <option value="MALE">Male</option>
-                <option value="FEMALE">Female</option>
-                <option value="OTHER">Other</option>
-                <option value="UNSPECIFIED">Prefer not to say</option>
-              </select>
-              <FieldError message={errors.gender} />
-            </div>
-          </div>
-
           <div>
             <AuthLabel>Email verification code</AuthLabel>
             <div className="flex gap-2">
               <input value={form.verificationCode} inputMode="numeric" maxLength={6} placeholder="6-digit code" onChange={(event) => handleChange("verificationCode", event.target.value.replace(/\D/g, ""))} className={`${field("verificationCode")} min-w-0 flex-1`} />
-              <button type="button" onClick={sendCode} disabled={codeLoading || resendCountdown > 0} className="min-w-[7.4rem] rounded-2xl border border-[#7898bf]/25 bg-[#20385f]/30 px-3 text-xs font-bold text-[#c6d7ea] transition hover:bg-cyan-200/10 disabled:cursor-not-allowed disabled:opacity-60">
+              <button type="button" onClick={sendCode} disabled={codeLoading || resendCountdown > 0} className="min-w-[7.4rem] rounded-2xl border border-white/15 bg-white/5 px-3 text-xs font-bold text-white/80 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60">
                 {codeLoading ? <MoonSpinner label="Sending" /> : resendCountdown > 0 ? `Resend in ${resendCountdown}s` : codeSent ? "Resend code" : "Send code"}
               </button>
             </div>
@@ -410,7 +377,7 @@ export default function RegisterPage() {
 
           <TurnstileWidget token={turnstileToken} error={turnstileError} onChange={updateTurnstile} />
 
-          <div className="rounded-2xl border border-[#7898bf]/15 bg-[#0b1636]/45 px-4 py-3">
+          <div className="rounded-2xl border border-[#7898bf]/15 bg-[#171717]/60 px-4 py-3">
             <label className="flex cursor-pointer items-start gap-3 text-sm text-slate-200">
               <input
                 type="checkbox"
@@ -419,11 +386,11 @@ export default function RegisterPage() {
                   setAcceptedPolicy(event.target.checked);
                   if (event.target.checked) setPolicyError("");
                 }}
-                className="mt-0.5 h-4 w-4 accent-[#7898bf]"
+                className="mt-0.5 h-4 w-4 accent-white"
               />
               <span>
                 I agree to the FlickScope{" "}
-                <Link href="/policy" target="_blank" className="font-semibold text-[#c5d7ee] underline underline-offset-4 hover:text-white">
+                <Link href="/policy" target="_blank" className="font-semibold text-white/80 underline underline-offset-4 hover:text-white">
                   policy
                 </Link>
                 .

@@ -15,17 +15,14 @@ import {
   authInputClass,
   FieldError,
 } from "@/components/auth/AuthUi";
-import DobPicker from "@/components/auth/DobPicker";
 import TurnstileWidget from "@/components/auth/TurnstileWidget";
 
-type Gender = "" | "MALE" | "FEMALE" | "OTHER" | "UNSPECIFIED";
-
-type FormState = { name: string; dateOfBirth: string; gender: Gender };
+type FormState = { name: string };
 type TurnstileState = { token: string };
 type Errors = Partial<Record<keyof FormState, string>>;
 
 export default function GoogleCompletePage() {
-  const [form, setForm] = useState<FormState>({ name: "", dateOfBirth: "", gender: "" });
+  const [form, setForm] = useState<FormState>({ name: "" });
   const [errors, setErrors] = useState<Errors>({});
   const [serverError, setServerError] = useState("");
   const [acceptedPolicy, setAcceptedPolicy] = useState(false);
@@ -74,8 +71,6 @@ export default function GoogleCompletePage() {
   function validate() {
     const nextErrors: Errors = {};
     if (!form.name.trim() || form.name.trim().length < 2) nextErrors.name = "Name must be at least 2 characters";
-    if (!form.dateOfBirth) nextErrors.dateOfBirth = "Date of birth is required";
-    if (!form.gender) nextErrors.gender = "Please choose a gender";
     if (!acceptedPolicy) setPolicyError("Please accept the FlickScope policy");
     if (!turnstileToken) setTurnstileError("Please complete the Cloudflare security check");
     setErrors(nextErrors);
@@ -99,8 +94,6 @@ export default function GoogleCompletePage() {
       setServerError("");
       await authApi.put("/api/user-portal/auth/profile", {
         name: form.name.trim(),
-        dateOfBirth: form.dateOfBirth,
-        gender: form.gender,
         acceptedPolicy,
         turnstileToken,
       });
@@ -125,9 +118,9 @@ export default function GoogleCompletePage() {
         <AuthNotice title="Welcome" message="Your account is ready. Taking you to your FlickScope account now." />
       ) : null}
 
-      <div className="mx-auto w-full max-w-[480px] rounded-[2rem] border border-[#7898bf]/15 bg-[#101a3a]/95 p-6 shadow-[0_30px_90px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:p-8">
+      <div className="mx-auto w-full max-w-[480px] rounded-[2rem] border border-white/10 bg-[#1f1f1f]/95 p-6 shadow-[0_30px_90px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:p-8">
         <div className="mb-8 text-center">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-[#a9c0dd]/70">FlickScope</p>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-white/60">FlickScope</p>
           <h1 className="text-3xl font-bold tracking-tight text-white">Complete your profile</h1>
           <p className="mt-2 text-sm leading-6 text-slate-300">Just a few details before you enter your new account.</p>
         </div>
@@ -139,7 +132,7 @@ export default function GoogleCompletePage() {
           </Link>
         ) : null}
         {loading ? (
-          <div className="flex justify-center py-10 text-sm text-[#c6d7ea]"><MoonSpinner label="Checking your Google account" /></div>
+          <div className="flex justify-center py-10 text-sm text-white/80"><MoonSpinner label="Checking your Google account" /></div>
         ) : sessionExpired ? null : (
           <div className="space-y-5">
             <div>
@@ -147,30 +140,8 @@ export default function GoogleCompletePage() {
               <input value={form.name} autoComplete="name" onChange={(event) => update("name", event.target.value)} className={authInputClass(Boolean(errors.name))} />
               <FieldError message={errors.name} />
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <AuthLabel>Date of Birth</AuthLabel>
-                <DobPicker
-                  value={form.dateOfBirth}
-                  onChange={(value) => update("dateOfBirth", value)}
-                  hasError={Boolean(errors.dateOfBirth)}
-                />
-                <FieldError message={errors.dateOfBirth} />
-              </div>
-              <div>
-                <AuthLabel>Gender</AuthLabel>
-                <select value={form.gender} onChange={(event) => update("gender", event.target.value)} className={`${authInputClass(Boolean(errors.gender))} appearance-none`}>
-                  <option value="" disabled>Select gender</option>
-                  <option value="MALE">Male</option>
-                  <option value="FEMALE">Female</option>
-                  <option value="OTHER">Other</option>
-                  <option value="UNSPECIFIED">Prefer not to say</option>
-                </select>
-                <FieldError message={errors.gender} />
-              </div>
-            </div>
             <TurnstileWidget token={turnstileToken} error={turnstileError} onChange={updateTurnstile} />
-            <div className="rounded-2xl border border-[#7898bf]/15 bg-[#0b1636]/45 px-4 py-3">
+            <div className="rounded-2xl border border-white/10 bg-[#171717]/60 px-4 py-3">
               <label className="flex cursor-pointer items-start gap-3 text-sm text-slate-200">
                 <input
                   type="checkbox"
@@ -179,9 +150,9 @@ export default function GoogleCompletePage() {
                     setAcceptedPolicy(event.target.checked);
                     if (event.target.checked) setPolicyError("");
                   }}
-                  className="mt-0.5 h-4 w-4 accent-[#7898bf]"
+                  className="mt-0.5 h-4 w-4 accent-white"
                 />
-                <span>I agree to the FlickScope <Link href="/policy" target="_blank" className="font-semibold text-[#c5d7ee] underline underline-offset-4 hover:text-white">policy</Link>.</span>
+                <span>I agree to the FlickScope <Link href="/policy" target="_blank" className="font-semibold text-white/80 underline underline-offset-4 hover:text-white">policy</Link>.</span>
               </label>
               <FieldError message={policyError} />
             </div>
