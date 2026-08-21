@@ -9,7 +9,7 @@ import axios from "axios";
 import api from "@/lib/api";
 import authApi from "@/lib/authapi";
 import { clearCurrentUserCache } from "@/lib/current-user";
-import CaptchaChallenge from "@/components/auth/CaptchaChallenge";
+import TurnstileWidget from "@/components/auth/TurnstileWidget";
 import {
   AuthBackdrop,
   AuthError,
@@ -27,7 +27,7 @@ type GoogleCredentialResponse = { credential: string };
 
 type LoginForm = { email: string; password: string };
 type LoginErrors = { email?: string; password?: string };
-type CaptchaState = { token: string; answer: string; checked: boolean };
+type TurnstileState = { token: string };
 type ForgotForm = { email: string; verificationCode: string; newPassword: string; confirmPassword: string };
 type ForgotErrors = Partial<Record<keyof ForgotForm, string>>;
 
@@ -61,8 +61,8 @@ export default function LoginPage() {
   const [googleReady, setGoogleReady] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [serverError, setServerError] = useState("");
-  const [captcha, setCaptcha] = useState<CaptchaState>({ token: "", answer: "", checked: false });
-  const [captchaError, setCaptchaError] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileError, setTurnstileError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showWelcomeBack, setShowWelcomeBack] = useState(false);
   const [authTransitionLoading, setAuthTransitionLoading] = useState(false);
@@ -79,12 +79,12 @@ export default function LoginPage() {
   const [showForgotConfirm, setShowForgotConfirm] = useState(false);
   const googleButtonRef = useRef<HTMLDivElement>(null);
   const googleInitializedRef = useRef(false);
-  const captchaRef = useRef<CaptchaState>(captcha);
+  const turnstileRef = useRef<TurnstileState>({ token: "" });
   const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
   useEffect(() => {
-    captchaRef.current = captcha;
-  }, [captcha]);
+    turnstileRef.current = { token: turnstileToken };
+  }, [turnstileToken]);
 
   useEffect(() => {
     if (!showWelcomeBack) return;
@@ -117,15 +117,14 @@ export default function LoginPage() {
     const passwordError = validatePassword(form.password);
     if (emailError) nextErrors.email = emailError;
     if (passwordError) nextErrors.password = passwordError;
-    if (!captcha.checked) setCaptchaError("Please confirm that you are not a robot");
-    else if (!captcha.answer) setCaptchaError("Enter the CAPTCHA characters");
+    if (!turnstileToken) setTurnstileError("Please complete the Cloudflare security check");
     setErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0 && captcha.checked && Boolean(captcha.answer);
+    return Object.keys(nextErrors).length === 0 && Boolean(turnstileToken);
   }
 
-  function updateCaptcha(value: CaptchaState) {
-    setCaptcha(value);
-    if (value.checked && value.answer) setCaptchaError("");
+  function updateTurnstile(token: string) {
+    setTurnstileToken(token);
+    if (token) setTurnstileError("");
   }
 
   function handleChange(field: keyof LoginForm, value: string) {
@@ -222,8 +221,7 @@ export default function LoginPage() {
           setServerError("");
           const result = await authApi.post("/api/user-portal/auth/google", {
             credential: response.credential,
-            captchaToken: captchaRef.current.token,
-            captchaAnswer: captchaRef.current.answer,
+            turnstileToken: turnstileRef.current.token,
           });
           clearCurrentUserCache();
           await authApi.get("/api/user-portal/auth/me");
@@ -258,8 +256,8 @@ export default function LoginPage() {
   }
 
   function openGooglePrompt() {
-    if (!captcha.checked || !captcha.answer) {
-      setCaptchaError(!captcha.checked ? "Please confirm that you are not a robot" : "Enter the CAPTCHA characters");
+    if (!turnstileToken) {
+      setTurnstileError("Please complete the Cloudflare security check");
       return;
     }
     initializeGoogle();
@@ -294,8 +292,7 @@ export default function LoginPage() {
       setLoading(true);
       const response = await authApi.post("/api/user-portal/auth/login", {
         ...form,
-        captchaToken: captcha.token,
-        captchaAnswer: captcha.answer,
+        turnstileToken,
       });
       clearCurrentUserCache();
       await authApi.get("/api/user-portal/auth/me");
@@ -343,7 +340,7 @@ export default function LoginPage() {
               <div><AuthLabel>Verification code</AuthLabel><div className="flex gap-2"><input value={forgotForm.verificationCode} inputMode="numeric" maxLength={6} placeholder="6-digit code" onChange={(event) => updateForgot("verificationCode", event.target.value.replace(/\D/g, ""))} className={`${authInputClass(Boolean(forgotErrors.verificationCode))} min-w-0 flex-1`} /><button type="button" onClick={sendForgotCode} disabled={forgotLoading || forgotCountdown > 0} className="min-w-[7.2rem] rounded-2xl border border-[#7898bf]/25 bg-[#20385f]/30 px-3 text-xs font-bold text-[#c6d7ea] disabled:cursor-not-allowed disabled:opacity-60">{forgotLoading ? <MoonSpinner label="Sending" /> : forgotCountdown > 0 ? `Resend in ${forgotCountdown}s` : forgotCodeSent ? "Resend code" : "Send code"}</button></div><FieldError message={forgotErrors.verificationCode} /></div>
               <div><AuthLabel>New password</AuthLabel><div className="relative"><input type={showForgotPassword ? "text" : "password"} value={forgotForm.newPassword} onChange={(event) => updateForgot("newPassword", event.target.value)} className={`${authInputClass(Boolean(forgotErrors.newPassword))} pr-12`} /><button type="button" onClick={() => setShowForgotPassword((value) => !value)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white" aria-label="Toggle new password">{showForgotPassword ? <EyeOff size={19} /> : <Eye size={19} />}</button></div><FieldError message={forgotErrors.newPassword} /></div>
               <div><AuthLabel>Confirm password</AuthLabel><div className="relative"><input type={showForgotConfirm ? "text" : "password"} value={forgotForm.confirmPassword} onChange={(event) => updateForgot("confirmPassword", event.target.value)} className={`${authInputClass(Boolean(forgotErrors.confirmPassword))} pr-12`} /><button type="button" onClick={() => setShowForgotConfirm((value) => !value)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white" aria-label="Toggle password confirmation">{showForgotConfirm ? <EyeOff size={19} /> : <Eye size={19} />}</button></div><FieldError message={forgotErrors.confirmPassword} /></div>
-              <button type="button" onClick={resetForgotPassword} disabled={forgotLoading} className="b360-primary-action w-full rounded-2xl py-3.5 text-sm font-bold">{forgotLoading ? <MoonSpinner label="Updating" /> : "Reset password"}</button>
+              <button type="button" onClick={resetForgotPassword} disabled={forgotLoading} className="flickscope-primary-action w-full rounded-2xl py-3.5 text-sm font-bold">{forgotLoading ? <MoonSpinner label="Updating" /> : "Reset password"}</button>
             </div>
           </div>
         </div>
@@ -354,16 +351,16 @@ export default function LoginPage() {
       {showWelcomeBack ? (
         <AuthNotice
           title="Welcome back"
-          message="Your Hxu Movie account is ready. Taking you to your account now."
+          message="Your FlickScope account is ready. Taking you to your account now."
           onDone={() => { window.location.href = "/profile"; }}
         />
       ) : null}
 
       <div className="mx-auto w-full max-w-[440px] rounded-[2rem] border border-[#7898bf]/15 bg-[#101a3a]/95 p-6 shadow-[0_30px_90px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:p-8">
         <div className="mb-8 text-center">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-[#a9c0dd]/70">Hxu Movie</p>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-[#a9c0dd]/70">FlickScope</p>
           <h1 className="text-3xl font-bold tracking-tight text-white">Login</h1>
-          <p className="mt-2 text-sm text-slate-300">Welcome back to Hxu Movie</p>
+          <p className="mt-2 text-sm text-slate-300">Welcome back to FlickScope</p>
         </div>
 
         {serverError ? (
@@ -416,19 +413,13 @@ export default function LoginPage() {
             <FieldError message={errors.password} />
           </div>
 
-          <CaptchaChallenge
-            token={captcha.token}
-            answer={captcha.answer}
-            checked={captcha.checked}
-            error={captchaError}
-            onChange={updateCaptcha}
-          />
+          <TurnstileWidget token={turnstileToken} error={turnstileError} onChange={updateTurnstile} />
 
           <button
             type="button"
             onClick={login}
             disabled={loading}
-            className="b360-primary-action w-full rounded-2xl py-3.5 text-sm font-bold"
+            className="flickscope-primary-action w-full rounded-2xl py-3.5 text-sm font-bold"
           >
             {loading ? <MoonSpinner label="Authenticating" /> : "Login"}
           </button>

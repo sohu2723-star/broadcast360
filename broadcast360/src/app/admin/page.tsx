@@ -136,7 +136,7 @@ export default function DashboardPage() {
             Dashboard
           </h1>
           <p className="mt-2 text-sm text-slate-400">
-            Monitor Hxu Movie content and account activity.
+            Monitor FlickScope content and account activity.
           </p>
         </div>
         <Link

@@ -22,7 +22,7 @@ import {
   FieldError,
 } from "@/components/auth/AuthUi";
 import DobPicker from "@/components/auth/DobPicker";
-import CaptchaChallenge from "@/components/auth/CaptchaChallenge";
+import TurnstileWidget from "@/components/auth/TurnstileWidget";
 
 type Gender = "" | "MALE" | "FEMALE" | "OTHER" | "UNSPECIFIED";
 type GoogleCredentialResponse = { credential: string };
@@ -38,7 +38,7 @@ type RegisterForm = {
 };
 
 type RegisterErrors = Partial<Record<keyof RegisterForm, string>>;
-type CaptchaState = { token: string; answer: string; checked: boolean };
+type TurnstileState = { token: string };
 
 declare global {
   interface Window {
@@ -84,20 +84,20 @@ export default function RegisterPage() {
   const [serverError, setServerError] = useState("");
   const [acceptedPolicy, setAcceptedPolicy] = useState(false);
   const [policyError, setPolicyError] = useState("");
-  const [captcha, setCaptcha] = useState<CaptchaState>({ token: "", answer: "", checked: false });
-  const [captchaError, setCaptchaError] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileError, setTurnstileError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [welcomeTitle, setWelcomeTitle] = useState("");
   const [authTransitionLoading, setAuthTransitionLoading] = useState(false);
   const googleButtonRef = useRef<HTMLDivElement>(null);
   const googleInitializedRef = useRef(false);
-  const captchaRef = useRef<CaptchaState>(captcha);
+  const turnstileRef = useRef<TurnstileState>({ token: "" });
   const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
   useEffect(() => {
-    captchaRef.current = captcha;
-  }, [captcha]);
+    turnstileRef.current = { token: turnstileToken };
+  }, [turnstileToken]);
 
   useEffect(() => {
     if (!welcomeTitle) return;
@@ -143,16 +143,15 @@ export default function RegisterPage() {
     if (passwordError) nextErrors.password = passwordError;
     if (form.password !== form.confirmPassword) nextErrors.confirmPassword = "Passwords do not match";
     if (!/^\d{6}$/.test(form.verificationCode)) nextErrors.verificationCode = "Enter the 6-digit code sent to Gmail";
-    if (!acceptedPolicy) setPolicyError("Please accept the Hxu Movie policy");
-    if (!captcha.checked) setCaptchaError("Please confirm that you are not a robot");
-    else if (!captcha.answer) setCaptchaError("Enter the CAPTCHA characters");
+    if (!acceptedPolicy) setPolicyError("Please accept the FlickScope policy");
+    if (!turnstileToken) setTurnstileError("Please complete the Cloudflare security check");
     setErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0 && acceptedPolicy && captcha.checked && Boolean(captcha.answer);
+    return Object.keys(nextErrors).length === 0 && acceptedPolicy && Boolean(turnstileToken);
   }
 
-  function updateCaptcha(value: CaptchaState) {
-    setCaptcha(value);
-    if (value.checked && value.answer) setCaptchaError("");
+  function updateTurnstile(token: string) {
+    setTurnstileToken(token);
+    if (token) setTurnstileError("");
   }
 
   function handleChange(field: keyof RegisterForm, value: string) {
@@ -209,8 +208,7 @@ export default function RegisterPage() {
           setServerError("");
           const result = await authApi.post("/api/user-portal/auth/google", {
             credential: response.credential,
-            captchaToken: captchaRef.current.token,
-            captchaAnswer: captchaRef.current.answer,
+            turnstileToken: turnstileRef.current.token,
           });
           clearCurrentUserCache();
           await authApi.get("/api/user-portal/auth/me");
@@ -245,8 +243,8 @@ export default function RegisterPage() {
   }
 
   function openGooglePrompt() {
-    if (!captcha.checked || !captcha.answer) {
-      setCaptchaError(!captcha.checked ? "Please confirm that you are not a robot" : "Enter the CAPTCHA characters");
+    if (!turnstileToken) {
+      setTurnstileError("Please complete the Cloudflare security check");
       return;
     }
     initializeGoogle();
@@ -287,14 +285,12 @@ export default function RegisterPage() {
         gender: form.gender,
         verificationCode: form.verificationCode,
         acceptedPolicy,
-        captchaToken: captcha.token,
-        captchaAnswer: captcha.answer,
+        turnstileToken,
       });
       await authApi.post("/api/user-portal/auth/login", {
         email: form.email.trim().toLowerCase(),
         password: form.password,
-        captchaToken: captcha.token,
-        captchaAnswer: captcha.answer,
+        turnstileToken,
       });
       clearCurrentUserCache();
       await authApi.get("/api/user-portal/auth/me");
@@ -328,16 +324,16 @@ export default function RegisterPage() {
       {welcomeTitle ? (
         <AuthNotice
           title={welcomeTitle}
-          message="Your Hxu Movie account is ready. Taking you to your account now."
+          message="Your FlickScope account is ready. Taking you to your account now."
           onDone={() => { window.location.href = "/profile"; }}
         />
       ) : null}
 
       <div className="mx-auto w-full max-w-[480px] rounded-[2rem] border border-[#7898bf]/15 bg-[#101a3a]/95 p-6 shadow-[0_30px_90px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:p-8">
         <div className="mb-7 text-center">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-[#a9c0dd]/70">Hxu Movie</p>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-[#a9c0dd]/70">FlickScope</p>
           <h1 className="text-3xl font-bold tracking-tight text-white">Create Account</h1>
-          <p className="mt-2 text-sm text-slate-300">Register your Hxu Movie account</p>
+          <p className="mt-2 text-sm text-slate-300">Register your FlickScope account</p>
         </div>
 
         {serverError ? <AuthError message={serverError} /> : null}
@@ -390,36 +386,6 @@ export default function RegisterPage() {
             {codeSent ? <p className="mt-2 text-xs text-[#b7cbe4]/80">Code sent. You can request another code when the timer reaches 0.</p> : null}
           </div>
 
-          <CaptchaChallenge
-            token={captcha.token}
-            answer={captcha.answer}
-            checked={captcha.checked}
-            error={captchaError}
-            onChange={updateCaptcha}
-          />
-
-          <div className="rounded-2xl border border-[#7898bf]/15 bg-[#0b1636]/45 px-4 py-3">
-            <label className="flex cursor-pointer items-start gap-3 text-sm text-slate-200">
-              <input
-                type="checkbox"
-                checked={acceptedPolicy}
-                onChange={(event) => {
-                  setAcceptedPolicy(event.target.checked);
-                  if (event.target.checked) setPolicyError("");
-                }}
-                className="mt-0.5 h-4 w-4 accent-[#7898bf]"
-              />
-              <span>
-                I agree to the Hxu Movie{" "}
-                <Link href="/policy" target="_blank" className="font-semibold text-[#c5d7ee] underline underline-offset-4 hover:text-white">
-                  policy
-                </Link>
-                .
-              </span>
-            </label>
-            <FieldError message={policyError} />
-          </div>
-
           <div>
             <AuthLabel>Password</AuthLabel>
             <div className="relative">
@@ -442,7 +408,31 @@ export default function RegisterPage() {
             <FieldError message={errors.confirmPassword} />
           </div>
 
-          <button type="button" onClick={register} disabled={loading} className="b360-primary-action w-full rounded-2xl py-3.5 text-sm font-bold">
+          <TurnstileWidget token={turnstileToken} error={turnstileError} onChange={updateTurnstile} />
+
+          <div className="rounded-2xl border border-[#7898bf]/15 bg-[#0b1636]/45 px-4 py-3">
+            <label className="flex cursor-pointer items-start gap-3 text-sm text-slate-200">
+              <input
+                type="checkbox"
+                checked={acceptedPolicy}
+                onChange={(event) => {
+                  setAcceptedPolicy(event.target.checked);
+                  if (event.target.checked) setPolicyError("");
+                }}
+                className="mt-0.5 h-4 w-4 accent-[#7898bf]"
+              />
+              <span>
+                I agree to the FlickScope{" "}
+                <Link href="/policy" target="_blank" className="font-semibold text-[#c5d7ee] underline underline-offset-4 hover:text-white">
+                  policy
+                </Link>
+                .
+              </span>
+            </label>
+            <FieldError message={policyError} />
+          </div>
+
+          <button type="button" onClick={register} disabled={loading} className="flickscope-primary-action w-full rounded-2xl py-3.5 text-sm font-bold">
             {loading ? <MoonSpinner label="Creating account" /> : "Create Account"}
           </button>
         </div>

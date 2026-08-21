@@ -2,11 +2,11 @@
 
 ## Project Name
 
-Broadcast360
+FlickScope
 
 ## Objective
 
-The objective of Broadcast360 is to provide a centralized platform for managing and viewing live television channels and on-demand video content.
+The objective of FlickScope is to provide a centralized platform for managing and viewing live television channels and on-demand video content.
 
 The platform enables administrators to publish live streams, upload videos, manage series, and post news updates. Users can access live channels, watch recorded content, and stay informed through news feeds.
 

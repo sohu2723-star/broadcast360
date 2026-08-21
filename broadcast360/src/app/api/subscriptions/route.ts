@@ -166,7 +166,7 @@ export async function POST(request: NextRequest) {
     /*
      * IMPORTANT:
      * Replace this with your actual authentication/session
-     * method used in Hxu Movie.
+     * method used in FlickScope.
      */
     const userId = 1;
 

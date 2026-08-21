@@ -207,7 +207,7 @@ export default function SubscriptionStatusCard({
                   "
                 >
                   You have full access to
-                  Hxu Movie Premium.
+                  FlickScope Premium.
                 </p>
 
               </div>
@@ -784,7 +784,7 @@ export default function SubscriptionStatusCard({
               </h2>
 
               <p className="mt-1 text-sm text-zinc-400">
-                Enjoy the free Hxu Movie
+                Enjoy the free FlickScope
                 experience.
               </p>
 

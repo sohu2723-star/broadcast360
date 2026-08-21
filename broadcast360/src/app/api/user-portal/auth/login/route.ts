@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { AuthService } from "@/services/auth.service";
-import { verifyCaptchaChallenge } from "@/lib/captcha";
+import { verifyTurnstileToken } from "@/lib/turnstile";
 
 import { cors, optionsResponse } from "@/lib/cors";
 import { setUserAuthCookie } from "@/lib/auth-cookie";
@@ -16,10 +16,10 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    if (!verifyCaptchaChallenge(body.captchaToken, body.captchaAnswer)) {
+    if (!(await verifyTurnstileToken(body.turnstileToken, request))) {
       return cors(
         NextResponse.json(
-          { success: false, message: "CAPTCHA verification failed" },
+          { success: false, message: "Cloudflare security verification failed" },
           { status: 400 },
         ),
       );

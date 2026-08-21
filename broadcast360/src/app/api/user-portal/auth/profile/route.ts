@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { verifyUserToken } from "@/lib/user-jwt";
-import { verifyCaptchaChallenge } from "@/lib/captcha";
+import { verifyTurnstileToken } from "@/lib/turnstile";
 
 import { AuthService } from "@/services/auth.service";
 
@@ -35,10 +35,10 @@ export async function PUT(request: NextRequest) {
         const body = await request.json();
 
     if (body.acceptedPolicy !== true) {
-      return cors(NextResponse.json({ message: "You must accept the Hxu Movie policy" }, { status: 400 }));
+      return cors(NextResponse.json({ message: "You must accept the FlickScope policy" }, { status: 400 }));
     }
-    if (!verifyCaptchaChallenge(body.captchaToken, body.captchaAnswer)) {
-      return cors(NextResponse.json({ message: "CAPTCHA verification failed" }, { status: 400 }));
+    if (!(await verifyTurnstileToken(body.turnstileToken, request))) {
+      return cors(NextResponse.json({ message: "Cloudflare security verification failed" }, { status: 400 }));
     }
 
     const dateOfBirth = body.dateOfBirth

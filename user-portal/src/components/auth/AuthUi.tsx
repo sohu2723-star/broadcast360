@@ -49,7 +49,7 @@ export function AuthNotice({
           <button
             type="button"
             onClick={onDone}
-            className="b360-primary-action mt-6 w-full rounded-2xl px-4 py-3 text-sm font-bold"
+            className="flickscope-primary-action mt-6 w-full rounded-2xl px-4 py-3 text-sm font-bold"
           >
             Continue
           </button>

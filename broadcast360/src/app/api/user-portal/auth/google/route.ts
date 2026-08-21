@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { cors, optionsResponse } from "@/lib/cors";
-import { verifyCaptchaChallenge } from "@/lib/captcha";
+import { verifyTurnstileToken } from "@/lib/turnstile";
 import { setUserAuthCookie } from "@/lib/auth-cookie";
 import { verifyGoogleCredential } from "@/lib/google-auth";
 import { AuthService } from "@/services/auth.service";
@@ -15,8 +15,8 @@ export async function OPTIONS() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    if (!verifyCaptchaChallenge(body.captchaToken, body.captchaAnswer)) {
-      return cors(NextResponse.json({ success: false, message: "CAPTCHA verification failed" }, { status: 400 }));
+    if (!(await verifyTurnstileToken(body.turnstileToken, request))) {
+      return cors(NextResponse.json({ success: false, message: "Cloudflare security verification failed" }, { status: 400 }));
     }
     const identity = await verifyGoogleCredential(body.credential);
     const result = await authService.googleUserLogin(identity);

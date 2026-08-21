@@ -10,7 +10,7 @@ type GoogleIdentityWindow = Window & {
 };
 
 /**
- * Clear Hxu Movie's Google Identity Services auto-select hint after app logout.
+ * Clear FlickScope's Google Identity Services auto-select hint after app logout.
  * This does not sign the user out of Google or delete Google account cookies.
  */
 export function clearGoogleAutoSelect(): void {

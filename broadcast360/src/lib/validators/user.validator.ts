@@ -45,9 +45,8 @@ export const publicRegisterSchema = z.object({
   gender: z.enum(["MALE", "FEMALE", "OTHER", "UNSPECIFIED"]),
   password: createUserSchema.shape.password,
   verificationCode: z.string().regex(/^\d{6}$/, "Verification code must be 6 digits"),
-  acceptedPolicy: z.literal(true, { error: "You must accept the Hxu Movie policy" }),
-  captchaToken: z.string().min(1, "CAPTCHA is required"),
-  captchaAnswer: z.string().min(1, "CAPTCHA answer is required"),
+  acceptedPolicy: z.literal(true, { error: "You must accept the FlickScope policy" }),
+  turnstileToken: z.string().min(1, "Cloudflare security check is required"),
 });
 
 export const updateUserSchema = z.object({

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { publicRegisterSchema } from "@/lib/validators/user.validator";
-import { verifyCaptchaChallenge } from "@/lib/captcha";
+import { verifyTurnstileToken } from "@/lib/turnstile";
 import { consumeVerificationCode } from "@/services/email-verification.service";
 
 import { UserService } from "@/services/user.service";
@@ -37,10 +37,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!verifyCaptchaChallenge(validation.data.captchaToken, validation.data.captchaAnswer)) {
+    if (!(await verifyTurnstileToken(validation.data.turnstileToken, request))) {
       return cors(
         NextResponse.json(
-          { success: false, message: "CAPTCHA verification failed" },
+          { success: false, message: "Cloudflare security verification failed" },
           { status: 400 },
         ),
       );

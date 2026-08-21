@@ -90,7 +90,7 @@ export default function DobPicker({ value, onChange, hasError }: DobPickerProps)
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className={`${authInputClass(Boolean(hasError))} flex items-center justify-between text-left`}
+        className={`${authInputClass(Boolean(hasError))} flex min-w-0 items-center justify-between gap-3 text-left`}
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-invalid={hasError || undefined}
@@ -100,16 +100,16 @@ export default function DobPicker({ value, onChange, hasError }: DobPickerProps)
       </button>
 
       {open ? (
-        <div className="absolute left-0 right-0 top-[calc(100%+0.6rem)] z-40 rounded-3xl border border-cyan-200/20 bg-[#101b43] p-4 shadow-[0_24px_70px_rgba(0,0,0,0.5)]" role="dialog" aria-label="Choose date of birth">
-          <div className="mb-4 flex items-center justify-between gap-2">
+        <div className="absolute left-0 right-0 top-[calc(100%+0.6rem)] z-40 max-h-[min(26rem,calc(100vh-9rem))] overflow-y-auto rounded-3xl border border-cyan-200/20 bg-[#101b43] p-3 shadow-[0_24px_70px_rgba(0,0,0,0.5)] sm:p-4" role="dialog" aria-label="Choose date of birth">
+          <div className="mb-4 flex items-center justify-between gap-1 sm:gap-2">
             <button type="button" onClick={() => moveMonth(-1)} className="rounded-xl p-2 text-cyan-100 transition hover:bg-white/10" aria-label="Previous month">
               <ChevronLeft size={18} />
             </button>
-            <div className="flex min-w-0 gap-2">
-              <select value={viewMonth} onChange={(event) => setViewMonth(Number(event.target.value))} className="min-w-0 rounded-xl border border-white/10 bg-[#090f28] px-2 py-2 text-xs font-semibold text-white outline-none focus:border-cyan-200/70">
+            <div className="grid min-w-0 flex-1 grid-cols-2 gap-1 sm:flex sm:gap-2">
+              <select value={viewMonth} onChange={(event) => setViewMonth(Number(event.target.value))} className="min-w-0 w-full rounded-xl border border-white/10 bg-[#090f28] px-2 py-2 text-xs font-semibold text-white outline-none focus:border-cyan-200/70">
                 {MONTHS.map((month, index) => <option key={month} value={index}>{month}</option>)}
               </select>
-              <select value={viewYear} onChange={(event) => setViewYear(Number(event.target.value))} className="rounded-xl border border-white/10 bg-[#090f28] px-2 py-2 text-xs font-semibold text-white outline-none focus:border-cyan-200/70">
+              <select value={viewYear} onChange={(event) => setViewYear(Number(event.target.value))} className="min-w-0 w-full rounded-xl border border-white/10 bg-[#090f28] px-2 py-2 text-xs font-semibold text-white outline-none focus:border-cyan-200/70">
                 {years.map((year) => <option key={year} value={year}>{year}</option>)}
               </select>
             </div>
@@ -123,7 +123,7 @@ export default function DobPicker({ value, onChange, hasError }: DobPickerProps)
           </div>
           <div className="mt-1 grid grid-cols-7 gap-1">
             {days.map((day, index) => {
-              if (!day) return <span key={`empty-${index}`} className="h-9" aria-hidden="true" />;
+              if (!day) return <span key={`empty-${index}`} className="h-10" aria-hidden="true" />;
               const iso = toIso(viewYear, viewMonth, day);
               const isSelected = value === iso;
               const date = new Date(viewYear, viewMonth, day);
@@ -134,7 +134,7 @@ export default function DobPicker({ value, onChange, hasError }: DobPickerProps)
                   type="button"
                   disabled={disabled}
                   onClick={() => selectDay(day)}
-                  className={`h-9 rounded-xl text-xs font-semibold transition ${isSelected ? "bg-cyan-300 text-slate-950" : "text-slate-200 hover:bg-blue-500/40"} disabled:cursor-not-allowed disabled:text-slate-700`}
+                  className={`h-10 min-w-0 rounded-xl text-xs font-semibold transition ${isSelected ? "bg-cyan-300 text-slate-950" : "text-slate-200 hover:bg-blue-500/40"} disabled:cursor-not-allowed disabled:text-slate-700`}
                   aria-label={iso}
                   aria-pressed={isSelected}
                 >

@@ -1,7 +1,7 @@
 UI Wireframes (MVP)
 Overview
 
-This document contains the wireframes for the MVP version of Broadcast360.
+This document contains the wireframes for the MVP version of FlickScope.
 
 Figma Design
 

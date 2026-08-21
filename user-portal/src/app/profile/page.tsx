@@ -325,7 +325,7 @@ export default function ProfilePage() {
       <div className="flex min-h-[70vh] items-center justify-center bg-[#010312] px-5 text-white">
         <div className="w-full max-w-md rounded-3xl border border-white/10 bg-[#0d142c] p-7 text-center shadow-2xl">
           <h1 className="text-2xl font-bold">Your session has expired</h1>
-          <p className="mt-3 text-sm leading-6 text-zinc-400">Please sign in again to open your Hxu Movie account.</p>
+          <p className="mt-3 text-sm leading-6 text-zinc-400">Please sign in again to open your FlickScope account.</p>
           <Link href="/login" className="mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-blue-500 to-cyan-400 px-4 py-3 font-semibold text-slate-950 transition hover:brightness-110">Sign in again</Link>
         </div>
       </div>
@@ -711,7 +711,7 @@ export default function ProfilePage() {
                 </p>
 
                 <p className="mt-1 text-xs text-zinc-500">
-                  Sign out of your Hxu Movie account
+                  Sign out of your FlickScope account
                 </p>
 
               </div>
@@ -729,7 +729,7 @@ export default function ProfilePage() {
         <div className="mt-8 text-center">
 
           <p className="text-xs text-zinc-600">
-            Hxu Movie
+            FlickScope
           </p>
 
           <p className="mt-1 text-[11px] text-zinc-700">

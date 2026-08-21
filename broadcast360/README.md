@@ -1,6 +1,6 @@
-# Hxu Movie
+# FlickScope
 
-Hxu Movie contains two Next.js applications: the **backend/admin application** on port `3000` and the **user portal** on port `3001`. The backend also owns the Prisma schema and communicates with MediaMTX for streaming.
+FlickScope contains two Next.js applications: the **backend/admin application** on port `3000` and the **user portal** on port `3001`. The backend also owns the Prisma schema and communicates with MediaMTX for streaming.
 
 ## Localhost setup
 

@@ -16,12 +16,12 @@ import {
   FieldError,
 } from "@/components/auth/AuthUi";
 import DobPicker from "@/components/auth/DobPicker";
-import CaptchaChallenge from "@/components/auth/CaptchaChallenge";
+import TurnstileWidget from "@/components/auth/TurnstileWidget";
 
 type Gender = "" | "MALE" | "FEMALE" | "OTHER" | "UNSPECIFIED";
 
 type FormState = { name: string; dateOfBirth: string; gender: Gender };
-type CaptchaState = { token: string; answer: string; checked: boolean };
+type TurnstileState = { token: string };
 type Errors = Partial<Record<keyof FormState, string>>;
 
 export default function GoogleCompletePage() {
@@ -30,8 +30,8 @@ export default function GoogleCompletePage() {
   const [serverError, setServerError] = useState("");
   const [acceptedPolicy, setAcceptedPolicy] = useState(false);
   const [policyError, setPolicyError] = useState("");
-  const [captcha, setCaptcha] = useState<CaptchaState>({ token: "", answer: "", checked: false });
-  const [captchaError, setCaptchaError] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileError, setTurnstileError] = useState("");
   const [sessionExpired, setSessionExpired] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -76,16 +76,15 @@ export default function GoogleCompletePage() {
     if (!form.name.trim() || form.name.trim().length < 2) nextErrors.name = "Name must be at least 2 characters";
     if (!form.dateOfBirth) nextErrors.dateOfBirth = "Date of birth is required";
     if (!form.gender) nextErrors.gender = "Please choose a gender";
-    if (!acceptedPolicy) setPolicyError("Please accept the Hxu Movie policy");
-    if (!captcha.checked) setCaptchaError("Please confirm that you are not a robot");
-    else if (!captcha.answer) setCaptchaError("Enter the CAPTCHA characters");
+    if (!acceptedPolicy) setPolicyError("Please accept the FlickScope policy");
+    if (!turnstileToken) setTurnstileError("Please complete the Cloudflare security check");
     setErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0 && acceptedPolicy && captcha.checked && Boolean(captcha.answer);
+    return Object.keys(nextErrors).length === 0 && acceptedPolicy && Boolean(turnstileToken);
   }
 
-  function updateCaptcha(value: CaptchaState) {
-    setCaptcha(value);
-    if (value.checked && value.answer) setCaptchaError("");
+  function updateTurnstile(token: string) {
+    setTurnstileToken(token);
+    if (token) setTurnstileError("");
   }
 
   function update(field: keyof FormState, value: string) {
@@ -103,8 +102,7 @@ export default function GoogleCompletePage() {
         dateOfBirth: form.dateOfBirth,
         gender: form.gender,
         acceptedPolicy,
-        captchaToken: captcha.token,
-        captchaAnswer: captcha.answer,
+        turnstileToken,
       });
       setAuthTransitionLoading(true);
       window.setTimeout(() => setCompleted(true), 550);
@@ -124,19 +122,19 @@ export default function GoogleCompletePage() {
       {authTransitionLoading ? <AuthTransitionLoader label="Creating your account..." /> : null}
 
       {completed ? (
-        <AuthNotice title="Welcome" message="Your account is ready. Taking you to your Hxu Movie account now." />
+        <AuthNotice title="Welcome" message="Your account is ready. Taking you to your FlickScope account now." />
       ) : null}
 
       <div className="mx-auto w-full max-w-[480px] rounded-[2rem] border border-[#7898bf]/15 bg-[#101a3a]/95 p-6 shadow-[0_30px_90px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:p-8">
         <div className="mb-8 text-center">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-[#a9c0dd]/70">Hxu Movie</p>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-[#a9c0dd]/70">FlickScope</p>
           <h1 className="text-3xl font-bold tracking-tight text-white">Complete your profile</h1>
           <p className="mt-2 text-sm leading-6 text-slate-300">Just a few details before you enter your new account.</p>
         </div>
 
         {serverError ? <AuthError message={serverError} /> : null}
         {sessionExpired ? (
-          <Link href="/login" className="b360-primary-action mt-5 block w-full rounded-2xl py-3.5 text-center text-sm font-bold">
+          <Link href="/login" className="flickscope-primary-action mt-5 block w-full rounded-2xl py-3.5 text-center text-sm font-bold">
             Sign in with Google again
           </Link>
         ) : null}
@@ -171,13 +169,7 @@ export default function GoogleCompletePage() {
                 <FieldError message={errors.gender} />
               </div>
             </div>
-            <CaptchaChallenge
-              token={captcha.token}
-              answer={captcha.answer}
-              checked={captcha.checked}
-              error={captchaError}
-              onChange={updateCaptcha}
-            />
+            <TurnstileWidget token={turnstileToken} error={turnstileError} onChange={updateTurnstile} />
             <div className="rounded-2xl border border-[#7898bf]/15 bg-[#0b1636]/45 px-4 py-3">
               <label className="flex cursor-pointer items-start gap-3 text-sm text-slate-200">
                 <input
@@ -189,11 +181,11 @@ export default function GoogleCompletePage() {
                   }}
                   className="mt-0.5 h-4 w-4 accent-[#7898bf]"
                 />
-                <span>I agree to the Hxu Movie <Link href="/policy" target="_blank" className="font-semibold text-[#c5d7ee] underline underline-offset-4 hover:text-white">policy</Link>.</span>
+                <span>I agree to the FlickScope <Link href="/policy" target="_blank" className="font-semibold text-[#c5d7ee] underline underline-offset-4 hover:text-white">policy</Link>.</span>
               </label>
               <FieldError message={policyError} />
             </div>
-            <button type="button" onClick={createAccount} disabled={saving} className="b360-primary-action w-full rounded-2xl py-3.5 text-sm font-bold">
+            <button type="button" onClick={createAccount} disabled={saving} className="flickscope-primary-action w-full rounded-2xl py-3.5 text-sm font-bold">
               {saving ? <MoonSpinner label="Creating account" /> : "Create Account"}
             </button>
           </div>

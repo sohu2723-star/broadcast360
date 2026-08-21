@@ -39,7 +39,7 @@ export default function CreateNewsPage() {
       <div className="mx-auto max-w-3xl">
         <Link href="/admin/news" className="inline-flex items-center gap-2 text-sm font-semibold text-[#c5d7ee] hover:text-white"><ArrowLeft size={16} /> Back to News</Link>
         <div className="mt-6 rounded-3xl border border-white/10 bg-[#0B1026] p-6 shadow-xl sm:p-8">
-          <div className="flex items-center gap-3"><div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#7898bf]/15 text-[#c5d7ee]"><Newspaper size={22} /></div><div><p className="text-xs uppercase tracking-[0.25em] text-slate-500">Hxu Movie</p><h1 className="text-2xl font-bold">Create News</h1></div></div>
+          <div className="flex items-center gap-3"><div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#7898bf]/15 text-[#c5d7ee]"><Newspaper size={22} /></div><div><p className="text-xs uppercase tracking-[0.25em] text-slate-500">FlickScope</p><h1 className="text-2xl font-bold">Create News</h1></div></div>
           {error ? <div className="mt-5 rounded-xl border border-amber-200/20 bg-amber-100/5 px-4 py-3 text-sm text-amber-100">{error}</div> : null}
           <div className="mt-7 space-y-5">
             <label className="block text-sm font-medium text-slate-200">Title<input value={form.title} onChange={(event) => setForm((previous) => ({ ...previous, title: event.target.value }))} className="mt-2 w-full rounded-2xl border border-white/10 bg-[#08122f] px-4 py-3.5 text-white outline-none focus:border-[#7898bf]/70" /></label>

@@ -126,7 +126,7 @@ export default function PremiumChatsPage() {
               </div>
 
               <p className="mt-2 text-sm text-slate-400">
-                Chat directly with the Hxu Movie
+                Chat directly with the FlickScope
                 support team.
               </p>
             </div>

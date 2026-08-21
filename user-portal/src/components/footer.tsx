@@ -5,7 +5,7 @@ export default function Footer() {
       <div className="border-t border-[#0B1026] py-5 px-6 text-sm text-gray-400">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between gap-3">
           {/* Left */}
-          <p>© 2026 Hxu Movie</p>
+          <p>© 2026 FlickScope</p>
 
           {/* Middle Links */}
           <div className="flex flex-wrap gap-4">

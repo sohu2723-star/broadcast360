@@ -1,4 +1,4 @@
--- Hxu Movie Google Sign-In and Gmail verification support
+-- FlickScope Google Sign-In and Gmail verification support
 ALTER TABLE "User"
   ADD COLUMN "googleId" TEXT,
   ADD COLUMN "emailVerifiedAt" TIMESTAMP(3),

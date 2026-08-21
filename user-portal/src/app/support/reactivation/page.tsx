@@ -69,7 +69,7 @@ export default function ReactivationPage() {
         ) : (
           <>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#a9c0dd]/70">Hxu Movie Support</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#a9c0dd]/70">FlickScope Support</p>
               <h1 className="mt-3 text-3xl font-bold tracking-tight text-white">Reactivate account</h1>
               <p className="mt-3 text-sm leading-6 text-slate-300">If your account became inactive after three months without login, send a request to the admin team. This is a regular support message, not live chat.</p>
             </div>
@@ -89,7 +89,7 @@ export default function ReactivationPage() {
                 <AuthLabel>Message</AuthLabel>
                 <textarea value={form.message} onChange={(event) => update("message", event.target.value)} className={`${authInputClass(false)} min-h-36 resize-y`} placeholder="Please tell the admin why you need your account reactivated." />
               </div>
-              <button type="submit" disabled={loading} className="b360-primary-action flex w-full items-center justify-center rounded-2xl py-3.5 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-60">
+              <button type="submit" disabled={loading} className="flickscope-primary-action flex w-full items-center justify-center rounded-2xl py-3.5 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-60">
                 {loading ? <MoonSpinner label="Sending" /> : "Send reactivation request"}
               </button>
             </form>

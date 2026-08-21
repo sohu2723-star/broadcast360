@@ -72,7 +72,6 @@ export async function middleware(request: NextRequest) {
     "/api/user-portal/auth/login",
     "/api/user-portal/auth/register",
     "/api/user-portal/auth/google",
-    "/api/user-portal/auth/captcha",
     "/api/user-portal/auth/forgot-password",
     "/api/user-portal/auth/send-code",
     "/api/user-portal/auth/reset-password",
