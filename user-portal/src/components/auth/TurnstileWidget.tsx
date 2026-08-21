@@ -58,7 +58,7 @@ export default function TurnstileWidget({ token, error, onChange }: TurnstileWid
   if (!siteKey) {
     return (
       <div className="rounded-2xl border border-amber-200/20 bg-amber-100/5 px-4 py-3 text-sm text-amber-100/90" role="alert">
-        Turnstile is not configured for this environment.
+        Security check is not configured for this environment.
         <FieldError message={error} />
       </div>
     );
@@ -69,7 +69,7 @@ export default function TurnstileWidget({ token, error, onChange }: TurnstileWid
       <div className="mb-3 flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
         <div>
           <p className="text-sm font-semibold text-white">Security check</p>
-          <p className="mt-1 text-xs leading-5 text-slate-400">This site is protected by Cloudflare Turnstile.</p>
+          <p className="mt-1 text-xs leading-5 text-slate-400">This site is protected by Cloudflare security.</p>
         </div>
         <span className="text-xs font-medium text-slate-500">Required</span>
       </div>
@@ -78,7 +78,7 @@ export default function TurnstileWidget({ token, error, onChange }: TurnstileWid
         strategy="afterInteractive"
         onLoad={() => setReady(true)}
       />
-      <div ref={containerRef} className="mx-auto flex min-h-[65px] w-full min-w-0 max-w-[360px] items-center justify-center overflow-x-auto overflow-y-hidden rounded-xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&_iframe]:block [&_iframe]:!h-[65px] [&_iframe]:!max-w-full [&_iframe]:!w-full" />
+      <div ref={containerRef} className="turnstile-widget-host mx-auto flex min-h-[65px] w-full min-w-0 max-w-[360px] items-center justify-center overflow-x-auto overflow-y-hidden rounded-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&_iframe]:block [&_iframe]:!h-[65px] [&_iframe]:!max-w-full [&_iframe]:!w-full" />
       <FieldError message={error} />
       {token ? <p className="mt-2 text-xs text-emerald-200/80">Security check completed.</p> : null}
     </div>

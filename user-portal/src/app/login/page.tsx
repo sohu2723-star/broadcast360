@@ -328,16 +328,37 @@ export default function LoginPage() {
       ) : null}
 
       {forgotOpen ? (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/80 px-4 py-8 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="forgot-password-title">
-          <div className="max-h-[92vh] w-full max-w-[460px] overflow-y-auto rounded-3xl border border-[#7898bf]/15 bg-[#101a3a] p-6 shadow-[0_30px_90px_rgba(0,0,0,0.5)] sm:p-8">
-            <div className="mb-6 flex items-start justify-between gap-4">
+        <div className="fixed inset-0 z-40 flex items-start justify-center overflow-y-auto bg-slate-950/80 px-4 py-4 backdrop-blur-sm sm:items-center sm:py-8" role="dialog" aria-modal="true" aria-labelledby="forgot-password-title">
+          <div className="my-auto max-h-[calc(100dvh-2rem)] w-full max-w-[460px] overflow-y-auto rounded-3xl border border-[#7898bf]/15 bg-[#101a3a] p-5 shadow-[0_30px_90px_rgba(0,0,0,0.5)] sm:max-h-[92vh] sm:p-8">
+            <div className="mb-6 flex items-start justify-between gap-3 sm:gap-4">
               <div><h2 id="forgot-password-title" className="text-2xl font-bold text-white">Forgot password?</h2><p className="mt-2 text-sm leading-6 text-slate-300">Send a code to your Gmail and choose a new password.</p></div>
               <button type="button" onClick={() => setForgotOpen(false)} className="rounded-xl px-3 py-2 text-slate-300 hover:bg-white/10 hover:text-white" aria-label="Close forgot password">×</button>
             </div>
             {forgotServerError ? <AuthError message={forgotServerError} /> : null}
             <div className="space-y-4">
               <div><AuthLabel>Gmail</AuthLabel><input type="email" value={forgotForm.email} placeholder="example@gmail.com" onChange={(event) => updateForgot("email", event.target.value)} className={authInputClass(Boolean(forgotErrors.email))} /><FieldError message={forgotErrors.email} /></div>
-              <div><AuthLabel>Verification code</AuthLabel><div className="flex gap-2"><input value={forgotForm.verificationCode} inputMode="numeric" maxLength={6} placeholder="6-digit code" onChange={(event) => updateForgot("verificationCode", event.target.value.replace(/\D/g, ""))} className={`${authInputClass(Boolean(forgotErrors.verificationCode))} min-w-0 flex-1`} /><button type="button" onClick={sendForgotCode} disabled={forgotLoading || forgotCountdown > 0} className="min-w-[7.2rem] rounded-2xl border border-[#7898bf]/25 bg-[#20385f]/30 px-3 text-xs font-bold text-[#c6d7ea] disabled:cursor-not-allowed disabled:opacity-60">{forgotLoading ? <MoonSpinner label="Sending" /> : forgotCountdown > 0 ? `Resend in ${forgotCountdown}s` : forgotCodeSent ? "Resend code" : "Send code"}</button></div><FieldError message={forgotErrors.verificationCode} /></div>
+              <div>
+                <AuthLabel>Verification code</AuthLabel>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <input
+                    value={forgotForm.verificationCode}
+                    inputMode="numeric"
+                    maxLength={6}
+                    placeholder="6-digit code"
+                    onChange={(event) => updateForgot("verificationCode", event.target.value.replace(/\D/g, ""))}
+                    className={`${authInputClass(Boolean(forgotErrors.verificationCode))} w-full min-w-0 sm:flex-1`}
+                  />
+                  <button
+                    type="button"
+                    onClick={sendForgotCode}
+                    disabled={forgotLoading || forgotCountdown > 0}
+                    className="min-h-12 w-full shrink-0 rounded-2xl border border-[#7898bf]/25 bg-[#20385f]/30 px-3 text-xs font-bold text-[#c6d7ea] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:min-w-[7.2rem]"
+                  >
+                    {forgotLoading ? <MoonSpinner label="Sending" /> : forgotCountdown > 0 ? `Resend in ${forgotCountdown}s` : forgotCodeSent ? "Resend code" : "Send code"}
+                  </button>
+                </div>
+                <FieldError message={forgotErrors.verificationCode} />
+              </div>
               <div><AuthLabel>New password</AuthLabel><div className="relative"><input type={showForgotPassword ? "text" : "password"} value={forgotForm.newPassword} onChange={(event) => updateForgot("newPassword", event.target.value)} className={`${authInputClass(Boolean(forgotErrors.newPassword))} pr-12`} /><button type="button" onClick={() => setShowForgotPassword((value) => !value)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white" aria-label="Toggle new password">{showForgotPassword ? <EyeOff size={19} /> : <Eye size={19} />}</button></div><FieldError message={forgotErrors.newPassword} /></div>
               <div><AuthLabel>Confirm password</AuthLabel><div className="relative"><input type={showForgotConfirm ? "text" : "password"} value={forgotForm.confirmPassword} onChange={(event) => updateForgot("confirmPassword", event.target.value)} className={`${authInputClass(Boolean(forgotErrors.confirmPassword))} pr-12`} /><button type="button" onClick={() => setShowForgotConfirm((value) => !value)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white" aria-label="Toggle password confirmation">{showForgotConfirm ? <EyeOff size={19} /> : <Eye size={19} />}</button></div><FieldError message={forgotErrors.confirmPassword} /></div>
               <button type="button" onClick={resetForgotPassword} disabled={forgotLoading} className="flickscope-primary-action w-full rounded-2xl py-3.5 text-sm font-bold">{forgotLoading ? <MoonSpinner label="Updating" /> : "Reset password"}</button>

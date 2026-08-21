@@ -79,6 +79,12 @@ textarea:focus-visible {
   filter: saturate(0.72);
 }
 
+.turnstile-widget-host,
+.turnstile-widget-host iframe {
+  border-radius: 0 !important;
+  clip-path: none !important;
+}
+
 .google-button-shell > div,
 .google-button-shell iframe {
   display: block;
