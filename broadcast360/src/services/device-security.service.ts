@@ -35,6 +35,19 @@ export async function registerDeviceSession(userId: number, request: Request, de
     });
   }
 
+  const activeSessions = await prisma.deviceSession.findMany({
+    where: { userId, revokedAt: null },
+    orderBy: { lastSeenAt: "asc" },
+    select: { id: true },
+  });
+
+  if (activeSessions.length >= 2) {
+    await prisma.deviceSession.update({
+      where: { id: activeSessions[0].id },
+      data: { revokedAt: new Date() },
+    });
+  }
+
   return prisma.deviceSession.create({
     data: { userId, deviceHash, ipHash, userAgent, lastSeenAt: new Date() },
   });
