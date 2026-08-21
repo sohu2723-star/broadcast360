@@ -82,8 +82,8 @@ textarea:focus-visible {
 .google-button-shell > div,
 .google-button-shell iframe {
   display: block;
-  width: 100% !important;
   max-width: 100% !important;
+  margin-inline: auto !important;
   border-radius: 9999px !important;
   overflow: hidden !important;
   clip-path: inset(0 round 9999px);
@@ -146,6 +146,7 @@ button {
   .google-button-shell iframe {
     min-width: 0 !important;
     max-width: 100% !important;
+    margin-inline: auto !important;
   }
 
   dialog,

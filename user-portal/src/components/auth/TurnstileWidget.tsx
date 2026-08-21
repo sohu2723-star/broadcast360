@@ -65,8 +65,8 @@ export default function TurnstileWidget({ token, error, onChange }: TurnstileWid
   }
 
   return (
-    <div className="rounded-2xl border border-[#7898bf]/20 bg-[#0b1636]/75 p-4">
-      <div className="mb-3 flex items-center justify-between gap-3">
+    <div className="rounded-2xl border border-[#7898bf]/20 bg-[#0b1636]/75 p-3 sm:p-4">
+      <div className="mb-3 flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
         <div>
           <p className="text-sm font-semibold text-white">Security check</p>
           <p className="mt-1 text-xs leading-5 text-slate-400">This site is protected by Cloudflare Turnstile.</p>
@@ -78,7 +78,7 @@ export default function TurnstileWidget({ token, error, onChange }: TurnstileWid
         strategy="afterInteractive"
         onLoad={() => setReady(true)}
       />
-      <div ref={containerRef} className="flex min-h-[65px] w-full min-w-0 items-center justify-center overflow-hidden rounded-xl [&_iframe]:max-w-full" />
+      <div ref={containerRef} className="mx-auto flex min-h-[65px] w-full min-w-0 max-w-[360px] items-center justify-center overflow-x-auto overflow-y-hidden rounded-xl [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&_iframe]:block [&_iframe]:!h-[65px] [&_iframe]:!max-w-full [&_iframe]:!w-full" />
       <FieldError message={error} />
       {token ? <p className="mt-2 text-xs text-emerald-200/80">Security check completed.</p> : null}
     </div>

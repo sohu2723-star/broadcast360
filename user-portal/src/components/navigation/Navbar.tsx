@@ -67,7 +67,7 @@ export default function Navbar() {
     <header className="border-b border-[#0B1026] bg-[#010312]">
       <nav className="relative mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 sm:py-4">
         <Link href="/" className="shrink-0 text-2xl font-bold tracking-tight sm:text-3xl">
-          <span className="text-[#7898bf]">Broadcast</span>360
+          <span className="text-[#7898bf]">Flick</span>Scope
         </Link>
 
         <div className="hidden items-center gap-5 lg:gap-7 md:flex">
