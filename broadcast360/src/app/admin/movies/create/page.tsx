@@ -84,6 +84,7 @@ export default function CreateMoviePage() {
       formData.append("description", data.description);
       formData.append("genre", data.genre);
       formData.append("releaseYear", String(data.releaseYear));
+      formData.append("accessType", data.accessType ?? "FREE");
       formData.append("videoUrl", videoUpload.publicUrl);
       formData.append("thumbnailUrl", thumbnailUpload.publicUrl);
       formData.append("duration", String(duration));
