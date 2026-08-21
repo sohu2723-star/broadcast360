@@ -59,7 +59,7 @@ export default function LoginPage() {
   const [authTransitionLoading, setAuthTransitionLoading] = useState(false);
   const googleButtonRef = useRef<HTMLDivElement>(null);
   const googleInitializedRef = useRef(false);
-  const [googleClientId, setGoogleClientId] = useState("524254578493-9ce8ttte7c63hjo61rn9seo2m6jpfbjb.apps.googleusercontent.com");
+  const [googleClientId, setGoogleClientId] = useState("142767190785-vhj059537ornq1b1f90ln48lad6j3fja.apps.googleusercontent.com");
 
   useEffect(() => {
     let cancelled = false;
