@@ -377,7 +377,8 @@ export default function LoginPage() {
         />
       ) : null}
 
-      <div className="mx-auto w-full max-w-[440px] rounded-[2rem] border border-[#7898bf]/15 bg-[#101a3a]/95 p-6 shadow-[0_30px_90px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:p-8">
+      {!forgotOpen ? (
+        <div className="mx-auto w-full max-w-[440px] rounded-[2rem] border border-[#7898bf]/15 bg-[#101a3a]/95 p-6 shadow-[0_30px_90px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:p-8">
         <div className="mb-8 text-center">
           <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-[#a9c0dd]/70">FlickScope</p>
           <h1 className="text-3xl font-bold tracking-tight text-white">Login</h1>
@@ -458,7 +459,8 @@ export default function LoginPage() {
           Don&apos;t have an account?
           <Link href="/register" className="ml-1.5 font-semibold text-[#b7cbe4] transition hover:text-white">Sign up</Link>
         </p>
-      </div>
+        </div>
+      ) : null}
     </AuthBackdrop>
   );
 }
