@@ -6,6 +6,7 @@ import { UserRepository } from "@/repositories/user.repository";
 import { isUserInactiveByInactivity } from "@/services/auth.service";
 
 import { prisma } from "@/lib/prisma";
+import { getVodEntitlement } from "@/services/vod-entitlement.service";
 
 const userRepository = new UserRepository();
 
@@ -106,6 +107,8 @@ export async function GET(request: NextRequest) {
       console.error("GET CURRENT USER SUBSCRIPTION ERROR:", subscriptionError);
     }
 
+    const entitlement = await getVodEntitlement(userId);
+
     // =====================================================
     // RESPONSE
     // =====================================================
@@ -122,6 +125,16 @@ export async function GET(request: NextRequest) {
           gender: user.gender,
           role: user.role,
           status: user.status,
+          trialStartedAt: user.trialStartedAt ?? null,
+          trialEndsAt: user.trialEndsAt ?? null,
+          entitlement: {
+            isPremium: entitlement.isPremium,
+            isTrial: entitlement.isTrial,
+            canViewPremium: entitlement.canViewPremium,
+            creditBalance: entitlement.creditBalance,
+            trialEndsAt: entitlement.trialEndsAt,
+            subscriptionEndsAt: entitlement.subscriptionEndsAt,
+          },
 
           subscription: subscription
   ? {
