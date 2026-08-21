@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
     // FIND CURRENT SUBSCRIPTION
     // =====================================================
 
-    let subscription = null;
+    let subscription: any = null;
     try {
       subscription = await prisma.subscription.findFirst({
         where: {

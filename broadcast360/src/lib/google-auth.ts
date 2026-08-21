@@ -1,8 +1,17 @@
-import { OAuth2Client } from "google-auth-library";
+import { createRemoteJWKSet, jwtVerify } from "jose";
 
 import { assertGmailAddress, getGoogleClientId } from "@/lib/auth-policy";
 
-const googleClient = new OAuth2Client();
+const GOOGLE_JWKS = createRemoteJWKSet(new URL("https://www.googleapis.com/oauth2/v3/certs"));
+const GOOGLE_ISSUERS = ["https://accounts.google.com", "accounts.google.com"];
+
+type GoogleTokenClaims = {
+  sub?: string;
+  email?: string;
+  email_verified?: boolean;
+  name?: string;
+  picture?: string;
+};
 
 export type GoogleIdentity = {
   googleId: string;
@@ -11,29 +20,26 @@ export type GoogleIdentity = {
   avatar?: string;
 };
 
-export async function verifyGoogleCredential(
-  credential: unknown,
-): Promise<GoogleIdentity> {
+export async function verifyGoogleCredential(credential: unknown): Promise<GoogleIdentity> {
   if (typeof credential !== "string" || credential.length < 100) {
     throw new Error("Invalid Google credential");
   }
 
-  const ticket = await googleClient.verifyIdToken({
-    idToken: credential,
+  const { payload } = await jwtVerify(credential, GOOGLE_JWKS, {
+    issuer: GOOGLE_ISSUERS,
     audience: getGoogleClientId(),
   });
-  const payload = ticket.getPayload();
+  const claims = payload as GoogleTokenClaims;
 
-  if (!payload?.sub || !payload.email || payload.email_verified !== true) {
+  if (!claims.sub || !claims.email || claims.email_verified !== true) {
     throw new Error("Google email is not verified");
   }
 
-  const email = assertGmailAddress(payload.email);
-
+  const email = assertGmailAddress(claims.email);
   return {
-    googleId: payload.sub,
+    googleId: claims.sub,
     email,
-    name: payload.name?.trim() || email.split("@")[0],
-    avatar: payload.picture,
+    name: claims.name?.trim() || email.split("@")[0],
+    avatar: claims.picture,
   };
 }

@@ -1,7 +1,7 @@
 import fs from "fs/promises";
 import path from "path";
 import { createClient } from "@supabase/supabase-js";
-import { isR2Configured, createR2SignedUpload, uploadR2MediaFile } from "./r2-storage";
+import { isR2Configured, createR2DirectUpload, uploadR2MediaFile } from "./r2-storage";
 
 const DEFAULT_BUCKET = "hxu-movie-media";
 
@@ -43,7 +43,7 @@ export async function createSignedMediaUpload(input: {
   }
 
   if (isR2Configured()) {
-    return createR2SignedUpload(input);
+    return createR2DirectUpload(input);
   }
 
   const config = getStorageConfig();

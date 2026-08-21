@@ -335,7 +335,7 @@ export async function POST(request: NextRequest) {
     //
     // =================================================
 
-    const conditions = [];
+    const conditions: Array<Record<string, number>> = [];
 
     if (movieId !== null) {
       conditions.push({

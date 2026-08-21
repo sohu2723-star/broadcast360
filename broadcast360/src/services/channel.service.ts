@@ -70,8 +70,8 @@ export async function fetchChannelById(id: number) {
 
   // Remove duplicates in case the same playlist appears more than once
   const uniquePlaylists = Array.from(
-    new Map(
-      playlists.map((playlist) => [playlist.id, playlist]),
+    new Map<number, any>(
+      playlists.map((playlist: any) => [playlist.id, playlist] as [number, any]),
     ).values(),
   );
 

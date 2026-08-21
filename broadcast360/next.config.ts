@@ -9,10 +9,6 @@ const streamOrigin = process.env.PUBLIC_STREAM_ORIGIN || "*";
 const nextConfig: NextConfig = {
   assetPrefix: "/admin",
   serverExternalPackages: [
-    "@prisma/client",
-    ".prisma/client",
-    "pg",
-    "pg-cloudflare",
     "jose",
   ],
   async headers() {
