@@ -69,6 +69,7 @@ export async function editMovie(
 
   const thumbnail = formData.get("thumbnail") as File | null;
   const video = formData.get("video") as File | null;
+  const hdVideo = formData.get("hdVideo") as File | null;
 
   const updateData: {
     title: string;
@@ -77,6 +78,7 @@ export async function editMovie(
     releaseYear: number;
     thumbnail?: string;
     videoUrl?: string;
+    hdVideoUrl?: string;
     duration?: number;
     accessType: "FREE" | "PREMIUM";
   } = {
@@ -107,6 +109,10 @@ export async function editMovie(
     }
   }
 
+  if (hdVideo && hdVideo.size > 0) {
+    updateData.hdVideoUrl = await uploadMediaFile(hdVideo, "videos/movies");
+  }
+
   return updateMovie(id, updateData);
 }
 /* -------------------------
@@ -120,9 +126,11 @@ export async function addMovie(formData: FormData) {
   const accessType = formData.get("accessType") === "PREMIUM" ? "PREMIUM" : "FREE";
 
   const video = formData.get("video") as File | null;
+  const hdVideo = formData.get("hdVideo") as File | null;
   const thumbnail = formData.get("thumbnail") as File | null;
   const preUploadedVideoUrl = String(formData.get("videoUrl") ?? "").trim();
   const preUploadedThumbnailUrl = String(formData.get("thumbnailUrl") ?? "").trim();
+  const preUploadedHdVideoUrl = String(formData.get("hdVideoUrl") ?? "").trim();
   const preUploadedDuration = Number(formData.get("duration"));
 
   if ((!video || video.size <= 0) && !preUploadedVideoUrl) {
@@ -146,6 +154,7 @@ export async function addMovie(formData: FormData) {
           ? Math.round(preUploadedDuration)
           : 0,
       accessType,
+      hdVideoUrl: preUploadedHdVideoUrl || undefined,
     });
   }
 
@@ -156,9 +165,10 @@ export async function addMovie(formData: FormData) {
   const temporaryPath = await writeTemporaryMediaFile(video, "hxumovie-movie");
 
   try {
-    const [videoUrl, thumbnailUrl, duration] = await Promise.all([
+    const [videoUrl, thumbnailUrl, hdVideoUrl, duration] = await Promise.all([
       uploadMediaFile(video, "videos/movies"),
       uploadMediaFile(thumbnail, "thumbnails/movies"),
+      hdVideo && hdVideo.size > 0 ? uploadMediaFile(hdVideo, "videos/movies") : Promise.resolve(null),
       getVideoDuration(temporaryPath),
     ]);
 
@@ -171,6 +181,7 @@ export async function addMovie(formData: FormData) {
       thumbnail: thumbnailUrl,
       duration,
       accessType,
+      hdVideoUrl: hdVideoUrl ?? undefined,
     });
   } finally {
     await removeTemporaryMediaFile(temporaryPath);

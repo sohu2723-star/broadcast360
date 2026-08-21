@@ -373,6 +373,19 @@ export default function MovieForm({
                 </div>
               )}
             </div>
+
+            {form.accessType === "PREMIUM" ? (
+              <div>
+                <label className="mb-2 block font-medium">Premium HD File <span className="text-xs font-normal text-white/50">(optional — standard file is used if empty)</span></label>
+                <input
+                  type="file"
+                  accept="video/*"
+                  onChange={(event) => setForm((previous) => ({ ...previous, hdVideo: event.target.files?.[0] ?? null }))}
+                  className="w-full rounded-xl border border-white/10 bg-[#171717] p-3 text-white file:mr-4 file:rounded-lg file:border-0 file:bg-white/10 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-white hover:file:bg-white/20 focus:border-white/45 focus:outline-none"
+                />
+                {form.hdVideo ? <p className="mt-2 truncate text-xs text-white/60">HD file: {form.hdVideo.name}</p> : null}
+              </div>
+            ) : null}
           </div>
 
           {/* RIGHT SIDE: MOVIE POSTER UPLOADER */}

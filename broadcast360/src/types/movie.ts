@@ -7,6 +7,7 @@ export type MovieFormData = {
   genre: string;
   releaseYear: number;
   video: File | null;
+  hdVideo?: File | null;
   thumbnail?: File | null;
   accessType: "FREE" | "PREMIUM";
 };
