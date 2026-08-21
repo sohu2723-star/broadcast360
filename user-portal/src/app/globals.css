@@ -1,16 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --background: #071029;
-  --foreground: #e6edf7;
-  --surface: #0d1838;
-  --surface-raised: #111f46;
-  --surface-input: #08122f;
-  --border-subtle: rgba(176, 201, 235, 0.14);
-  --accent: #78a6dc;
-  --accent-strong: #4e7fba;
-  --accent-soft: rgba(120, 166, 220, 0.14);
-  --muted: #91a0b9;
+  --background: #121212;
+  --foreground: #f1f1f1;
+  --surface: #1f1f1f;
+  --surface-raised: #2a2a2a;
+  --surface-input: #171717;
+  --border-subtle: rgba(255, 255, 255, 0.12);
+  --accent: #d8d8d8;
+  --accent-strong: #ffffff;
+  --accent-soft: rgba(255, 255, 255, 0.10);
+  --muted: #a4a4a4;
 }
 
 @theme inline {
@@ -36,7 +36,7 @@ body {
 }
 
 ::selection {
-  background: rgba(120, 166, 220, 0.28);
+  background: rgba(255, 255, 255, 0.18);
   color: #f5f8fc;
 }
 
@@ -53,20 +53,20 @@ a:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 2px solid rgba(150, 188, 232, 0.78);
+  outline: 2px solid rgba(255, 255, 255, 0.72);
   outline-offset: 2px;
 }
 
 .flickscope-primary-action {
-  background: linear-gradient(90deg, #287cff 0%, #10cbe0 100%);
-  color: #061127;
-  box-shadow: 0 12px 28px rgba(16, 203, 224, 0.16);
+  background: #f1f1f1;
+  color: #141414;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.24);
   transition: filter 160ms ease, transform 160ms ease, box-shadow 160ms ease;
 }
 
 .flickscope-primary-action:hover {
   filter: brightness(1.08) saturate(1.04);
-  box-shadow: 0 14px 32px rgba(16, 203, 224, 0.22);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.34);
 }
 
 .flickscope-primary-action:active {
@@ -108,7 +108,7 @@ textarea:focus-visible {
 
 .playlist-scroll {
   scrollbar-width: thin;
-  scrollbar-color: #4f6689 transparent;
+  scrollbar-color: #5e5e5e transparent;
 }
 
 .playlist-scroll::-webkit-scrollbar {
@@ -120,12 +120,12 @@ textarea:focus-visible {
 }
 
 .playlist-scroll::-webkit-scrollbar-thumb {
-  background: #4f6689;
+  background: #5e5e5e;
   border-radius: 999px;
 }
 
 .playlist-scroll::-webkit-scrollbar-thumb:hover {
-  background: #7898bf;
+  background: #8a8a8a;
 }
 
 select {

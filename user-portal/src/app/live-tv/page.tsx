@@ -1,5 +1,5 @@
-import LiveTvLayout from "@/components/live-tv/LiveTvLayout";
+import { redirect } from "next/navigation";
 
-export default function LiveTvPage() {
-  return <LiveTvLayout />;
+export default function LiveTvRetiredPage() {
+  redirect("/movies");
 }

@@ -30,28 +30,8 @@ const menus: MenuItem[] = [
     path: "/admin",
   },
   {
-    name: "Broadcast",
-    path: "/admin/broadcast",
-  },
-  {
-    name: "TV Control",
-    path: "/admin/tv",
-  },
-  {
-    name: "Channels",
-    path: "/admin/channels",
-  },
-  {
-    name: "Programs",
-    path: "/admin/programs",
-  },
-  {
-    name: "Schedules",
+    name: "Release Schedule",
     path: "/admin/schedules",
-  },
-  {
-    name: "Live Streams",
-    path: "/admin/streams",
   },
 
   // =====================================================
@@ -59,7 +39,7 @@ const menus: MenuItem[] = [
   // =====================================================
 
   {
-    name: "Content",
+    name: "VOD Content",
     children: [
       {
         name: "Movies",
@@ -68,14 +48,6 @@ const menus: MenuItem[] = [
       {
         name: "Series",
         path: "/admin/series",
-      },
-      {
-        name: "News",
-        path: "/admin/news",
-      },
-      {
-        name: "Entertainment",
-        path: "/admin/entertainments",
       },
       {
         name: "Advertisements",
@@ -92,7 +64,7 @@ const menus: MenuItem[] = [
     name: "Subscriptions",
     children: [
       {
-        name: "Subscriptions",
+        name: "User Subscriptions",
         path: "/admin/subscriptions",
       },
       {
@@ -357,10 +329,10 @@ export default function Sidebar({
   }
 
   return (
-    <aside className={`fixed inset-y-0 left-0 z-50 h-screen w-72 overflow-y-auto border-r border-white/10 bg-[#0B1026] p-4 transition-transform duration-200 lg:sticky lg:z-auto lg:w-64 lg:translate-x-0 lg:p-5 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
+    <aside className={`fixed inset-y-0 left-0 z-50 h-screen w-72 overflow-y-auto border-r border-white/10 bg-[#121212] p-4 transition-transform duration-200 lg:sticky lg:z-auto lg:w-64 lg:translate-x-0 lg:p-5 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
       <div className="mb-6 flex items-center justify-between lg:mb-10">
         <h1 className="text-2xl font-bold">
-          <span className="text-[#4f6689]">Broadcast</span>360
+          <span className="text-white">Flick</span>Scope
         </h1>
         <button type="button" onClick={onClose} className="rounded-xl px-3 py-2 text-sm text-slate-300 hover:bg-white/10 lg:hidden" aria-label="Close admin navigation">Close</button>
       </div>
@@ -395,8 +367,8 @@ export default function Sidebar({
                   transition
                   ${
                     active
-                      ? "bg-[#4f6689] text-white shadow-lg shadow-black/20"
-                      : "text-gray-300 hover:bg-[#7898bf]/12 hover:text-white"
+                      ? "bg-[#2a2a2a] text-white shadow-lg shadow-black/20"
+                      : "text-gray-300 hover:bg-white/10 hover:text-white"
                   }
                 `}
               >
@@ -424,8 +396,8 @@ export default function Sidebar({
                 aria-expanded={isOpen}
                 className={`flex w-full items-center justify-between rounded-xl px-4 py-3 text-left text-sm font-medium transition ${
                   active
-                    ? "bg-[#7898bf]/15 text-white"
-                    : "text-gray-300 hover:bg-[#7898bf]/12 hover:text-white"
+                    ? "bg-[#2a2a2a] text-white"
+                    : "text-gray-300 hover:bg-white/10 hover:text-white"
                 }`}
               >
                 <span>{menu.name}</span>
@@ -444,8 +416,8 @@ export default function Sidebar({
                         onClick={onClose}
                         className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm transition ${
                           childActive
-                            ? "bg-[#4f6689] text-white shadow-lg shadow-black/20"
-                            : "text-gray-400 hover:bg-[#7898bf]/12 hover:text-white"
+                            ? "bg-[#2a2a2a] text-white shadow-lg shadow-black/20"
+                            : "text-gray-400 hover:bg-white/10 hover:text-white"
                         }`}
                       >
                         <span>{child.name}</span>

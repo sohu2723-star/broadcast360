@@ -10,11 +10,8 @@ import { getCurrentUser } from "@/lib/current-user";
 import type { User } from "@/types/user";
 
 const menus = [
-  { name: "Live TV", href: "/live-tv", live: true },
-  { name: "Series", href: "/series" },
   { name: "Movies", href: "/movies" },
-  { name: "Entertainment", href: "/entertainments" },
-  { name: "News", href: "/news" },
+  { name: "Series", href: "/series" },
   { name: "Schedule", href: "/schedule" },
   { name: "Contact Us", href: "/support" },
 ];
@@ -64,7 +61,7 @@ export default function Navbar() {
   }
 
   return (
-    <header className="border-b border-[#0B1026] bg-[#010312]">
+    <header className="border-b border-white/10 bg-[#121212]">
       <nav className="relative mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 sm:py-4">
         <Link href="/" className="shrink-0 text-2xl font-bold tracking-tight sm:text-3xl">
           <span className="text-[#7898bf]">Flick</span>Scope
@@ -75,9 +72,8 @@ export default function Navbar() {
             <Link
               key={menu.href}
               href={menu.href}
-              className={`relative whitespace-nowrap text-sm text-white transition hover:text-[#7898bf] ${pathname === menu.href ? "text-[#7898bf]" : ""}`}
+              className={`relative whitespace-nowrap text-sm text-white transition hover:text-white/70 ${pathname === menu.href ? "text-white" : ""}`}
             >
-              {menu.live ? <span className="mr-2 inline-block h-2 w-2 rounded-full bg-red-500" /> : null}
               {menu.name}
             </Link>
           ))}
@@ -102,9 +98,8 @@ export default function Navbar() {
               <Link
                 key={menu.href}
                 href={menu.href}
-                className={`rounded-xl px-4 py-3 text-sm text-slate-200 transition hover:bg-white/10 ${pathname === menu.href ? "bg-blue-500/20 text-cyan-200" : ""}`}
+                className={`rounded-lg px-4 py-3 text-sm text-slate-200 transition hover:bg-white/10 ${pathname === menu.href ? "bg-white/10 text-white" : ""}`}
               >
-                {menu.live ? <span className="mr-2 inline-block h-2 w-2 rounded-full bg-red-500" /> : null}
                 {menu.name}
               </Link>
             ))}
