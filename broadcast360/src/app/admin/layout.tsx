@@ -1,5 +1,7 @@
 "use client";
 
+
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 import Navbar from "@/components/admin/navbar";
@@ -10,7 +12,16 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const isLoginRoute =
+    pathname === "/admin/login" || pathname.startsWith("/admin/login/");
+
+  // The login route must never inherit the authenticated Admin shell.
+  // Middleware protects every other /admin route on the server.
+  if (isLoginRoute) {
+    return <>{children}</>;
+  }
 
   return (
     <div className="flex min-h-screen bg-[#010312] text-white">

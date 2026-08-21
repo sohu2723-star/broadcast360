@@ -65,9 +65,25 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  // Public browsing and authentication bootstrap endpoints. More sensitive
+  // account, premium, history, subscription, and support routes remain behind
+  // the user_token check below.
   const publicUserRoutes = [
     "/api/user-portal/auth/login",
     "/api/user-portal/auth/register",
+    "/api/user-portal/auth/google",
+    "/api/user-portal/auth/captcha",
+    "/api/user-portal/auth/forgot-password",
+    "/api/user-portal/auth/send-code",
+    "/api/user-portal/auth/reset-password",
+    "/api/user-portal/auth/me",
+    "/api/user-portal/auth/logout",
+    "/api/user-portal/channels",
+    "/api/user-portal/entertainments",
+    "/api/user-portal/movies",
+    "/api/user-portal/news",
+    "/api/user-portal/series",
+    "/api/user-portal/media",
   ];
 
   const isUserPublicRoute = publicUserRoutes.some((route) =>
