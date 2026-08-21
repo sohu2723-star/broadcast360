@@ -39,6 +39,7 @@ type Props = {
     episodeNo?: number;
     videoUrl?: string;
     thumbnailUrl?: string;
+    accessType?: "FREE" | "PREMIUM";
   };
 
   isEdit?: boolean;
@@ -118,6 +119,7 @@ export default function EpisodeForm({
     videoFile: null,
 
     thumbnailFile: null,
+    accessType: defaultValues?.accessType ?? "FREE",
   }));
 
   // ===================================================
@@ -735,7 +737,7 @@ export default function EpisodeForm({
   // ===================================================
 
   return (
-    <div className="w-full rounded-2xl border border-white/10 bg-[#0B1026] p-8 text-white">
+    <div className="w-full rounded-2xl border border-white/10 bg-[#1f1f1f] p-8 text-white">
       <form
         onSubmit={handleSubmit}
         className="space-y-6"
@@ -764,7 +766,7 @@ export default function EpisodeForm({
                 placeholder={
                   autoTitle
                 }
-                className="w-full rounded-xl border border-white/10 bg-[#111936] p-3 text-white focus:border-blue-500 focus:outline-none"
+                className="w-full rounded-xl border border-white/10 bg-[#171717] p-3 text-white focus:border-white/45 focus:outline-none"
               />
 
               <p className="mt-1 text-xs text-slate-500">
@@ -800,7 +802,7 @@ export default function EpisodeForm({
                 onChange={
                   handleEpisodeNumberChange
                 }
-                className="w-full rounded-xl border border-white/10 bg-[#111936] p-3 text-white focus:border-blue-500 focus:outline-none"
+                className="w-full rounded-xl border border-white/10 bg-[#171717] p-3 text-white focus:border-white/45 focus:outline-none"
               />
 
               {errors.episodeNo && (
@@ -810,6 +812,20 @@ export default function EpisodeForm({
                   }
                 </p>
               )}
+            </div>
+
+            {/* ACCESS TIER */}
+
+            <div>
+              <label className="mb-2 block font-medium">Access Tier</label>
+              <select
+                value={form.accessType}
+                onChange={(event) => setForm((previous) => ({ ...previous, accessType: event.target.value as "FREE" | "PREMIUM" }))}
+                className="w-full rounded-xl border border-white/10 bg-[#171717] p-3 text-white outline-none transition focus:border-white/45"
+              >
+                <option value="FREE" className="bg-[#171717]">Free — Standard viewing</option>
+                <option value="PREMIUM" className="bg-[#171717]">Premium — HD, schedule, and download</option>
+              </select>
             </div>
 
             {/* VIDEO */}
@@ -825,7 +841,7 @@ export default function EpisodeForm({
                 onChange={
                   handleVideoChange
                 }
-                className="w-full rounded-xl border border-white/10 bg-[#111936] p-3 text-white file:mr-4 file:rounded-lg file:border-0 file:bg-white/10 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-white hover:file:bg-white/20 focus:border-blue-500 focus:outline-none"
+                className="w-full rounded-xl border border-white/10 bg-[#171717] p-3 text-white file:mr-4 file:rounded-lg file:border-0 file:bg-white/10 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-white hover:file:bg-white/20 focus:border-white/45 focus:outline-none"
               />
 
               {errors.videoFile && (
@@ -837,7 +853,7 @@ export default function EpisodeForm({
               )}
 
               {videoPreviewUrl && (
-                <div className="mt-4 overflow-hidden rounded-xl border border-white/10 bg-[#111936] p-2">
+                <div className="mt-4 overflow-hidden rounded-xl border border-white/10 bg-[#171717] p-2">
                   <p className="mb-2 text-xs font-semibold text-gray-400">
                     Video Preview
                   </p>

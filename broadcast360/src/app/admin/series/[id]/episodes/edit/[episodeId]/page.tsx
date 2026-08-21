@@ -19,6 +19,7 @@ type Episode = {
   episodeNo: number;
   videoUrl: string | null;
   thumbnailUrl: string | null;
+  accessType?: "FREE" | "PREMIUM";
   duration: number;
   createdAt: string;
 };
@@ -186,6 +187,8 @@ export default function EditEpisodePage() {
     thumbnailUrl:
       episode.thumbnailUrl ??
       undefined,
+
+    accessType: episode.accessType ?? "FREE",
   };
 
   // =====================================================
@@ -244,6 +247,8 @@ export default function EditEpisodePage() {
               data.episodeNo,
             ),
           );
+
+          formData.append("accessType", data.accessType ?? "FREE");
 
           // =================================================
           // VIDEO

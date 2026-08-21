@@ -4,6 +4,7 @@ export type EpisodeFormData = {
 
   videoFile: File | null;
   thumbnailFile: File | null;
+  accessType: "FREE" | "PREMIUM";
 };
 export type Episode = {
   id: number;
@@ -13,6 +14,7 @@ export type Episode = {
   duration: number;
   videoUrl: string | null;
   thumbnailUrl: string | null;
+  accessType?: "FREE" | "PREMIUM";
   createdAt: Date | string;
 };
 
@@ -22,4 +24,5 @@ export type EpisodeUpdateData = {
   episodeNo: number;
   videoFile?: File | null; //  optional + nullable (edit-safe)
   thumbnailFile?: File | null;
+  accessType?: "FREE" | "PREMIUM";
 };

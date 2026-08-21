@@ -140,6 +140,7 @@ export default function CreateEpisodePage() {
     const formData = new FormData();
     formData.append("title", data.title.trim());
     formData.append("episodeNo", String(data.episodeNo));
+    formData.append("accessType", data.accessType ?? "FREE");
     formData.append("videoUrl", videoUpload.publicUrl);
     formData.append("duration", String(duration));
     if (thumbnailUpload) formData.append("thumbnailUrl", thumbnailUpload.publicUrl);
