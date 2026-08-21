@@ -53,3 +53,5 @@ public/uploads/
 public/logos/
 public/streams/
 public/storage/recordings
+/storage/recordings/
+/tmp/
