@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { resolveMediaUrl } from "@/lib/media/url";
 import { getPortalCorsHeaders } from "@/lib/portal-cors";
+import { verifyUserToken } from "@/lib/user-jwt";
+import { getVodEntitlement, redeemCreditForContent } from "@/services/vod-entitlement.service";
 
 export async function GET(
   req: NextRequest,
@@ -86,13 +88,26 @@ export async function GET(
       );
     }
 
+    let userId: number | null = null;
+    let premiumAccess = false;
+    const userToken = req.cookies.get("user_token")?.value;
+    if (userToken) {
+      try {
+        const payload = await verifyUserToken(userToken);
+        userId = Number(payload.id);
+        premiumAccess = (await getVodEntitlement(userId)).isPremium;
+      } catch {
+        userId = null;
+      }
+    }
+
     const availableEpisodes = series.episodes.filter((episode) =>
       episode.playlistItems.some((item) => item.playlist.schedules.length > 0),
     );
 
     const episodeMap = new Map<number, any>();
 
-    availableEpisodes.forEach((episode) => {
+    for (const episode of availableEpisodes) {
       const schedule = episode.playlistItems[0].playlist.schedules[0];
 
       if (!episodeMap.has(episode.episodeNo)) {
@@ -118,18 +133,21 @@ export async function GET(
         });
       }
 
+      const accessType = episode.accessType ?? "FREE";
+      let canView = accessType === "FREE" || premiumAccess;
+      if (!canView && userId) {
+        canView = await redeemCreditForContent(userId, `episode:${episode.id}`);
+      }
+
       episodeMap.get(episode.episodeNo).parts.push({
         id: episode.id,
-
         title: episode.title,
-
         duration: episode.duration,
-
+        accessType,
         thumbnail: resolveMediaUrl(episode.thumbnailUrl, origin),
-
-        videoUrl: episode.videoUrl,
+        videoUrl: canView ? resolveMediaUrl(episode.hdVideoUrl ?? episode.standardVideoUrl ?? episode.videoUrl, origin) : null,
       });
-    });
+    }
 
     const episodes = Array.from(episodeMap.values()).sort(
       (a, b) => a.episodeNo - b.episodeNo,
