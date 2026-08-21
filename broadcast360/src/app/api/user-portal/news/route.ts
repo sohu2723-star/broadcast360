@@ -56,7 +56,7 @@ export async function GET(request: Request) {
         videoUrl: formatMediaUrl(rawVideoUrl, backendOrigin),
         duration: item.duration || item.recording?.duration || null,
         type: item.type || "NEWS",
-        createdAt: item.createdAt.toISOString(),
+        createdAt: item.createdAt ? new Date(item.createdAt).toISOString() : null,
         channel: item.channel
           ? {
               id: item.channel.id,
