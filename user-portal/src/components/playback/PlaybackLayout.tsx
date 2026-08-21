@@ -63,21 +63,21 @@ export default function PlaybackLayout({
   const playlistBoxHeight = needScroll ? leftHeight : "auto";
 
   return (
-    <main className="min-h-screen bg-[#010312] text-white">
+    <main className="min-h-screen bg-[#121212] text-white">
       <div className="mx-auto max-w-7xl px-6 py-8">
-        {/* <Link
-          href="/movies"
-          className="mb-5 inline-flex rounded-full border border-[#106EE9]/30 bg-[#0B1026] px-4 py-2 text-sm transition hover:bg-[#106EE9]/20"
-        >
-          ← Back to Movies
-        </Link> */}
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <Link href="/movies" className="inline-flex rounded-lg border border-white/10 bg-[#1f1f1f] px-4 py-2 text-sm text-white/75 transition hover:bg-[#2a2a2a]">← Back to Movies</Link>
+          {currentMovie.accessType === "PREMIUM" ? (
+            <a href={`/api/user-portal/download?movieId=${currentMovie.id}`} className="inline-flex rounded-lg bg-white px-4 py-2 text-sm font-semibold text-[#141414] transition hover:bg-white/80">Download HD</a>
+          ) : null}
+        </div>
 
         <div className="mt-6 grid items-start gap-6 lg:grid-cols-[2fr_1fr]">
           {/* VIDEO + METADATA */}
 
           <section
             ref={leftRef}
-            className="overflow-hidden rounded-xl border border-[#106EE9]/20 bg-[#0B1026] p-4"
+            className="overflow-hidden rounded-xl border border-white/10 bg-[#1f1f1f] p-4"
           >
             <VideoPlayer movie={currentMovie} />
 
@@ -92,7 +92,7 @@ export default function PlaybackLayout({
             style={{
               height: playlistBoxHeight,
             }}
-            className="flex flex-col overflow-hidden rounded-xl border border-[#106EE9]/20 bg-[#0B1026] p-4"
+            className="flex flex-col overflow-hidden rounded-xl border border-white/10 bg-[#1f1f1f] p-4"
           >
             <div
               className={
