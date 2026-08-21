@@ -2,12 +2,18 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 const MAX_UPLOAD_BYTES = 1024 * 1024 * 1024;
 
+type R2ObjectLike = {
+  body?: ReadableStream;
+  httpMetadata?: { contentType?: string };
+};
+
 type R2BucketLike = {
   put: (
     key: string,
     value: ArrayBuffer | ArrayBufferView | ReadableStream | string,
     options?: { httpMetadata?: { contentType?: string; cacheControl?: string } },
   ) => Promise<unknown>;
+  get?: (key: string) => Promise<R2ObjectLike | null>;
 };
 
 type R2Config = {
@@ -73,6 +79,23 @@ export async function uploadR2MediaFile(file: File, folder: string) {
     },
   });
   return publicUrlFor(config, objectKey);
+}
+
+export async function getR2MediaObject(publicUrl: string) {
+  const config = getR2Config();
+  const bucket = getR2Binding();
+  if (!config || !bucket?.get || !config.publicBaseUrl) return null;
+
+  const requested = new URL(publicUrl);
+  const base = new URL(config.publicBaseUrl);
+  if (requested.origin !== base.origin) return null;
+
+  const basePath = base.pathname.replace(/\/$/, "");
+  if (!requested.pathname.startsWith(`${basePath}/`)) return null;
+
+  const objectKey = decodeURIComponent(requested.pathname.slice(basePath.length + 1));
+  if (!objectKey || objectKey.includes("..")) return null;
+  return bucket.get(objectKey);
 }
 
 export async function createR2DirectUpload(input: {
