@@ -27,6 +27,13 @@ enum AccessType {
   PREMIUM
 }
 
+enum CreditLedgerType {
+  DAILY_CLAIM
+  AD_REWARD
+  REDEMPTION
+  ADJUSTMENT
+}
+
 enum SubscriptionStatus {
   PENDING
   ACTIVE
@@ -65,6 +72,8 @@ model User {
   status UserStatus @default(ACTIVE)
 
   lastLoginAt DateTime?
+  trialStartedAt DateTime?
+  trialEndsAt   DateTime?
 
   createdAt DateTime @default(now())
 
@@ -78,8 +87,58 @@ model User {
   supportConversations SupportConversation[]
   liveViewerSessions LiveViewerSession[]
   advertisementEvents AdvertisementEvent[]
+  creditLedger        CreditLedger[]
+  deviceSessions      DeviceSession[]
+  downloadGrants      DownloadGrant[]
   reactivationRequests AccountReactivationRequest[] @relation("ReactivationRequester")
   reviewedReactivationRequests AccountReactivationRequest[] @relation("ReactivationReviewer")
+}
+
+model CreditLedger {
+  id        Int             @id @default(autoincrement())
+  userId    Int
+  amount    Int
+  eventType CreditLedgerType @default(AD_REWARD)
+  eventKey  String          @unique
+  createdAt DateTime        @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+model DeviceSession {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  deviceHash String
+  ipHash     String
+  userAgent  String?
+  lastSeenAt DateTime @default(now())
+  revokedAt  DateTime?
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, deviceHash])
+  @@index([ipHash])
+  @@index([lastSeenAt])
+}
+
+model DownloadGrant {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  movieId    Int?
+  episodeId  Int?
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  movie   Movie?  @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  episode Episode? @relation(fields: [episodeId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
 }
 
 model EmailVerificationCode {
@@ -132,6 +191,8 @@ model Movie {
   genre       String?
   thumbnail   String?
   videoUrl    String?
+  standardVideoUrl String?
+  hdVideoUrl       String?
   duration    Int
   releaseYear Int?
   createdAt   DateTime @default(now())
@@ -206,6 +267,8 @@ model Episode {
   episodeNo    Int
   duration     Int
   videoUrl     String?
+  standardVideoUrl String?
+  hdVideoUrl       String?
   thumbnailUrl String?
 
   // NEW
@@ -215,6 +278,7 @@ model Episode {
 
   playlistItems PlaylistItem[]
   favorites     Favorite[]
+  downloadGrants DownloadGrant[]
 
   createdAt DateTime @default(now())
 }
@@ -286,10 +350,11 @@ model Entertainment {
 
   playlistItems PlaylistItem[]
   favorites     Favorite[]
+  downloadGrants DownloadGrant[]
 }
 
 // =====================
-// PROGRAM
+// STREAM PROTOCOLGRAM
 // =====================
 
 enum ProgramType {

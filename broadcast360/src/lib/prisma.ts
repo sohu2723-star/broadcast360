@@ -41,6 +41,9 @@ type PrismaFacade = { [K in keyof typeof MODEL_TABLES]: ModelDelegate } & {
 const MODEL_TABLES: Record<string, string> = {
   user: "User",
   emailVerificationCode: "EmailVerificationCode",
+  creditLedger: "CreditLedger",
+  deviceSession: "DeviceSession",
+  downloadGrant: "DownloadGrant",
   channel: "Channel",
   movie: "Movie",
   stream: "Stream",
@@ -81,7 +84,21 @@ const RELATIONS: Record<string, Record<string, { model: string; foreignKey: stri
     liveViewerSessions: { model: "liveViewerSession", foreignKey: "userId", many: true },
     advertisementEvents: { model: "advertisementEvent", foreignKey: "userId", many: true },
     reactivationRequests: { model: "accountReactivationRequest", foreignKey: "userId", many: true },
+    creditLedger: { model: "creditLedger", foreignKey: "userId", many: true },
+    deviceSessions: { model: "deviceSession", foreignKey: "userId", many: true },
+    downloadGrants: { model: "downloadGrant", foreignKey: "userId", many: true },
     reviewedReactivationRequests: { model: "accountReactivationRequest", foreignKey: "reviewedById", many: true },
+  },
+  creditLedger: {
+    user: { model: "user", foreignKey: "id", localKey: "userId", many: false },
+  },
+  deviceSession: {
+    user: { model: "user", foreignKey: "id", localKey: "userId", many: false },
+  },
+  downloadGrant: {
+    user: { model: "user", foreignKey: "id", localKey: "userId", many: false },
+    movie: { model: "movie", foreignKey: "id", localKey: "movieId", many: false },
+    episode: { model: "episode", foreignKey: "id", localKey: "episodeId", many: false },
   },
   channel: {
     streams: { model: "stream", foreignKey: "channelId", many: true },
@@ -96,6 +113,7 @@ const RELATIONS: Record<string, Record<string, { model: string; foreignKey: stri
   movie: {
     playlistItems: { model: "playlistItem", foreignKey: "movieId", many: true },
     favorites: { model: "favorite", foreignKey: "movieId", many: true },
+    downloadGrants: { model: "downloadGrant", foreignKey: "movieId", many: true },
   },
   stream: {
     channel: { model: "channel", foreignKey: "id", localKey: "channelId", many: false },
@@ -106,6 +124,7 @@ const RELATIONS: Record<string, Record<string, { model: string; foreignKey: stri
     series: { model: "series", foreignKey: "id", localKey: "seriesId", many: false },
     playlistItems: { model: "playlistItem", foreignKey: "episodeId", many: true },
     favorites: { model: "favorite", foreignKey: "episodeId", many: true },
+    downloadGrants: { model: "downloadGrant", foreignKey: "episodeId", many: true },
   },
   advertisement: {
     playlistItems: { model: "playlistItem", foreignKey: "advertisementId", many: true },

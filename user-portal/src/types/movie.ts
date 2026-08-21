@@ -14,6 +14,9 @@ export interface Movie {
   thumbnail?: string | null;
 
   videoUrl?: string | null;
+  standardVideoUrl?: string | null;
+  hdVideoUrl?: string | null;
+  accessType?: "FREE" | "PREMIUM";
 
   duration: number;
 

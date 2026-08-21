@@ -185,8 +185,22 @@ export async function GET(req: Request) {
           thumbnail:
             mediaUrl(movie?.thumbnail, requestOrigin),
 
-          videoUrl:
-            mediaUrl(movie?.videoUrl, requestOrigin),
+          accessType: movie?.accessType ?? "FREE",
+
+          standardVideoUrl: mediaUrl(
+            movie?.standardVideoUrl ?? movie?.videoUrl,
+            requestOrigin,
+          ),
+
+          hdVideoUrl: mediaUrl(
+            movie?.hdVideoUrl ?? movie?.videoUrl,
+            requestOrigin,
+          ),
+
+          videoUrl: mediaUrl(
+            movie?.standardVideoUrl ?? movie?.videoUrl,
+            requestOrigin,
+          ),
 
           // =================================================
           // CHANNEL

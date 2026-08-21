@@ -104,7 +104,22 @@ export async function GET(request: NextRequest, context: Context) {
 
       thumbnail: resolveMediaUrl(firstMovie.thumbnail, origin),
 
-      videoUrl: resolveMediaUrl(firstMovie.videoUrl, origin),
+      accessType: firstMovie.accessType ?? "FREE",
+
+      standardVideoUrl: resolveMediaUrl(
+        firstMovie.standardVideoUrl ?? firstMovie.videoUrl,
+        origin,
+      ),
+
+      hdVideoUrl: resolveMediaUrl(
+        firstMovie.hdVideoUrl ?? firstMovie.videoUrl,
+        origin,
+      ),
+
+      videoUrl: resolveMediaUrl(
+        firstMovie.standardVideoUrl ?? firstMovie.videoUrl,
+        origin,
+      ),
 
       duration: firstMovie.duration,
 
@@ -148,7 +163,22 @@ export async function GET(request: NextRequest, context: Context) {
 
       thumbnail: resolveMediaUrl(item.movie?.thumbnail ?? null, origin),
 
-      videoUrl: resolveMediaUrl(item.movie?.videoUrl ?? null, origin),
+      accessType: item.movie?.accessType ?? "FREE",
+
+      standardVideoUrl: resolveMediaUrl(
+        item.movie?.standardVideoUrl ?? item.movie?.videoUrl ?? null,
+        origin,
+      ),
+
+      hdVideoUrl: resolveMediaUrl(
+        item.movie?.hdVideoUrl ?? item.movie?.videoUrl ?? null,
+        origin,
+      ),
+
+      videoUrl: resolveMediaUrl(
+        item.movie?.standardVideoUrl ?? item.movie?.videoUrl ?? null,
+        origin,
+      ),
 
       duration: item.movie?.duration ?? 0,
 
