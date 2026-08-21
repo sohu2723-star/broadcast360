@@ -9,6 +9,7 @@ import { getMovies } from "@/services/movie.service";
 
 import MovieSearch from "./MovieSearch";
 import MovieGrid from "./MovieGrid";
+import EntitlementBar from "@/components/vod/EntitlementBar";
 
 export default function MoviePage() {
   const [movies, setMovies] = useState<Movie[]>([]);
@@ -65,6 +66,8 @@ export default function MoviePage() {
     <main className="min-h-screen bg-[#121212] px-4 py-10 text-white sm:px-6">
   <div className="mx-auto max-w-7xl">
         <h1 className="mb-8 text-4xl font-semibold tracking-tight">Movies</h1>
+
+        <EntitlementBar />
 
         {/* Search */}
 
