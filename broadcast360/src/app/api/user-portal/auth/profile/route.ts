@@ -41,31 +41,11 @@ export async function PUT(request: NextRequest) {
       return cors(NextResponse.json({ message: "Cloudflare security verification failed" }, { status: 400 }));
     }
 
-    const dateOfBirth = body.dateOfBirth
-
-      ? new Date(`${body.dateOfBirth}T00:00:00.000Z`)
-      : undefined;
-
-    if (dateOfBirth && Number.isNaN(dateOfBirth.getTime())) {
-      return cors(
-        NextResponse.json({ message: "Invalid date of birth" }, { status: 400 }),
-      );
-    }
-
-    const allowedGenders = ["MALE", "FEMALE", "OTHER", "UNSPECIFIED"];
-    if (body.gender && !allowedGenders.includes(body.gender)) {
-      return cors(
-        NextResponse.json({ message: "Invalid gender" }, { status: 400 }),
-      );
-    }
-
     const user = await authService.updateProfile(Number(payload.id), {
       name: typeof body.name === "string" ? body.name.trim() : undefined,
       email: body.email,
       phone: body.phone,
       avatar: body.avatar,
-      dateOfBirth,
-      gender: body.gender,
     });
     console.log("PROFILE UPDATE BODY:", user);
 

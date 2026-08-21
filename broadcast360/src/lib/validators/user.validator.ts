@@ -39,10 +39,6 @@ export const publicRegisterSchema = z.object({
     .toLowerCase()
     .email("Invalid email format")
     .endsWith("@gmail.com", "Only Gmail accounts are allowed"),
-  dateOfBirth: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Date of birth is required"),
-  gender: z.enum(["MALE", "FEMALE", "OTHER", "UNSPECIFIED"]),
   password: createUserSchema.shape.password,
   verificationCode: z.string().regex(/^\d{6}$/, "Verification code must be 6 digits"),
   acceptedPolicy: z.literal(true, { error: "You must accept the FlickScope policy" }),

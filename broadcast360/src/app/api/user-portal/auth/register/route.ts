@@ -56,10 +56,6 @@ export async function POST(request: NextRequest) {
       name: validation.data.name,
       email: validation.data.email,
       password: validation.data.password,
-      gender: validation.data.gender,
-      dateOfBirth: validation.data.dateOfBirth
-        ? new Date(`${validation.data.dateOfBirth}T00:00:00.000Z`)
-        : undefined,
       emailVerifiedAt: new Date(),
     });
 
