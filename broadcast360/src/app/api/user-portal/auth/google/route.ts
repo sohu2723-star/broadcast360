@@ -5,6 +5,7 @@ import { verifyTurnstileToken } from "@/lib/turnstile";
 import { setUserAuthCookie } from "@/lib/auth-cookie";
 import { verifyGoogleCredential } from "@/lib/google-auth";
 import { AuthService } from "@/services/auth.service";
+import { registerDeviceSession } from "@/services/device-security.service";
 
 const authService = new AuthService();
 
@@ -20,6 +21,13 @@ export async function POST(request: NextRequest) {
     }
     const identity = await verifyGoogleCredential(body.credential);
     const result = await authService.googleUserLogin(identity);
+    if (typeof body.deviceId === "string" && body.deviceId.trim()) {
+      try {
+        await registerDeviceSession(result.user.id, request, body.deviceId);
+      } catch (sessionError) {
+        console.error("DEVICE SESSION RECORDING FAILED:", sessionError);
+      }
+    }
     const response = NextResponse.json({
       success: true,
       user: result.user,

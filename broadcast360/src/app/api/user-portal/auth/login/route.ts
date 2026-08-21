@@ -5,6 +5,7 @@ import { verifyTurnstileToken } from "@/lib/turnstile";
 
 import { cors, optionsResponse } from "@/lib/cors";
 import { setUserAuthCookie } from "@/lib/auth-cookie";
+import { registerDeviceSession } from "@/services/device-security.service";
 
 const authService = new AuthService();
 
@@ -26,6 +27,13 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await authService.userLogin(body.email, body.password);
+    if (typeof body.deviceId === "string" && body.deviceId.trim()) {
+      try {
+        await registerDeviceSession(result.user.id, request, body.deviceId);
+      } catch (sessionError) {
+        console.error("DEVICE SESSION RECORDING FAILED:", sessionError);
+      }
+    }
 
     const response = NextResponse.json({
       success: true,

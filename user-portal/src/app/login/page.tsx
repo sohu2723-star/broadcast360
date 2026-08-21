@@ -28,6 +28,16 @@ type LoginForm = { email: string; password: string };
 type LoginErrors = { email?: string; password?: string };
 type TurnstileState = { token: string };
 
+function getDeviceId() {
+  if (typeof window === "undefined") return "server-side";
+  const key = "flickscope_device_id";
+  const existing = window.localStorage.getItem(key);
+  if (existing) return existing;
+  const created = typeof crypto.randomUUID === "function" ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+  window.localStorage.setItem(key, created);
+  return created;
+}
+
 declare global {
   interface Window {
     google?: {
@@ -134,6 +144,7 @@ export default function LoginPage() {
           const result = await authApi.post("/api/user-portal/auth/google", {
             credential: response.credential,
             turnstileToken: turnstileRef.current.token,
+            deviceId: getDeviceId(),
           });
           clearCurrentUserCache();
           await authApi.get("/api/user-portal/auth/me");
@@ -205,6 +216,7 @@ export default function LoginPage() {
       const response = await authApi.post("/api/user-portal/auth/login", {
         ...form,
         turnstileToken,
+        deviceId: getDeviceId(),
       });
       clearCurrentUserCache();
       await authApi.get("/api/user-portal/auth/me");
