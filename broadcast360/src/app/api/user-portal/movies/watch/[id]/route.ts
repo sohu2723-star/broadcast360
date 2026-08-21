@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { resolveMediaUrl } from "@/lib/media/url";
+import { verifyUserToken } from "@/lib/user-jwt";
+import { getVodEntitlement, redeemCreditForContent } from "@/services/vod-entitlement.service";
 
 interface Context {
   params: Promise<{
@@ -81,6 +83,22 @@ export async function GET(request: NextRequest, context: Context) {
       );
     }
 
+    const accessType = firstMovie.accessType ?? "FREE";
+    if (accessType === "PREMIUM") {
+      const token = request.cookies.get("user_token")?.value;
+      if (!token) {
+        return NextResponse.json({ message: "Sign in or use a daily credit to watch this Premium movie", code: "PREMIUM_REQUIRED" }, { status: 401 });
+      }
+
+      const payload = await verifyUserToken(token);
+      const userId = Number(payload.id);
+      const entitlement = await getVodEntitlement(userId);
+      const hasAccess = entitlement.isPremium || await redeemCreditForContent(userId, `movie:${firstMovie.id}`);
+      if (!hasAccess) {
+        return NextResponse.json({ message: "Premium access or one daily credit is required", code: "PREMIUM_REQUIRED" }, { status: 403 });
+      }
+    }
+
     /*
       MAIN MOVIE
     */
@@ -104,7 +122,7 @@ export async function GET(request: NextRequest, context: Context) {
 
       thumbnail: resolveMediaUrl(firstMovie.thumbnail, origin),
 
-      accessType: firstMovie.accessType ?? "FREE",
+      accessType,
 
       standardVideoUrl: resolveMediaUrl(
         firstMovie.standardVideoUrl ?? firstMovie.videoUrl,
