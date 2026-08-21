@@ -82,11 +82,11 @@ export function authInputClass(hasError: boolean) {
 
 export function AuthBackdrop({ children }: { children: React.ReactNode }) {
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#071029] px-4 py-10 text-white sm:px-6">
+    <main className="relative flex min-h-screen w-full max-w-[100vw] items-center justify-center overflow-x-hidden overflow-y-auto bg-[#071029] px-4 py-10 text-white sm:px-6">
       <div className="pointer-events-none absolute -left-32 top-[-12rem] h-[30rem] w-[30rem] rounded-full bg-[#476d9f]/12 blur-3xl" />
       <div className="pointer-events-none absolute -right-40 bottom-[-14rem] h-[32rem] w-[32rem] rounded-full bg-[#7898bf]/8 blur-3xl" />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_10%,rgba(120,166,220,0.11),transparent_38%)]" />
-      <div className="relative z-10 w-full">{children}</div>
+      <div className="relative z-10 w-full min-w-0 max-w-full">{children}</div>
     </main>
   );
 }
