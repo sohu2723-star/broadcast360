@@ -59,7 +59,24 @@ export default function LoginPage() {
   const [authTransitionLoading, setAuthTransitionLoading] = useState(false);
   const googleButtonRef = useRef<HTMLDivElement>(null);
   const googleInitializedRef = useRef(false);
-  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+  const [googleClientId, setGoogleClientId] = useState("524254578493-9ce8ttte7c63hjo61rn9seo2m6jpfbjb.apps.googleusercontent.com");
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/config/public", { credentials: "include", cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((config: unknown) => {
+        const clientId =
+          typeof config === "object" && config !== null && "googleClientId" in config
+            ? (config as { googleClientId?: unknown }).googleClientId
+            : "";
+        if (!cancelled && typeof clientId === "string") setGoogleClientId(clientId);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!showWelcomeBack) return;
