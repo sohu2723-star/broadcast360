@@ -214,6 +214,10 @@ export class AuthService {
       throw new Error("Unable to reset password for this account");
     }
 
+    if (await comparePassword(newPassword, user.password)) {
+      throw new Error("New password must be different from your previous password");
+    }
+
     await consumeVerificationCode(
       normalizedEmail,
       verificationCode,

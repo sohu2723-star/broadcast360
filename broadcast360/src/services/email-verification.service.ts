@@ -121,6 +121,36 @@ export async function sendVerificationCode(rawEmail: string, purpose = "REGISTER
   }
 }
 
+export async function verifyVerificationCode(rawEmail: string, rawCode: string, purpose = "REGISTER") {
+  const email = assertGmailAddress(rawEmail);
+  const code = rawCode.trim();
+  if (!/^\d{6}$/.test(code)) {
+    throw new Error("Verification code must be 6 digits");
+  }
+
+  const record = await prisma.emailVerificationCode.findFirst({
+    where: { email, purpose, consumedAt: null },
+    orderBy: { createdAt: "desc" },
+  });
+  if (!record || record.expiresAt.getTime() < Date.now()) {
+    throw new Error("Verification code expired or not found");
+  }
+  if (record.attempts >= MAX_ATTEMPTS) {
+    throw new Error("Too many verification attempts");
+  }
+
+  const valid = await comparePassword(code, record.codeHash);
+  if (!valid) {
+    await prisma.emailVerificationCode.update({
+      where: { id: record.id },
+      data: { attempts: { increment: 1 } },
+    });
+    throw new Error("Invalid verification code");
+  }
+
+  return true;
+}
+
 export async function consumeVerificationCode(rawEmail: string, rawCode: string, purpose = "REGISTER") {
   const email = assertGmailAddress(rawEmail);
   const code = rawCode.trim();
