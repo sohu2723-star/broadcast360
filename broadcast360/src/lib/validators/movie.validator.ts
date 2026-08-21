@@ -15,6 +15,8 @@ const baseMovieSchema = z.object({
 
   genre: z.string().min(1, "Genre is required"),
 
+  accessType: z.enum(["FREE", "PREMIUM"]).default("FREE"),
+
   releaseYear: z
     .union([z.string(), z.number()])
     .transform((val) => {

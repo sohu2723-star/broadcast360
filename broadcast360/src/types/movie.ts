@@ -8,6 +8,7 @@ export type MovieFormData = {
   releaseYear: number;
   video: File | null;
   thumbnail?: File | null;
+  accessType: "FREE" | "PREMIUM";
 };
 
 /* -------------------------
@@ -24,6 +25,9 @@ export type Movie = {
   releaseYear: number | null;
   createdAt?: Date;
   updatedAt?: Date;
+  accessType?: "FREE" | "PREMIUM";
+  standardVideoUrl?: string | null;
+  hdVideoUrl?: string | null;
 };
 
 /* -------------------------
@@ -37,6 +41,9 @@ export type MovieCreateInput = {
   videoUrl: string;
   thumbnail: string;
   duration: number;
+  accessType?: "FREE" | "PREMIUM";
+  standardVideoUrl?: string;
+  hdVideoUrl?: string;
 };
 
 /* -------------------------
@@ -48,6 +55,9 @@ export type MovieUpdateInput = {
   genre?: string;
   releaseYear?: number;
   thumbnail?: string;
+  accessType?: "FREE" | "PREMIUM";
+  standardVideoUrl?: string;
+  hdVideoUrl?: string;
 };
 
 /* -------------------------

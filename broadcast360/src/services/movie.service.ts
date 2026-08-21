@@ -65,6 +65,7 @@ export async function editMovie(
   const description = formData.get("description") as string;
   const genre = formData.get("genre") as string;
   const releaseYear = Number(formData.get("releaseYear"));
+  const accessType = formData.get("accessType") === "PREMIUM" ? "PREMIUM" : "FREE";
 
   const thumbnail = formData.get("thumbnail") as File | null;
   const video = formData.get("video") as File | null;
@@ -77,11 +78,13 @@ export async function editMovie(
     thumbnail?: string;
     videoUrl?: string;
     duration?: number;
+    accessType: "FREE" | "PREMIUM";
   } = {
     title,
     description,
     genre,
     releaseYear,
+    accessType,
   };
 
   // Replace Thumbnail
@@ -114,6 +117,7 @@ export async function addMovie(formData: FormData) {
   const description = formData.get("description") as string;
   const genre = formData.get("genre") as string;
   const releaseYear = Number(formData.get("releaseYear"));
+  const accessType = formData.get("accessType") === "PREMIUM" ? "PREMIUM" : "FREE";
 
   const video = formData.get("video") as File | null;
   const thumbnail = formData.get("thumbnail") as File | null;
@@ -141,6 +145,7 @@ export async function addMovie(formData: FormData) {
         Number.isFinite(preUploadedDuration) && preUploadedDuration >= 0
           ? Math.round(preUploadedDuration)
           : 0,
+      accessType,
     });
   }
 
@@ -165,6 +170,7 @@ export async function addMovie(formData: FormData) {
       videoUrl,
       thumbnail: thumbnailUrl,
       duration,
+      accessType,
     });
   } finally {
     await removeTemporaryMediaFile(temporaryPath);

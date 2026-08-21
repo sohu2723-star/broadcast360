@@ -43,6 +43,7 @@ export default function MovieForm({
       video: null,
       thumbnail: null,
       releaseYear: 0,
+      accessType: "FREE",
     },
   );
 
@@ -171,7 +172,7 @@ export default function MovieForm({
   }
 
   return (
-    <div className="max-w-6xl rounded-2xl border border-white/10 bg-[#0B1026] p-8 text-white">
+    <div className="max-w-6xl rounded-2xl border border-white/10 bg-[#1f1f1f] p-8 text-white">
       <form className="space-y-6" onSubmit={handleSubmit}>
         {/* LEFT & RIGHT GRID LAYOUT */}
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
@@ -181,7 +182,7 @@ export default function MovieForm({
             <div>
               <label className="mb-2 block font-medium">Movie Title</label>
               <input
-                className="w-full rounded-xl border border-white/10 bg-[#111936] p-3 text-white focus:border-blue-500 focus:outline-none"
+                className="w-full rounded-xl border border-white/10 bg-[#171717] p-3 text-white focus:border-white/45 focus:outline-none"
                 value={form.title}
                 onChange={(e) => {
                   onApiErrorClear?.();
@@ -204,7 +205,7 @@ export default function MovieForm({
               <label className="mb-2 block font-medium">Description</label>
               <textarea
                 rows={4}
-                className="w-full rounded-xl border border-white/10 bg-[#111936] p-3 text-white focus:border-blue-500 focus:outline-none"
+                className="w-full rounded-xl border border-white/10 bg-[#171717] p-3 text-white focus:border-white/45 focus:outline-none"
                 value={form.description}
                 onChange={(e) => {
                   onApiErrorClear?.();
@@ -223,10 +224,10 @@ export default function MovieForm({
               <label className="mb-2 block text-sm text-slate-200">Genre</label>
 
               <select
-                className={`w-full rounded-xl border bg-[#111936] p-3 text-white transition outline-none ${
+                className={`w-full rounded-xl border bg-[#171717] p-3 text-white transition outline-none ${
                   errors.genre
                     ? "border-red-500"
-                    : "border-white/10 focus:border-blue-500"
+                    : "border-white/10 focus:border-white/45"
                 }`}
                 value={form.genre}
                 onChange={(e) => {
@@ -247,7 +248,7 @@ export default function MovieForm({
                 <option value="">Select Genre</option>
 
                 {GENRES.map((genre) => (
-                  <option key={genre} value={genre} className="bg-[#111936]">
+                  <option key={genre} value={genre} className="bg-[#171717]">
                     {genre}
                   </option>
                 ))}
@@ -258,6 +259,19 @@ export default function MovieForm({
               )}
             </div>
 
+            {/* ACCESS TIER */}
+            <div>
+              <label className="mb-2 block font-medium">Access Tier</label>
+              <select
+                value={form.accessType ?? "FREE"}
+                onChange={(e) => setForm({ ...form, accessType: e.target.value as "FREE" | "PREMIUM" })}
+                className="w-full rounded-xl border border-white/10 bg-[#1f1f1f] p-3 text-white outline-none transition focus:border-white/45"
+              >
+                <option value="FREE" className="bg-[#1f1f1f]">Free — Standard viewing</option>
+                <option value="PREMIUM" className="bg-[#1f1f1f]">Premium — HD, schedule, and download</option>
+              </select>
+            </div>
+
             {/* RELEASE YEAR */}
             <div>
               <label className="mb-2 block font-medium">Release Year</label>
@@ -265,7 +279,7 @@ export default function MovieForm({
                 type="text"
                 inputMode="numeric"
                 maxLength={4}
-                className="w-full rounded-xl border border-white/10 bg-[#111936] p-3 text-white focus:border-blue-500 focus:outline-none"
+                className="w-full rounded-xl border border-white/10 bg-[#171717] p-3 text-white focus:border-white/45 focus:outline-none"
                 value={form.releaseYear || ""}
                 placeholder="2026"
                 onChange={(e) => {
@@ -292,7 +306,7 @@ export default function MovieForm({
               <button
                 type="button"
                 onClick={openVideoPicker}
-                className="w-full cursor-pointer rounded-xl border border-white/10 bg-[#111936] p-3 text-left text-gray-300 transition hover:border-gray-500"
+                className="w-full cursor-pointer rounded-xl border border-white/10 bg-[#171717] p-3 text-left text-gray-300 transition hover:border-gray-500"
               >
                 Choose Video File
               </button>
@@ -401,7 +415,7 @@ export default function MovieForm({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex-1 cursor-pointer rounded-xl bg-[#4f6689] py-3 text-sm font-bold text-white transition-all hover:opacity-90 disabled:opacity-50"
+            className="flex-1 cursor-pointer rounded-xl bg-[#2a2a2a] py-3 text-sm font-bold text-white transition-all hover:opacity-90 disabled:opacity-50"
           >
             {isSubmitting
               ? "Saving..."
@@ -412,7 +426,7 @@ export default function MovieForm({
           <button
             type="button"
             onClick={() => router.push("/admin/movies")}
-            className="cursor-pointer rounded-xl bg-[#F41010] px-6 py-3 font-bold text-white transition hover:opacity-80"
+            className="cursor-pointer rounded-xl bg-[#3a3a3a] px-6 py-3 font-bold text-white transition hover:opacity-80"
           >
             Cancel
           </button>

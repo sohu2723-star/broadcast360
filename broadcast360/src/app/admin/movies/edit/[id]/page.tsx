@@ -40,6 +40,7 @@ export default function EditMoviePage() {
     description: movie.description ?? "",
     genre: movie.genre ?? "",
     releaseYear: movie.releaseYear ?? new Date().getFullYear(),
+    accessType: movie.accessType ?? "FREE",
     video: null,
     thumbnail: null,
   };
@@ -74,6 +75,7 @@ export default function EditMoviePage() {
           formData.append("description", form.description);
           formData.append("genre", form.genre);
           formData.append("releaseYear", String(form.releaseYear));
+          formData.append("accessType", form.accessType ?? "FREE");
 
           if (form.video) {
             formData.append("video", form.video);
