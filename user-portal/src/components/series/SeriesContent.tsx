@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import SearchBar from "./SearchBar";
-import ChannelFilter from "./ChannelFilter";
 import Pagination from "./pagination";
 import SeriesGrid from "./SeriesGrid";
 import type { Series } from "@/types/series";
@@ -13,7 +12,6 @@ interface Props {
   page: number;
   totalPages: number;
   search: string;
-  channelId?: number;
 }
 
 export default function SeriesContent({
@@ -21,7 +19,6 @@ export default function SeriesContent({
   page,
   totalPages,
   search,
-  channelId,
 }: Props) {
   const router = useRouter();
 
@@ -35,10 +32,6 @@ export default function SeriesContent({
 
     if (key !== "search" && search) {
       params.set("search", search);
-    }
-
-    if (key !== "channelId" && channelId) {
-      params.set("channelId", String(channelId));
     }
 
     if (value) {
@@ -64,11 +57,6 @@ export default function SeriesContent({
           onChange={(value) => updateQuery("search", value)}
         />
         {isPending && <div className="text-sm text-gray-400">Loading...</div>}
-
-        <ChannelFilter
-          value={channelId}
-          onChange={(id) => updateQuery("channelId", id ? String(id) : "")}
-        />
       </div>
       <SeriesGrid title=" Hot Series" series={hotSeries} horizontal />
 

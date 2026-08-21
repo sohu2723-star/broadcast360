@@ -65,7 +65,7 @@ export default function MovieGrid({
             type="button"
             aria-label="Scroll movies left"
             onClick={scrollLeft}
-            className="absolute left-0 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/70 p-2 text-white transition hover:bg-black"
+            className="absolute left-0 top-1/2 z-10 -translate-y-1/2 rounded-full bg-[#2a2a2a]/90 p-2 text-white transition hover:bg-[#3a3a3a]"
           >
             <ChevronLeft size={22} aria-hidden="true" />
           </button>
@@ -92,7 +92,7 @@ export default function MovieGrid({
             type="button"
             aria-label="Scroll movies right"
             onClick={scrollRight}
-            className="absolute right-0 top-1/2 z-10 -translate-y-1/2 rounded-full bg-black/70 p-2 text-white transition hover:bg-black"
+            className="absolute right-0 top-1/2 z-10 -translate-y-1/2 rounded-full bg-[#2a2a2a]/90 p-2 text-white transition hover:bg-[#3a3a3a]"
           >
             <ChevronRight size={22} aria-hidden="true" />
           </button>
@@ -101,7 +101,7 @@ export default function MovieGrid({
         </div>
       ) : (
 
-  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
 
   {movies.map((movie) => (
     <MovieCard

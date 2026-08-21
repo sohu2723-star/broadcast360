@@ -4,22 +4,17 @@ import { useEffect, useState } from "react";
 import { Film, Flame } from "lucide-react";
 
 import type { Movie } from "@/types/movie";
-import type { Channel } from "@/types/channel";
 
 import { getMovies } from "@/services/movie.service";
-import { channelService } from "@/services/channel.service";
 
 import MovieSearch from "./MovieSearch";
-import ChannelFilter from "./ChannelFilter";
 import MovieGrid from "./MovieGrid";
 
 export default function MoviePage() {
   const [movies, setMovies] = useState<Movie[]>([]);
-  const [channels, setChannels] = useState<Channel[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState("");
-  const [channel, setChannel] = useState("");
 
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -28,13 +23,8 @@ export default function MoviePage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [movieData, channelData] = await Promise.all([
-          getMovies(),
-          channelService.getAllChannels(),
-        ]);
-
+        const movieData = await getMovies();
         setMovies(movieData);
-        setChannels(channelData);
       } catch (error) {
         console.error("Failed loading movies page:", error);
       } finally {
@@ -50,10 +40,7 @@ export default function MoviePage() {
       .toLowerCase()
       .includes(search.toLowerCase());
 
-    const matchChannel =
-      channel === "" || movie.channelId?.toString() === channel;
-
-    return matchSearch && matchChannel;
+    return matchSearch;
   });
 
  const hotMovies = [...filteredMovies]
@@ -74,32 +61,16 @@ export default function MoviePage() {
     setCurrentPage(1);
   }
 
-  function changeChannel(value: string) {
-    setChannel(value);
-    setCurrentPage(1);
-  }
-
   return (
-    <main className="min-h-screen bg-black px-6 py-10 text-white">
+    <main className="min-h-screen bg-[#121212] px-4 py-10 text-white sm:px-6">
   <div className="mx-auto max-w-7xl">
-        <h1 className="mb-8 text-4xl font-bold">MOVIES</h1>
+        <h1 className="mb-8 text-4xl font-semibold tracking-tight">Movies</h1>
 
-        {/* Search + Channel Filter */}
+        {/* Search */}
 
-       <div className="mb-8 flex gap-4">
-
-  <MovieSearch
-    value={search}
-    onChange={changeSearch}
-  />
-
-  <ChannelFilter
-    value={channel}
-    channels={channels}
-    onChange={changeChannel}
-  />
-
-</div>
+             <div className="mb-8 max-w-2xl">
+          <MovieSearch value={search} onChange={changeSearch} />
+        </div>
 
         {/* Hot Movies */}
 
@@ -114,7 +85,7 @@ export default function MoviePage() {
     </div>
   ) : (
     <MovieGrid
-      title={<span className="inline-flex items-center gap-2"><Flame size={18} strokeWidth={1.8} className="text-[#d7b36a]" aria-hidden="true" />HOT MOVIES</span>}
+      title={<span className="inline-flex items-center gap-2"><Flame size={18} strokeWidth={1.8} className="text-white/70" aria-hidden="true" />HOT MOVIES</span>}
       movies={hotMovies}
       horizontal
     />
@@ -124,14 +95,14 @@ export default function MoviePage() {
         {/* All Movies */}
 
         <section className="mb-16">
-          <h2 className="mb-6 text-2xl font-bold"><span className="inline-flex items-center gap-2"><Film size={22} strokeWidth={1.8} className="text-[#7898bf]" aria-hidden="true" />ALL MOVIES ARCHIVE</span></h2>
+          <h2 className="mb-6 text-2xl font-bold"><span className="inline-flex items-center gap-2"><Film size={22} strokeWidth={1.8} className="text-white/70" aria-hidden="true" />ALL MOVIES ARCHIVE</span></h2>
 
           {loading ? (
-            <div className="rounded-2xl  bg-black p-10 text-center text-gray-400">
+            <div className="rounded-2xl  bg-[#1f1f1f] p-10 text-center text-gray-400">
               Loading movies...
             </div>
           ) : filteredMovies.length === 0 ? (
-            <div className="rounded-2xl  bg-black p-10 text-center text-gray-400">
+            <div className="rounded-2xl  bg-[#1f1f1f] p-10 text-center text-gray-400">
               No movies found.
             </div>
           ) : (
@@ -142,7 +113,7 @@ export default function MoviePage() {
                 <button
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage((prev) => prev - 1)}
-                  className="rounded-lg bg-[#11151a] px-5 py-2 disabled:opacity-40"
+                  className="rounded-lg bg-[#2a2a2a] px-5 py-2 transition hover:bg-[#3a3a3a] disabled:opacity-40"
                 >
                   Previous
                 </button>
@@ -154,7 +125,7 @@ export default function MoviePage() {
                 <button
                   disabled={currentPage === totalPages || totalPages === 0}
                   onClick={() => setCurrentPage((prev) => prev + 1)}
-                  className="rounded-lg bg-[#11151a] px-5 py-2 disabled:opacity-40"
+                  className="rounded-lg bg-[#2a2a2a] px-5 py-2 transition hover:bg-[#3a3a3a] disabled:opacity-40"
                 >
                   Next
                 </button>
