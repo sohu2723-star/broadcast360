@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { cors, optionsResponse } from "@/lib/cors";
 import { verifyUserToken } from "@/lib/user-jwt";
-import { isUserPremium } from "@/services/subscription.service";
+import { getVodEntitlement } from "@/services/vod-entitlement.service";
 import { prisma } from "@/lib/prisma";
 
 export async function OPTIONS() {
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
     // =====================================================
 
     const premium =
-      await isUserPremium(userId);
+      (await getVodEntitlement(userId)).isPremium;
 
     console.log(
       " SCHEDULE API - premium:",
