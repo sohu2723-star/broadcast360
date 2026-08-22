@@ -1,6 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "hxu-movie-portal",
+  "account_id": "1ca5d7fd25075504cf40fe5ca95f6380",
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-08-20",
   "compatibility_flags": [

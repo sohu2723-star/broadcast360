@@ -85,12 +85,6 @@ export default function SchedulesPage() {
           />
         </div>
 
-        <Link
-          href="/admin/schedules/create"
-          className="rounded-xl bg-[#4f6689] px-5 py-3"
-        >
-          + Add Schedule
-        </Link>
       </div>
 
       {/* TABLE */}

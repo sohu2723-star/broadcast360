@@ -27,13 +27,6 @@ export default function ScheduleButton({ id }: Props) {
         View
       </Link>
 
-      <Link
-        href={`/admin/schedules/edit/${id}`}
-        className="bg-[#400FD3] px-4 py-2 rounded-lg text-sm"
-      >
-        Edit
-      </Link>
-
       <button
         onClick={handleDelete}
         className="bg-red-600 px-4 py-2 rounded-lg text-sm"
