@@ -328,7 +328,7 @@ export default function LoginPage() {
 
         <p className="mt-8 text-center text-sm text-slate-400">
           Don&apos;t have an account?
-          <Link href="/register" className="ml-1.5 font-semibold text-white/65 transition hover:text-white">Sign up</Link>
+          <a href="/register" className="ml-1.5 font-semibold text-white/65 transition hover:text-white">Sign up</a>
         </p>
       </div>
     </AuthBackdrop>

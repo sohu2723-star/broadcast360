@@ -73,7 +73,7 @@ export default function EntitlementBar() {
     return (
       <div className="mb-8 flex flex-col gap-3 rounded-2xl border border-white/10 bg-[#1f1f1f] p-4 text-sm text-white/75 sm:flex-row sm:items-center sm:justify-between">
         <span>Sign in to view Premium access, trial, and credit status.</span>
-        <Link href="/login" className="rounded-lg bg-white px-4 py-2 text-center font-semibold text-[#141414] transition hover:bg-white/80">Sign in</Link>
+        <a href="/login" className="rounded-lg bg-white px-4 py-2 text-center font-semibold text-[#141414] transition hover:bg-white/80">Sign in</a>
       </div>
     );
   }

@@ -414,7 +414,7 @@ export default function RegisterPage() {
 
         <p className="mt-8 text-center text-sm text-slate-400">
           Already have an account?
-          <Link href="/login" className="ml-1.5 font-semibold text-white/65 transition hover:text-white">Login</Link>
+          <a href="/login" className="ml-1.5 font-semibold text-white/65 transition hover:text-white">Login</a>
         </p>
       </div>
     </AuthBackdrop>

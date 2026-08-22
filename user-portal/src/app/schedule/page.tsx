@@ -219,14 +219,14 @@ export default function SchedulePage() {
 
               <a
                 href="/login"
-                className="rounded-lg bg-yellow-500 px-6 py-3 font-semibold text-black transition hover:bg-yellow-400"
+                className="rounded-lg bg-white px-6 py-3 font-semibold text-[#141414] transition hover:bg-white/80"
               >
                 Login
               </a>
 
               <a
                 href="/register"
-                className="rounded-lg border border-gray-700 bg-gray-800 px-6 py-3 font-semibold text-white transition hover:bg-gray-700"
+                className="rounded-lg border border-white/15 bg-[#2a2a2a] px-6 py-3 font-semibold text-white transition hover:bg-[#363636]"
               >
                 Create Account
               </a>
