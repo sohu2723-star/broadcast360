@@ -2,7 +2,7 @@
   "$schema": "../../node_modules/wrangler/config-schema.json",
   "name": "hxu-movie-admin",
   "main": "./cloudflare-worker.mjs",
-  "compatibility_date": "2026-08-23",
+  "compatibility_date": "2026-08-22",
   "assets": {
     "binding": "ASSETS",
     "directory": "./dist/public",
