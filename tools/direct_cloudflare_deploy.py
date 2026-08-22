@@ -67,10 +67,12 @@ WORKER_REQUIRE_SHIM = r'''var __flickscopeRequire = globalThis.__flickscopeRequi
   };
   const events = { EventEmitter: class { constructor() { this._listeners = {}; } on(name, fn) { (this._listeners[name] ||= []).push(fn); return this; } once(name, fn) { const once = (...args) => { this.off(name, once); fn(...args); }; return this.on(name, once); } off(name, fn) { this._listeners[name] = (this._listeners[name] || []).filter((item) => item !== fn); return this; } removeListener(name, fn) { return this.off(name, fn); } emit(name, ...args) { for (const fn of this._listeners[name] || []) fn(...args); return (this._listeners[name] || []).length > 0; } } };
   const NodeStreamBase = class extends events.EventEmitter { constructor() { super(); this.destroyed = false; } destroy(error) { this.destroyed = true; if (error) this.emit("error", error); this.emit("close"); return this; } pipe(destination) { this.on("data", (chunk) => destination.write(chunk)); this.on("end", () => destination.end()); return destination; } };
-  const streams = { Readable: class extends NodeStreamBase { _read() {} }, Writable: class extends NodeStreamBase { write() { return true; } end() { this.emit("finish"); return this; } }, Duplex: class extends NodeStreamBase {}, Transform: class extends NodeStreamBase {}, PassThrough: class extends NodeStreamBase {} };
-  const util = { inspect: (value) => String(value), types: {}, promisify: (fn) => fn, TextEncoder: globalThis.TextEncoder, TextDecoder: globalThis.TextDecoder };
+  const streams = { Stream: NodeStreamBase, Readable: class extends NodeStreamBase { _read() {} }, Writable: class extends NodeStreamBase { write() { return true; } end() { this.emit("finish"); return this; } }, Duplex: class extends NodeStreamBase {}, Transform: class extends NodeStreamBase {}, PassThrough: class extends NodeStreamBase {} };
+  const util = { inspect: (value) => String(value), types: {}, promisify: (fn) => fn, deprecate: (fn) => fn, inherits: (ctor, superCtor) => { Object.setPrototypeOf(ctor.prototype, superCtor.prototype); return ctor; }, TextEncoder: globalThis.TextEncoder, TextDecoder: globalThis.TextDecoder };
   const asyncHooks = { AsyncLocalStorage: globalThis.AsyncLocalStorage || class { run(_store, callback, ...args) { return callback(...args); } getStore() { return undefined; } enterWith() {} } };
   const os = { cpus: () => [], homedir: () => "/", tmpdir: () => "/tmp", platform: () => "linux", arch: () => "x64", EOL: "\\n", endianness: () => "LE", hostname: () => "flickscope-worker" };
+  const tty = { isatty: () => false };
+  const zlib = { constants: { Z_SYNC_FLUSH: 2, BROTLI_OPERATION_FLUSH: 1, ZSTD_e_flush: 1 } };
   const http = { Agent: class { constructor(options = {}) { this.options = options; } destroy() {} }, ClientRequest: class {}, IncomingMessage: class {}, ServerResponse: class {}, request: () => { throw new Error("HTTP request is unavailable in the Worker runtime"); }, get: () => { throw new Error("HTTP get is unavailable in the Worker runtime"); } };
   if (name === "crypto") return crypto;
   if (name === "path") return path;
@@ -79,6 +81,8 @@ WORKER_REQUIRE_SHIM = r'''var __flickscopeRequire = globalThis.__flickscopeRequi
   if (name === "util") return util;
   if (name === "async_hooks") return asyncHooks;
   if (name === "os") return os;
+  if (name === "tty") return tty;
+  if (name === "zlib") return zlib;
   if (name === "buffer") return { Buffer: globalThis.Buffer || Uint8Array, SlowBuffer: Uint8Array };
   if (name === "http" || name === "https" || name === "_http" || name === "_http_agent" || name === "_https" || name === "node:http" || name === "node:https") return http;
   if (name === "url" || name === "node:url") return { URL: globalThis.URL, URLSearchParams: globalThis.URLSearchParams, parse: (value) => { const raw = String(value); const u = new URL(raw, "http://localhost"); return { href: raw, protocol: u.protocol, slashes: raw.includes("://"), auth: null, host: u.host, port: u.port || null, hostname: u.hostname, hash: u.hash || null, search: u.search || null, query: u.search ? u.search.slice(1) : null, pathname: u.pathname, path: u.pathname + u.search }; }, format: (value) => typeof value === "string" ? value : (value?.href || ""), resolve: (from, to) => new URL(to, from).toString(), pathToFileURL: (value) => new URL("file://" + value), fileURLToPath: (value) => new URL(value).pathname };
@@ -340,11 +344,6 @@ def worker_bindings(worker_name):
             {"name": "NEXT_PUBLIC_TURNSTILE_SITE_KEY", "text": "0x4AAAAAAEXlR46DdlFf3qBG", "type": "plain_text"},
             {"name": "NEXT_PUBLIC_URL", "text": "https://hxu-movie.sohu2723.workers.dev", "type": "plain_text"},
             {"name": "USER_PORTAL_ORIGIN", "text": "https://hxu-movie.sohu2723.workers.dev", "type": "plain_text"},
-            {"name": "DATABASE_URL", "type": "inherit"},
-            {"name": "JWT_SECRET_USER", "type": "inherit"},
-            {"name": "SUPABASE_KEY", "type": "inherit"},
-            {"name": "SUPABASE_URL", "text": "https://ygkwwzjvifnnypkjfnnw.supabase.co", "type": "plain_text"},
-            {"name": "TURNSTILE_SECRET_KEY", "type": "inherit"},
         ]
     return [{"name": "ASSETS", "type": "assets"}] + common
 
