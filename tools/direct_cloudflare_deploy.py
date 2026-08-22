@@ -7,6 +7,7 @@ import re
 import sys
 import time
 from pathlib import Path
+from urllib.parse import urlsplit, urlunsplit
 
 import requests
 
@@ -410,9 +411,32 @@ def promote(token, worker_name, version_id, message):
     )
 
 
-def smoke(url):
-    response = requests.get(url, timeout=30)
-    return response.status_code, response.headers.get("content-type", ""), response.text[:200]
+PORTAL_SMOKE_PAGES = {
+    "/": "FlickScope",
+    "/login": "Login",
+    "/register": "Register",
+}
+
+
+def smoke_url(origin, path):
+    """Return the public URL for a path without discarding an origin prefix."""
+    parts = urlsplit(origin)
+    base_path = parts.path.rstrip("/")
+    return urlunsplit((parts.scheme, parts.netloc, f"{base_path}{path}", "", ""))
+
+
+def smoke(url, expected_text=None):
+    try:
+        response = requests.get(url, timeout=30)
+    except requests.RequestException as exc:
+        return None, "", f"request failed: {exc}"
+
+    content_type = response.headers.get("content-type", "")
+    excerpt = response.text[:200]
+    if expected_text and expected_text not in response.text:
+        excerpt = f"missing expected page content: {expected_text}; {excerpt}"
+        return response.status_code, content_type, excerpt
+    return response.status_code, content_type, excerpt
 
 
 def main():
@@ -437,11 +461,20 @@ def main():
     promote(token, args.worker, version_id, "FlickScope VOD production deployment")
     print("promotion=100%")
     time.sleep(8)
-    status, content_type, excerpt = smoke(args.url)
-    print(f"smoke_status={status}")
-    print(f"smoke_content_type={content_type}")
-    print(f"smoke_excerpt={excerpt.replace(chr(10), ' ')[:180]}")
-    if status >= 500 and previous:
+    smoke_failed = False
+    smoke_pages = PORTAL_SMOKE_PAGES if args.worker == "hxu-movie-portal" else {"/": None}
+    for path, expected_text in smoke_pages.items():
+        page_url = smoke_url(args.url, path)
+        status, content_type, excerpt = smoke(page_url, expected_text)
+        # `excerpt` may be truncated before the marker, so inspect the explicit
+        # missing-content signal added by smoke() instead of checking it again.
+        page_failed = status is None or not 200 <= status < 400 or excerpt.startswith("missing expected page content:")
+        smoke_failed = smoke_failed or page_failed
+        print(f"smoke_path={path}")
+        print(f"smoke_status={status}")
+        print(f"smoke_content_type={content_type}")
+        print(f"smoke_excerpt={excerpt.replace(chr(10), ' ')[:180]}")
+    if smoke_failed and previous:
         promote(token, args.worker, previous, "Automatic rollback after FlickScope smoke-test failure")
         print(f"rollback_version={previous}")
         return 2
