@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/admin/"
+title = "FlickScope Admin"
+description = "The FlickScope administration console for managing live channels, video content, series, news, subscriptions, users, advertising, schedules, and support."
+version = "1.0.0"
+id = "artifacts/flickscope-admin"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/admin/" ]
+localPort = 26177
+
+[services.development]
+run = "pnpm --filter @workspace/flickscope-admin run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/flickscope-admin", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/flickscope-admin/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "26177"
+BASE_PATH = "/admin/"
