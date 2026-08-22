@@ -350,7 +350,7 @@ export default function RegisterPage() {
               </button>
             </div>
             <FieldError message={errors.verificationCode} />
-            {codeSent ? <p className="mt-2 text-xs text-[#b7cbe4]/80">Code sent. You can request another code when the timer reaches 0.</p> : null}
+            {codeSent ? <p className="mt-2 text-xs text-white/65">Code sent. You can request another code when the timer reaches 0.</p> : null}
           </div>
 
           <div>
@@ -414,7 +414,7 @@ export default function RegisterPage() {
 
         <p className="mt-8 text-center text-sm text-slate-400">
           Already have an account?
-          <Link href="/login" className="ml-1.5 font-semibold text-[#b7cbe4] transition hover:text-white">Login</Link>
+          <Link href="/login" className="ml-1.5 font-semibold text-white/65 transition hover:text-white">Login</Link>
         </p>
       </div>
     </AuthBackdrop>

@@ -224,7 +224,7 @@ def asset_hash(raw, extension):
     return hashlib.sha256((encoded + extension).encode()).hexdigest()[:32]
 
 
-def build_asset_manifest(asset_root):
+def build_asset_manifest(asset_root, worker_name):
     manifest = {}
     values = {}
     for path in sorted(asset_root.rglob("*")):
@@ -237,7 +237,13 @@ def build_asset_manifest(asset_root):
         content_type = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
         if path.suffix == ".ico":
             content_type = "image/x-icon"
-        manifest[rel] = {"hash": digest, "size": len(raw)}
+        asset_keys = [rel]
+        # Next assetPrefix is `/admin`, while Cloudflare's asset manifest is
+        # uploaded from the root. Publish both paths to keep CSS/JS public.
+        if worker_name == "hxu-movie-admin" and rel.startswith("/_next/"):
+            asset_keys.append("/admin" + rel)
+        for asset_key in asset_keys:
+            manifest[asset_key] = {"hash": digest, "size": len(raw)}
         values[digest] = {"type": content_type, "value": base64.b64encode(raw).decode()}
     return manifest, values
 
@@ -258,7 +264,7 @@ def multipart_bucket(bucket, values, boundary):
 
 
 def upload_assets(token, worker_name, asset_root):
-    manifest, values = build_asset_manifest(asset_root)
+    manifest, values = build_asset_manifest(asset_root, worker_name)
     print(f"asset_count={len(manifest)}")
     session = api_request(
         token,

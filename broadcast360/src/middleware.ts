@@ -28,6 +28,17 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
+  // Admin static assets must remain public. Redirecting `/admin/_next/*` to
+  // `/admin/login` returns HTML where CSS/JS is expected, producing the raw
+  // unstyled Admin screen seen on mobile browsers.
+  if (
+    pathname.startsWith("/admin/_next/") ||
+    pathname.startsWith("/_next/") ||
+    pathname === "/favicon.ico"
+  ) {
+    return NextResponse.next();
+  }
+
   if (pathname === "/") {
     const token = request.cookies.get("token")?.value;
 

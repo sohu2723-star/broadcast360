@@ -249,9 +249,9 @@ export default function LoginPage() {
         />
       ) : null}
 
-      <div className="mx-auto w-full max-w-[440px] rounded-[2rem] border border-[#7898bf]/15 bg-[#101a3a]/95 p-6 shadow-[0_30px_90px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:p-8">
+      <div className="mx-auto w-full max-w-[440px] rounded-[2rem] border border-white/10 bg-[#1f1f1f]/95 p-6 shadow-[0_30px_90px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:p-8">
         <div className="mb-8 text-center">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-[#a9c0dd]/70">FlickScope</p>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.35em] text-white/60">FlickScope</p>
           <h1 className="text-3xl font-bold tracking-tight text-white">Login</h1>
           <p className="mt-2 text-sm text-slate-300">Welcome back to FlickScope</p>
         </div>
@@ -260,7 +260,7 @@ export default function LoginPage() {
           <div className="space-y-3">
             <AuthError message={serverError} />
             {serverError.toLowerCase().includes("inactive") ? (
-              <Link href="/support/reactivation" className="block text-center text-sm font-semibold text-[#b8cee8] underline decoration-[#7898bf]/50 underline-offset-4 hover:text-white">
+              <Link href="/support/reactivation" className="block text-center text-sm font-semibold text-white/65 underline decoration-white/20 underline-offset-4 hover:text-white">
                 Request account reactivation from Support
               </Link>
             ) : null}
@@ -284,7 +284,7 @@ export default function LoginPage() {
           <div>
             <div className="mb-2 flex items-center justify-between">
               <AuthLabel>Password</AuthLabel>
-              <Link href="/forgot-password" className="text-xs font-semibold text-[#b7cbe4] hover:text-white">Forgot password?</Link>
+              <Link href="/forgot-password" className="text-xs font-semibold text-white/65 hover:text-white">Forgot password?</Link>
             </div>
             <div className="relative">
               <input
@@ -328,7 +328,7 @@ export default function LoginPage() {
 
         <p className="mt-8 text-center text-sm text-slate-400">
           Don&apos;t have an account?
-          <Link href="/register" className="ml-1.5 font-semibold text-[#b7cbe4] transition hover:text-white">Sign up</Link>
+          <Link href="/register" className="ml-1.5 font-semibold text-white/65 transition hover:text-white">Sign up</Link>
         </p>
       </div>
     </AuthBackdrop>

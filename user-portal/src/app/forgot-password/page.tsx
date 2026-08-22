@@ -232,15 +232,15 @@ export default function ForgotPasswordPage() {
     <AuthBackdrop>
       <div className="mx-auto w-full max-w-[440px]">
         <div className="mb-5 flex items-center justify-between px-1">
-          <Link href="/login" className="text-sm font-semibold text-[#b7cbe4] transition hover:text-white">
+          <Link href="/login" className="text-sm font-semibold text-white/65 transition hover:text-white">
             ← Back to login
           </Link>
-          <span className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">FlickScope</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.22em] text-white/50">FlickScope</span>
         </div>
 
-        <section className="rounded-[2rem] border border-[#7898bf]/15 bg-[#101a3a]/95 p-6 shadow-[0_30px_90px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:p-8">
+        <section className="rounded-[2rem] border border-white/10 bg-[#1f1f1f]/95 p-6 shadow-[0_30px_90px_rgba(0,0,0,0.38)] backdrop-blur-xl sm:p-8">
           <div className="mb-7">
-            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#9cb9dc]">Account recovery</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/55">Account recovery</p>
             <h1 className="mt-2 text-2xl font-bold text-white">
               {step === "email" ? "Forgot password?" : step === "otp" ? "Check your Gmail" : step === "password" ? "Create a new password" : "Password updated"}
             </h1>
@@ -325,7 +325,7 @@ export default function ForgotPasswordPage() {
                 {countdown > 0 ? (
                   <span>You can request another code in <strong className="text-slate-200">{countdown}s</strong></span>
                 ) : (
-                  <button type="button" onClick={resendCode} className="font-semibold text-[#b7cbe4] hover:text-white">Resend code</button>
+                  <button type="button" onClick={resendCode} className="font-semibold text-white/70 hover:text-white">Resend code</button>
                 )}
               </div>
             </form>
