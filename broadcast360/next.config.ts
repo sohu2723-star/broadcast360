@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 
 initOpenNextCloudflareForDev();
 
-const userPortalOrigin = process.env.USER_PORTAL_ORIGIN || "http://localhost:3001";
+const userPortalOrigin = process.env.USER_PORTAL_ORIGIN || "https://hxu-movie.sohu2723.workers.dev";
 const streamOrigin = process.env.PUBLIC_STREAM_ORIGIN || "*";
 
 const nextConfig: NextConfig = {

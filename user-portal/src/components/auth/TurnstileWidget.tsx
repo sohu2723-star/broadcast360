@@ -39,7 +39,7 @@ export default function TurnstileWidget({ token, error, onChange }: TurnstileWid
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
   const onChangeRef = useRef(onChange);
-  const [scriptReady, setScriptReady] = useState(false);
+  const [scriptReady, setScriptReady] = useState(() => typeof window !== "undefined" && Boolean(window.turnstile?.render));
   const [status, setStatus] = useState<WidgetStatus>("loading");
   const [widgetError, setWidgetError] = useState("");
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
@@ -47,6 +47,21 @@ export default function TurnstileWidget({ token, error, onChange }: TurnstileWid
   useEffect(() => {
     onChangeRef.current = onChange;
   }, [onChange]);
+
+  useEffect(() => {
+    if (scriptReady) return;
+    let attempts = 0;
+    const timer = window.setInterval(() => {
+      attempts += 1;
+      if (window.turnstile?.render) {
+        setScriptReady(true);
+        window.clearInterval(timer);
+      } else if (attempts >= 40) {
+        window.clearInterval(timer);
+      }
+    }, 250);
+    return () => window.clearInterval(timer);
+  }, [scriptReady]);
 
   useEffect(() => {
     if (!scriptReady || !siteKey || !window.turnstile || !containerRef.current || widgetIdRef.current) return;

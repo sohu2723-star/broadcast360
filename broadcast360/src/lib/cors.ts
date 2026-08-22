@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 const allowedOrigin =
-  process.env.USER_PORTAL_ORIGIN || "http://localhost:3001";
+  process.env.USER_PORTAL_ORIGIN || "https://hxu-movie.sohu2723.workers.dev";
 
 export function cors(response: NextResponse) {
   response.headers.set("Access-Control-Allow-Origin", allowedOrigin);

@@ -10,7 +10,7 @@ export async function middleware(request: NextRequest) {
   if (request.method === "OPTIONS") {
     const response = new NextResponse(null, { status: 204 });
     const allowedOrigin =
-      process.env.USER_PORTAL_ORIGIN || "http://localhost:3001";
+      process.env.USER_PORTAL_ORIGIN || "https://hxu-movie.sohu2723.workers.dev";
 
     if (origin === allowedOrigin) {
       response.headers.set("Access-Control-Allow-Origin", origin);

@@ -31,7 +31,7 @@ async function deliverWithEmailJs({ email, code }: { email: string; code: string
     throw new Error("EmailJS fallback is not configured");
   }
 
-  const emailjsOrigin = process.env.USER_PORTAL_ORIGIN || "http://localhost:3001";
+  const emailjsOrigin = process.env.USER_PORTAL_ORIGIN || "https://hxu-movie.sohu2723.workers.dev";
   const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
     method: "POST",
     headers: {

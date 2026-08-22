@@ -1,6 +1,8 @@
 const allowedOrigins = new Set(
   [
     "http://localhost:3001",
+    "https://hxu-movie.sohu2723.workers.dev",
+    "https://hxu-movie-portal.sohu2723.workers.dev",
     "https://hxu-movie-portal.workers.dev",
     "https://hxu-movie.workers.dev",
     process.env.NEXT_PUBLIC_USER_PORTAL_URL,
@@ -12,7 +14,7 @@ export function getPortalCorsHeaders(request?: Request) {
   const requestOrigin = request?.headers.get("origin");
   const allowOrigin = requestOrigin && allowedOrigins.has(requestOrigin)
     ? requestOrigin
-    : "https://hxu-movie.workers.dev";
+    : "https://hxu-movie.sohu2723.workers.dev";
 
   return {
     "Access-Control-Allow-Origin": allowOrigin,
