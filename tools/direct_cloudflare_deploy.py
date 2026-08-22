@@ -418,10 +418,17 @@ PORTAL_SMOKE_PAGES = {
 }
 
 
+SMOKE_ROUTE_SUFFIXES = ("/admin/login", "/login", "/register", "/movies")
+
+
 def smoke_url(origin, path):
-    """Return the public URL for a path without discarding an origin prefix."""
+    """Return a smoke URL while tolerating a route URL passed as ``--url``."""
     parts = urlsplit(origin)
     base_path = parts.path.rstrip("/")
+    for suffix in SMOKE_ROUTE_SUFFIXES:
+        if base_path == suffix:
+            base_path = ""
+            break
     return urlunsplit((parts.scheme, parts.netloc, f"{base_path}{path}", "", ""))
 
 
