@@ -63,12 +63,12 @@ export default function UserMenu({ user }: Props) {
           rounded-xl
           border
           border-white/10
-          bg-[#0B1026]
+          bg-[#121212]
           px-3
           py-2
           transition
           hover:border-white/15
-          hover:bg-[#111936]
+          hover:bg-[#2a2a2a]
         "
       >
         {/* Avatar */}
@@ -96,7 +96,7 @@ export default function UserMenu({ user }: Props) {
                 justify-center
                 rounded-full
                 border
-                border-[#0B1026]
+                border-[#121212]
                 bg-amber-400
                 text-[#17120a]
                 shadow-sm
@@ -118,7 +118,7 @@ export default function UserMenu({ user }: Props) {
 
           </div>
 
-          <p className="text-xs text-[#9fb3ca]">
+          <p className="text-xs text-[#a4a4a4]">
             {isPremium ? "Premium Member" : "Account"}
           </p>
         </div>
@@ -151,7 +151,7 @@ export default function UserMenu({ user }: Props) {
             rounded-2xl
             border
             border-white/10
-            bg-[#0B1026]
+            bg-[#121212]
             shadow-2xl
             shadow-black/40
           "

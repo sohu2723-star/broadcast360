@@ -162,3 +162,88 @@ button {
     max-width: calc(100vw - 2rem);
   }
 }
+
+/* Shared FlickScope charcoal compatibility layer for legacy feature classes. */
+[class~="bg-[#0B1026]"],
+[class~="bg-[#111936]"],
+[class~="bg-slate-900"],
+[class~="bg-slate-900/80"] {
+  background-color: var(--surface) !important;
+}
+
+[class~="bg-slate-800"],
+[class~="bg-[#0f172a]"] {
+  background-color: var(--surface-raised) !important;
+}
+
+[class*="text-blue-"],
+[class*="text-indigo-"],
+[class*="text-cyan-"],
+[class*="text-violet-"] {
+  color: var(--accent) !important;
+}
+
+[class*="border-blue-"],
+[class*="border-indigo-"],
+[class*="border-cyan-"],
+[class*="border-violet-"] {
+  border-color: var(--border-subtle) !important;
+}
+
+[class*="bg-blue-"],
+[class*="bg-indigo-"],
+[class*="bg-cyan-"],
+[class*="bg-violet-"] {
+  background-color: var(--accent-soft) !important;
+}
+
+[class*="focus:border-blue-"]:focus,
+[class*="focus:border-indigo-"]:focus,
+[class*="focus:ring-blue-"]:focus,
+[class*="focus:ring-indigo-"]:focus {
+  border-color: rgba(255, 255, 255, 0.42) !important;
+  --tw-ring-color: rgba(255, 255, 255, 0.16) !important;
+}
+
+[class*="hover:bg-blue-"]:hover,
+[class*="hover:bg-indigo-"]:hover,
+[class*="hover:bg-slate-"]:hover {
+  background-color: var(--surface-raised) !important;
+}
+
+.flickscope-panel,
+.flickscope-form-surface {
+  background: var(--surface);
+  border-color: var(--border-subtle);
+}
+
+.flickscope-panel-raised {
+  background: var(--surface-raised);
+}
+
+.flickscope-muted {
+  color: var(--muted);
+}
+
+.flickscope-neutral-action {
+  background: var(--surface-raised);
+  color: var(--foreground);
+  border: 1px solid var(--border-subtle);
+  transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.flickscope-neutral-action:hover {
+  background: #363636;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.flickscope-neutral-action:active {
+  transform: scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flickscope-neutral-action,
+  .flickscope-primary-action {
+    transition: none;
+  }
+}
